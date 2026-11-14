@@ -1,0 +1,3186 @@
+{
+ "delete_guard": {
+  "ideate+tools bound": {
+   "message": null,
+   "refused": false
+  },
+  "optimize bound": {
+   "message": "Cannot delete MCP server: 1 profile(s) depend on it: @O",
+   "refused": true
+  },
+  "optimize other server": {
+   "message": null,
+   "refused": false
+  }
+ },
+ "focus": {
+  "classify": {
+   "all_known_mcp_arguments": {
+    "prompt": [
+     "database_name",
+     "question"
+    ],
+    "tool": [
+     "answer_from_context",
+     "column_name",
+     "data_to_filter",
+     "database_name",
+     "date_phrase",
+     "goal",
+     "obj_name",
+     "scope",
+     "source_data",
+     "sql",
+     "start_date",
+     "synthesized_answer",
+     "table_name",
+     "task_description"
+    ]
+   },
+   "call_counts": {
+    "list_prompts": 1,
+    "list_resources": 1,
+    "list_tools": 1,
+    "session": 1
+   },
+   "llm_calls": [],
+   "mcp_prompts": [
+    "base_query",
+    "qlty_databaseQuality"
+   ],
+   "mcp_tools": [
+    {
+     "args": {
+      "sql": {
+       "description": "the SQL to run",
+       "name": "sql",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Runs a SQL query.",
+     "name": "base_readQuery"
+    },
+    {
+     "args": {
+      "scope": {
+       "description": "No description.",
+       "name": "scope",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Lists databases.",
+     "name": "base_databaseList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Lists the tables of a database.",
+     "name": "base_tableList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "obj_name": {
+       "description": "No description.",
+       "name": "obj_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Describes the columns of a table.",
+     "name": "base_columnDescription"
+    },
+    {
+     "args": {
+      "column_name": {
+       "description": "No description.",
+       "name": "column_name",
+       "required": true,
+       "type": "string"
+      },
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "table_name": {
+       "description": "No description.",
+       "name": "table_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Column statistics for data quality.",
+     "name": "qlty_columnSummary"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Space used per table.",
+     "name": "dba_tableSpace"
+    },
+    {
+     "args": {},
+     "description": "Returns the current system date in YYYY-MM-DD format. Use this as the first step for any user query involving relative dates like 'today', 'yesterday', or 'this week'.",
+     "name": "TDA_CurrentDate"
+    },
+    {
+     "args": {
+      "date_phrase": {
+       "description": "The natural language phrase describing the desired range (e.g., 'past 3 days', 'last 2 weeks').",
+       "required": true,
+       "type": "string"
+      },
+      "start_date": {
+       "description": "The anchor date for the calculation, usually today's date from `TDA_CurrentDate`. Must be in YYYY-MM-DD format.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Calculates a list of dates based on a start date and a natural language phrase (e.g., 'past 3 days', 'last week'). This is a necessary second step for multi-day queries.",
+     "name": "TDA_DateRange"
+    },
+    {
+     "args": {
+      "data_to_filter": {
+       "description": "The list of data objects to be filtered, passed from the result of a previous phase.",
+       "required": true,
+       "type": "list[dict]"
+      },
+      "goal": {
+       "description": "A clear, natural language description of the item to find and extract (e.g., 'Find the database related to fitness', 'Extract the name of the sales summary table').",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "A specialized internal tool that filters a list of items based on a natural language goal and extracts a single, clean value. This is used as an intermediate step to pass a specific, machine-readable value from one tool to another.",
+     "name": "TDA_LLMFilter"
+    },
+    {
+     "args": {
+      "source_data": {
+       "description": "A list of keys (e.g., 'result_of_phase_1') identifying which data from the workflow history is relevant for this task. This is critical for providing the correct context.",
+       "required": true,
+       "type": "list[string]"
+      },
+      "synthesized_answer": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it can confidently answer from history.",
+       "required": false,
+       "type": "string"
+      },
+      "task_description": {
+       "description": "A natural language description of the internal task to be executed (e.g., 'describe the table in a business context', 'format final output'). The LLM infers this from the workflow plan.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Performs internal, LLM-driven tasks that are not direct calls to the Teradata database. This tool is used for text synthesis, summarization, and formatting based on a specific 'task_description' provided by the LLM itself.",
+     "name": "TDA_LLMTask"
+    },
+    {
+     "args": {
+      "answer_from_context": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it has confidently answered the user's question from the conversation history.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "The History First Shortcut. This tool MUST be used for a single-phase plan if, and only if, the user's question can be answered entirely from the existing Workflow History. It bypasses all data gathering. Do NOT use this tool if you need to gather new data.",
+     "name": "TDA_ContextReport"
+    },
+    {
+     "args": {},
+     "description": "The Data Summarization Tool. This tool MUST be the final phase of a multi-step plan to synthesize the results from all previous data-gathering phases into a final report. Do NOT use this tool in a single-phase plan or as a first step.",
+     "name": "TDA_FinalReport"
+    },
+    {
+     "args": {},
+     "description": "A special internal tool used to format and deliver the final, structured report for a pre-defined UI prompt. This tool MUST be called when all data gathering phases for the prompt are complete.",
+     "name": "TDA_ComplexPromptReport"
+    }
+   ],
+   "prompts_context_slot": "--- Available Prompts ---\n--- Category: All Prompts ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database",
+   "saved": [
+    {
+     "profile_id": "p-focus",
+     "results": {
+      "classified_with_mode": "light",
+      "prompts": {
+       "All Prompts": [
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          },
+          {
+           "description": "The question",
+           "name": "question",
+           "required": false,
+           "type": "unknown"
+          }
+         ],
+         "description": "Answer a question about a table. (type: sql)",
+         "disabled": false,
+         "name": "base_query",
+         "prompt_type": "reporting"
+        },
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          }
+         ],
+         "description": "Quality review of a database.",
+         "disabled": false,
+         "name": "qlty_databaseQuality",
+         "prompt_type": "reporting"
+        }
+       ]
+      },
+      "resources": {
+       "All Resources": [
+        {
+         "description": "The schema reference.",
+         "name": "schema_doc"
+        }
+       ]
+      },
+      "tool_scopes": {
+       "base_columnDescription": "table",
+       "base_tableList": "database",
+       "qlty_columnSummary": "column"
+      },
+      "tools": {
+       "All Tools": [
+        {
+         "arguments": [
+          {
+           "description": "the SQL to run",
+           "name": "sql",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Runs a SQL query.",
+         "disabled": false,
+         "name": "base_readQuery"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "scope",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Lists databases.",
+         "disabled": false,
+         "name": "base_databaseList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Lists the tables of a database.",
+         "disabled": false,
+         "name": "base_tableList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "obj_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Describes the columns of a table.",
+         "disabled": false,
+         "name": "base_columnDescription"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "table_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "column_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Column statistics for data quality.",
+         "disabled": false,
+         "name": "qlty_columnSummary"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Space used per table.",
+         "disabled": false,
+         "name": "dba_tableSpace"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "schema_cache_keys": [
+    "srv-primary"
+   ],
+   "state_keys": [
+    "all_known_mcp_arguments",
+    "mcp_prompts",
+    "mcp_tool_schema_cache",
+    "mcp_tools",
+    "prompts_context",
+    "structured_prompts",
+    "structured_resources",
+    "structured_tools",
+    "tool_scopes",
+    "tools_context"
+   ],
+   "structured_prompts": {
+    "All Prompts": [
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       },
+       {
+        "description": "The question",
+        "name": "question",
+        "required": false,
+        "type": "unknown"
+       }
+      ],
+      "description": "Answer a question about a table. (type: sql)",
+      "disabled": false,
+      "name": "base_query",
+      "prompt_type": "reporting"
+     },
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       }
+      ],
+      "description": "Quality review of a database.",
+      "disabled": false,
+      "name": "qlty_databaseQuality",
+      "prompt_type": "reporting"
+     }
+    ]
+   },
+   "structured_resources": {
+    "All Resources": [
+     {
+      "description": "The schema reference.",
+      "name": "schema_doc"
+     }
+    ]
+   },
+   "structured_tools": {
+    "All Tools": [
+     {
+      "arguments": [
+       {
+        "description": "the SQL to run",
+        "name": "sql",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Runs a SQL query.",
+      "disabled": false,
+      "name": "base_readQuery"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "scope",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Lists databases.",
+      "disabled": false,
+      "name": "base_databaseList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Lists the tables of a database.",
+      "disabled": false,
+      "name": "base_tableList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "obj_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Describes the columns of a table.",
+      "disabled": false,
+      "name": "base_columnDescription"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "table_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "column_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Column statistics for data quality.",
+      "disabled": false,
+      "name": "qlty_columnSummary"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Space used per table.",
+      "disabled": false,
+      "name": "dba_tableSpace"
+     }
+    ]
+   },
+   "tool_scopes": {
+    "base_columnDescription": "table",
+    "base_tableList": "database",
+    "qlty_columnSummary": "column"
+   },
+   "tools_context_slot": "--- No Tools Available ---",
+   "wire": [
+    [
+     "session",
+     "srv-primary"
+    ],
+    [
+     "list_tools",
+     "srv-primary"
+    ],
+    [
+     "list_prompts",
+     "srv-primary"
+    ],
+    [
+     "list_resources",
+     "srv-primary"
+    ]
+   ]
+  },
+  "deployment": {
+   "catalog": null,
+   "hash": "b8a852836e1c46300ae0d6a059eb80ba582352fe3c75b23b697276dfe8707fee",
+   "signature": {
+    "catalog": null,
+    "connectors": [],
+    "llm": {
+     "model": "gemini",
+     "provider": "Google"
+    }
+   }
+  }
+ },
+ "ideate_tools": {
+  "classify": {
+   "all_known_mcp_arguments": {
+    "prompt": [
+     "database_name",
+     "question"
+    ],
+    "tool": [
+     "answer_from_context",
+     "column_name",
+     "data_to_filter",
+     "database_name",
+     "date_phrase",
+     "goal",
+     "obj_name",
+     "scope",
+     "source_data",
+     "sql",
+     "start_date",
+     "synthesized_answer",
+     "table_name",
+     "task_description"
+    ]
+   },
+   "call_counts": {
+    "list_prompts": 1,
+    "list_resources": 1,
+    "list_tools": 1,
+    "session": 1
+   },
+   "llm_calls": [],
+   "mcp_prompts": [
+    "base_query",
+    "qlty_databaseQuality"
+   ],
+   "mcp_tools": [
+    {
+     "args": {
+      "sql": {
+       "description": "the SQL to run",
+       "name": "sql",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Runs a SQL query.",
+     "name": "base_readQuery"
+    },
+    {
+     "args": {
+      "scope": {
+       "description": "No description.",
+       "name": "scope",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Lists databases.",
+     "name": "base_databaseList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Lists the tables of a database.",
+     "name": "base_tableList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "obj_name": {
+       "description": "No description.",
+       "name": "obj_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Describes the columns of a table.",
+     "name": "base_columnDescription"
+    },
+    {
+     "args": {
+      "column_name": {
+       "description": "No description.",
+       "name": "column_name",
+       "required": true,
+       "type": "string"
+      },
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "table_name": {
+       "description": "No description.",
+       "name": "table_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Column statistics for data quality.",
+     "name": "qlty_columnSummary"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Space used per table.",
+     "name": "dba_tableSpace"
+    },
+    {
+     "args": {},
+     "description": "Returns the current system date in YYYY-MM-DD format. Use this as the first step for any user query involving relative dates like 'today', 'yesterday', or 'this week'.",
+     "name": "TDA_CurrentDate"
+    },
+    {
+     "args": {
+      "date_phrase": {
+       "description": "The natural language phrase describing the desired range (e.g., 'past 3 days', 'last 2 weeks').",
+       "required": true,
+       "type": "string"
+      },
+      "start_date": {
+       "description": "The anchor date for the calculation, usually today's date from `TDA_CurrentDate`. Must be in YYYY-MM-DD format.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Calculates a list of dates based on a start date and a natural language phrase (e.g., 'past 3 days', 'last week'). This is a necessary second step for multi-day queries.",
+     "name": "TDA_DateRange"
+    },
+    {
+     "args": {
+      "data_to_filter": {
+       "description": "The list of data objects to be filtered, passed from the result of a previous phase.",
+       "required": true,
+       "type": "list[dict]"
+      },
+      "goal": {
+       "description": "A clear, natural language description of the item to find and extract (e.g., 'Find the database related to fitness', 'Extract the name of the sales summary table').",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "A specialized internal tool that filters a list of items based on a natural language goal and extracts a single, clean value. This is used as an intermediate step to pass a specific, machine-readable value from one tool to another.",
+     "name": "TDA_LLMFilter"
+    },
+    {
+     "args": {
+      "source_data": {
+       "description": "A list of keys (e.g., 'result_of_phase_1') identifying which data from the workflow history is relevant for this task. This is critical for providing the correct context.",
+       "required": true,
+       "type": "list[string]"
+      },
+      "synthesized_answer": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it can confidently answer from history.",
+       "required": false,
+       "type": "string"
+      },
+      "task_description": {
+       "description": "A natural language description of the internal task to be executed (e.g., 'describe the table in a business context', 'format final output'). The LLM infers this from the workflow plan.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Performs internal, LLM-driven tasks that are not direct calls to the Teradata database. This tool is used for text synthesis, summarization, and formatting based on a specific 'task_description' provided by the LLM itself.",
+     "name": "TDA_LLMTask"
+    },
+    {
+     "args": {
+      "answer_from_context": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it has confidently answered the user's question from the conversation history.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "The History First Shortcut. This tool MUST be used for a single-phase plan if, and only if, the user's question can be answered entirely from the existing Workflow History. It bypasses all data gathering. Do NOT use this tool if you need to gather new data.",
+     "name": "TDA_ContextReport"
+    },
+    {
+     "args": {},
+     "description": "The Data Summarization Tool. This tool MUST be the final phase of a multi-step plan to synthesize the results from all previous data-gathering phases into a final report. Do NOT use this tool in a single-phase plan or as a first step.",
+     "name": "TDA_FinalReport"
+    },
+    {
+     "args": {},
+     "description": "A special internal tool used to format and deliver the final, structured report for a pre-defined UI prompt. This tool MUST be called when all data gathering phases for the prompt are complete.",
+     "name": "TDA_ComplexPromptReport"
+    }
+   ],
+   "prompts_context_slot": "--- Available Prompts ---\n--- Category: All Prompts ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database",
+   "saved": [
+    {
+     "profile_id": "p-ideate",
+     "results": {
+      "classified_with_mode": "light",
+      "prompts": {},
+      "resources": {
+       "All Resources": [
+        {
+         "description": "The schema reference.",
+         "name": "schema_doc"
+        }
+       ]
+      },
+      "tool_scopes": {
+       "base_columnDescription": "table",
+       "base_tableList": "database",
+       "qlty_columnSummary": "column"
+      },
+      "tools": {
+       "All Tools": [
+        {
+         "arguments": [
+          {
+           "description": "the SQL to run",
+           "name": "sql",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Runs a SQL query.",
+         "disabled": false,
+         "name": "base_readQuery"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "scope",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Lists databases.",
+         "disabled": false,
+         "name": "base_databaseList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Lists the tables of a database.",
+         "disabled": false,
+         "name": "base_tableList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "obj_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Describes the columns of a table.",
+         "disabled": false,
+         "name": "base_columnDescription"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "table_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "column_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Column statistics for data quality.",
+         "disabled": false,
+         "name": "qlty_columnSummary"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Space used per table.",
+         "disabled": false,
+         "name": "dba_tableSpace"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "schema_cache_keys": [
+    "srv-primary"
+   ],
+   "state_keys": [
+    "all_known_mcp_arguments",
+    "mcp_prompts",
+    "mcp_tool_schema_cache",
+    "mcp_tools",
+    "prompts_context",
+    "structured_prompts",
+    "structured_resources",
+    "structured_tools",
+    "tool_scopes",
+    "tools_context"
+   ],
+   "structured_prompts": {
+    "All Prompts": [
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       },
+       {
+        "description": "The question",
+        "name": "question",
+        "required": false,
+        "type": "unknown"
+       }
+      ],
+      "description": "Answer a question about a table. (type: sql)",
+      "disabled": false,
+      "name": "base_query",
+      "prompt_type": "reporting"
+     },
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       }
+      ],
+      "description": "Quality review of a database.",
+      "disabled": false,
+      "name": "qlty_databaseQuality",
+      "prompt_type": "reporting"
+     }
+    ]
+   },
+   "structured_resources": {
+    "All Resources": [
+     {
+      "description": "The schema reference.",
+      "name": "schema_doc"
+     }
+    ]
+   },
+   "structured_tools": {
+    "All Tools": [
+     {
+      "arguments": [
+       {
+        "description": "the SQL to run",
+        "name": "sql",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Runs a SQL query.",
+      "disabled": false,
+      "name": "base_readQuery"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "scope",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Lists databases.",
+      "disabled": false,
+      "name": "base_databaseList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Lists the tables of a database.",
+      "disabled": false,
+      "name": "base_tableList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "obj_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Describes the columns of a table.",
+      "disabled": false,
+      "name": "base_columnDescription"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "table_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "column_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Column statistics for data quality.",
+      "disabled": false,
+      "name": "qlty_columnSummary"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Space used per table.",
+      "disabled": false,
+      "name": "dba_tableSpace"
+     }
+    ]
+   },
+   "tool_scopes": {
+    "base_columnDescription": "table",
+    "base_tableList": "database",
+    "qlty_columnSummary": "column"
+   },
+   "tools_context_slot": "--- No Tools Available ---",
+   "wire": [
+    [
+     "session",
+     "srv-primary"
+    ],
+    [
+     "list_tools",
+     "srv-primary"
+    ],
+    [
+     "list_prompts",
+     "srv-primary"
+    ],
+    [
+     "list_resources",
+     "srv-primary"
+    ]
+   ]
+  },
+  "deployment": {
+   "catalog": {
+    "prompts": [],
+    "tools": [
+     "base_readQuery(sql)",
+     "base_databaseList(scope)",
+     "base_tableList(database_name)",
+     "base_columnDescription(database_name,obj_name)",
+     "qlty_columnSummary(column_name,database_name,table_name)",
+     "dba_tableSpace(database_name)"
+    ]
+   },
+   "hash": "5007d7104614261e5111a984245d8399b3afb5e62de46df10bfb68f21ea9c488",
+   "signature": {
+    "catalog": {
+     "prompts": [],
+     "tools": [
+      "base_columnDescription(database_name,obj_name)",
+      "base_databaseList(scope)",
+      "base_readQuery(sql)",
+      "base_tableList(database_name)",
+      "dba_tableSpace(database_name)",
+      "qlty_columnSummary(column_name,database_name,table_name)"
+     ]
+    },
+    "connectors": [],
+    "llm": {
+     "model": "gemini",
+     "provider": "Google"
+    }
+   }
+  }
+ },
+ "optimize_full": {
+  "classify": {
+   "all_known_mcp_arguments": {
+    "prompt": [
+     "database_name",
+     "question"
+    ],
+    "tool": [
+     "answer_from_context",
+     "column_name",
+     "data_to_filter",
+     "database_name",
+     "date_phrase",
+     "goal",
+     "obj_name",
+     "scope",
+     "source_data",
+     "sql",
+     "start_date",
+     "synthesized_answer",
+     "table_name",
+     "task_description"
+    ]
+   },
+   "call_counts": {
+    "list_prompts": 1,
+    "list_resources": 1,
+    "list_tools": 1,
+    "session": 1
+   },
+   "llm_calls": [
+    {
+     "prompt_len": 1304,
+     "prompt_sha": "826cd3c1fdd5b848efb4a0998d212e349bb9535499670136c1ab5b95e274fab7",
+     "system": "You are an expert assistant that only responds with valid JSON."
+    }
+   ],
+   "mcp_prompts": [
+    "base_query",
+    "qlty_databaseQuality"
+   ],
+   "mcp_tools": [
+    {
+     "args": {
+      "sql": {
+       "description": "the SQL to run",
+       "name": "sql",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Runs a SQL query.",
+     "name": "base_readQuery"
+    },
+    {
+     "args": {
+      "scope": {
+       "description": "No description.",
+       "name": "scope",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Lists databases.",
+     "name": "base_databaseList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Lists the tables of a database.",
+     "name": "base_tableList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "obj_name": {
+       "description": "No description.",
+       "name": "obj_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Describes the columns of a table.",
+     "name": "base_columnDescription"
+    },
+    {
+     "args": {
+      "column_name": {
+       "description": "No description.",
+       "name": "column_name",
+       "required": true,
+       "type": "string"
+      },
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "table_name": {
+       "description": "No description.",
+       "name": "table_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Column statistics for data quality.",
+     "name": "qlty_columnSummary"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Space used per table.",
+     "name": "dba_tableSpace"
+    },
+    {
+     "args": {},
+     "description": "Returns the current system date in YYYY-MM-DD format. Use this as the first step for any user query involving relative dates like 'today', 'yesterday', or 'this week'.",
+     "name": "TDA_CurrentDate"
+    },
+    {
+     "args": {
+      "date_phrase": {
+       "description": "The natural language phrase describing the desired range (e.g., 'past 3 days', 'last 2 weeks').",
+       "required": true,
+       "type": "string"
+      },
+      "start_date": {
+       "description": "The anchor date for the calculation, usually today's date from `TDA_CurrentDate`. Must be in YYYY-MM-DD format.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Calculates a list of dates based on a start date and a natural language phrase (e.g., 'past 3 days', 'last week'). This is a necessary second step for multi-day queries.",
+     "name": "TDA_DateRange"
+    },
+    {
+     "args": {
+      "data_to_filter": {
+       "description": "The list of data objects to be filtered, passed from the result of a previous phase.",
+       "required": true,
+       "type": "list[dict]"
+      },
+      "goal": {
+       "description": "A clear, natural language description of the item to find and extract (e.g., 'Find the database related to fitness', 'Extract the name of the sales summary table').",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "A specialized internal tool that filters a list of items based on a natural language goal and extracts a single, clean value. This is used as an intermediate step to pass a specific, machine-readable value from one tool to another.",
+     "name": "TDA_LLMFilter"
+    },
+    {
+     "args": {
+      "source_data": {
+       "description": "A list of keys (e.g., 'result_of_phase_1') identifying which data from the workflow history is relevant for this task. This is critical for providing the correct context.",
+       "required": true,
+       "type": "list[string]"
+      },
+      "synthesized_answer": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it can confidently answer from history.",
+       "required": false,
+       "type": "string"
+      },
+      "task_description": {
+       "description": "A natural language description of the internal task to be executed (e.g., 'describe the table in a business context', 'format final output'). The LLM infers this from the workflow plan.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Performs internal, LLM-driven tasks that are not direct calls to the Teradata database. This tool is used for text synthesis, summarization, and formatting based on a specific 'task_description' provided by the LLM itself.",
+     "name": "TDA_LLMTask"
+    },
+    {
+     "args": {
+      "answer_from_context": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it has confidently answered the user's question from the conversation history.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "The History First Shortcut. This tool MUST be used for a single-phase plan if, and only if, the user's question can be answered entirely from the existing Workflow History. It bypasses all data gathering. Do NOT use this tool if you need to gather new data.",
+     "name": "TDA_ContextReport"
+    },
+    {
+     "args": {},
+     "description": "The Data Summarization Tool. This tool MUST be the final phase of a multi-step plan to synthesize the results from all previous data-gathering phases into a final report. Do NOT use this tool in a single-phase plan or as a first step.",
+     "name": "TDA_FinalReport"
+    },
+    {
+     "args": {},
+     "description": "A special internal tool used to format and deliver the final, structured report for a pre-defined UI prompt. This tool MUST be called when all data gathering phases for the prompt are complete.",
+     "name": "TDA_ComplexPromptReport"
+    }
+   ],
+   "prompts_context_slot": "--- Available Prompts ---\n--- Category: Data Quality ---\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database\n--- Category: Query Execution ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question",
+   "saved": [
+    {
+     "profile_id": "p-opt-full",
+     "results": {
+      "classified_with_mode": "full",
+      "prompts": {
+       "Data Quality": [
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          }
+         ],
+         "description": "Quality review of a database.",
+         "disabled": false,
+         "name": "qlty_databaseQuality",
+         "prompt_type": "reporting"
+        }
+       ],
+       "Query Execution": [
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          },
+          {
+           "description": "The question",
+           "name": "question",
+           "required": false,
+           "type": "unknown"
+          }
+         ],
+         "description": "Answer a question about a table. (type: sql)",
+         "disabled": false,
+         "name": "base_query",
+         "prompt_type": "reporting"
+        }
+       ]
+      },
+      "resources": {
+       "Reference": [
+        {
+         "description": "The schema reference.",
+         "name": "schema_doc"
+        }
+       ]
+      },
+      "tool_scopes": {
+       "base_columnDescription": "table",
+       "base_tableList": "database",
+       "qlty_columnSummary": "column"
+      },
+      "tools": {
+       "Data Quality": [
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "table_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "column_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Column statistics for data quality.",
+         "disabled": false,
+         "name": "qlty_columnSummary"
+        }
+       ],
+       "Database Information": [
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "scope",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Lists databases.",
+         "disabled": false,
+         "name": "base_databaseList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Lists the tables of a database.",
+         "disabled": false,
+         "name": "base_tableList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "obj_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Describes the columns of a table.",
+         "disabled": false,
+         "name": "base_columnDescription"
+        }
+       ],
+       "Performance": [
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Space used per table.",
+         "disabled": false,
+         "name": "dba_tableSpace"
+        }
+       ],
+       "Query Execution": [
+        {
+         "arguments": [
+          {
+           "description": "the SQL to run",
+           "name": "sql",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Runs a SQL query.",
+         "disabled": false,
+         "name": "base_readQuery"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "schema_cache_keys": [
+    "srv-primary"
+   ],
+   "state_keys": [
+    "all_known_mcp_arguments",
+    "mcp_prompts",
+    "mcp_tool_schema_cache",
+    "mcp_tools",
+    "prompts_context",
+    "structured_prompts",
+    "structured_resources",
+    "structured_tools",
+    "tool_scopes",
+    "tools_context"
+   ],
+   "structured_prompts": {
+    "Data Quality": [
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       }
+      ],
+      "description": "Quality review of a database.",
+      "disabled": false,
+      "name": "qlty_databaseQuality",
+      "prompt_type": "reporting"
+     }
+    ],
+    "Query Execution": [
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       },
+       {
+        "description": "The question",
+        "name": "question",
+        "required": false,
+        "type": "unknown"
+       }
+      ],
+      "description": "Answer a question about a table. (type: sql)",
+      "disabled": false,
+      "name": "base_query",
+      "prompt_type": "reporting"
+     }
+    ]
+   },
+   "structured_resources": {
+    "Reference": [
+     {
+      "description": "The schema reference.",
+      "name": "schema_doc"
+     }
+    ]
+   },
+   "structured_tools": {
+    "Data Quality": [
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "table_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "column_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Column statistics for data quality.",
+      "disabled": false,
+      "name": "qlty_columnSummary"
+     }
+    ],
+    "Database Information": [
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "scope",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Lists databases.",
+      "disabled": false,
+      "name": "base_databaseList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Lists the tables of a database.",
+      "disabled": false,
+      "name": "base_tableList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "obj_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Describes the columns of a table.",
+      "disabled": false,
+      "name": "base_columnDescription"
+     }
+    ],
+    "Performance": [
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Space used per table.",
+      "disabled": false,
+      "name": "dba_tableSpace"
+     }
+    ],
+    "Query Execution": [
+     {
+      "arguments": [
+       {
+        "description": "the SQL to run",
+        "name": "sql",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Runs a SQL query.",
+      "disabled": false,
+      "name": "base_readQuery"
+     }
+    ]
+   },
+   "tool_scopes": {
+    "base_columnDescription": "table",
+    "base_tableList": "database",
+    "qlty_columnSummary": "column"
+   },
+   "tools_context_slot": "--- No Tools Available ---",
+   "wire": [
+    [
+     "session",
+     "srv-primary"
+    ],
+    [
+     "list_tools",
+     "srv-primary"
+    ],
+    [
+     "list_prompts",
+     "srv-primary"
+    ],
+    [
+     "list_resources",
+     "srv-primary"
+    ]
+   ]
+  },
+  "deployment": {
+   "catalog": {
+    "prompts": [
+     "base_query(database_name,question)",
+     "qlty_databaseQuality(database_name)"
+    ],
+    "tools": [
+     "base_readQuery(sql)",
+     "base_databaseList(scope)",
+     "base_tableList(database_name)",
+     "base_columnDescription(database_name,obj_name)",
+     "qlty_columnSummary(column_name,database_name,table_name)",
+     "dba_tableSpace(database_name)"
+    ]
+   },
+   "hash": "dc9ac8d97e924670028401974bc5a6c5ed3b2bb1c5463c485d44768051e677f2",
+   "signature": {
+    "catalog": {
+     "prompts": [
+      "base_query(database_name,question)",
+      "qlty_databaseQuality(database_name)"
+     ],
+     "tools": [
+      "base_columnDescription(database_name,obj_name)",
+      "base_databaseList(scope)",
+      "base_readQuery(sql)",
+      "base_tableList(database_name)",
+      "dba_tableSpace(database_name)",
+      "qlty_columnSummary(column_name,database_name,table_name)"
+     ]
+    },
+    "connectors": [],
+    "llm": {
+     "model": "gemini",
+     "provider": "Google"
+    }
+   }
+  },
+  "prompts_context": "--- Available Prompts ---\n--- Category: Data Quality ---\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database\n--- Category: Query Execution ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question",
+  "prompts_context_sha": "eecd9595bfb29f94084dc627bb423233cb7c24b7d452c38eeb387e951ecb993b",
+  "surface_catalog": [
+   [
+    "base_readQuery",
+    "Query Execution"
+   ],
+   [
+    "base_databaseList",
+    "Database Information"
+   ],
+   [
+    "base_tableList",
+    "Database Information"
+   ],
+   [
+    "base_columnDescription",
+    "Database Information"
+   ],
+   [
+    "qlty_columnSummary",
+    "Data Quality"
+   ],
+   [
+    "dba_tableSpace",
+    "Performance"
+   ]
+  ],
+  "surface_denied": [],
+  "surface_held": [
+   "dba_tableSpace"
+  ],
+  "surface_offered": [
+   "base_readQuery",
+   "base_databaseList",
+   "base_tableList",
+   "base_columnDescription",
+   "qlty_columnSummary"
+  ],
+  "surface_reasons": {
+   "base_columnDescription": "backbone \u2014 discovery and execution",
+   "base_databaseList": "backbone \u2014 discovery and execution",
+   "base_readQuery": "backbone \u2014 discovery and execution",
+   "base_tableList": "backbone \u2014 discovery and execution",
+   "dba_tableSpace": "held \u2014 findable with TDA_FindTools",
+   "qlty_columnSummary": "addresses the question: quality"
+  },
+  "tools_context": "--- Available Tools ---\n--- Category: Data Quality ---\n- `qlty_columnSummary` (tool): Column statistics for data quality.\n  - Arguments:\n    - `database_name` (string, required): No description.\n    - `table_name` (string, required): No description.\n    - `column_name` (string, required): No description.\n--- Category: Database Information ---\n- `base_databaseList` (tool): Lists databases.\n  - Arguments:\n    - `scope` (string, optional): No description.\n- `base_tableList` (tool): Lists the tables of a database.\n  - Arguments:\n    - `database_name` (string, required): No description.\n- `base_columnDescription` (tool): Describes the columns of a table.\n  - Arguments:\n    - `database_name` (string, required): No description.\n    - `obj_name` (string, required): No description.\n--- Category: Performance ---\n- `dba_tableSpace` (tool): Space used per table.\n  - Arguments:\n    - `database_name` (string, optional): No description.\n--- Category: Query Execution ---\n- `base_readQuery` (tool): Runs a SQL query.\n  - Arguments:\n    - `sql` (string, required): the SQL to run",
+  "tools_context_sha": "5e3f172588ed480c9084383400edf987cc2c84d7232dd17dfdaa01d750d63c93"
+ },
+ "optimize_light": {
+  "classify": {
+   "all_known_mcp_arguments": {
+    "prompt": [
+     "database_name",
+     "question"
+    ],
+    "tool": [
+     "answer_from_context",
+     "column_name",
+     "data_to_filter",
+     "database_name",
+     "date_phrase",
+     "goal",
+     "obj_name",
+     "scope",
+     "source_data",
+     "sql",
+     "start_date",
+     "synthesized_answer",
+     "table_name",
+     "task_description"
+    ]
+   },
+   "call_counts": {
+    "list_prompts": 1,
+    "list_resources": 1,
+    "list_tools": 1,
+    "session": 1
+   },
+   "llm_calls": [],
+   "mcp_prompts": [
+    "base_query",
+    "qlty_databaseQuality"
+   ],
+   "mcp_tools": [
+    {
+     "args": {
+      "sql": {
+       "description": "the SQL to run",
+       "name": "sql",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Runs a SQL query.",
+     "name": "base_readQuery"
+    },
+    {
+     "args": {
+      "scope": {
+       "description": "No description.",
+       "name": "scope",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Lists databases.",
+     "name": "base_databaseList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Lists the tables of a database.",
+     "name": "base_tableList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "obj_name": {
+       "description": "No description.",
+       "name": "obj_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Describes the columns of a table.",
+     "name": "base_columnDescription"
+    },
+    {
+     "args": {
+      "column_name": {
+       "description": "No description.",
+       "name": "column_name",
+       "required": true,
+       "type": "string"
+      },
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "table_name": {
+       "description": "No description.",
+       "name": "table_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Column statistics for data quality.",
+     "name": "qlty_columnSummary"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Space used per table.",
+     "name": "dba_tableSpace"
+    },
+    {
+     "args": {},
+     "description": "Returns the current system date in YYYY-MM-DD format. Use this as the first step for any user query involving relative dates like 'today', 'yesterday', or 'this week'.",
+     "name": "TDA_CurrentDate"
+    },
+    {
+     "args": {
+      "date_phrase": {
+       "description": "The natural language phrase describing the desired range (e.g., 'past 3 days', 'last 2 weeks').",
+       "required": true,
+       "type": "string"
+      },
+      "start_date": {
+       "description": "The anchor date for the calculation, usually today's date from `TDA_CurrentDate`. Must be in YYYY-MM-DD format.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Calculates a list of dates based on a start date and a natural language phrase (e.g., 'past 3 days', 'last week'). This is a necessary second step for multi-day queries.",
+     "name": "TDA_DateRange"
+    },
+    {
+     "args": {
+      "data_to_filter": {
+       "description": "The list of data objects to be filtered, passed from the result of a previous phase.",
+       "required": true,
+       "type": "list[dict]"
+      },
+      "goal": {
+       "description": "A clear, natural language description of the item to find and extract (e.g., 'Find the database related to fitness', 'Extract the name of the sales summary table').",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "A specialized internal tool that filters a list of items based on a natural language goal and extracts a single, clean value. This is used as an intermediate step to pass a specific, machine-readable value from one tool to another.",
+     "name": "TDA_LLMFilter"
+    },
+    {
+     "args": {
+      "source_data": {
+       "description": "A list of keys (e.g., 'result_of_phase_1') identifying which data from the workflow history is relevant for this task. This is critical for providing the correct context.",
+       "required": true,
+       "type": "list[string]"
+      },
+      "synthesized_answer": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it can confidently answer from history.",
+       "required": false,
+       "type": "string"
+      },
+      "task_description": {
+       "description": "A natural language description of the internal task to be executed (e.g., 'describe the table in a business context', 'format final output'). The LLM infers this from the workflow plan.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Performs internal, LLM-driven tasks that are not direct calls to the Teradata database. This tool is used for text synthesis, summarization, and formatting based on a specific 'task_description' provided by the LLM itself.",
+     "name": "TDA_LLMTask"
+    },
+    {
+     "args": {
+      "answer_from_context": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it has confidently answered the user's question from the conversation history.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "The History First Shortcut. This tool MUST be used for a single-phase plan if, and only if, the user's question can be answered entirely from the existing Workflow History. It bypasses all data gathering. Do NOT use this tool if you need to gather new data.",
+     "name": "TDA_ContextReport"
+    },
+    {
+     "args": {},
+     "description": "The Data Summarization Tool. This tool MUST be the final phase of a multi-step plan to synthesize the results from all previous data-gathering phases into a final report. Do NOT use this tool in a single-phase plan or as a first step.",
+     "name": "TDA_FinalReport"
+    },
+    {
+     "args": {},
+     "description": "A special internal tool used to format and deliver the final, structured report for a pre-defined UI prompt. This tool MUST be called when all data gathering phases for the prompt are complete.",
+     "name": "TDA_ComplexPromptReport"
+    }
+   ],
+   "prompts_context_slot": "--- Available Prompts ---\n--- Category: All Prompts ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database",
+   "saved": [
+    {
+     "profile_id": "p-opt-light",
+     "results": {
+      "classified_with_mode": "light",
+      "prompts": {
+       "All Prompts": [
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          },
+          {
+           "description": "The question",
+           "name": "question",
+           "required": false,
+           "type": "unknown"
+          }
+         ],
+         "description": "Answer a question about a table. (type: sql)",
+         "disabled": false,
+         "name": "base_query",
+         "prompt_type": "reporting"
+        },
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          }
+         ],
+         "description": "Quality review of a database.",
+         "disabled": false,
+         "name": "qlty_databaseQuality",
+         "prompt_type": "reporting"
+        }
+       ]
+      },
+      "resources": {
+       "All Resources": [
+        {
+         "description": "The schema reference.",
+         "name": "schema_doc"
+        }
+       ]
+      },
+      "tool_scopes": {
+       "base_columnDescription": "table",
+       "base_tableList": "database",
+       "qlty_columnSummary": "column"
+      },
+      "tools": {
+       "All Tools": [
+        {
+         "arguments": [
+          {
+           "description": "the SQL to run",
+           "name": "sql",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Runs a SQL query.",
+         "disabled": false,
+         "name": "base_readQuery"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "scope",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Lists databases.",
+         "disabled": false,
+         "name": "base_databaseList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Lists the tables of a database.",
+         "disabled": false,
+         "name": "base_tableList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "obj_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Describes the columns of a table.",
+         "disabled": false,
+         "name": "base_columnDescription"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "table_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "column_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Column statistics for data quality.",
+         "disabled": false,
+         "name": "qlty_columnSummary"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Space used per table.",
+         "disabled": false,
+         "name": "dba_tableSpace"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "schema_cache_keys": [
+    "srv-primary"
+   ],
+   "state_keys": [
+    "all_known_mcp_arguments",
+    "mcp_prompts",
+    "mcp_tool_schema_cache",
+    "mcp_tools",
+    "prompts_context",
+    "structured_prompts",
+    "structured_resources",
+    "structured_tools",
+    "tool_scopes",
+    "tools_context"
+   ],
+   "structured_prompts": {
+    "All Prompts": [
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       },
+       {
+        "description": "The question",
+        "name": "question",
+        "required": false,
+        "type": "unknown"
+       }
+      ],
+      "description": "Answer a question about a table. (type: sql)",
+      "disabled": false,
+      "name": "base_query",
+      "prompt_type": "reporting"
+     },
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       }
+      ],
+      "description": "Quality review of a database.",
+      "disabled": false,
+      "name": "qlty_databaseQuality",
+      "prompt_type": "reporting"
+     }
+    ]
+   },
+   "structured_resources": {
+    "All Resources": [
+     {
+      "description": "The schema reference.",
+      "name": "schema_doc"
+     }
+    ]
+   },
+   "structured_tools": {
+    "All Tools": [
+     {
+      "arguments": [
+       {
+        "description": "the SQL to run",
+        "name": "sql",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Runs a SQL query.",
+      "disabled": false,
+      "name": "base_readQuery"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "scope",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Lists databases.",
+      "disabled": false,
+      "name": "base_databaseList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Lists the tables of a database.",
+      "disabled": false,
+      "name": "base_tableList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "obj_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Describes the columns of a table.",
+      "disabled": false,
+      "name": "base_columnDescription"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "table_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "column_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Column statistics for data quality.",
+      "disabled": false,
+      "name": "qlty_columnSummary"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Space used per table.",
+      "disabled": false,
+      "name": "dba_tableSpace"
+     }
+    ]
+   },
+   "tool_scopes": {
+    "base_columnDescription": "table",
+    "base_tableList": "database",
+    "qlty_columnSummary": "column"
+   },
+   "tools_context_slot": "--- No Tools Available ---",
+   "wire": [
+    [
+     "session",
+     "srv-primary"
+    ],
+    [
+     "list_tools",
+     "srv-primary"
+    ],
+    [
+     "list_prompts",
+     "srv-primary"
+    ],
+    [
+     "list_resources",
+     "srv-primary"
+    ]
+   ]
+  },
+  "deployment": {
+   "catalog": {
+    "prompts": [
+     "base_query(database_name,question)",
+     "qlty_databaseQuality(database_name)"
+    ],
+    "tools": [
+     "base_readQuery(sql)",
+     "base_databaseList(scope)",
+     "base_tableList(database_name)",
+     "base_columnDescription(database_name,obj_name)",
+     "qlty_columnSummary(column_name,database_name,table_name)",
+     "dba_tableSpace(database_name)"
+    ]
+   },
+   "hash": "dc9ac8d97e924670028401974bc5a6c5ed3b2bb1c5463c485d44768051e677f2",
+   "signature": {
+    "catalog": {
+     "prompts": [
+      "base_query(database_name,question)",
+      "qlty_databaseQuality(database_name)"
+     ],
+     "tools": [
+      "base_columnDescription(database_name,obj_name)",
+      "base_databaseList(scope)",
+      "base_readQuery(sql)",
+      "base_tableList(database_name)",
+      "dba_tableSpace(database_name)",
+      "qlty_columnSummary(column_name,database_name,table_name)"
+     ]
+    },
+    "connectors": [],
+    "llm": {
+     "model": "gemini",
+     "provider": "Google"
+    }
+   }
+  },
+  "prompts_context": "--- Available Prompts ---\n--- Category: All Prompts ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database",
+  "prompts_context_sha": "066bae1342419d18d0a5ea770a2958fd05652a607f71f4ec98a58abbcc2f152b",
+  "surface_catalog": [
+   [
+    "base_readQuery",
+    "All Tools"
+   ],
+   [
+    "base_databaseList",
+    "All Tools"
+   ],
+   [
+    "base_tableList",
+    "All Tools"
+   ],
+   [
+    "base_columnDescription",
+    "All Tools"
+   ],
+   [
+    "qlty_columnSummary",
+    "All Tools"
+   ],
+   [
+    "dba_tableSpace",
+    "All Tools"
+   ]
+  ],
+  "surface_denied": [],
+  "surface_held": [
+   "dba_tableSpace"
+  ],
+  "surface_offered": [
+   "base_readQuery",
+   "base_databaseList",
+   "base_tableList",
+   "base_columnDescription",
+   "qlty_columnSummary"
+  ],
+  "surface_reasons": {
+   "base_columnDescription": "backbone \u2014 discovery and execution",
+   "base_databaseList": "backbone \u2014 discovery and execution",
+   "base_readQuery": "backbone \u2014 discovery and execution",
+   "base_tableList": "backbone \u2014 discovery and execution",
+   "dba_tableSpace": "held \u2014 findable with TDA_FindTools",
+   "qlty_columnSummary": "addresses the question: quality"
+  },
+  "tools_context": "--- Available Tools ---\n--- Category: All Tools ---\n- `base_readQuery` (tool): Runs a SQL query.\n  - Arguments:\n    - `sql` (string, required): the SQL to run\n- `base_databaseList` (tool): Lists databases.\n  - Arguments:\n    - `scope` (string, optional): No description.\n- `base_tableList` (tool): Lists the tables of a database.\n  - Arguments:\n    - `database_name` (string, required): No description.\n- `base_columnDescription` (tool): Describes the columns of a table.\n  - Arguments:\n    - `database_name` (string, required): No description.\n    - `obj_name` (string, required): No description.\n- `qlty_columnSummary` (tool): Column statistics for data quality.\n  - Arguments:\n    - `database_name` (string, required): No description.\n    - `table_name` (string, required): No description.\n    - `column_name` (string, required): No description.\n- `dba_tableSpace` (tool): Space used per table.\n  - Arguments:\n    - `database_name` (string, optional): No description.",
+  "tools_context_sha": "409b53e2c9007a3dc668e9699d3283e8d79e956bb6340b172bf76be7da5cf27e"
+ },
+ "optimize_light_platform_tool": {
+  "classify": {
+   "all_known_mcp_arguments": {
+    "prompt": [
+     "database_name",
+     "question"
+    ],
+    "tool": [
+     "answer_from_context",
+     "column_name",
+     "data_to_filter",
+     "database_name",
+     "date_phrase",
+     "goal",
+     "obj_name",
+     "scope",
+     "source_data",
+     "sql",
+     "start_date",
+     "synthesized_answer",
+     "table_name",
+     "task_description"
+    ]
+   },
+   "call_counts": {
+    "list_prompts": 1,
+    "list_resources": 1,
+    "list_tools": 1,
+    "session": 1
+   },
+   "llm_calls": [],
+   "mcp_prompts": [
+    "base_query",
+    "qlty_databaseQuality"
+   ],
+   "mcp_tools": [
+    {
+     "args": {
+      "sql": {
+       "description": "the SQL to run",
+       "name": "sql",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Runs a SQL query.",
+     "name": "base_readQuery"
+    },
+    {
+     "args": {
+      "scope": {
+       "description": "No description.",
+       "name": "scope",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Lists databases.",
+     "name": "base_databaseList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Lists the tables of a database.",
+     "name": "base_tableList"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "obj_name": {
+       "description": "No description.",
+       "name": "obj_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Describes the columns of a table.",
+     "name": "base_columnDescription"
+    },
+    {
+     "args": {
+      "column_name": {
+       "description": "No description.",
+       "name": "column_name",
+       "required": true,
+       "type": "string"
+      },
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": true,
+       "type": "string"
+      },
+      "table_name": {
+       "description": "No description.",
+       "name": "table_name",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Column statistics for data quality.",
+     "name": "qlty_columnSummary"
+    },
+    {
+     "args": {
+      "database_name": {
+       "description": "No description.",
+       "name": "database_name",
+       "required": false,
+       "type": "string"
+      }
+     },
+     "description": "Space used per table.",
+     "name": "dba_tableSpace"
+    },
+    {
+     "args": {},
+     "description": "Returns the current system date in YYYY-MM-DD format. Use this as the first step for any user query involving relative dates like 'today', 'yesterday', or 'this week'.",
+     "name": "TDA_CurrentDate"
+    },
+    {
+     "args": {
+      "date_phrase": {
+       "description": "The natural language phrase describing the desired range (e.g., 'past 3 days', 'last 2 weeks').",
+       "required": true,
+       "type": "string"
+      },
+      "start_date": {
+       "description": "The anchor date for the calculation, usually today's date from `TDA_CurrentDate`. Must be in YYYY-MM-DD format.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Calculates a list of dates based on a start date and a natural language phrase (e.g., 'past 3 days', 'last week'). This is a necessary second step for multi-day queries.",
+     "name": "TDA_DateRange"
+    },
+    {
+     "args": {
+      "data_to_filter": {
+       "description": "The list of data objects to be filtered, passed from the result of a previous phase.",
+       "required": true,
+       "type": "list[dict]"
+      },
+      "goal": {
+       "description": "A clear, natural language description of the item to find and extract (e.g., 'Find the database related to fitness', 'Extract the name of the sales summary table').",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "A specialized internal tool that filters a list of items based on a natural language goal and extracts a single, clean value. This is used as an intermediate step to pass a specific, machine-readable value from one tool to another.",
+     "name": "TDA_LLMFilter"
+    },
+    {
+     "args": {
+      "source_data": {
+       "description": "A list of keys (e.g., 'result_of_phase_1') identifying which data from the workflow history is relevant for this task. This is critical for providing the correct context.",
+       "required": true,
+       "type": "list[string]"
+      },
+      "synthesized_answer": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it can confidently answer from history.",
+       "required": false,
+       "type": "string"
+      },
+      "task_description": {
+       "description": "A natural language description of the internal task to be executed (e.g., 'describe the table in a business context', 'format final output'). The LLM infers this from the workflow plan.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Performs internal, LLM-driven tasks that are not direct calls to the Teradata database. This tool is used for text synthesis, summarization, and formatting based on a specific 'task_description' provided by the LLM itself.",
+     "name": "TDA_LLMTask"
+    },
+    {
+     "args": {
+      "answer_from_context": {
+       "description": "The final, synthesized natural language answer, provided directly by the planner when it has confidently answered the user's question from the conversation history.",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "The History First Shortcut. This tool MUST be used for a single-phase plan if, and only if, the user's question can be answered entirely from the existing Workflow History. It bypasses all data gathering. Do NOT use this tool if you need to gather new data.",
+     "name": "TDA_ContextReport"
+    },
+    {
+     "args": {},
+     "description": "The Data Summarization Tool. This tool MUST be the final phase of a multi-step plan to synthesize the results from all previous data-gathering phases into a final report. Do NOT use this tool in a single-phase plan or as a first step.",
+     "name": "TDA_FinalReport"
+    },
+    {
+     "args": {},
+     "description": "A special internal tool used to format and deliver the final, structured report for a pre-defined UI prompt. This tool MUST be called when all data gathering phases for the prompt are complete.",
+     "name": "TDA_ComplexPromptReport"
+    },
+    {
+     "args": {
+      "query": {
+       "description": "q",
+       "name": "query",
+       "required": true,
+       "type": "string"
+      }
+     },
+     "description": "Search the web.",
+     "name": "web_search"
+    }
+   ],
+   "prompts_context_slot": "--- Available Prompts ---\n--- Category: All Prompts ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database",
+   "saved": [
+    {
+     "profile_id": "p-opt-light",
+     "results": {
+      "classified_with_mode": "light",
+      "prompts": {
+       "All Prompts": [
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          },
+          {
+           "description": "The question",
+           "name": "question",
+           "required": false,
+           "type": "unknown"
+          }
+         ],
+         "description": "Answer a question about a table. (type: sql)",
+         "disabled": false,
+         "name": "base_query",
+         "prompt_type": "reporting"
+        },
+        {
+         "arguments": [
+          {
+           "description": "The database",
+           "name": "database_name",
+           "required": true,
+           "type": "unknown"
+          }
+         ],
+         "description": "Quality review of a database.",
+         "disabled": false,
+         "name": "qlty_databaseQuality",
+         "prompt_type": "reporting"
+        }
+       ]
+      },
+      "resources": {
+       "All Resources": [
+        {
+         "description": "The schema reference.",
+         "name": "schema_doc"
+        }
+       ]
+      },
+      "tool_scopes": {
+       "base_columnDescription": "table",
+       "base_tableList": "database",
+       "qlty_columnSummary": "column"
+      },
+      "tools": {
+       "All Tools": [
+        {
+         "arguments": [
+          {
+           "description": "the SQL to run",
+           "name": "sql",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Runs a SQL query.",
+         "disabled": false,
+         "name": "base_readQuery"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "scope",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Lists databases.",
+         "disabled": false,
+         "name": "base_databaseList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Lists the tables of a database.",
+         "disabled": false,
+         "name": "base_tableList"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "obj_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Describes the columns of a table.",
+         "disabled": false,
+         "name": "base_columnDescription"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "table_name",
+           "required": true,
+           "type": "string"
+          },
+          {
+           "description": "No description.",
+           "name": "column_name",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Column statistics for data quality.",
+         "disabled": false,
+         "name": "qlty_columnSummary"
+        },
+        {
+         "arguments": [
+          {
+           "description": "No description.",
+           "name": "database_name",
+           "required": false,
+           "type": "string"
+          }
+         ],
+         "description": "Space used per table.",
+         "disabled": false,
+         "name": "dba_tableSpace"
+        }
+       ],
+       "Platform: Web": [
+        {
+         "_category": "Platform: Web",
+         "arguments": [
+          {
+           "description": "q",
+           "name": "query",
+           "required": true,
+           "type": "string"
+          }
+         ],
+         "description": "Search the web.",
+         "name": "web_search"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "schema_cache_keys": [
+    "srv-primary"
+   ],
+   "state_keys": [
+    "all_known_mcp_arguments",
+    "mcp_prompts",
+    "mcp_tool_schema_cache",
+    "mcp_tools",
+    "prompts_context",
+    "structured_prompts",
+    "structured_resources",
+    "structured_tools",
+    "tool_scopes",
+    "tools_context"
+   ],
+   "structured_prompts": {
+    "All Prompts": [
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       },
+       {
+        "description": "The question",
+        "name": "question",
+        "required": false,
+        "type": "unknown"
+       }
+      ],
+      "description": "Answer a question about a table. (type: sql)",
+      "disabled": false,
+      "name": "base_query",
+      "prompt_type": "reporting"
+     },
+     {
+      "arguments": [
+       {
+        "description": "The database",
+        "name": "database_name",
+        "required": true,
+        "type": "unknown"
+       }
+      ],
+      "description": "Quality review of a database.",
+      "disabled": false,
+      "name": "qlty_databaseQuality",
+      "prompt_type": "reporting"
+     }
+    ]
+   },
+   "structured_resources": {
+    "All Resources": [
+     {
+      "description": "The schema reference.",
+      "name": "schema_doc"
+     }
+    ]
+   },
+   "structured_tools": {
+    "All Tools": [
+     {
+      "arguments": [
+       {
+        "description": "the SQL to run",
+        "name": "sql",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Runs a SQL query.",
+      "disabled": false,
+      "name": "base_readQuery"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "scope",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Lists databases.",
+      "disabled": false,
+      "name": "base_databaseList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Lists the tables of a database.",
+      "disabled": false,
+      "name": "base_tableList"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "obj_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Describes the columns of a table.",
+      "disabled": false,
+      "name": "base_columnDescription"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "table_name",
+        "required": true,
+        "type": "string"
+       },
+       {
+        "description": "No description.",
+        "name": "column_name",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Column statistics for data quality.",
+      "disabled": false,
+      "name": "qlty_columnSummary"
+     },
+     {
+      "arguments": [
+       {
+        "description": "No description.",
+        "name": "database_name",
+        "required": false,
+        "type": "string"
+       }
+      ],
+      "description": "Space used per table.",
+      "disabled": false,
+      "name": "dba_tableSpace"
+     }
+    ],
+    "Platform: Web": [
+     {
+      "_category": "Platform: Web",
+      "arguments": [
+       {
+        "description": "q",
+        "name": "query",
+        "required": true,
+        "type": "string"
+       }
+      ],
+      "description": "Search the web.",
+      "name": "web_search"
+     }
+    ]
+   },
+   "tool_scopes": {
+    "base_columnDescription": "table",
+    "base_tableList": "database",
+    "qlty_columnSummary": "column"
+   },
+   "tools_context_slot": "--- No Tools Available ---",
+   "wire": [
+    [
+     "session",
+     "srv-primary"
+    ],
+    [
+     "list_tools",
+     "srv-primary"
+    ],
+    [
+     "list_prompts",
+     "srv-primary"
+    ],
+    [
+     "list_resources",
+     "srv-primary"
+    ]
+   ]
+  },
+  "prompts_context": "--- Available Prompts ---\n--- Category: All Prompts ---\n- `base_query` (prompt): Answer a question about a table. (type: sql)\n  - Arguments:\n    - `database_name` (unknown, required): The database\n    - `question` (unknown, optional): The question\n- `qlty_databaseQuality` (prompt): Quality review of a database.\n  - Arguments:\n    - `database_name` (unknown, required): The database",
+  "prompts_context_sha": "066bae1342419d18d0a5ea770a2958fd05652a607f71f4ec98a58abbcc2f152b",
+  "surface_catalog": [
+   [
+    "base_readQuery",
+    "All Tools"
+   ],
+   [
+    "base_databaseList",
+    "All Tools"
+   ],
+   [
+    "base_tableList",
+    "All Tools"
+   ],
+   [
+    "base_columnDescription",
+    "All Tools"
+   ],
+   [
+    "qlty_columnSummary",
+    "All Tools"
+   ],
+   [
+    "dba_tableSpace",
+    "All Tools"
+   ],
+   [
+    "web_search",
+    "Platform: Web"
+   ]
+  ],
+  "surface_denied": [],
+  "surface_held": [
+   "dba_tableSpace",
+   "web_search"
+  ],
+  "surface_offered": [
+   "base_readQuery",
+   "base_databaseList",
+   "base_tableList",
+   "base_columnDescription",
+   "qlty_columnSummary"
+  ],
+  "surface_reasons": {
+   "base_columnDescription": "backbone \u2014 discovery and execution",
+   "base_databaseList": "backbone \u2014 discovery and execution",
+   "base_readQuery": "backbone \u2014 discovery and execution",
+   "base_tableList": "backbone \u2014 discovery and execution",
+   "dba_tableSpace": "held \u2014 findable with TDA_FindTools",
+   "qlty_columnSummary": "addresses the question: quality",
+   "web_search": "held \u2014 findable with TDA_FindTools"
+  },
+  "tools_context": "--- Available Tools ---\n--- Category: All Tools ---\n- `base_readQuery` (tool): Runs a SQL query.\n  - Arguments:\n    - `sql` (string, required): the SQL to run\n- `base_databaseList` (tool): Lists databases.\n  - Arguments:\n    - `scope` (string, optional): No description.\n- `base_tableList` (tool): Lists the tables of a database.\n  - Arguments:\n    - `database_name` (string, required): No description.\n- `base_columnDescription` (tool): Describes the columns of a table.\n  - Arguments:\n    - `database_name` (string, required): No description.\n    - `obj_name` (string, required): No description.\n- `qlty_columnSummary` (tool): Column statistics for data quality.\n  - Arguments:\n    - `database_name` (string, required): No description.\n    - `table_name` (string, required): No description.\n    - `column_name` (string, required): No description.\n- `dba_tableSpace` (tool): Space used per table.\n  - Arguments:\n    - `database_name` (string, optional): No description.\n--- Category: Platform: Web ---\n- `web_search` (tool): Search the web.\n  - Arguments:\n    - `query` (string, required): q",
+  "tools_context_sha": "9c69f5479960518f57173ecf5e4898abcb650d538b5ba6f4a729802bd7205197"
+ },
+ "react_all": {
+  "bound": [
+   "base_readQuery",
+   "base_databaseList",
+   "base_tableList",
+   "base_columnDescription",
+   "qlty_columnSummary",
+   "dba_tableSpace"
+  ],
+  "connections": [
+   {
+    "sse_read_timeout": "0:02:00",
+    "timeout": "0:00:30",
+    "transport": "streamable_http",
+    "url": "http://db.example:8001/mcp"
+   }
+  ],
+  "metadata": [
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   },
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   },
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   },
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   },
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   },
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   }
+  ]
+ },
+ "react_selected": {
+  "bound": [
+   "base_readQuery",
+   "base_tableList"
+  ],
+  "connections": [
+   {
+    "sse_read_timeout": "0:02:00",
+    "timeout": "0:00:30",
+    "transport": "streamable_http",
+    "url": "http://db.example:8001/mcp"
+   }
+  ],
+  "metadata": [
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   },
+   {
+    "uderia_mcp_server_id": "srv-primary"
+   }
+  ]
+ },
+ "reclass": {
+  "an unknown key": false,
+  "legacy mcp_servers changed": true,
+  "llm changed, full": true,
+  "llm changed, light": false,
+  "mode changed": true,
+  "never classified": false,
+  "server absent in incoming": false,
+  "server changed": true,
+  "server same": false
+ },
+ "route_overlay": {
+  "status": "success",
+  "wire": [
+   [
+    "session",
+    "srv-override"
+   ],
+   [
+    "call_tool",
+    "srv-override",
+    "base_readQuery",
+    {
+     "sql": "SELECT 1"
+    }
+   ]
+  ]
+ },
+ "route_plain": {
+  "status": "success",
+  "wire": [
+   [
+    "session",
+    "srv-primary"
+   ],
+   [
+    "call_tool",
+    "srv-primary",
+    "base_readQuery",
+    {
+     "sql": "SELECT 1"
+    }
+   ]
+  ]
+ }
+}

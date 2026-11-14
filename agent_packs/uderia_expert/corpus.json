@@ -1,0 +1,303 @@
+{
+  "_doc": [
+    "The @UDERIA documentation corpus: which markdown files the platform-documentation agent may answer from.",
+    "Documentation = a description of the product AS IT SHIPS, for a user, operator or integrator.",
+    "Plans, roadmaps, assessments, proposals, strategy, implementation logs and test plans are NOT documentation:",
+    "they describe unbuilt or superseded states, and an agent grounded on them presents them as fact.",
+    "Rules are evaluated in order; the FIRST matching pattern decides. A file matching no rule fails the build,",
+    "so every new doc gets a deliberate decision. Patterns are fnmatch globs over the project-root-relative path",
+    "('*' also crosses '/'). Checked by test/test_uderia_expert_corpus.py."
+  ],
+  "rules": [
+    {
+      "pattern": "README.md",
+      "action": "include",
+      "reason": "the platform overview"
+    },
+    {
+      "pattern": "CONTRIBUTING.md",
+      "action": "include",
+      "reason": "how to contribute to the public core: the export rhythm, the CLA in plain words, what a change needs"
+    },
+    {
+      "pattern": "legal/*",
+      "action": "exclude",
+      "reason": "licence and CLA texts are drafts under counsel's review; the agent explains them from CONTRIBUTING.md and the README's licence section, never states terms from the drafts"
+    },
+    {
+      "pattern": "docs/value/POSITIONING_*.md",
+      "action": "exclude",
+      "reason": "positioning framings (standalone platform · Teradata accelerator): emphasis for an audience, not a description of the product; an agent must not adopt a framing its deployment did not choose"
+    },
+    {
+      "pattern": "docs/value/*",
+      "action": "include",
+      "reason": "the value layer's neutral core and index: outcomes and principles, as the product ships"
+    },
+    {
+      "pattern": "docs/capabilities/*",
+      "action": "include",
+      "reason": "the capability layer: what the platform does (moved out of the README)"
+    },
+    {
+      "pattern": "docs/guides/*",
+      "action": "include",
+      "reason": "install, user, consumption-profile and Docker guides (moved out of the README)"
+    },
+    {
+      "pattern": "docs/README.md",
+      "action": "include",
+      "reason": "the documentation index"
+    },
+    {
+      "pattern": "docs/WHATS_NEW.md",
+      "action": "exclude",
+      "reason": "dated release announcements (the welcome screen's list): superseded states read as current fact"
+    },
+    {
+      "pattern": "docs/roadmap/TIER_1.1_GROUNDING_GATE.md",
+      "action": "include",
+      "reason": "README cites it as the grounding-gate reference (promote to docs/Architecture)"
+    },
+    {
+      "pattern": "docs/roadmap/TIER_1.3_GUARDRAILS.md",
+      "action": "include",
+      "reason": "README cites it as the guardrails architecture (promote to docs/Architecture)"
+    },
+    {
+      "pattern": "docs/roadmap/TIER_2.2_AGENT_MEMORY.md",
+      "action": "include",
+      "reason": "README cites it as the Agent Memory architecture (promote to docs/Architecture)"
+    },
+    {
+      "pattern": "docs/roadmap/TIER_5.2_PORTABILITY.md",
+      "action": "include",
+      "reason": "README cites it as the marketplace trust-portability reference"
+    },
+    {
+      "pattern": "docs/roadmap/TIER_5.2_VALIDATORS.md",
+      "action": "include",
+      "reason": "README cites it as the trust-validator reference"
+    },
+    {
+      "pattern": "docs/roadmap/RAG_TRUST_HARDENING.md",
+      "action": "include",
+      "reason": "README cites it as the knowledge-lane trust reference"
+    },
+    {
+      "pattern": "docs/roadmap/AGENT_ANATOMY_PANEL.md",
+      "action": "include",
+      "reason": "README cites it as the Agent Anatomy reference"
+    },
+    {
+      "pattern": "docs/roadmap/ANSWER_SURFACE_GRAMMAR.md",
+      "action": "include",
+      "reason": "README cites it as the answer-layout reference"
+    },
+    {
+      "pattern": "docs/roadmap/BEYOND_CLAUDE_CONVERSATION_AGENT.md",
+      "action": "include",
+      "reason": "README cites it as the conversation-agent design reference"
+    },
+    {
+      "pattern": "docs/roadmap/*",
+      "action": "exclude",
+      "reason": "plans and roadmaps describe unbuilt or deferred features"
+    },
+    {
+      "pattern": "docs/assessments/*",
+      "action": "exclude",
+      "reason": "point-in-time defect assessments; findings since fixed read as current fact"
+    },
+    {
+      "pattern": "docs/Assessment/*",
+      "action": "exclude",
+      "reason": "point-in-time assessment"
+    },
+    {
+      "pattern": "docs/proposals/*",
+      "action": "exclude",
+      "reason": "design proposals, including rejected options"
+    },
+    {
+      "pattern": "docs/Strategy/*",
+      "action": "exclude",
+      "reason": "internal strategy and commercial planning"
+    },
+    {
+      "pattern": "docs/design/*",
+      "action": "exclude",
+      "reason": "design drafts"
+    },
+    {
+      "pattern": "docs/upstream/*",
+      "action": "exclude",
+      "reason": "drafts written for upstream maintainers of other projects, not Uderia documentation"
+    },
+    {
+      "pattern": "docs/optimization/*",
+      "action": "exclude",
+      "reason": "internal optimization notes"
+    },
+    {
+      "pattern": "docs/component-audit/*",
+      "action": "exclude",
+      "reason": "internal audit working notes"
+    },
+    {
+      "pattern": "docs/Testing/*",
+      "action": "exclude",
+      "reason": "test plans"
+    },
+    {
+      "pattern": "docs/Canvas/CANVAS_TEST_PLAN.md",
+      "action": "exclude",
+      "reason": "test plan"
+    },
+    {
+      "pattern": "docs/Knowledge_Repositories/*",
+      "action": "exclude",
+      "reason": "phase-completion logs"
+    },
+    {
+      "pattern": "docs/Schema/LICENSE_PROTECTION_STRATEGY.md",
+      "action": "exclude",
+      "reason": "security-sensitive licensing strategy"
+    },
+    {
+      "pattern": "docs/Schema/PHASE*",
+      "action": "exclude",
+      "reason": "phase-completion logs and phase test plans"
+    },
+    {
+      "pattern": "docs/Schema/MIGRATION_COMPLETE.md",
+      "action": "exclude",
+      "reason": "migration completion log"
+    },
+    {
+      "pattern": "docs/Schema/INTEGRATION_NOTES.md",
+      "action": "exclude",
+      "reason": "internal integration notes"
+    },
+    {
+      "pattern": "docs/Architecture/*_PLAN.md",
+      "action": "exclude",
+      "reason": "implementation plans (the architecture docs are the live contract)"
+    },
+    {
+      "pattern": "docs/Architecture/*TESTPLAN.md",
+      "action": "exclude",
+      "reason": "test plan"
+    },
+    {
+      "pattern": "docs/OAuth/GOOGLE_OAUTH_TESTING.md",
+      "action": "exclude",
+      "reason": "developer test notes"
+    },
+    {
+      "pattern": "docs/FeatureProfile/IS_CONFIGURED_REDESIGN_EVALUATION.md",
+      "action": "exclude",
+      "reason": "design evaluation"
+    },
+    {
+      "pattern": "docs/*IMPLEMENTATION*.md",
+      "action": "exclude",
+      "reason": "implementation logs and summaries"
+    },
+    {
+      "pattern": "docs/RELEASE.md",
+      "action": "exclude",
+      "reason": "internal release runbook"
+    },
+    {
+      "pattern": "docs/CHANGELOG.md",
+      "action": "exclude",
+      "reason": "the change history: root causes, file lists and superseded states — an implementation log, not the product as it ships"
+    },
+    {
+      "pattern": "docs/GIF_*.md",
+      "action": "exclude",
+      "reason": "marketing storyboard material"
+    },
+    {
+      "pattern": "docs/Architecture/*",
+      "action": "include",
+      "reason": "subsystem architecture: the live contract"
+    },
+    {
+      "pattern": "docs/manuals/*",
+      "action": "include",
+      "reason": "operator and developer manuals"
+    },
+    {
+      "pattern": "docs/RestAPI/*",
+      "action": "include",
+      "reason": "REST API reference"
+    },
+    {
+      "pattern": "docs/RAG/*",
+      "action": "include",
+      "reason": "RAG guide"
+    },
+    {
+      "pattern": "docs/RAG_Templates/*",
+      "action": "include",
+      "reason": "RAG template guide"
+    },
+    {
+      "pattern": "docs/OAuth/*",
+      "action": "include",
+      "reason": "authentication setup guides"
+    },
+    {
+      "pattern": "docs/n8n/*",
+      "action": "include",
+      "reason": "integration guide"
+    },
+    {
+      "pattern": "docs/Airflow/*",
+      "action": "include",
+      "reason": "integration guide"
+    },
+    {
+      "pattern": "docs/Flowise/*",
+      "action": "include",
+      "reason": "integration guide"
+    },
+    {
+      "pattern": "docs/MLX/*",
+      "action": "include",
+      "reason": "provider setup guide"
+    },
+    {
+      "pattern": "docs/Marketplace/*",
+      "action": "include",
+      "reason": "marketplace publisher guide"
+    },
+    {
+      "pattern": "docs/proof-packs/*",
+      "action": "include",
+      "reason": "reproducible evidence for shipped capabilities"
+    },
+    {
+      "pattern": "docs/FeatureProfile/*",
+      "action": "include",
+      "reason": "profile feature guides"
+    },
+    {
+      "pattern": "docs/Schema/*",
+      "action": "include",
+      "reason": "schema reference"
+    },
+    {
+      "pattern": "docs/Consumption Profiles/*",
+      "action": "include",
+      "reason": "consumption profiles guide"
+    },
+    {
+      "pattern": "docs/Finops/*",
+      "action": "include",
+      "reason": "cost management guide"
+    }
+  ]
+}

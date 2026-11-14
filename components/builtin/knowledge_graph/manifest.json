@@ -1,0 +1,192 @@
+{
+  "component_id": "knowledge_graph",
+  "display_name": "Knowledge Graph",
+  "icon_accent": "#6366f1",
+  "answer_surface": {
+    "open": false,
+    "pin": true
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"5\" r=\"2\"/><circle cx=\"5\" cy=\"19\" r=\"2\"/><circle cx=\"19\" cy=\"19\" r=\"2\"/><path stroke-linecap=\"round\" d=\"M12 7v5M12 12l-5 5M12 12l5 5\"/></svg>",
+  "description": "Context-enriching knowledge graph that captures database topology, business concepts, and taxonomies to guide LLM decisions through subgraph injection",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "agent",
+  "signals": {
+    "emits": [
+      "uderia:kg-node-dblclick",
+      "uderia:kg-node-deselect",
+      "uderia:kg-node-select",
+      "uderia:kg-rendered"
+    ],
+    "listens": [
+      "uderia:component-changed",
+      "uderia:effective-profile"
+    ],
+    "announces": [
+      "created",
+      "updated",
+      "imported",
+      "cleared",
+      "renamed",
+      "snapshot",
+      "restored",
+      "published",
+      "withdrawn",
+      "deleted"
+    ],
+    "consumes_refs": false
+  },
+  "category": "Knowledge",
+  "tool_definition": {
+    "name": "TDA_KnowledgeGraph",
+    "description": "Queries, visualizes, and versions the knowledge graph. Use 'query' to find related entities, 'visualize' to render a subgraph, 'open' to open the full graph panel (works from any session), 'add_entity'/'add_relationship' to enrich it, 'snapshot' to save a version, 'versions' to list version history, 'restore' to roll back to a prior version, 'compile_metric' to get ready-to-run SQL for a metric slice, 'probe_bridge' to compile evidence for a declared cross-product link.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "Action to perform: 'query', 'visualize', 'open', 'add_entity', 'add_relationship', 'get_context', 'snapshot', 'versions', 'restore', 'compile_metric', 'declare_concept', 'probe_bridge'",
+        "required": true
+      },
+      "version_id": {
+        "type": "string",
+        "description": "Version identifier — required for 'restore'.",
+        "required": false
+      },
+      "metric_name": {
+        "type": "string",
+        "description": "Metric to compile — required for 'compile_metric'.",
+        "required": false
+      },
+      "bridge_name": {
+        "type": "string",
+        "description": "Declared cross-product link to probe — required for 'probe_bridge'. Matches on the bridge's label.",
+        "required": false
+      },
+      "label": {
+        "type": "string",
+        "description": "Optional label for a 'snapshot' (e.g. 'before refactor').",
+        "required": false
+      },
+      "entity_name": {
+        "type": "string",
+        "description": "Name of the entity to query, add, or center visualization on",
+        "required": false
+      },
+      "entity_type": {
+        "type": "string",
+        "description": "Type of entity: 'database', 'domain', 'entity', 'attribute', 'foreign_key', 'business_concept', 'taxonomy', 'metric', 'query_recipe', 'design_decision', 'quality_metric', 'naming_standard', 'product_bridge'",
+        "required": false
+      },
+      "properties": {
+        "type": "dict",
+        "description": "Properties for the entity (e.g., description, data_type, business_meaning)",
+        "required": false
+      },
+      "target_entity": {
+        "type": "string",
+        "description": "Target entity name for relationship creation",
+        "required": false
+      },
+      "target_entity_type": {
+        "type": "string",
+        "description": "Target entity type for relationship creation",
+        "required": false
+      },
+      "relationship_type": {
+        "type": "string",
+        "description": "Edge type: 'contains', 'foreign_key', 'is_a', 'has_property', 'measures', 'derives_from', 'depends_on', 'relates_to'",
+        "required": false
+      },
+      "query_text": {
+        "type": "string",
+        "description": "For 'query': the ONE concept to look up — an entity, column or term name (the lookup matches entity names and descriptions; a whole question matches nothing as a phrase and is then searched by its terms). For 'get_context': the free text to ground.",
+        "required": false
+      },
+      "depth": {
+        "type": "int",
+        "description": "Traversal depth for subgraph extraction (default: 2)",
+        "required": false
+      },
+      "title": {
+        "type": "string",
+        "description": "Title for the visualization",
+        "required": false
+      },
+      "dimensions": {
+        "type": "list[str]",
+        "description": "compile_metric: dimension names.",
+        "required": false
+      },
+      "entity": {
+        "type": "string",
+        "description": "For 'declare_concept': the entity the concept is declared on (also accepted as 'entity_name').",
+        "required": false
+      },
+      "concept_name": {
+        "type": "string",
+        "description": "For 'declare_concept': the business term to declare (e.g. a category of records the product never defined).",
+        "required": false
+      },
+      "definition": {
+        "type": "string",
+        "description": "For 'declare_concept': the plain-language definition of the concept.",
+        "required": false
+      },
+      "predicate": {
+        "type": "string",
+        "description": "For 'declare_concept': ONE boolean SQL condition over the entity's declared columns (no statements). It becomes the term's rule, a compilable metric and a recipe. Refused if it names a column the entity does not declare.",
+        "required": false
+      }
+    }
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_tooltips": {
+      "medium": "Use graph context as guidance when available",
+      "heavy": "Strictly validate against graph; proactively enrich"
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "KnowledgeGraphHandler",
+    "fast_path": true,
+    "supports_context_enrichment": true
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderKnowledgeGraph",
+    "cdn_dependencies": [
+      {
+        "name": "d3",
+        "url": "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js",
+        "global": "d3"
+      }
+    ]
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline",
+      "sub_window"
+    ],
+    "sub_window": {
+      "title_template": "Knowledge Graph: {title}",
+      "default_size": {
+        "width": 800,
+        "height": 600
+      },
+      "resizable": true,
+      "interactive": true
+    }
+  },
+  "profile_defaults": {
+    "on_for_new_agents": false,
+    "enabled_for": [
+      "tool_enabled",
+      "llm_only",
+      "rag_focused",
+      "genie"
+    ],
+    "default_intensity": "medium"
+  }
+}

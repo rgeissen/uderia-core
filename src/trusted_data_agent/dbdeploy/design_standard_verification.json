@@ -1,0 +1,76 @@
+{
+ "on": "2026-10-06",
+ "rules": {
+  "boolean_byteint": {
+   "statements": [
+    "c8993084f1aefdd6c08fa1dcb5b8e8e2d5aeb9eb4e9a1c906012c7c270ec8113"
+   ]
+  },
+  "charset_latin": {
+   "statements": [
+    "2188197e5a6bcab6b1bc1dc1cab1206863ecec147ad6e74dfa949f90aa069420"
+   ]
+  },
+  "collect_statistics": {
+   "statements": [
+    "51e9c9744984338494efbcaefd3597f629405ee576c3b44a94da7353c891d139"
+   ]
+  },
+  "comment_bounded": {
+   "statements": [
+    "a55aa1b002ee0bb11860f55b79564420a727d727762c869eabe79ba591e6b1a3"
+   ]
+  },
+  "key_not_null": {
+   "statements": [
+    "ddf172688550e311ea02d9ad4e98a102b3254d1bc947d20af3c4388209c5efd3"
+   ]
+  },
+  "multiset": {
+   "statements": [
+    "3273886c0d830c5695cd3f78bfd500fd6620792e1d080d13eb869bd7095ce956",
+    "e95591e5b64a99f7af7bd3243c923e9b9b299551706da77d173a00428dd39721"
+   ]
+  },
+  "no_fallback": {
+   "statements": [
+    "c9a0a02cd84c94d904693275ba0f095dc014a32cc3a2d98577c2fc61b1452a04"
+   ]
+  },
+  "nopi_without_key": {
+   "statements": [
+    "5b842f53b2ee62fd3939f4f08058c60da3a1cf3041d3af837ca8eaabb5b34099",
+    "ac590146160143d089aad5914b862a1423c8ff26d3355cd082a4e778d3964155"
+   ]
+  },
+  "pi_even_distribution": {
+   "statements": [
+    "4c63a5f2f6c9c728cb7d321b448a3eead25d8c24a25522ef9a383fa8849b9097",
+    "f17adbc1f99daa943e313c67ca400305f1cee48de0809aae1a4ce1f4ef1ce547"
+   ]
+  },
+  "pi_unique": {
+   "statements": [
+    "cf1d063ac6c3bc859c5b0dedfe040ae59aafac77ec202a0a46e8cee47b5215d0"
+   ]
+  },
+  "soft_ri": {
+   "statements": [
+    "200edcd6e6af332d7f5653b192bd61e1dbcebd2a3c8c0f5611a5acca39cafa95",
+    "2988e876548e7b84dbffba52aeeec9588c727c3e6c865820bbeaf80770be1b50"
+   ]
+  },
+  "timestamp_tz": {
+   "statements": [
+    "36318707d64db1587beeaeeac5f5f7e0974b9977639c741a13d71c461a53d53c"
+   ]
+  },
+  "upi_from_key": {
+   "statements": [
+    "0b58693e8356da3bb102bde76f19e4e9d87de4126112307dfeaea8ed6939d1a1"
+   ]
+  }
+ },
+ "standard": "teradata/1.0",
+ "system": "Teradata 20.00.22.31"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "dashboard-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on creating high-quality dashboards using the Dashboard Canvas component. Covers workflow sequences, tile layout patterns, visual design decisions, and query writing best practices.",
+  "author": "Uderia",
+  "tags": ["dashboard", "visualization", "tiles", "charts", "layout", "data-display"],
+  "keywords": ["dashboard", "tile", "chart", "KPI", "table", "add_tile", "create", "open", "refresh", "TDA_Dashboard"],
+  "use_cases": [
+    "Creating a new dashboard with multiple tiles",
+    "Choosing the right tile size and layout for different data types",
+    "Writing effective tile queries",
+    "Structuring a multi-tile dashboard for visual clarity",
+    "Knowing when to use chart vs table vs KPI tile format"
+  ],
+  "main_file": "dashboard-expert.md",
+  "last_updated": "2026-05-17",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "layout-dashboard"
+  }
+}

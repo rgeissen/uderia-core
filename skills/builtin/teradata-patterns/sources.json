@@ -1,0 +1,157 @@
+{
+  "analytics/attribution": {
+    "upstream": "patterns/teradata/analytics/attribution.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "4f5d1fe2ca1d548ca9e7ec5163f2db56cfc170574eb0c756cd081f353fc3e8c2"
+  },
+  "analytics/churn_analysis": {
+    "upstream": "patterns/teradata/analytics/churn_analysis.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "e23197a43eb5bdf8cc8304adab0f2901a4ad63dc8f1ee8566bd09c8393800dfa"
+  },
+  "analytics/customer_health_scoring": {
+    "upstream": "patterns/teradata/analytics/customer_health_scoring.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "8ea96862d9a00106fed3aee2e291539d2b9b9bba5523f906abe9d2623f653e1d"
+  },
+  "analytics/funnel_analysis": {
+    "upstream": "patterns/teradata/analytics/funnel_analysis.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "b55574a73e18603eef1372df035e658537187fc72ee4953a7ceae4ad930f7e1c"
+  },
+  "analytics/npath": {
+    "upstream": "patterns/teradata/analytics/npath.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "8ad66621acef16c4d1082fc55275d4e291af2b6c8585a2c9bd84294d630e8c38"
+  },
+  "analytics/sessionize": {
+    "upstream": "patterns/teradata/analytics/sessionize.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "8e2f0f41c9fc3717546b341f37333adbc5c1dbe84e7ac3c5547b4bcf17b597d7"
+  },
+  "core/data_types_casting": {
+    "upstream": "patterns/teradata/core/data_types_casting.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "fafb375433ad0b37f7a2e7e2514d645d0a4304e8db40fb73fb14655ef9a6fbac"
+  },
+  "core/sql_basics": {
+    "upstream": "patterns/teradata/core/sql_basics.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "e1b8302d917752707b376ea574775a328ee14d1943a0e2d87afe65830ac311b2"
+  },
+  "data_quality/data_profiling": {
+    "upstream": "patterns/teradata/data_quality/data_profiling.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "cde433626f0b7a912e2c79017bd3e4f7f63bcb45264e2b6b0d5c04c6fd607f4c"
+  },
+  "data_quality/data_validation": {
+    "upstream": "patterns/teradata/data_quality/data_validation.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "d1ad55d3bfb128d64bbe7adb2e2092305a936974c57c53bda08ca1fd421745f3"
+  },
+  "data_quality/duplicate_detection": {
+    "upstream": "patterns/teradata/data_quality/duplicate_detection.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "8d0b9970d02cef5e274f0b2b3d37ba3e031411cbb517cbe48a9fd4d0e4bd3de8"
+  },
+  "data_quality/missing_value_analysis": {
+    "upstream": "patterns/teradata/data_quality/missing_value_analysis.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "c7a77e71507e03a56301ca7a46d851091a78f804512746d7299dbb64f293b2ef"
+  },
+  "data_quality/outlier_detection": {
+    "upstream": "patterns/teradata/data_quality/outlier_detection.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "d4816ffe2b01eba4c27f9abd1672eeb8639502c8c797a97610da175296adaba6"
+  },
+  "geospatial/geometry_basics": {
+    "upstream": "patterns/teradata/geospatial/geometry_basics.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "dbaa1d35eb1aecd125c966325c540625032fa2a8f666a7035808d6e9cb0519b9"
+  },
+  "geospatial/spatial_operations": {
+    "upstream": "patterns/teradata/geospatial/spatial_operations.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "cf5320ebce181d33cda82cd9434300ffd56ea647b56de47ae5e0888567986f3a"
+  },
+  "geospatial/spatial_relationships": {
+    "upstream": "patterns/teradata/geospatial/spatial_relationships.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "c3a9ea7af67e844230e0560e2cdd4319132267f0cbae9e224b8c31b7ae587bd7"
+  },
+  "hypothesis_testing/anova": {
+    "upstream": "patterns/teradata/hypothesis_testing/anova.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "dd4a0ad97a92e9448b7e1a89ec0dbac4972b0e6f56a6a5eabc3f6abd58dccf77"
+  },
+  "hypothesis_testing/statistical_tests": {
+    "upstream": "patterns/teradata/hypothesis_testing/statistical_tests.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "f1ec1ec2ae9af2a355dea1771a32453a4d202c1f8a9124298bb3d023379dca9c"
+  },
+  "performance/catalog_views": {
+    "upstream": "patterns/teradata/performance/catalog_views.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "79b80deb91a5c19bea3a506e7093777476f60dd6e014a4d8b01d47c6a2efe076"
+  },
+  "performance/explain_analysis": {
+    "upstream": "patterns/teradata/performance/explain_analysis.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "caf43d6aeed931bcd8c586724d90571f980a5bf7fd941508a544b74e1eec31c2"
+  },
+  "performance/pi_skew_detection": {
+    "upstream": "patterns/teradata/performance/pi_skew_detection.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "105c096e2ad10a1c144b4508c92b7ce13df793732a32a0533f807663c79220af"
+  },
+  "performance/query_tuning": {
+    "upstream": "patterns/teradata/performance/query_tuning.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "95f94b04e9fcfd66afad3e4c216625eee7f37e00f887033bdda18d90cef3035d"
+  },
+  "performance/spool_space_analysis": {
+    "upstream": "patterns/teradata/performance/spool_space_analysis.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "1233e550645d012c20b2186bd8a608bfc3ad47f85ad88bb24350767e67146f38"
+  },
+  "performance/statistics_collection": {
+    "upstream": "patterns/teradata/performance/statistics_collection.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "d23cdc8d7e80711c56490bfb7eeab69fdd1367849de664eed84c9c4ab6d22dec"
+  },
+  "timeseries/arima": {
+    "upstream": "patterns/teradata/timeseries/arima.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "8c981722f14e1d18126b5b5bc1df247ebf2b37dc9d211fb386ded3d1fb83ea8a"
+  },
+  "timeseries/holt_winters": {
+    "upstream": "patterns/teradata/timeseries/holt_winters.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "0e430996c3639aa61c6ca96a8fdc800762fd43342feb2aa72efe5ea79b956ffc"
+  },
+  "timeseries/moving_average": {
+    "upstream": "patterns/teradata/timeseries/moving_average.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "88b50169f90e61c91cb75b7e76566b1abdf59e0734f3a14658ed7c8bd381aa5c"
+  },
+  "timeseries/signal_processing": {
+    "upstream": "patterns/teradata/timeseries/signal_processing.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "92a045b215835685c67d1b8bc92d0c4b0463a36699363edfe86cd39e4c875923"
+  },
+  "timeseries/uaf_concepts": {
+    "upstream": "patterns/teradata/timeseries/uaf_concepts.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "298d36cdecfee96f27944ce855e10d59e1cd10a447e3eced37cdbdde93fb6e68"
+  },
+  "vector_search/vector_distance": {
+    "upstream": "patterns/teradata/vector_search/vector_distance.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "6ce9dc442077020253834b129e242b949c84db00ba1667f818fbcf9f586800d4"
+  },
+  "vector_search/vector_normalize": {
+    "upstream": "patterns/teradata/vector_search/vector_normalize.yaml",
+    "commit": "8e53efd3f89e8f48b67c1943e35d84c9dce32863",
+    "sha256": "0d6eaaecbb58dc644863d8a9a3f78d4f0d9a69b13705d9350d42b87102092cc6"
+  }
+}

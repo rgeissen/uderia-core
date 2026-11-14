@@ -1,0 +1,90 @@
+{
+  "id": "automation-builder",
+  "title": "Automation Builder",
+  "status": "active",
+  "effects": [
+    "read",
+    "write"
+  ],
+  "description": "Puts the user's agents to work without being asked: creates flows from topology templates with the user's agents in their slots, runs them and follows the runs, keeps versions, and schedules questions for agents to answer on a timer. Every schedule is approved by a person; a flow's graph is edited with the flow component (TDA_Flow); where results are sent stays the owner's.",
+  "operations": [
+    "flows.*",
+    "scheduled_tasks.*",
+    "scheduler.status",
+    "profiles.list",
+    "profiles.overview",
+    "trust.agents"
+  ],
+  "playbooks": [
+    "platform-playbooks:automation/*"
+  ],
+  "needs": [
+    "database-connections"
+  ],
+  "rank": 4,
+  "examples": [
+    {
+      "ask": "Every weekday at 9, have @IDEAT answer: what is one tip for writing clearer emails? Call it Morning tip.",
+      "outcome": "One call: a schedule `0 9 * * 1-5` for @IDEAT, always submitted for your approval. Where its results are sent stays your choice in the Scheduler."
+    },
+    {
+      "ask": "Build a flow where @SALES and @DOCS answer and @COORD combines them.",
+      "outcome": "It picks the fork–join template, fills its slots with the three agents and submits the flow; you edit its steps in Flows if you want more."
+    },
+    {
+      "ask": "Did the morning report run?",
+      "outcome": "It reads the task's run history: when each run went, whether it succeeded, a summary of its answer and what it cost."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Where a schedule sends its results",
+      "why": "Email or a webhook is a way for your data to leave the platform — you set it in the Scheduler.",
+      "args": [
+        "scheduled_tasks.create:output_channel",
+        "scheduled_tasks.create:output_config",
+        "scheduled_tasks.update:output_channel",
+        "scheduled_tasks.update:output_config"
+      ]
+    },
+    {
+      "what": "Scheduling a database action",
+      "why": "Actions pass their own approval gate (OBDA-ACT), not this one.",
+      "args": [
+        "scheduled_tasks.create:action_spec",
+        "scheduled_tasks.update:action_spec"
+      ]
+    },
+    {
+      "what": "Editing a flow's steps",
+      "why": "There is one way to change a graph: the flow component (TDA_Flow) and its designer skill.",
+      "args": [
+        "flows.create:definition",
+        "flows.update:definition"
+      ]
+    },
+    {
+      "what": "Debugging options when running a flow",
+      "why": "Running one node, or from one node on, is for the person debugging in the flow editor.",
+      "args": [
+        "flows.run:start_node_id",
+        "flows.run:run_mode"
+      ]
+    },
+    {
+      "what": "Sharing a flow with every user",
+      "why": "It publishes to the whole deployment — an administrator's act.",
+      "ops": [
+        "flows.toggle_platform"
+      ]
+    },
+    {
+      "what": "Replacing all flow variables at once",
+      "why": "One call would wipe every variable."
+    },
+    {
+      "what": "Starting a schedule without you",
+      "why": "An agent acting on its own on a timer is your decision: every new or changed schedule waits for your approval, whatever the write mode."
+    }
+  ]
+}

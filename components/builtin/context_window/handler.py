@@ -1,0 +1,800 @@
+"""
+Context Window Handler — the budget orchestrator.
+
+This is the core system component that manages the most scarce resource
+in the platform: the LLM context window. It reads a profile's bound
+Context Window Type, resolves which modules are active, allocates budget
+using the type's allocation strategy, and produces a ContextWindowSnapshot
+for observability.
+
+Five-Pass Assembly:
+  Pass 1: RESOLVE ACTIVE MODULES — skip deactivated and inapplicable modules
+  Pass 2: APPLY DYNAMIC ADJUSTMENTS — runtime condition-based reallocation
+  Pass 3: ALLOCATE AND ASSEMBLE — allocate budget and call each module
+  Pass 3b: REALLOCATE SURPLUS — redistribute unused budget to high-utilization modules
+  Pass 4: CONDENSE IF OVER BUDGET — condense lowest-priority modules first
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
+from trusted_data_agent.components.base import SystemHandler
+
+from .base import AssemblyContext, ContextModule, Contribution
+from .module_registry import ContextModuleRegistry, get_module_registry
+from .snapshot import (
+    CondensationEvent,
+    ContributionMetric,
+    ContextWindowSnapshot,
+)
+from .token_estimator import estimate_tokens
+
+logger = logging.getLogger("quart.app")
+
+
+# ---------------------------------------------------------------------------
+# Active module — resolved module with its type-specific configuration
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ActiveModule:
+    """A module resolved for a specific context window type + profile."""
+
+    module_id: str
+    handler: ContextModule
+    label: str
+    category: str
+    priority: int
+    target_pct: float
+    min_pct: float
+    max_pct: float
+    condensable: bool
+
+    # Computed during allocation
+    allocated_tokens: int = 0
+    contribution: Optional[Contribution] = None
+
+
+# ---------------------------------------------------------------------------
+# Assembled context — the output of a full assembly operation
+# ---------------------------------------------------------------------------
+
+@dataclass
+class AssembledContext:
+    """
+    The fully assembled context window, ready to be sent to the LLM.
+
+    Contains all module contributions in priority order, along with
+    the snapshot for observability.
+    """
+
+    contributions: Dict[str, Contribution] = field(default_factory=dict)
+    """Module contributions keyed by module_id, in assembly order."""
+
+    snapshot: Optional[ContextWindowSnapshot] = None
+    """Full metrics snapshot for SSE emission."""
+
+    total_tokens: int = 0
+    """Total tokens consumed across all contributions."""
+
+    def get_content(self, module_id: str) -> str:
+        """Get a specific module's contribution content."""
+        contrib = self.contributions.get(module_id)
+        return contrib.content if contrib else ""
+
+    def get_all_content(self) -> str:
+        """Get all contributions concatenated (for debugging)."""
+        return "\n\n".join(
+            c.content for c in self.contributions.values() if c.content
+        )
+
+
+# ---------------------------------------------------------------------------
+# Context Window Handler — the orchestrator
+# ---------------------------------------------------------------------------
+
+class ContextWindowHandler(SystemHandler):
+    """
+    Orchestrates context budget allocation across pluggable modules.
+
+    Reads a Context Window Type configuration, resolves active modules
+    from the registry, allocates budget using the type's strategy, and
+    produces an AssembledContext with full observability metrics.
+    """
+
+    @property
+    def component_id(self) -> str:
+        return "context_window"
+
+    async def get_metrics(self) -> Dict[str, Any]:
+        """Return metrics from the last assembly operation."""
+        if self._last_snapshot:
+            return self._last_snapshot.to_sse_event()
+        return {"status": "no_assembly_yet"}
+
+    def __init__(self):
+        self._last_snapshot: Optional[ContextWindowSnapshot] = None
+        self._registry: Optional[ContextModuleRegistry] = None
+
+    @property
+    def registry(self) -> ContextModuleRegistry:
+        """Lazy-load the module registry."""
+        if self._registry is None:
+            self._registry = get_module_registry()
+        return self._registry
+
+    # -------------------------------------------------------------------
+    # Main assembly entry point
+    # -------------------------------------------------------------------
+
+    async def assemble(
+        self,
+        context_window_type: Dict[str, Any],
+        ctx: AssemblyContext,
+        session_store: Optional[Any] = None,
+    ) -> AssembledContext:
+        """
+        Assemble the full context window using the four-pass algorithm.
+
+        Args:
+            context_window_type: The context window type config dict
+                (from tda_config.json context_window_types).
+            ctx: Assembly context with session state and dependencies.
+
+        Returns:
+            AssembledContext with all contributions and a snapshot.
+        """
+        type_id = context_window_type.get("id", "unknown")
+        type_name = context_window_type.get("name", "Unknown")
+        output_reserve_pct = context_window_type.get("output_reserve_pct", 12)
+
+        # Calculate output reserve
+        output_reserve = int(ctx.model_context_limit * output_reserve_pct / 100)
+        available_budget = ctx.model_context_limit - output_reserve
+
+        logger.info(
+            f"Context window assembly: type={type_name}, "
+            f"budget={available_budget:,} tokens "
+            f"(limit={ctx.model_context_limit:,}, reserve={output_reserve:,})"
+        )
+
+        ctx.session_store = session_store
+
+        # --- Pass 1: Resolve active modules ---
+        active_modules, skipped_modules = self._resolve_active_modules(
+            context_window_type, ctx
+        )
+
+        if not active_modules:
+            logger.warning("No active modules resolved — returning empty context")
+            snapshot = self._build_snapshot(
+                type_id, type_name, ctx, available_budget,
+                output_reserve, [], [], [], skipped_modules,
+            )
+            self._last_snapshot = snapshot
+            return AssembledContext(snapshot=snapshot)
+
+        # Redistribute budget from skipped modules
+        self._redistribute_budget(active_modules)
+
+        # --- Pass 2: Apply dynamic adjustments ---
+        # Must run BEFORE allocation so adjusted target_pct values
+        # are used by _allocate_and_assemble() for budget calculation.
+        adjustments_fired = self._apply_dynamic_adjustments(
+            context_window_type, active_modules, ctx
+        )
+
+        # --- Pass 3: Allocate and assemble ---
+        contributions = await self._allocate_and_assemble(
+            active_modules, available_budget, ctx
+        )
+
+        # --- Pass 3b: Reallocate surplus budget ---
+        contributions, reallocation_events = await self._reallocate_surplus(
+            active_modules, contributions, available_budget, ctx
+        )
+
+        # --- Pass 4: Condense if over budget ---
+        total_used = sum(c.tokens_used for c in contributions.values())
+        condensations = []
+
+        if total_used > available_budget:
+            condensation_order = list(context_window_type.get("condensation_order", []))
+            # Registry-merged (and any other condensable active) modules absent
+            # from the configured order get appended by ascending priority
+            # (lowest condensed first) so they remain reducible under budget
+            # pressure. Never reorders the CWT's explicit order — append-only.
+            _in_order = set(condensation_order)
+            _extra = sorted(
+                (m for m in active_modules
+                 if m.condensable and m.module_id not in _in_order),
+                key=lambda m: m.priority,
+            )
+            condensation_order = condensation_order + [m.module_id for m in _extra]
+            contributions, condensations = await self._condense(
+                active_modules, contributions, condensation_order,
+                total_used, available_budget, ctx,
+                cwt_modules=context_window_type.get("modules", {}),
+                session_store=session_store,
+            )
+            total_used = sum(c.tokens_used for c in contributions.values())
+
+        # Build result
+        utilization_pct = (total_used / available_budget * 100) if available_budget > 0 else 0
+
+        # Build contribution metrics
+        contribution_metrics = []
+        for am in active_modules:
+            contrib = contributions.get(am.module_id)
+            if contrib:
+                alloc = am.allocated_tokens
+                used = contrib.tokens_used
+                contribution_metrics.append(ContributionMetric(
+                    module_id=am.module_id,
+                    label=am.label,
+                    category=am.category,
+                    tokens_allocated=alloc,
+                    tokens_used=used,
+                    utilization_pct=(used / alloc * 100) if alloc > 0 else 0,
+                    was_condensed=any(
+                        e.module_id == am.module_id for e in condensations
+                    ),
+                    is_active=True,
+                    metadata=contrib.metadata,
+                ))
+
+        snapshot = self._build_snapshot(
+            type_id, type_name, ctx, available_budget, output_reserve,
+            contribution_metrics, condensations, adjustments_fired,
+            skipped_modules, reallocation_events,
+        )
+        self._last_snapshot = snapshot
+
+        logger.info(snapshot.to_summary_text())
+
+        return AssembledContext(
+            contributions=contributions,
+            snapshot=snapshot,
+            total_tokens=total_used,
+        )
+
+    # -------------------------------------------------------------------
+    # Pass 1: Resolve active modules
+    # -------------------------------------------------------------------
+
+    def _resolve_active_modules(
+        self,
+        context_window_type: Dict[str, Any],
+        ctx: AssemblyContext,
+    ) -> Tuple[List[ActiveModule], List[str]]:
+        """
+        Determine which modules participate in this assembly.
+
+        A module is skipped if:
+        1. It's set to active=false in the context window type
+        2. It doesn't apply to the current profile type
+        3. It's not found in the registry
+
+        Registry-default merge: the context window type's ``modules`` dict is an
+        OVERRIDE layer, not an allowlist. Any registered module absent from it is
+        activated with its manifest defaults (priority / target / min / max pct),
+        so newly-installed builtin modules (e.g. user_memory,
+        knowledge_graph_context) participate without a per-user config migration.
+        This is safe because modules self-gate to an empty contribution when their
+        backing feature is off — merging one in never forces content on.
+
+        Returns:
+            (active_modules sorted by priority desc, skipped_module_ids)
+        """
+        type_modules = context_window_type.get("modules", {})
+        active = []
+        skipped = []
+
+        # Union of explicitly-configured modules and all registered modules.
+        # Configured order first (stable), then registered-but-unlisted ones.
+        module_ids = list(type_modules.keys())
+        for defn in self.registry.get_all_modules():
+            if defn.module_id not in type_modules:
+                module_ids.append(defn.module_id)
+
+        for module_id in module_ids:
+            config = type_modules.get(module_id, {})
+            # Check activation
+            if not config.get("active", True):
+                skipped.append(module_id)
+                logger.debug(f"Module '{module_id}' deactivated in type config")
+                continue
+
+            # Check registry
+            defn = self.registry.get_module(module_id)
+            if defn is None or defn.handler is None:
+                skipped.append(module_id)
+                logger.debug(f"Module '{module_id}' not found in registry")
+                continue
+
+            # Check profile applicability
+            if not defn.handler.applies_to(ctx.profile_type):
+                skipped.append(module_id)
+                logger.debug(
+                    f"Module '{module_id}' not applicable to "
+                    f"profile_type={ctx.profile_type}"
+                )
+                continue
+
+            active.append(ActiveModule(
+                module_id=module_id,
+                handler=defn.handler,
+                label=defn.display_name,
+                category=defn.category,
+                priority=config.get("priority", defn.default_priority),
+                target_pct=config.get("target_pct", defn.default_target_pct),
+                min_pct=config.get("min_pct", defn.default_min_pct),
+                max_pct=config.get("max_pct", defn.default_max_pct),
+                condensable=defn.condensable,
+            ))
+
+        # Sort by priority (highest first)
+        active.sort(key=lambda m: m.priority, reverse=True)
+
+        logger.debug(
+            f"Resolved {len(active)} active modules, "
+            f"{len(skipped)} skipped: {skipped}"
+        )
+        return active, skipped
+
+    # -------------------------------------------------------------------
+    # Budget redistribution
+    # -------------------------------------------------------------------
+
+    def _redistribute_budget(self, active_modules: List[ActiveModule]) -> None:
+        """
+        Redistribute budget from skipped modules proportionally to active ones.
+
+        The total target_pct of active modules is normalized to sum to
+        (100 - output_reserve_pct). This ensures all available budget
+        is distributed regardless of how many modules are active.
+        """
+        total_target = sum(m.target_pct for m in active_modules)
+        if total_target <= 0:
+            return
+
+        # Normalize: each module's share = its target / total_target
+        # This redistributes skipped budget proportionally
+        for m in active_modules:
+            m.target_pct = (m.target_pct / total_target) * 100
+
+    # -------------------------------------------------------------------
+    # Pass 3: Allocate and assemble
+    # -------------------------------------------------------------------
+
+    async def _allocate_and_assemble(
+        self,
+        active_modules: List[ActiveModule],
+        available_budget: int,
+        ctx: AssemblyContext,
+    ) -> Dict[str, Contribution]:
+        """
+        Allocate budget to each module and call contribute().
+
+        Modules are processed in priority order (highest first).
+        Each module receives its allocated budget as a hard cap.
+        """
+        contributions: Dict[str, Contribution] = {}
+
+        for am in active_modules:
+            # Calculate token allocation
+            allocation = int(available_budget * am.target_pct / 100)
+            min_tokens = int(available_budget * am.min_pct / 100)
+            max_tokens = int(available_budget * am.max_pct / 100)
+
+            # Clamp to min/max
+            allocation = max(min_tokens, min(allocation, max_tokens))
+            am.allocated_tokens = allocation
+
+            # Provide previous contributions for cross-module awareness
+            ctx.previous_contributions = {
+                mid: c for mid, c in contributions.items()
+            }
+
+            try:
+                contribution = await am.handler.contribute(allocation, ctx)
+                contributions[am.module_id] = contribution
+                am.contribution = contribution
+
+                logger.debug(
+                    f"Module '{am.module_id}': allocated={allocation}, "
+                    f"used={contribution.tokens_used}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Module '{am.module_id}' failed to contribute: {e}",
+                    exc_info=True,
+                )
+                # Insert empty contribution so assembly can continue
+                contributions[am.module_id] = Contribution(
+                    content="",
+                    tokens_used=0,
+                    metadata={"error": str(e)},
+                )
+
+        return contributions
+
+    # -------------------------------------------------------------------
+    # Pass 2: Dynamic adjustments
+    # -------------------------------------------------------------------
+
+    def _apply_dynamic_adjustments(
+        self,
+        context_window_type: Dict[str, Any],
+        active_modules: List[ActiveModule],
+        ctx: AssemblyContext,
+    ) -> List[str]:
+        """
+        Evaluate and apply dynamic adjustment rules.
+
+        Rules are defined in the context window type's dynamic_adjustments
+        array. Each rule has a condition and an action.
+
+        Returns list of adjustment names that fired.
+        """
+        adjustments = context_window_type.get("dynamic_adjustments", [])
+        fired = []
+
+        for rule in adjustments:
+            condition = rule.get("condition", "")
+            action = rule.get("action", {})
+
+            if self._evaluate_condition(condition, ctx, active_modules):
+                self._apply_action(action, active_modules)
+                fired.append(condition)
+                logger.debug(f"Dynamic adjustment fired: {condition}")
+
+        return fired
+
+    def _evaluate_condition(
+        self,
+        condition: str,
+        ctx: AssemblyContext,
+        active_modules: List[ActiveModule],
+    ) -> bool:
+        """Evaluate a dynamic adjustment condition."""
+        if condition == "first_turn":
+            return ctx.is_first_turn
+
+        if condition == "no_documents_attached":
+            # Check if any documents are attached to the session
+            attachments = ctx.session_data.get("attachments", [])
+            return len(attachments) == 0
+
+        if condition == "long_conversation":
+            return ctx.turn_number > 10
+
+        if condition == "high_confidence_rag":
+            # Check if RAG module produced high-confidence results
+            rag_contrib = ctx.previous_contributions.get("rag_context")
+            if rag_contrib and rag_contrib.metadata.get("confidence", 0) > 0.85:
+                return True
+            return False
+
+        return False
+
+    def _apply_action(
+        self,
+        action: Dict[str, Any],
+        active_modules: List[ActiveModule],
+    ) -> None:
+        """Apply a dynamic adjustment action to active modules."""
+        modules_by_id = {m.module_id: m for m in active_modules}
+
+        if "reduce" in action:
+            target_id = action["reduce"]
+            by_pct = action.get("by_pct", 50)
+            if target_id in modules_by_id:
+                m = modules_by_id[target_id]
+                m.target_pct *= (1 - by_pct / 100)
+
+        elif "transfer" in action:
+            from_id = action["transfer"]
+            to_id = action.get("to")
+            if from_id in modules_by_id and to_id in modules_by_id:
+                from_m = modules_by_id[from_id]
+                to_m = modules_by_id[to_id]
+                to_m.target_pct += from_m.target_pct
+                from_m.target_pct = 0
+
+        elif "force_full" in action:
+            target_id = action["force_full"]
+            if target_id in modules_by_id:
+                m = modules_by_id[target_id]
+                m.target_pct = m.max_pct
+
+    # -------------------------------------------------------------------
+    # Pass 3b: Surplus reallocation
+    # -------------------------------------------------------------------
+
+    async def _reallocate_surplus(
+        self,
+        active_modules: List[ActiveModule],
+        contributions: Dict[str, Contribution],
+        available_budget: int,
+        ctx: AssemblyContext,
+    ) -> Tuple[Dict[str, Contribution], List[Dict[str, Any]]]:
+        """
+        Redistribute unused budget from low-utilization modules to high-utilization ones.
+
+        After initial assembly, some modules may use far less than allocated
+        (e.g., document_context=0 when no files are uploaded). This pass
+        identifies surplus budget and re-runs contribute() on modules that
+        could benefit from more space.
+
+        Donor criteria:  utilization < 30% of allocation
+        Recipient criteria: utilization > 80% of allocation AND condensable
+        """
+        DONOR_THRESHOLD = 0.30      # Module used < 30% of its allocation
+        RECIPIENT_THRESHOLD = 0.80  # Module used > 80% of its allocation
+
+        modules_by_id = {m.module_id: m for m in active_modules}
+
+        # Identify donors and recipients
+        donors = []
+        recipients = []
+        for am in active_modules:
+            contrib = contributions.get(am.module_id)
+            if not contrib or am.allocated_tokens == 0:
+                continue
+
+            utilization = contrib.tokens_used / am.allocated_tokens
+
+            if utilization < DONOR_THRESHOLD and am.allocated_tokens > 0:
+                surplus = am.allocated_tokens - contrib.tokens_used
+                donors.append((am.module_id, surplus))
+            elif utilization > RECIPIENT_THRESHOLD and am.condensable:
+                recipients.append(am.module_id)
+
+        if not donors or not recipients:
+            return contributions, []
+
+        total_surplus = sum(s for _, s in donors)
+        if total_surplus < 100:  # Not worth reallocating tiny amounts
+            return contributions, []
+
+        # Distribute surplus proportionally to recipients by priority
+        recipient_modules = [modules_by_id[rid] for rid in recipients]
+        total_priority = sum(m.priority for m in recipient_modules)
+        if total_priority == 0:
+            return contributions, []
+
+        logger.info(
+            f"Budget reallocation: {total_surplus:,} surplus tokens from "
+            f"{len(donors)} donor(s) → {len(recipients)} recipient(s)"
+        )
+
+        reallocation_events = []
+
+        # Record donors
+        for donor_id, surplus in donors:
+            reallocation_events.append({
+                "module_id": donor_id,
+                "type": "donor",
+                "tokens": surplus,
+            })
+
+        for am in recipient_modules:
+            share = int(total_surplus * am.priority / total_priority)
+            new_allocation = am.allocated_tokens + share
+            # Respect max_pct cap
+            max_tokens = int(available_budget * am.max_pct / 100)
+            new_allocation = min(new_allocation, max_tokens)
+
+            if new_allocation <= am.allocated_tokens:
+                continue
+
+            # Re-run contribute() with increased budget
+            try:
+                new_contrib = await am.handler.contribute(new_allocation, ctx)
+
+                if new_contrib.tokens_used > contributions[am.module_id].tokens_used:
+                    old_used = contributions[am.module_id].tokens_used
+                    contributions[am.module_id] = new_contrib
+                    am.allocated_tokens = new_allocation
+                    am.contribution = new_contrib
+
+                    reallocation_events.append({
+                        "module_id": am.module_id,
+                        "type": "recipient",
+                        "tokens": new_contrib.tokens_used - old_used,
+                        "old_used": old_used,
+                        "new_used": new_contrib.tokens_used,
+                    })
+
+                    logger.info(
+                        f"  Reallocated to '{am.module_id}': "
+                        f"{old_used:,} → {new_contrib.tokens_used:,} tokens "
+                        f"(budget: {new_allocation:,})"
+                    )
+            except Exception as e:
+                logger.warning(f"  Reallocation failed for '{am.module_id}': {e}")
+
+        return contributions, reallocation_events
+
+    # -------------------------------------------------------------------
+    # Pass 4: Condensation
+    # -------------------------------------------------------------------
+
+    async def _condense(
+        self,
+        active_modules: List[ActiveModule],
+        contributions: Dict[str, Contribution],
+        condensation_order: List[str],
+        total_used: int,
+        available_budget: int,
+        ctx: AssemblyContext,
+        cwt_modules: Optional[Dict[str, Any]] = None,
+        session_store: Optional[Any] = None,
+    ) -> Tuple[Dict[str, Contribution], List[CondensationEvent]]:
+        """
+        Condense contributions to fit within budget.
+
+        Processes modules in condensation_order (lowest priority first).
+        Stops as soon as total usage is within budget.
+
+        When a module has condensation_strategy="rag_offload" in its CWT config,
+        supports_rag_condensation=True, and the session store has indexed data for
+        that module, dispatches to condense_rag() instead of condense().
+        Falls back to condense() silently if any precondition is not met.
+        """
+        events = []
+        modules_by_id = {m.module_id: m for m in active_modules}
+        cwt_modules = cwt_modules or {}
+
+        for module_id in condensation_order:
+            if total_used <= available_budget:
+                break
+
+            am = modules_by_id.get(module_id)
+            if am is None or not am.condensable:
+                continue
+
+            contrib = contributions.get(module_id)
+            if contrib is None or contrib.tokens_used == 0:
+                continue
+
+            overage = total_used - available_budget
+            target_tokens = max(0, contrib.tokens_used - overage)
+
+            try:
+                # --- RAG offload dispatch ---
+                module_cwt_cfg = cwt_modules.get(module_id, {})
+                strategy = module_cwt_cfg.get("condensation_strategy", "truncate")
+                rag_cfg = module_cwt_cfg.get("rag_offload", {})
+                # Enforce backend policy: if "require_external" but session_store is in-memory,
+                # silently fall back to truncation so the admin policy is respected.
+                if strategy == "rag_offload" and not rag_cfg.get("vector_backend_id"):
+                    try:
+                        from trusted_data_agent.core.config_manager import get_config_manager
+                        _policy = get_config_manager().get_rag_offload_settings().get(
+                            "backend_policy", "allow_internal"
+                        )
+                        if _policy == "require_external":
+                            logger.warning(
+                                f"RAG offload for '{module_id}' requires external backend "
+                                f"(policy=require_external) but no vector_backend_id configured "
+                                f"— falling back to truncate"
+                            )
+                            strategy = "truncate"
+                    except Exception:
+                        pass
+
+                use_rag = (
+                    strategy == "rag_offload"
+                    and getattr(am.handler, "supports_rag_condensation", False)
+                    and session_store is not None
+                    and session_store.has_data(module_id)
+                )
+
+                if use_rag:
+                    floor_pct = rag_cfg.get("floor_pct", 30)
+                    query = ctx.session_data.get("current_query", "")
+                    max_store_mb = rag_cfg.get("max_store_mb", 10.0)
+
+                    # Enforce memory cap — fall back to truncate if exceeded
+                    if session_store.get_store_size_mb(module_id) > max_store_mb:
+                        logger.debug(
+                            f"RAG offload cap exceeded for '{module_id}' "
+                            f"({session_store.get_store_size_mb(module_id):.1f}MB > "
+                            f"{max_store_mb}MB) — falling back to truncate"
+                        )
+                        use_rag = False
+
+                    if use_rag:
+                        condensed = await am.handler.condense_rag(
+                            contrib.content, target_tokens, query,
+                            ctx, session_store, floor_pct,
+                        )
+                        logger.debug(
+                            f"RAG condensation for '{module_id}': "
+                            f"floor_pct={floor_pct}, "
+                            f"chunks={condensed.metadata.get('chunks_retrieved', '?')}"
+                        )
+
+                if not use_rag:
+                    condensed = await am.handler.condense(
+                        contrib.content, target_tokens, ctx
+                    )
+
+                tokens_before = contrib.tokens_used
+                tokens_after = condensed.tokens_used
+
+                if tokens_after < tokens_before:
+                    contributions[module_id] = condensed
+                    total_used -= (tokens_before - tokens_after)
+
+                    reduction_pct = (
+                        (tokens_before - tokens_after) / tokens_before * 100
+                        if tokens_before > 0 else 0
+                    )
+                    events.append(CondensationEvent(
+                        module_id=module_id,
+                        tokens_before=tokens_before,
+                        tokens_after=tokens_after,
+                        reduction_pct=reduction_pct,
+                        strategy=condensed.metadata.get("strategy", "unknown"),
+                        chunks_retrieved=condensed.metadata.get("chunks_retrieved"),
+                    ))
+                    logger.debug(
+                        f"Condensed '{module_id}': {tokens_before} → {tokens_after} "
+                        f"({reduction_pct:.0f}% reduction)"
+                    )
+
+            except Exception as e:
+                logger.error(
+                    f"Condensation failed for '{module_id}': {e}",
+                    exc_info=True,
+                )
+
+        return contributions, events
+
+    # -------------------------------------------------------------------
+    # Snapshot builder
+    # -------------------------------------------------------------------
+
+    def _build_snapshot(
+        self,
+        type_id: str,
+        type_name: str,
+        ctx: AssemblyContext,
+        available_budget: int,
+        output_reserve: int,
+        contributions: List[ContributionMetric],
+        condensations: List[CondensationEvent],
+        adjustments_fired: List[str],
+        skipped_modules: List[str],
+        reallocation_events: List[Dict[str, Any]] | None = None,
+    ) -> ContextWindowSnapshot:
+        """Build a complete snapshot for observability."""
+        total_used = sum(c.tokens_used for c in contributions)
+        utilization_pct = (total_used / available_budget * 100) if available_budget > 0 else 0
+
+        return ContextWindowSnapshot(
+            context_window_type_id=type_id,
+            context_window_type_name=type_name,
+            model_context_limit=ctx.model_context_limit,
+            context_limit_override=ctx.profile_config.get("contextLimitOverride") if ctx.profile_config else None,
+            session_context_limit_override=ctx.session_data.get("session_context_limit_override") if ctx.session_data else None,
+            output_reserve=output_reserve,
+            available_budget=available_budget,
+            total_used=total_used,
+            utilization_pct=utilization_pct,
+            contributions=contributions,
+            condensations=condensations,
+            reallocation_events=reallocation_events or [],
+            dynamic_adjustments_fired=adjustments_fired,
+            profile_type=ctx.profile_type,
+            skipped_modules=skipped_modules,
+            active_module_count=len(contributions),
+            session_id=ctx.session_id,
+            turn_number=ctx.turn_number,
+        )

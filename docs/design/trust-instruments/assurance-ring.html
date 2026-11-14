@@ -1,0 +1,918 @@
+<title>Assurance Ring — Uderia</title>
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   Assurance Ring — the Live Status instrument, drawn at TRUE width.
+   #status-window is width:33.333% · max-width:28rem · min-width:260px,
+   less p-4 → a content column of 228–416px. Every panel below is rendered
+   at a real width, not a comfortable one.
+   Palette, tokens and icons are the platform's own (trust.css, trustCircle.js).
+   Industrial / schematic: hairline geometry, radial ticks, engraved mono.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+    --scrim: rgba(0, 0, 0, .55);
+    --trust-pass: #34d399; --trust-pass-bg: rgba(52,211,153,.12);
+    --trust-warn: #fbbf24; --trust-warn-bg: rgba(251,191,36,.12);
+    --trust-danger: #f87171; --trust-danger-bg: rgba(248,113,113,.12);
+    --trust-na: #94a3b8;
+    --pending: #64748b;
+    --accent: #F15F22;
+
+    --bg: #0b0f14; --card-bg: #141a21; --card-bg-2: #1a222b;
+    --text-primary: #e6edf3; --text-secondary: #b3becb; --text-muted: #7d8896;
+    --border-primary: #29323d; --border-secondary: #1f2731; --rule: #232c36;
+
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --scrim: rgba(19, 28, 37, .38);
+        --trust-pass: #059669; --trust-pass-bg: rgba(5,150,105,.10);
+        --trust-warn: #b45309; --trust-warn-bg: rgba(180,83,9,.10);
+        --trust-danger: #dc2626; --trust-danger-bg: rgba(220,38,38,.08);
+        --trust-na: #64748b; --pending: #94a3b8;
+        --bg: #eef1f4; --card-bg: #ffffff; --card-bg-2: #f4f6f8;
+        --text-primary: #131c25; --text-secondary: #3b4855; --text-muted: #667585;
+        --border-primary: #d5dce4; --border-secondary: #e4e9ee; --rule: #e0e6ec;
+    }
+}
+:root[data-theme="light"] {
+    --scrim: rgba(19, 28, 37, .38);
+    --trust-pass: #059669; --trust-pass-bg: rgba(5,150,105,.10);
+    --trust-warn: #b45309; --trust-warn-bg: rgba(180,83,9,.10);
+    --trust-danger: #dc2626; --trust-danger-bg: rgba(220,38,38,.08);
+    --trust-na: #64748b; --pending: #94a3b8;
+    --bg: #eef1f4; --card-bg: #ffffff; --card-bg-2: #f4f6f8;
+    --text-primary: #131c25; --text-secondary: #3b4855; --text-muted: #667585;
+    --border-primary: #d5dce4; --border-secondary: #e4e9ee; --rule: #e0e6ec;
+}
+:root[data-theme="dark"] {
+    --scrim: rgba(0, 0, 0, .55);
+    --trust-pass: #34d399; --trust-pass-bg: rgba(52,211,153,.12);
+    --trust-warn: #fbbf24; --trust-warn-bg: rgba(251,191,36,.12);
+    --trust-danger: #f87171; --trust-danger-bg: rgba(248,113,113,.12);
+    --trust-na: #94a3b8; --pending: #64748b;
+    --bg: #0b0f14; --card-bg: #141a21; --card-bg-2: #1a222b;
+    --text-primary: #e6edf3; --text-secondary: #b3becb; --text-muted: #7d8896;
+    --border-primary: #29323d; --border-secondary: #1f2731; --rule: #232c36;
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0; background: var(--bg); color: var(--text-primary);
+    font-family: var(--sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+.page { max-width: 1180px; margin: 0 auto; padding: 40px 22px 80px; }
+.eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); }
+.annot { font-family: var(--serif); font-style: italic; color: var(--text-muted); }
+
+.masthead { display: flex; flex-direction: column; gap: 9px; margin-bottom: 8px; }
+.masthead h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+.masthead p { margin: 0; max-width: 62ch; color: var(--text-secondary); font-size: 16px; text-wrap: pretty; }
+
+.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 22px 0 20px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+.seg-switch { display: inline-flex; border: 1px solid var(--border-primary); border-radius: 4px; overflow: hidden; }
+.seg-switch button {
+    font: inherit; font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+    padding: 4px 11px; background: transparent; color: var(--text-muted); border: 0; cursor: pointer;
+}
+.seg-switch button + button { border-left: 1px solid var(--border-primary); }
+.seg-switch button[aria-pressed="true"] { background: var(--card-bg); color: var(--text-primary); }
+.seg-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.grow { flex: 1 1 auto; }
+
+.rack { display: flex; gap: 26px; align-items: start; flex-wrap: wrap; }
+.spec { display: flex; flex-direction: column; gap: 7px; }
+.spec-cap { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--text-muted); }
+.spec-cap b { color: var(--text-primary); font-weight: 600; }
+
+/* ── the panel ───────────────────────────────────────────────────────── */
+.ls { background: var(--card-bg); border: 1px solid var(--border-primary); border-radius: 10px; overflow: hidden; }
+.ls-max { width: 448px; }
+.ls-min { width: 292px; }
+@media (max-width: 800px) { .ls-max, .ls-min { width: 100%; max-width: 448px; } }
+.ls-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border-secondary); background: var(--card-bg-2); }
+.ls-title { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+.subject { font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; color: var(--text-muted); padding: 1px 7px; border: 1px dashed var(--border-primary); border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.band { display: grid; gap: 10px; padding: 12px; align-items: center; }
+.band.wide { grid-template-columns: 136px 1fr; }
+.band.stack { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.band.stack .summary { align-items: center; }
+.band.stack .route-btn { text-align: left; }
+
+svg.dial { display: block; overflow: visible; }
+.gnd { fill: none; stroke: var(--rule); stroke-width: 1; }
+.seg { fill: none; stroke-linecap: butt; transition: stroke-width 110ms ease; }
+.seg-hit { fill: none; stroke: transparent; cursor: pointer; }
+.seg-pass    { stroke: var(--trust-pass); }
+.seg-warn    { stroke: var(--trust-warn); }
+.seg-danger  { stroke: var(--trust-danger); }
+.seg-na      { stroke: var(--trust-na); stroke-dasharray: 2 3.5; opacity: .5; }
+.seg-pending { stroke: var(--pending); stroke-dasharray: 1 3; opacity: .75; }
+
+.tick { stroke-width: 1.4; stroke-linecap: butt; }
+.tick-pass { stroke: var(--trust-pass); } .tick-warn { stroke: var(--trust-warn); }
+.tick-danger { stroke: var(--trust-danger); } .tick-na { stroke: var(--trust-na); }
+
+.ico { pointer-events: none; }
+.ico * { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ico-pass * { stroke: var(--trust-pass); } .ico-warn * { stroke: var(--trust-warn); }
+.ico-danger * { stroke: var(--trust-danger); }
+.ico-na * { stroke: var(--trust-na); opacity: .42; }
+.ico-pending * { stroke: var(--pending); opacity: .7; }
+/* The subject mark. A STAR with NO PLUS: this dial is about one answer from one
+   agent, and that agent cannot be changed from here. The plus is reserved for the
+   Trust Circle, where choosing a different agent is a real act. Affordance lives
+   in one glyph, so a mark can never promise something the surface cannot do. */
+.core-star { fill: none; stroke: var(--text-muted); stroke-width: 1.15; opacity: .6; stroke-linejoin: round; }
+.core-star-i { fill: var(--text-muted); opacity: .06; stroke: none; }
+
+.st { transition: opacity 110ms ease; }
+.st.dim { opacity: .28; }
+.st:focus { outline: none; }
+.st:focus-visible .foc { stroke: var(--accent); stroke-width: 1.3; fill: none; }
+.foc { fill: none; stroke: none; }
+
+.summary { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.sum-big { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.sum-sub { font-size: 12px; color: var(--text-muted); text-wrap: pretty; }
+.chip { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 9.5px; letter-spacing: .05em; padding: 1px 7px; border-radius: 3px; border: 1px solid; white-space: nowrap; }
+.chip-pass { color: var(--trust-pass); border-color: var(--trust-pass); background: var(--trust-pass-bg); }
+.chip-warn { color: var(--trust-warn); border-color: var(--trust-warn); background: var(--trust-warn-bg); }
+.chip-danger { color: var(--trust-danger); border-color: var(--trust-danger); background: var(--trust-danger-bg); }
+.chip-na { color: var(--trust-na); border-color: var(--trust-na); border-style: dashed; }
+.chip-pending { color: var(--pending); border-color: var(--pending); border-style: dotted; }
+
+/* acted stations as inline targets — a stack of blocks made the resting
+   header taller than the trace it sits above. */
+.route { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.band.stack .route { justify-content: center; }
+.route-btn {
+    display: inline-flex; align-items: center; gap: 5px; font: inherit; cursor: pointer;
+    background: transparent; border: 1px solid var(--border-secondary); border-radius: 3px;
+    padding: 2px 7px 2px 4px; color: var(--text-primary);
+}
+.route-btn:hover { border-color: var(--text-muted); background: var(--card-bg-2); }
+.route-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.route-key { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.bar { width: 3px; height: 12px; border-radius: 2px; flex: 0 0 auto; }
+.bar-warn { background: var(--trust-warn); } .bar-danger { background: var(--trust-danger); }
+
+/* the summary region doubles as the hover readout, so a pointer crossing the
+   dial never changes the panel's height. */
+.summary { min-height: 74px; justify-content: center; }
+.band.stack .summary { min-height: 66px; }
+.hov-k { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
+.hov-l { display: grid; grid-template-columns: 62px 1fr; gap: 8px; align-items: baseline; }
+.band.stack .hov-l { grid-template-columns: 1fr; gap: 1px; text-align: center; }
+.hov-lk { font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+.hov-lv { font-size: 12px; color: var(--text-secondary); }
+.hov-l.now .hov-lv { color: var(--text-primary); }
+.opener { font-family: var(--mono); font-size: 9px; letter-spacing: .06em; color: var(--text-muted); }
+
+/* collapsed until a station is opened */
+.read[hidden] { display: none; }
+
+.read { border-top: 1px solid var(--border-secondary); padding: 12px; }
+.read-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.read-station { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; }
+.headline { margin: 9px 0 0; font-size: 14px; line-height: 1.45; text-wrap: pretty; }
+.alts { margin-top: 11px; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.alt { display: grid; grid-template-columns: 104px 1fr; gap: 10px; padding: 7px 10px; align-items: baseline; }
+.alt + .alt { border-top: 1px solid var(--rule); }
+.alt-now { background: var(--card-bg-2); }
+.alt-k { font-family: var(--mono); font-size: 9px; letter-spacing: .11em; text-transform: uppercase; color: var(--text-muted); }
+.alt-v { font-size: 12.5px; color: var(--text-secondary); }
+.alt-now .alt-v { font-size: 13.5px; color: var(--text-primary); }
+.alt-rel { border-top: 1px dashed var(--border-primary); }
+.alt-rel .alt-v { font-family: var(--serif); font-style: italic; color: var(--text-muted); font-size: 12px; }
+.ev { margin: 10px 0 0; font-size: 12px; color: var(--text-muted); }
+.ev-k { font-family: var(--mono); font-size: 9px; letter-spacing: .11em; text-transform: uppercase; margin-right: 6px; }
+.points { margin-top: 11px; border-top: 1px solid var(--rule); padding-top: 9px; }
+.points-t { font-family: var(--mono); font-size: 9px; letter-spacing: .11em; text-transform: uppercase; color: var(--text-muted); }
+.plist { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.pt { display: grid; grid-template-columns: 10px 1fr; gap: 8px; align-items: start; }
+.pd { width: 8px; height: 8px; margin-top: 5px; border: 1.4px solid; }
+.pd-pass { border-color: var(--trust-pass); background: var(--trust-pass-bg); }
+.pd-warn { border-color: var(--trust-warn); background: linear-gradient(180deg, var(--trust-warn-bg) 50%, transparent 50%); }
+.pd-danger { border-color: var(--trust-danger); background: var(--trust-danger-bg); border-width: 2px; }
+.pd-na { border-color: var(--trust-na); border-style: dashed; }
+.pn { font-size: 12px; } .px { font-size: 11.5px; color: var(--text-muted); }
+.hint { margin-top: 11px; font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--text-muted); }
+.ghost { font: inherit; font-family: var(--mono); font-size: 9.5px; letter-spacing: .07em; padding: 2px 8px; border-radius: 3px; cursor: pointer; background: transparent; color: var(--text-muted); border: 1px solid var(--border-primary); }
+.ghost:hover { color: var(--text-primary); }
+.ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ── capsule ─────────────────────────────────────────────────────────── */
+.cap { width: 448px; max-width: 100%; background: var(--card-bg); border: 1px solid var(--border-primary); border-radius: 10px; padding: 12px; }
+.cap-t { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+.cap-t svg { width: 14px; height: 14px; } .cap-t svg * { fill: none; stroke: var(--text-muted); stroke-width: 1.6; }
+.cap-rows { margin-top: 11px; border-top: 1px solid var(--rule); padding-top: 9px; display: flex; flex-direction: column; gap: 1px; }
+.cap-row { display: grid; grid-template-columns: 82px 1fr; gap: 9px; align-items: baseline; padding: 5px 7px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; background: none; text-align: left; font: inherit; color: inherit; width: 100%; }
+.cap-row:hover { background: var(--card-bg-2); }
+.cap-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cap-row.lit { border-color: var(--border-primary); background: var(--card-bg-2); }
+.cap-row.mute { opacity: .32; }
+.cap-k { font-family: var(--mono); font-size: 9px; letter-spacing: .11em; text-transform: uppercase; color: var(--text-muted); }
+.cap-v { font-size: 12px; color: var(--text-secondary); }
+.cap-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+/* ── capsule sections — the dial indexes, it never contains ──────────── */
+.cap-scroll { max-height: 460px; overflow-y: auto; margin-top: 11px; border-top: 1px solid var(--rule); }
+.cap-stick { position: sticky; top: 0; z-index: 2; background: var(--card-bg); padding-bottom: 6px; }
+.sec-b { border-top: 1px solid var(--rule); padding: 10px 2px 12px; }
+.sec-b:first-child { border-top: 0; }
+.sec-b.lit { background: var(--card-bg-2); box-shadow: inset 2px 0 0 var(--accent); border-radius: 0 4px 4px 0; }
+.sec-b.mute { opacity: .38; }
+.sec-h { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 0 6px; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.sec-h:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sec-k { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); min-width: 74px; }
+.sec-v { font-size: 12.5px; color: var(--text-secondary); flex: 1 1 auto; }
+.sec-body { padding: 8px 6px 0 80px; display: flex; flex-direction: column; gap: 6px; }
+.sec-body[hidden] { display: none; }
+.sec-h .caret { color: var(--text-muted); font-size: 10px; transition: transform 120ms ease; }
+.sec-b.open .sec-h .caret { transform: rotate(90deg); }
+@media (max-width: 420px) { .sec-body { padding-left: 6px; } }
+.src { font-size: 11.5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--trust-pass); color: var(--trust-pass); background: var(--trust-pass-bg); }
+.chain { display: flex; flex-wrap: wrap; gap: 5px; }
+.node { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--trust-pass); color: var(--trust-pass); background: var(--trust-pass-bg); }
+.node code { font-family: var(--mono); font-size: 10px; opacity: .8; }
+.orig { font-size: 12px; color: var(--text-secondary); line-height: 1.55; max-height: 130px; overflow: auto; padding: 9px; border: 1px solid var(--rule); border-radius: 5px; background: var(--card-bg-2); }
+details > summary { cursor: pointer; font-size: 12px; color: var(--text-secondary); list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "\25B8"; display: inline-block; width: 12px; color: var(--text-muted); transition: transform 120ms ease; }
+details[open] > summary::before { transform: rotate(90deg); }
+.cap-cover { margin-top: 9px; font-family: var(--mono); font-size: 9px; letter-spacing: .06em; color: var(--text-muted); }
+
+/* ── notes ───────────────────────────────────────────────────────────── */
+.notes { margin-top: 46px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.note { background: var(--card-bg); padding: 15px 15px 17px; display: flex; flex-direction: column; gap: 6px; }
+.note h3 { margin: 2px 0 0; font-size: 13.5px; font-weight: 600; }
+.note p { margin: 0; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+.legend { display: flex; flex-wrap: wrap; gap: 5px 14px; align-items: center; font-family: var(--mono); font-size: 9.5px; letter-spacing: .05em; color: var(--text-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 3px; display: inline-block; }
+.swt { width: 2px; height: 10px; display: inline-block; }
+h2.sec { margin: 44px 0 5px; font-size: 20px; font-weight: 600; letter-spacing: -.015em; }
+p.sec { margin: 0 0 18px; max-width: 66ch; color: var(--text-secondary); font-size: 14px; text-wrap: pretty; }
+
+/* ── dimension chips + the Guide route ───────────────────────────────── */
+.dims { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.dimchip {
+    font: inherit; font-family: var(--mono); font-size: 9px; letter-spacing: .05em;
+    padding: 1px 6px; border-radius: 3px; cursor: pointer;
+    border: 1px solid var(--border-primary); background: transparent; color: var(--text-secondary);
+}
+.dimchip:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.dimchip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dimchip.j { border-style: dashed; }
+.unscored {
+    display: inline-block; margin-top: 4px; font-family: var(--mono); font-size: 9px;
+    letter-spacing: .05em; color: var(--text-muted); opacity: .8;
+    border-bottom: 1px dotted var(--border-primary);
+}
+.gd-back { position: fixed; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
+.gd { width: 440px; max-width: 100%; max-height: 80vh; overflow: auto; background: var(--card-bg); border: 1px solid var(--border-primary); border-radius: 10px; padding: 16px; }
+.gd h4 { margin: 0; font-size: 15px; font-weight: 600; }
+.gd-meta { display: flex; gap: 6px; flex-wrap: wrap; margin: 7px 0 10px; }
+.gd p { margin: 0 0 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+.gd-tune { font-size: 11.5px; color: var(--text-muted); padding: 6px 9px; border-left: 2px solid var(--border-primary); background: var(--card-bg-2); border-radius: 0 4px 4px 0; }
+.gd-tune.yesno { border-left-style: dashed; }
+.gd-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="page">
+
+    <div class="masthead">
+        <div class="eyebrow">Uderia · Live Status</div>
+        <h1>The Assurance Ring</h1>
+        <p>One instrument answering <em>what had the power to change this answer, and what did it do?</em> — in the Trust Circle's eight stations, four words, and shape.</p>
+    </div>
+
+    <div class="toolbar">
+        <span class="eyebrow">Turn</span>
+        <div class="seg-switch" role="group" aria-label="Choose a turn">
+            <button type="button" data-turn="a" aria-pressed="true">quiet</button>
+            <button type="button" data-turn="b" aria-pressed="false">failed</button>
+            <button type="button" data-turn="live" aria-pressed="false">mid-turn</button>
+        </div>
+        <span class="grow"></span>
+        <span class="annot" style="font-size:12.5px">Hover a station for both readings · click a ticked one for its gates</span>
+    </div>
+
+    <div class="rack">
+        <div class="spec">
+            <div class="spec-cap"><b>448 px</b> — panel at max-width: 28rem</div>
+            <div class="ls ls-max">
+                <div class="ls-head"><span class="ls-title">Assurance</span><span class="subject" data-subject></span></div>
+                <div class="band wide"><svg class="dial" data-dial="max" role="group" aria-label="Assurance ring"></svg><div class="summary" data-sum></div></div>
+                <div class="read" data-read></div>
+            </div>
+        </div>
+        <div class="spec">
+            <div class="spec-cap"><b>292 px</b> — panel at min-width: 260px + padding</div>
+            <div class="ls ls-min">
+                <div class="ls-head"><span class="ls-title">Assurance</span><span class="subject" data-subject></span></div>
+                <div class="band stack"><svg class="dial" data-dial="min" role="group" aria-label="Assurance ring"></svg><div class="summary" data-sum></div></div>
+                <div class="read" data-read></div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="sec">The same instrument, in the answer capsule</h2>
+    <p class="sec">The capsule carried a nine-glyph strip <em>and</em> a mini ring doing a different job — two vocabularies for one question. One dial replaces both, and the rows it already had become the station detail it never had a spine for.</p>
+
+    <div class="cap">
+        <div class="cap-t"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>Why trust this answer?</div>
+        <div class="cap-stick">
+            <div class="band wide" style="padding:0"><svg class="dial" data-dial="cap" role="group" aria-label="Assurance ring"></svg><div class="summary" id="capsum"></div></div>
+        </div>
+        <div class="cap-scroll" id="caprows"></div>
+        <p class="cap-cover" id="capnote"></p>
+    </div>
+
+    <div class="notes">
+        <div class="note">
+            <div class="eyebrow">Reading the dial</div>
+            <div class="legend">
+                <span><i class="sw" style="background:var(--trust-pass)"></i> quiet</span>
+                <span><i class="sw" style="background:var(--trust-warn)"></i> worth a look</span>
+                <span><i class="sw" style="background:var(--trust-danger)"></i> needs you now</span>
+                <span><i class="sw" style="background:var(--trust-na);opacity:.5"></i> not turned on</span>
+                <span><i class="sw" style="background:var(--pending)"></i> not yet resolved</span>
+            </div>
+            <div class="legend" style="margin-top:6px">
+                <span><i class="swt" style="background:var(--trust-pass)"></i> one tick — detail behind it</span>
+                <span><i class="swt" style="background:var(--trust-danger)"></i><i class="swt" style="background:var(--trust-danger);margin-left:-3px"></i> two — it acted</span>
+            </div>
+        </div>
+        <div class="note">
+            <div class="eyebrow">The affordance</div>
+            <h3>Ticks mark what is engraved</h3>
+            <p>A station carries a tick only when opening it tells you something the dial cannot. Stations with nothing behind them stay hairline and unticked, so the click always pays.</p>
+        </div>
+        <div class="note">
+            <div class="eyebrow">The centre</div>
+            <h3>Left empty on purpose</h3>
+            <p>The Trust Circle's centre holds the agent. This dial holds one answer, so its centre holds only a registration mark. Identity sits in the header, where it can't be mistaken for a reading.</p>
+        </div>
+        <div class="note">
+            <div class="eyebrow">Live</div>
+            <h3>Pending is not absent</h3>
+            <p>Mounted at turn start with every station unresolved, the dial fills in as each gate reports. A dotted segment means <em>not yet</em>; a dashed one means <em>nothing is owed</em>. Try “mid-turn”.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    var ICONS = {
+        signed:   '<circle cx="12" cy="10" r="6"/><path d="M9.5 10l1.8 1.8L15 8.2"/><path d="M8.5 15.4L7 21l5-2.4L17 21l-1.5-5.6"/>',
+        grounded: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="1.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22.5" y2="12"/>',
+        guarded:  '<path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/>',
+        bounded:  '<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.4"/>',
+        scored:   '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 3.5V6h6V3.5"/><path d="M8.5 11l2 2 4-4"/><line x1="8.5" y1="16.5" x2="15.5" y2="16.5"/>',
+        trusted:  '<path d="M2.5 12h4l2.5-6 4 12 2.5-6h6"/>',
+        reviewed: '<path d="M15 20v-1.6a3.6 3.6 0 0 0-3.6-3.6H5.6A3.6 3.6 0 0 0 2 18.4V20"/><circle cx="8.5" cy="7.5" r="3.5"/><path d="M15.5 9.5l2 2 4.5-4.5"/>',
+        proven:   '<path d="M6 2.5h12v19l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><line x1="9" y1="7.5" x2="15" y2="7.5"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="14.5" x2="13" y2="14.5"/>'
+    };
+    var STAR = 'M0,-11 L2.7,-3.72 L10.46,-3.4 L4.37,1.42 L6.47,8.9 L0,4.6 L-6.47,8.9 L-4.37,1.42 L-10.46,-3.4 L-2.7,-3.72 Z';
+    var ORDER = ['signed', 'grounded', 'guarded', 'bounded', 'scored', 'trusted', 'reviewed', 'proven'];
+    var WORD = { pass: 'quiet', warn: 'worth a look', danger: 'needs you now', na: 'not turned on', pending: 'not yet resolved' };
+    var RANK = { pass: 0, na: 1, pending: 1, warn: 2, danger: 3 };
+    var SEG = 45, GAP = 6;
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+    }
+
+    /* The Guide's own vocabulary — the ring never defines a dimension, it routes.
+       `band` is the dimension's live reading; `tune` is its real pass line. */
+    var DIMS = {
+        scope_adherence:     { l: 'Scope Adherence', b: 'pass', d: 'Data-source calls that reached outside the scope the knowledge model declares. Counts only what the ontology could not have authorised.', t: 'Bands now: Healthy ≤ 0 · Danger > 1 · set as max_out_of_scope_dbs' },
+        scope_faithfulness:  { l: 'Scope Faithfulness', j: 1, b: 'pass', d: 'An LLM judge — did the answer stay faithful to the trusted scope, or drift outside it? The judgement half of the grounding gate; it tells an honest “not in scope” refusal apart from a confident out-of-scope answer.', t: 'No pass line to set — a judge returns the verdict.' },
+        grounded_overlap:    { l: 'Grounding Overlap', b: 'pass', d: 'The share of the answer’s sentences supported by text that was actually retrieved. A deterministic pre-signal, not a judgement.', t: 'Bands now: not set — the scorer falls back to Danger < 50% · set as min_grounded' },
+        honest_absence:      { l: 'Honest Absence', b: 'pass', d: 'When the answer reports that something does not exist, the turn actually established it — rather than reporting a failed lookup as a negative result. The only check that asks whether what the answer DENIES is supported.', t: 'A yes/no check — it either holds or it does not. Nothing to configure.' },
+        governed_data_ratio: { l: 'Governed Data Ratio', b: 'warn', d: 'Of the turn’s data operations, the fraction routed through the governed, deterministic compiler rather than free-formed SQL.', t: 'Bands now: Healthy ≥ 75% · Danger < 40% · set as min_governed_data_ratio' },
+        provenance_integrity:{ l: 'Provenance Integrity', b: 'pass', d: 'The signed step chain is continuous and its tip matches — the receipt is tamper-evident. Non-gating: it reports, it never convicts.', t: 'A yes/no check — it either holds or it does not.' },
+        safety:              { l: 'Safety', b: 'pass', d: 'No error or guardrail-violation step occurred during execution. Deliberately coarse — it counts that a guardrail acted, not which one or what it found.', t: 'A yes/no check — it either holds or it does not.' },
+        content_safety:      { l: 'Content Safety', j: 1, b: 'pass', d: 'An LLM judge covering the residue only meaning can catch — coded abuse, demeaning framing, indirect identification. The semantic complement to the deterministic outbound guard.', t: 'No pass line to set — a judge returns the verdict.' }
+    };
+
+    var S = {
+        signed:   { head: 'Produced by an agent whose signature was intact when it answered.',
+                    rel: 'The seal covers the agent; the turn inherits it.' },
+        grounded: { rel: 'This answer is one of those turns — the Circle aggregates them, the dial reports only this one.' },
+        guarded:  { head: 'Screened on the way in and on the way out. Nothing was altered.',
+                    rel: 'Consistent with the agent’s record in this window.' },
+        bounded:  { rel: 'Reachability is a property of the agent, not of this particular answer.' },
+        scored:   { rel: 'Scored is the union over every dimension — it can never read better than Grounded.' },
+        trusted:  { head: 'A trailing-window measurement — it has no honest reading for one answer.',
+                    rel: 'The only station with nothing to say about one answer. Stated, not hidden.' },
+        reviewed: { rel: 'A gate parks an answer only where its mode is set to review.' },
+        proven:   { head: 'Sealed into the signed chain. The receipt is exportable.',
+                    rel: 'A receipt proves what happened, not that the answer was right.' }
+    };
+    function st(state, marks, now, all, ev, pts, head, rel) {
+        var k = { s: state, marks: marks, now: now, all: all, ev: ev, pts: pts };
+        k.head = head; k.rel = rel; return k;
+    }
+
+    var TURNS = {
+        a: { agent: '@UDERIA', cls: 'Focus', turn: 'turn 22', window: '18 turns', live: false, stations: {
+            signed:   st('pass', 1, 'attested — verified against the live composition', 'attested · 18 sealed',
+                         'ontology, corpus and skills all signed — nothing changed since',
+                         [['pass', 'Integrity at answer time', 'verified · no drift']], S.signed.head, S.signed.rel),
+            grounded: st('pass', 1, 'quiet — scope stamped, gate passed, honesty held', '12 of 18 turns clean · worth a look',
+                         'scope: uderia_docs · 0 out-of-scope references · no absence claimed',
+                         [['pass', 'Trusted scope', 'stamped from the bound ontology', ['scope_adherence']],
+                          ['na', 'Preflight SQL guard', 'no raw SQL — inapplicable to Focus'],
+                          ['pass', 'Grounding gate', 'review mode · inside scope', ['scope_faithfulness', 'grounded_overlap']],
+                          ['pass', 'Honesty', 'no absence claimed', ['honest_absence']]],
+                         'The answer stayed inside the scope its knowledge model declares.', S.grounded.rel),
+            guarded:  st('pass', 1, 'quiet — both guards ran, both clean', '18 of 18 turns clean · quiet',
+                         'inbound: no injection · outbound: no personal data, no toxicity',
+                         [['pass', 'Inbound guard', 'review mode · clean', ['safety']],
+                          ['pass', 'Retrieval firewall', '9 chunks screened · none defused'],
+                          ['pass', 'Corpus quarantine', 'no quarantined document reached retrieval'],
+                          ['pass', 'Outbound guard', 'review mode · clean', ['safety', 'content_safety']]], S.guarded.head, S.guarded.rel),
+            bounded:  st('na', 0, 'not turned on — no coordinator, schedule or flow lists it', 'unscoped · nothing owed',
+                         'no constraints configured, and nothing can drive it unattended',
+                         [['na', 'Authority', 'interactive turn — acting as you'],
+                          ['na', 'Tool enforcement', 'no tool calls'],
+                          ['na', 'Sensitivity ceiling', 'no source above the configured level']],
+                         'Nothing can drive this agent unattended, so no authority scope is owed.', S.bounded.rel),
+            scored:   st('pass', 1, 'quiet — 20 of 20 checks passed', '14 of 18 turns clean · worth a look',
+                         'no gating failure · 3 dimensions abstained',
+                         [['na', 'Governed data lane', 'no data operations — inapplicable to Focus', ['governed_data_ratio']],
+                          ['pass', 'Evaluation', 'scored automatically · deterministic · $0.00', ['*']]],
+                         'Graded against every dimension its class can produce. All passed.', S.scored.rel),
+            trusted:  st('na', 0, 'not turned on — no per-turn reading exists', 'proven · breaker off',
+                         'measured across 18 turns, not within one',
+                         [['na', 'Trailing trust state', 'agent-scoped by construction']], S.trusted.head, S.trusted.rel),
+            reviewed: st('na', 0, 'not turned on — nothing parked', '0 open · can park',
+                         'grounding and honesty both in review mode · neither fired',
+                         [['na', 'Review parking', 'no gate acted']],
+                         'Nothing was withheld, so nothing is waiting on a human.', S.reviewed.rel),
+            proven:   st('pass', 1, 'quiet — sealed · 6 steps', '18 of 18 sealed',
+                         'chain tip 9f2c41b8e0d3… · Ed25519 · verifiable offline',
+                         [['pass', 'Provenance seal', 'sealed · 9f2c41b8e0d3…', ['provenance_integrity']]], S.proven.head, S.proven.rel)
+        } },
+        b: { agent: '@OPGGT', cls: 'Optimize', turn: 'turn 6', window: '12 turns', live: false, stations: {
+            signed:   st('pass', 1, 'attested — verified against the live composition', 'attested · 12 sealed',
+                         'ontology, planner repo and skills all signed',
+                         [['pass', 'Integrity at answer time', 'verified · no drift']], S.signed.head, S.signed.rel),
+            grounded: st('danger', 2, 'needs you now — honesty found an unestablished absence claim',
+                         '6 of 12 turns clean · needs you now',
+                         '1 failed query, none succeeded · “There are no tables or entities … named ‘airport stations’”',
+                         [['pass', 'Trusted scope', 'stamped: airlines_mvm', ['scope_adherence']],
+                          ['warn', 'Preflight SQL guard', 'observe · flagged an unresolved database'],
+                          ['pass', 'Grounding gate', 'no out-of-scope reference', ['scope_faithfulness', 'grounded_overlap']],
+                          ['danger', 'Honesty', 'observe · flagged, answer delivered anyway', ['honest_absence']]],
+                         'The answer reported an absence it never established — every data query had failed.', S.grounded.rel),
+            guarded:  st('pass', 1, 'quiet — both guards ran, both clean', '12 of 12 turns clean · quiet',
+                         'inbound: no injection · outbound: no personal data, no toxicity',
+                         [['pass', 'Inbound guard', 'observe · clean', ['safety']],
+                          ['na', 'Retrieval firewall', 'no knowledge retrieval'],
+                          ['na', 'Corpus quarantine', 'no corpus bound'],
+                          ['pass', 'Outbound guard', 'observe · clean', ['safety', 'content_safety']]], S.guarded.head, S.guarded.rel),
+            bounded:  st('warn', 2, 'worth a look — unscoped, and reachable unattended',
+                         'unscoped · 2 coordinators list it as an expert',
+                         'no constraints configured — autonomy, tools and spend unrestricted',
+                         [['na', 'Authority', 'interactive turn — acting as you'],
+                          ['pass', 'Tool enforcement', '3 calls executed · none denied'],
+                          ['na', 'Sensitivity ceiling', 'no knowledge sources']],
+                         'Run unattended it would act with your full authority — and two coordinators can run it.', S.bounded.rel),
+            scored:   st('warn', 2, 'worth a look — 2 gating failures · 3 review · 20 checks',
+                         '7 of 12 turns clean · worth a look', 'failing: honest absence, tool success rate',
+                         [['warn', 'Governed data lane', '0 governed / 1 free-formed', ['governed_data_ratio']],
+                          ['warn', 'Evaluation', 'scored automatically · 2 gating failures', ['*']]],
+                         'Two gating checks failed and three more want a look.', S.scored.rel),
+            trusted:  st('na', 0, 'not turned on — no per-turn reading exists', 'at risk · breaker set to notify',
+                         'measured across 12 turns, not within one',
+                         [['na', 'Trailing trust state', 'agent-scoped by construction']], S.trusted.head, S.trusted.rel),
+            reviewed: st('na', 0, 'not turned on — observe records, it does not withhold', '0 open · cannot park',
+                         'honesty mode: observe · grounding mode: observe',
+                         [['na', 'Review parking', 'no gate is set to park on this agent']],
+                         'The honesty gate flagged this answer but could not park it — its mode is observe.', S.reviewed.rel),
+            proven:   st('pass', 1, 'quiet — sealed · 14 steps', '12 of 12 sealed',
+                         'chain tip 4a17c9de52b1… · Ed25519 · verifiable offline',
+                         [['pass', 'Provenance seal', 'sealed · 4a17c9de52b1…', ['provenance_integrity']]], S.proven.head, S.proven.rel)
+        } }
+    };
+
+    /* mid-turn: mounted at turn start, filling in as each gate reports. */
+    TURNS.live = { agent: '@OPTIM', cls: 'Optimize', turn: 'turn 3', window: '9 turns', live: true, stations: {
+        signed:   st('pass', 1, 'attested — verified at turn start', 'attested · 9 sealed',
+                     'resolved before the first LLM call', [['pass', 'Integrity at answer time', 'verified']], S.signed.head, S.signed.rel),
+        grounded: st('pending', 0, 'not yet resolved — the gate runs once an answer exists', '8 of 9 turns clean · quiet',
+                     'trusted scope stamped; the gate has not run yet',
+                     [['pass', 'Trusted scope', 'stamped: airlines_mvm', ['scope_adherence']],
+                      ['pending', 'Grounding gate', 'waiting for the drafted answer'],
+                      ['pending', 'Honesty', 'waiting for the drafted answer']],
+                     'The gate has not run yet — an answer has to exist first.', S.grounded.rel),
+        guarded:  st('pass', 1, 'quiet — the inbound guard screened your request', '9 of 9 turns clean · quiet',
+                     'inbound: no injection · outbound has not run yet',
+                     [['pass', 'Inbound guard', 'observe · clean', ['safety']],
+                      ['pending', 'Outbound guard', 'waiting for the drafted answer']], S.guarded.head, S.guarded.rel),
+        bounded:  st('pass', 1, 'quiet — 2 calls executed, none denied', 'unscoped · reachable unattended',
+                     'every call passed the enforcement chokepoint',
+                     [['na', 'Authority', 'interactive turn — acting as you'],
+                      ['pass', 'Tool enforcement', '2 calls · none denied']],
+                     'Every tool call so far cleared the enforcement chokepoint.', S.bounded.rel),
+        scored:   st('pending', 0, 'not yet resolved — scoring runs after the turn completes', '7 of 9 turns clean · quiet',
+                     'the turn has not completed', [['pending', 'Evaluation', 'runs after the turn completes']],
+                     'Scoring runs after the answer is delivered.', S.scored.rel),
+        trusted:  st('na', 0, 'not turned on — no per-turn reading exists', 'proven · breaker off',
+                     'measured across 9 turns, not within one',
+                     [['na', 'Trailing trust state', 'agent-scoped by construction']], S.trusted.head, S.trusted.rel),
+        reviewed: st('pending', 0, 'not yet resolved — nothing has been withheld yet', '0 open · can park',
+                     'no gate has acted', [['pending', 'Review parking', 'no gate has acted yet']],
+                     'Nothing has been withheld — yet.', S.reviewed.rel),
+        proven:   st('pending', 0, 'not yet resolved — the chain seals at turn end', '9 of 9 sealed',
+                     '4 steps chained so far', [['pending', 'Provenance seal', '4 steps chained · seals at turn end']],
+                     'The chain seals when the turn completes.', S.proven.rel)
+    } };
+
+    // ── one instrument, instantiated per surface ──────────────────────────
+    function Instrument(root, size, opts) {
+        opts = opts || {};
+        var dial = root.querySelector('[data-dial]'),
+            sum = root.querySelector('[data-sum]') || opts.sum,
+            read = root.querySelector('[data-read]') || opts.read,
+            subj = root.querySelector('[data-subject]');
+        var C = size / 2, R = C - (size < 120 ? 15 : 19), W = size < 120 ? 3 : 4;
+        var hovered = null, pinned = null, key = null, self = {};
+
+        dial.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
+        dial.style.width = size + 'px'; dial.style.height = size + 'px';
+
+        function pol(r, d) { var a = (d - 90) * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; }
+        function arc(r, i, g) {
+            var p0 = pol(r, i * SEG + g / 2), p1 = pol(r, (i + 1) * SEG - g / 2);
+            return 'M ' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A ' + r + ' ' + r + ' 0 0 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2);
+        }
+        function ln(r0, r1, d) { var a = pol(r0, d), b = pol(r1, d); return 'M ' + a[0].toFixed(2) + ' ' + a[1].toFixed(2) + ' L ' + b[0].toFixed(2) + ' ' + b[1].toFixed(2); }
+
+        function draw(t) {
+            var o = '<circle class="gnd" cx="' + C + '" cy="' + C + '" r="' + (R + (size < 120 ? 7 : 10)) + '"/>';
+            var ss = (size < 120 ? 0.46 : 0.54);
+            o += '<g transform="translate(' + C + ',' + C + ') scale(' + ss + ')">' +
+                 '<path class="core-star-i" d="' + STAR + '"/><path class="core-star" d="' + STAR + '"/></g>';
+            ORDER.forEach(function (k, i) {
+                var d = t.stations[k], mid = i * SEG + SEG / 2, ip = pol(R - (size < 120 ? 13 : 17), mid), tk = '';
+                var w = d.s === 'na' ? W * 0.36 : d.s === 'danger' ? W * 1.6 : d.s === 'warn' ? W * 1.35 : d.s === 'pending' ? W * 0.6 : W;
+                if (d.marks > 0) {
+                    var t0 = R + (size < 120 ? 3.5 : 5), t1 = R + (size < 120 ? 8 : 11), off = d.marks > 1 ? (size < 120 ? 3 : 2.6) : 0;
+                    tk += '<path class="tick tick-' + d.s + '" d="' + ln(t0, t1, mid - off) + '"/>';
+                    if (d.marks > 1) tk += '<path class="tick tick-' + d.s + '" d="' + ln(t0, t1, mid + off) + '"/>';
+                }
+                var sc = (size < 120 ? 0.458 : 0.6), half = 12 * sc;
+                o += '<g class="st" data-station="' + k + '" tabindex="0" role="button" aria-label="' +
+                    esc(k + ' — ' + WORD[d.s] + (d.marks ? ', has detail' : '')) + '">' +
+                    '<path class="seg-hit" d="' + arc(R, i, GAP) + '" style="stroke-width:' + (size < 120 ? 18 : 24) + '"/>' +
+                    '<path class="foc" d="' + arc(R + (size < 120 ? 7 : 10), i, GAP) + '"/>' +
+                    '<path class="seg seg-' + d.s + '" data-seg="' + k + '" d="' + arc(R, i, GAP) + '" style="stroke-width:' + w.toFixed(1) + '"/>' + tk +
+                    '<g class="ico ico-' + d.s + '" transform="translate(' + (ip[0] - half).toFixed(2) + ',' + (ip[1] - half).toFixed(2) + ') scale(' + sc + ')">' + ICONS[k] + '</g></g>';
+            });
+            dial.innerHTML = o;
+            Array.prototype.forEach.call(dial.querySelectorAll('.st'), function (g) {
+                var k = g.getAttribute('data-station');
+                g.addEventListener('mouseenter', function () { hovered = k; paint(); });
+                g.addEventListener('mouseleave', function () { hovered = null; paint(); });
+                g.addEventListener('focus', function () { hovered = k; paint(); });
+                g.addEventListener('blur', function () { hovered = null; paint(); });
+                g.addEventListener('click', function () { pinned = (pinned === k) ? null : k; paint(); });
+                g.addEventListener('keydown', function (e) {
+                    var i = ORDER.indexOf(k), n;
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pinned = (pinned === k) ? null : k; paint(); }
+                    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % 8;
+                    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i + 7) % 8;
+                    else if (e.key === 'Escape') { pinned = null; paint(); }
+                    if (n != null) { e.preventDefault(); dial.querySelector('[data-station="' + ORDER[n] + '"]').focus(); }
+                });
+            });
+        }
+
+        function survey(t) {
+            var acted = [], open = 0, ran = 0, wait = 0, worst = 'pass';
+            ORDER.forEach(function (k) {
+                var d = t.stations[k];
+                if (RANK[d.s] > RANK[worst]) worst = d.s;
+                if (d.s === 'warn' || d.s === 'danger') acted.push(k);
+                if (d.marks > 0) open++;
+                if (d.s === 'pending') wait++;
+                if (d.s !== 'na' && d.s !== 'pending') ran++;
+            });
+            return { worst: worst, acted: acted, open: open, ran: ran, wait: wait };
+        }
+
+        function paint() {
+            var t = self.turn, a = survey(t);
+            key = hovered || pinned;
+            if (subj) subj.textContent = t.agent + ' · ' + t.turn;
+            Array.prototype.forEach.call(dial.querySelectorAll('.st'), function (g) {
+                var k = g.getAttribute('data-station');
+                g.classList.toggle('dim', !!key && k !== key);
+            });
+
+            var h = '';
+            // A pointer crossing the dial must not resize the panel — so hover
+            // writes into the summary region (fixed height) and only a CLICK
+            // expands the reading beneath it. In Live Status the trace is the
+            // content; this is a band, not a section.
+            if (key && !(pinned === key)) {
+                var hd = t.stations[key];
+                h = '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">' +
+                    '<span class="hov-k">' + esc(key) + '</span>' +
+                    '<span class="chip chip-' + hd.s + '">' + esc(WORD[hd.s]) + '</span></div>' +
+                    '<div class="hov-l now"><span class="hov-lk">this answer</span><span class="hov-lv">' + esc(hd.now) + '</span></div>' +
+                    '<div class="hov-l"><span class="hov-lk">' + esc(t.window) + '</span><span class="hov-lv">' + esc(hd.all) + '</span></div>' +
+                    (hd.marks ? '<span class="opener">click to open</span>' : '');
+                if (sum) sum.innerHTML = h;
+                if (read) { read.hidden = true; read.innerHTML = ''; }
+                if (opts.onPaint) opts.onPaint(key);
+                return;
+            }
+            if (a.wait) {
+                h = '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sum-big">' + a.ran + ' of 8 reported</span>' +
+                    '<span class="chip chip-pending">' + a.wait + ' pending</span></div>' +
+                    '<p class="sum-sub">The path is still closing. Dotted stations have not reported yet.</p>';
+            } else if (!a.acted.length) {
+                h = '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sum-big">All quiet</span>' +
+                    '<span class="chip chip-pass">' + a.ran + ' reported</span></div>' +
+                    '<p class="sum-sub">Nothing was withheld, redacted or rewritten.</p>' +
+                    '<span class="opener">' + a.open + ' ticked stations have detail — click one</span>';
+            } else {
+                h = '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sum-big">' + a.acted.length +
+                    (a.acted.length === 1 ? ' station acted' : ' stations acted') + '</span>' +
+                    '<span class="chip chip-' + a.worst + '">' + esc(WORD[a.worst]) + '</span></div><div class="route">';
+                a.acted.forEach(function (k) {
+                    var d = t.stations[k];
+                    h += '<button type="button" class="route-btn" data-goto="' + k + '" title="' + esc(WORD[d.s]) + '">' +
+                        '<span class="bar bar-' + d.s + '"></span><span class="route-key">' + esc(k) + '</span></button>';
+                });
+                h += '</div><span class="opener" style="margin-top:2px">click a station to open it</span>';
+            }
+            if (sum) {
+                sum.innerHTML = h;
+                Array.prototype.forEach.call(sum.querySelectorAll('[data-goto]'), function (b) {
+                    b.addEventListener('click', function () {
+                        // Toggle, exactly like the dial segment. Two routes to the same
+                        // station that behave differently is a control you cannot learn.
+                        var k = b.getAttribute('data-goto'), opening = pinned !== k;
+                        pinned = opening ? k : null;
+                        hovered = null;
+                        paint();
+                        if (opening) {
+                            var seg = dial.querySelector('[data-station="' + k + '"]');
+                            if (seg) seg.focus();
+                        }
+                    });
+                });
+            }
+            if (read) {
+                read.hidden = !pinned;
+                read.innerHTML = pinned ? reading(t, pinned, true) : '';
+                var c = read.querySelector('[data-close]');
+                if (c) c.addEventListener('click', function () { pinned = null; paint(); });
+                Array.prototype.forEach.call(read.querySelectorAll('[data-dim]'), function (b) {
+                    b.addEventListener('click', function (e) { e.stopPropagation(); openGuide(b.getAttribute('data-dim')); });
+                });
+            }
+            if (opts.onPaint) opts.onPaint(key);
+        }
+
+        function rest(t, a) {   // retained for reference; the band now carries the resting reading
+            return '<div class="read-head"><span class="read-station">Assurance path</span>' +
+                '<span class="chip chip-' + a.worst + '">' + esc(WORD[a.worst]) + '</span></div>' +
+                '<p class="headline">Eight stations watch this answer on its way to you. ' +
+                (a.wait ? esc(a.wait + (a.wait === 1 ? ' has' : ' have') + ' still to report.')
+                        : a.acted.length ? esc((a.acted.length === 1 ? 'One' : String(a.acted.length)) + ' had to act.')
+                        : 'None had to act.') + '</p>' +
+                '<div class="alts"><div class="alt alt-now"><span class="alt-k">This answer</span><span class="alt-v">' +
+                esc(t.agent + ' · ' + t.cls + ' · ' + t.turn) + '</span></div>' +
+                '<div class="alt"><span class="alt-k">This agent</span><span class="alt-v">the trailing ' + esc(t.window) + '</span></div>' +
+                '<div class="alt alt-rel"><span class="alt-k" style="visibility:hidden">r</span><span class="alt-v">' +
+                'This answer is one of those turns. The Circle aggregates them; the dial reports only this one.</span></div></div>' +
+                '<p class="hint">Hover a station for both readings. Click a ticked one for its gates.</p>';
+        }
+
+        function reading(t, k, open) {
+            var d = t.stations[k];
+            var pts = open ? d.pts.map(function (p) {
+                // A gate links to the dimensions that score ITS outcome — through the one
+                // navigation channel (openGuide), never by restating the dimension here.
+                // Where nothing scores a gate, say so: an invented mapping would be worse
+                // than an honest gap, and the gap is what gets it fixed.
+                var tail = (p[3] && p[3].length)
+                    ? '<span class="dims">' + p[3].map(function (k) {
+                          if (k === '*') return '<button type="button" class="dimchip" data-dim="*">all 52 dimensions</button>';
+                          var dm = DIMS[k] || {};
+                          return '<button type="button" class="dimchip' + (dm.j ? ' j' : '') + '" data-dim="' + esc(k) + '">' +
+                                 esc(dm.l || k) + '</button>';
+                      }).join('') + '</span>'
+                    : (p[0] === 'na' || p[0] === 'pending' ? ''
+                       : '<span class="unscored">no dimension scores this yet</span>');
+                return '<li class="pt"><span class="pd pd-' + (p[0] === 'pending' ? 'na' : p[0]) + '"></span><span>' +
+                    '<span class="pn">' + esc(p[1]) + '</span><br><span class="px">' + esc(p[2]) + '</span>' +
+                    tail + '</span></li>';
+            }).join('') : '';
+            return '<div class="read-head"><span class="read-station">' + esc(k) + '</span>' +
+                '<span class="chip chip-' + d.s + '">' + esc(WORD[d.s]) + '</span>' +
+                (open ? '<span class="grow"></span><button type="button" class="ghost" data-close>Close</button>' : '') +
+                '</div><p class="headline">' + esc(d.head) + '</p><div class="alts">' +
+                '<div class="alt alt-now"><span class="alt-k">This answer</span><span class="alt-v">' + esc(d.now) + '</span></div>' +
+                '<div class="alt"><span class="alt-k">This agent · ' + esc(t.window) + '</span><span class="alt-v">' + esc(d.all) + '</span></div>' +
+                '<div class="alt alt-rel"><span class="alt-k" style="visibility:hidden">r</span><span class="alt-v">' + esc(d.rel) + '</span></div>' +
+                '</div><p class="ev"><span class="ev-k">Evidence</span>' + esc(d.ev) + '</p>' +
+                (open ? '<div class="points"><span class="points-t">What ran, for this answer</span><ul class="plist">' + pts + '</ul></div>'
+                      : (d.marks ? '<p class="hint">Click for the gates behind this station.</p>'
+                                 : '<p class="hint">Nothing is engraved here for this answer.</p>'));
+        }
+
+        self.set = function (t) { self.turn = t; pinned = null; hovered = null; draw(t); paint(); };
+        self.lit = function () { return key; };
+        return self;
+    }
+
+    function openGuide(k) {
+        var back = document.createElement('div');
+        back.className = 'gd-back';
+        var d = DIMS[k];
+        var body = (k === '*')
+            ? '<h4>Quality Dimensions — Guide</h4><div class="gd-meta">' +
+              '<span class="chip chip-pass">43 deterministic</span><span class="chip chip-na">9 judged</span></div>' +
+              '<p>Every scored dimension this platform grades a turn against, with what each measures, ' +
+              'whether it is deterministic code or an LLM judge, and its live pass line.</p>' +
+              '<p class="gd-tune">Opened unscoped — the full set. From a station it opens scoped to that station\'s dimensions.</p>'
+            : '<h4>' + esc(d.l) + '</h4><div class="gd-meta">' +
+              '<span class="chip chip-' + d.b + '">' + esc(WORD[d.b]) + '</span>' +
+              '<span class="chip chip-na">' + (d.j ? 'LLM judge' : 'deterministic') + '</span>' +
+              '<span class="chip chip-na">' + esc(k) + '</span></div>' +
+              '<p>' + esc(d.d) + '</p>' +
+              '<p class="gd-tune' + (/yes\/no|No pass line/.test(d.t) ? ' yesno' : '') + '">' + esc(d.t) + '</p>';
+        back.innerHTML = '<div class="gd" role="dialog" aria-modal="true" aria-label="Quality dimension">' + body +
+            '<div class="gd-foot"><button type="button" class="ghost" data-gd-close>Close</button></div></div>';
+        function shut() { back.remove(); document.removeEventListener('keydown', onKey); }
+        function onKey(e) { if (e.key === 'Escape') shut(); }
+        back.addEventListener('mousedown', function (e) { if (e.target === back) shut(); });
+        back.querySelector('[data-gd-close]').addEventListener('click', shut);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(back);
+        back.querySelector('[data-gd-close]').focus();
+    }
+
+    var instruments = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.ls'), function (root) {
+        var which = root.querySelector('[data-dial]').getAttribute('data-dial');
+        instruments.push(Instrument(root, which === 'max' ? 136 : 116));
+    });
+
+    function setTurn(id) {
+        instruments.forEach(function (ins) { ins.set(TURNS[id]); });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-turn]'), function (x) {
+            x.setAttribute('aria-pressed', String(x.getAttribute('data-turn') === id));
+        });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-turn]'), function (b) {
+        b.addEventListener('click', function () { setTurn(b.getAttribute('data-turn')); });
+    });
+    setTurn('a');
+
+    // ── the capsule: one dial, and the rows it already had become its detail ──
+    var CAP_TURN = {
+        agent: '@UDERIA', cls: 'Focus', turn: 'turn 14', window: '18 turns', live: false, stations: {
+            signed:   st('pass', 1, 'attested', 'attested · 18 sealed', 'signature intact', [['pass', 'Integrity', 'verified']], S.signed.head, S.signed.rel),
+            grounded: st('danger', 2, 'needs you now — withheld, confirmed drift', '12 of 18 clean · worth a look',
+                         '4 sources · integrity-signed · sync off',
+                         [['danger', 'Grounding gate', 'enforce · answer withheld', ['scope_faithfulness']], ['pass', 'Trusted scope', 'stamped']],
+                         'The gate withheld this answer for confirmed drift.', S.grounded.rel),
+            guarded:  st('pass', 1, 'quiet — nothing altered', '18 of 18 clean · quiet', 'inbound and outbound clean',
+                         [['pass', 'Inbound guard', 'clean'], ['pass', 'Outbound guard', 'clean']], S.guarded.head, S.guarded.rel),
+            bounded:  st('na', 0, 'not turned on', 'unscoped · nothing owed', 'nothing drives it unattended',
+                         [['na', 'Authority', 'interactive turn']], 'No authority scope is owed.', S.bounded.rel),
+            scored:   st('pass', 1, 'quiet — 20 checks, no gating failure', '14 of 18 clean · worth a look', 'no gating failure',
+                         [['pass', 'Evaluation', '20 checks']], 'All checks passed.', S.scored.rel),
+            trusted:  st('na', 0, 'not turned on', 'proven · breaker off', 'agent-scoped',
+                         [['na', 'Trailing trust state', 'agent-scoped']], S.trusted.head, S.trusted.rel),
+            reviewed: st('pass', 2, 'quiet — released by you after review', '0 open · can park',
+                         'released into the conversation · 01/08/2026, 20:12',
+                         [['pass', 'Review parking', 'parked, then released']],
+                         'The gate withheld it; you reviewed and released it.', S.reviewed.rel),
+            proven:   st('pass', 1, 'quiet — sealed · 7 steps', '18 of 18 sealed', 'tip 58e699751afb… · Ed25519',
+                         [['pass', 'Provenance seal', '7 steps · 58e699751afb…', ['provenance_integrity']]], S.proven.head, S.proven.rel)
+        }
+    };
+    /* Every section of the capsule, verbatim in kind — a chip list, an
+       expandable chain, actions, a full text block. The dial INDEXES these;
+       it never contains them, and clicking LOCATES rather than filters, so
+       nothing can leave the page. `st: null` = not an assurance section. */
+    var CHAIN = [['query_intake', 'cd58d23d'], ['profile_resolve', 'c80f9fde'], ['rag_search', '491a6f79'],
+                 ['rag_results', 'e0dc6f5f'], ['rag_synthesis', '370b0128'], ['llm_response', '035cac20'],
+                 ['turn_complete', '58e69975']];
+    var SOURCES = ['Uderia Platform - Your Trusted Data Agent', 'README.md',
+                   'Uderia Platform — Strategic Assessment & Competitive Roadmap',
+                   'Uderia Platform: Value Proposition Assessment & Orchestration Engine Recommendation'];
+    var LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" style="vertical-align:-1px"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+
+    /* Keyed BY STATION, and rendered in ORDER — the same eight, in the same
+       sequence as the dial. Never a hand-kept list beside it: a second order
+       is how the segment→section trace stopped being obvious in the first place.
+       A station the class cannot produce still gets a section, quiet, so every
+       segment lands somewhere and the mapping is 1:1 and complete. */
+    var CAP_BODY = {
+        grounded: '<div style="display:flex;flex-wrap:wrap;gap:5px">' +
+                  SOURCES.map(function (x) { return '<span class="src">' + esc(x) + ' · integrity-signed · sync off</span>'; }).join('') +
+                  '</div><span class="unscored" style="margin-top:2px">4 sources · every one signed</span>' +
+                  '<div class="dims"><button type="button" class="dimchip" data-dim="scope_faithfulness">Scope Faithfulness</button>' +
+                  '<button type="button" class="dimchip" data-dim="grounded_overlap">Grounding Overlap</button></div>',
+        scored:   '<div class="dims"><button type="button" class="dimchip" data-dim="*">all 52 dimensions</button></div>',
+        proven:   '<details><summary>View the sealed chain — 7 steps, Ed25519-signed, tamper-evident</summary>' +
+                  '<div class="chain" style="margin-top:7px">' +
+                  CHAIN.map(function (n) { return '<span class="node">' + LOCK + esc(n[0]) + ' <code>' + esc(n[1]) + '</code></span>'; }).join('') +
+                  '</div></details>' +
+                  '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">' +
+                  '<button type="button" class="ghost">Verify chain</button>' +
+                  '<button type="button" class="ghost">Export receipt</button>' +
+                  '<span class="px">a portable, independently verifiable record of how this answer was produced</span></div>' +
+                  '<div class="dims"><button type="button" class="dimchip" data-dim="provenance_integrity">Provenance Integrity</button></div>',
+        reviewed: '<details><summary>Read the released original</summary>' +
+                  '<div class="orig" style="margin-top:7px">Uderia is an <b>enterprise-grade intelligent execution engine</b> ' +
+                  'designed to act as an autonomous agent platform for complex data workflows. It is engineered to provide ' +
+                  '“Cloud-Level Reasoning” with “Zero-Trust Privacy”, positioning itself as a sovereign, vendor-neutral layer ' +
+                  'that sits on top of your existing data infrastructure.<br><br>According to the <i>Strategic Assessment &amp; ' +
+                  'Competitive Roadmap</i>, its core value proposition and architecture can be broken down as follows…</div></details>',
+        guarded:  '<div class="dims"><button type="button" class="dimchip" data-dim="safety">Safety</button>' +
+                  '<button type="button" class="dimchip j" data-dim="content_safety">Content Safety</button></div>'
+    };
+    /* The one section that is NOT a station — your rating, not an assurance
+       reading. Marked, so the coverage check can tell deliberate from dropped. */
+    var CAP_EXTRA = [{ k: 'Feedback', v: 'Helpful · Unhelpful — your rating, not an assurance reading' }];
+
+    var caprows = document.getElementById('caprows'), capnote = document.getElementById('capnote');
+    var capIns = Instrument(document.querySelector('.cap'), 116, {
+        sum: document.getElementById('capsum'), read: null,
+        onPaint: function (lit) {
+            if (!caprows.childElementCount) {
+                caprows.innerHTML = ORDER.map(function (k) {
+                    var d = CAP_TURN.stations[k];
+                    return '<div class="sec-b" data-sec="' + k + '">' +
+                        '<button type="button" class="sec-h" data-open="' + k + '" aria-expanded="false">' +
+                        '<span class="caret">' + (CAP_BODY[k] ? '\u25B8' : '\u00A0') + '</span>' +
+                        '<span class="sec-k">' + esc(k) + '</span>' +
+                        '<span class="sec-v">' + esc(d.now) + '</span>' +
+                        '<span class="chip chip-' + d.s + '">' + esc(WORD[d.s]) + '</span></button>' +
+                        (CAP_BODY[k] ? '<div class="sec-body" hidden>' + CAP_BODY[k] + '</div>' : '') + '</div>';
+                }).join('') + CAP_EXTRA.map(function (r) {
+                    return '<div class="sec-b" data-sec="">' +
+                        '<button type="button" class="sec-h"><span class="sec-k">' + esc(r.k) + '</span>' +
+                        '<span class="sec-v">' + esc(r.v) + '</span></button></div>';
+                }).join('');
+                Array.prototype.forEach.call(caprows.querySelectorAll('[data-dim]'), function (b) {
+                    b.addEventListener('click', function (e) { e.stopPropagation(); openGuide(b.getAttribute('data-dim')); });
+                });
+                // Collapsed at rest: the capsule opens under the answer, so it must not
+                // arrive as a wall. Hover LOCATES a section; only a click opens it.
+                Array.prototype.forEach.call(caprows.querySelectorAll('[data-open]'), function (b) {
+                    b.addEventListener('click', function () {
+                        var box = b.parentNode, body = box.querySelector('.sec-body');
+                        if (!body) return;
+                        var open = body.hasAttribute('hidden');
+                        body.toggleAttribute('hidden', !open);
+                        box.classList.toggle('open', open);
+                        b.setAttribute('aria-expanded', String(open));
+                    });
+                });
+            }
+            // LOCATE, never filter: others dim, none are removed, and the lit one
+            // is scrolled into view. Content cannot leave the page.
+            var target = null;
+            Array.prototype.forEach.call(caprows.querySelectorAll('.sec-b'), function (el) {
+                var k = el.getAttribute('data-sec');
+                var on = !!lit && k === lit;
+                el.classList.toggle('lit', on);
+                el.classList.toggle('mute', !!lit && !on);
+                if (on && !target) target = el;
+            });
+            if (target && target.scrollIntoView) {
+                target.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+            }
+            capnote.textContent = lit
+                ? 'Its section is highlighted — nothing was hidden.'
+                : ORDER.length + ' sections, one per station, in the dial\u2019s order · ' +
+                  CAP_EXTRA.length + ' more is feedback, not assurance';
+        }
+    });
+    capIns.set(CAP_TURN);
+})();
+</script>

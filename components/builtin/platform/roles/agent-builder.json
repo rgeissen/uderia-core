@@ -1,0 +1,112 @@
+{
+  "id": "agent-builder",
+  "title": "Agent Builder",
+  "status": "active",
+  "effects": [
+    "read",
+    "write"
+  ],
+  "description": "Composes agents of every class from the ingredients the user has — model, data source, knowledge repositories, expert agents, skills, components, context window — and submits them for the user's approval; changes an agent's composition the same way, and which knowledge graph each agent reads; tests them once they exist. It reads repositories and graphs; changing them is the Knowledge Curator's.",
+  "operations": [
+    "profiles.*",
+    "!profiles.metric*",
+    "llm.*",
+    "mcp.*",
+    "!mcp.servers_delete",
+    "!llm.configurations_delete",
+    "trust.agent",
+    "trust.agents",
+    "rag.collections",
+    "rag.collection",
+    "knowledge.documents",
+    "knowledge_graph.list",
+    "knowledge_graph.stats",
+    "knowledge_graph.assignments",
+    "knowledge_graph.assignments_set",
+    "knowledge_graph.activate",
+    "knowledge_graph.context",
+    "skills.list",
+    "components.list",
+    "components.get",
+    "context_window_types.*"
+  ],
+  "playbooks": [
+    "platform-playbooks:agents/*",
+    "platform-playbooks:building/*"
+  ],
+  "needs": [
+    "connectors",
+    "platform-connectors",
+    "database-connections"
+  ],
+  "rank": 2,
+  "examples": [
+    {
+      "ask": "Create a Focus agent DOCSQA that answers from the Uderia Documentation repository, on my default agent's model.",
+      "outcome": "It reads your default agent and your repositories and submits a new Focus agent — your default model, Uderia Documentation as its knowledge, the name already resolved to its id. Nothing exists until you approve."
+    },
+    {
+      "ask": "Turn on the chart component for @SALES.",
+      "outcome": "It submits a change naming only the chart; the request you approve carries @SALES's whole component setup with the chart on and every other component exactly as it was."
+    },
+    {
+      "ask": "Make a coordinator over @SALES and @DOCS.",
+      "outcome": "It submits a Coordinate agent with both as its experts, their tags resolved to your agents — and refuses a tag that is not one of yours, listing the ones that are."
+    },
+    {
+      "ask": "Let @SALES use the Retail graph.",
+      "outcome": "It reads which agents the Retail graph is assigned to, then submits the full list with @SALES added — and, when you want it to be the graph @SALES reads, making it active. Both wait for your approval. Afterwards it can show what @SALES would be told from the graph about a question."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Entering, changing or reading back credentials — LLM configurations and MCP servers",
+      "why": "Credentials are yours to hold; no result an agent sees ever contains one.",
+      "ops": [
+        "llm.configurations_create",
+        "llm.configurations_update",
+        "llm.configurations_get",
+        "mcp.servers_create",
+        "mcp.servers_update",
+        "mcp.servers_import"
+      ]
+    },
+    {
+      "what": "Choosing which LLM or MCP server is your active one",
+      "why": "It changes every conversation you start, not only the agent being built.",
+      "ops": [
+        "llm.configurations_activate",
+        "mcp.servers_activate"
+      ]
+    },
+    {
+      "what": "Deleting an LLM configuration or an MCP server",
+      "why": "Other agents depend on them, and creating them is already yours — so is removing them. The role excludes both."
+    },
+    {
+      "what": "Opening an agent to the REST API, or making one your default",
+      "why": "They decide what every other client and conversation runs on.",
+      "ops": [
+        "profiles.set_active_for_consumption",
+        "profiles.set_default"
+      ]
+    },
+    {
+      "what": "An agent's authority limits and its additional data sources",
+      "why": "Not part of what the Builder may compose yet — set them in the agent editor.",
+      "args": [
+        "profiles.create:authorityConfig",
+        "profiles.update:authorityConfig",
+        "profiles.create:additionalMcpServers"
+      ]
+    },
+    {
+      "what": "Signing the agents it builds",
+      "why": "Building and vouching stay apart: you test the agent, then sign it."
+    },
+    {
+      "what": "Creating repositories, adding documents or building graphs",
+      "why": "That is the Knowledge Curator's work; the Builder chooses from what already exists."
+    }
+  ]
+}

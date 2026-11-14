@@ -1,0 +1,2049 @@
+{
+ "budget_exhausted": {
+  "navigator": {
+   "budget_used": {
+    "claims": 0,
+    "notes": 1,
+    "refusals": 1,
+    "steps": 1
+   },
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [
+       "[Budget exhausted \u2014 steps] 1 of 1 steps used. Do not call any more tools. Answer NOW with what you have, and state plainly what is left undone."
+      ],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    },
+    {
+     "returned": {
+      "executed_sql": "SELECT name FROM db1.t",
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "budget_exhausted": "steps",
+       "error": "[Budget exhausted \u2014 steps] `database_query` was not run: the turn's steps budget is used up (1 of 1 steps used). Do not call more tools. Answer now with what you already have, and state plainly what is left undone.",
+       "tool_name": "database_query"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": {
+    "claims": 0,
+    "notes": 2,
+    "refusals": 0,
+    "steps": 2
+   },
+   "db_saw": [
+    "SELECT id FROM db1.t",
+    "SELECT name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    },
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ],
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": {
+    "claims": 0,
+    "notes": 1,
+    "refusals": 1,
+    "steps": 1
+   },
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       },
+       {
+        "text": "[Budget exhausted \u2014 steps] 1 of 1 steps used. Do not call any more tools. Answer NOW with what you have, and state plainly what is left undone.",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    },
+    {
+     "returned": [
+      "{\"error\": \"[Budget exhausted \\u2014 steps] `base_readQuery` was not run: the turn's steps budget is used up (1 of 1 steps used). Do not call more tools. Answer now with what you already have, and state plainly what is left undone.\", \"budget_exhausted\": \"steps\", \"tool_name\": \"base_readQuery\"}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "db_error": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT nope FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT nope FROM db1.t",
+      "notes": [],
+      "outcome": "error",
+      "result": {
+       "error": "Column nope does not exist",
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "error",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT nope FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "error": "Column nope does not exist",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "error",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT nope FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"error\", \"error\": \"Column nope does not exist\"}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "error",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "db_raises": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [],
+      "outcome": "error",
+      "result": {
+       "error": "socket closed",
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "error",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "data": "socket closed",
+      "error": "An exception occurred while invoking tool 'base_readQuery'.",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      "Error from base_readQuery: socket closed\nNEXT STEP: correct the call (the error names what was wrong) and try again, or answer with what you have \u2014 do not repeat the identical call.",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "denied_and_nonstring": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "database_query"
+   ],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": 7,
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "agent_policy_denied: 'database_query' is denied to this agent",
+       "metadata": {
+        "agent_denied": true,
+        "policy_reason": "'database_query' is denied to this agent",
+        "terminal": true,
+        "tool_name": "database_query"
+       },
+       "results": [
+        {
+         "agent_policy": "DENIED \u2014 this action is outside this agent's permitted scope ('database_query' is denied to this agent). Do not retry; report this limitation."
+        }
+       ],
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "data": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "error": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "base_readQuery"
+   ],
+   "outs": [
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"agent_policy_denied: 'base_readQuery' is denied to this agent\", \"metadata\": {\"tool_name\": \"base_readQuery\", \"agent_denied\": true, \"policy_reason\": \"'base_readQuery' is denied to this agent\", \"terminal\": true}, \"results\": [{\"agent_policy\": \"DENIED \\u2014 this action is outside this agent's permitted scope ('base_readQuery' is denied to this agent). Do not retry; report this limitation.\"}]}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "denied_tool": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "database_query"
+   ],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "agent_policy_denied: 'database_query' is denied to this agent",
+       "metadata": {
+        "agent_denied": true,
+        "policy_reason": "'database_query' is denied to this agent",
+        "terminal": true,
+        "tool_name": "database_query"
+       },
+       "results": [
+        {
+         "agent_policy": "DENIED \u2014 this action is outside this agent's permitted scope ('database_query' is denied to this agent). Do not retry; report this limitation."
+        }
+       ],
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "base_readQuery"
+   ],
+   "outs": [
+    {
+     "returned": {
+      "error": "agent_policy_denied: 'base_readQuery' is denied to this agent",
+      "metadata": {
+       "agent_denied": true,
+       "policy_reason": "'base_readQuery' is denied to this agent",
+       "terminal": true,
+       "tool_name": "base_readQuery"
+      },
+      "results": [
+       {
+        "agent_policy": "DENIED \u2014 this action is outside this agent's permitted scope ('base_readQuery' is denied to this agent). Do not retry; report this limitation."
+       }
+      ],
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "base_readQuery"
+   ],
+   "outs": [
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"agent_policy_denied: 'base_readQuery' is denied to this agent\", \"metadata\": {\"tool_name\": \"base_readQuery\", \"agent_denied\": true, \"policy_reason\": \"'base_readQuery' is denied to this agent\", \"terminal\": true}, \"results\": [{\"agent_policy\": \"DENIED \\u2014 this action is outside this agent's permitted scope ('base_readQuery' is denied to this agent). Do not retry; report this limitation.\"}]}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "deny_writes_delete": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "database_query"
+   ],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "DELETE FROM db1.t",
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "agent_policy_denied: this agent may not perform write actions ('database_query')",
+       "metadata": {
+        "agent_denied": true,
+        "policy_reason": "this agent may not perform write actions ('database_query')",
+        "terminal": true,
+        "tool_name": "database_query"
+       },
+       "results": [
+        {
+         "agent_policy": "DENIED \u2014 this action is outside this agent's permitted scope (this agent may not perform write actions ('database_query')). Do not retry; report this limitation."
+        }
+       ],
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "base_readQuery"
+   ],
+   "outs": [
+    {
+     "returned": {
+      "error": "agent_policy_denied: this agent may not perform write actions ('base_readQuery')",
+      "metadata": {
+       "agent_denied": true,
+       "policy_reason": "this agent may not perform write actions ('base_readQuery')",
+       "terminal": true,
+       "tool_name": "base_readQuery"
+      },
+      "results": [
+       {
+        "agent_policy": "DENIED \u2014 this action is outside this agent's permitted scope (this agent may not perform write actions ('base_readQuery')). Do not retry; report this limitation."
+       }
+      ],
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [
+    "base_readQuery"
+   ],
+   "outs": [
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"agent_policy_denied: this agent may not perform write actions ('base_readQuery')\", \"metadata\": {\"tool_name\": \"base_readQuery\", \"agent_denied\": true, \"policy_reason\": \"this agent may not perform write actions ('base_readQuery')\", \"terminal\": true}, \"results\": [{\"agent_policy\": \"DENIED \\u2014 this action is outside this agent's permitted scope (this agent may not perform write actions ('base_readQuery')). Do not retry; report this limitation.\"}]}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "deny_writes_read_ok": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "loop_guard_repeat": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    },
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "repeated_identical_call",
+       "error_message": "This exact call to 'database_query' has already been made 1\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \u2014 use what you already have, or change the arguments.",
+       "loop_guard": {
+        "ceiling": 1,
+        "repeats": 2,
+        "tool_name": "database_query"
+       },
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    },
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t",
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "repeated_identical_call",
+       "error_message": "This exact call to 'database_query' has already been made 1\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \u2014 use what you already have, or change the arguments.",
+       "loop_guard": {
+        "ceiling": 1,
+        "repeats": 3,
+        "tool_name": "database_query"
+       },
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    },
+    {
+     "returned": {
+      "error": "repeated_identical_call",
+      "error_message": "This exact call to 'base_readQuery' has already been made 1\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \u2014 use what you already have, or change the arguments.",
+      "loop_guard": {
+       "ceiling": 1,
+       "repeats": 2,
+       "tool_name": "base_readQuery"
+      },
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    },
+    {
+     "returned": {
+      "error": "repeated_identical_call",
+      "error_message": "This exact call to 'base_readQuery' has already been made 1\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \u2014 use what you already have, or change the arguments.",
+      "loop_guard": {
+       "ceiling": 1,
+       "repeats": 3,
+       "tool_name": "base_readQuery"
+      },
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    },
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"repeated_identical_call\", \"error_message\": \"This exact call to 'base_readQuery' has already been made 1\\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \\u2014 use what you already have, or change the arguments.\", \"loop_guard\": {\"tool_name\": \"base_readQuery\", \"repeats\": 2, \"ceiling\": 1}}",
+      null
+     ]
+    },
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"repeated_identical_call\", \"error_message\": \"This exact call to 'base_readQuery' has already been made 1\\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \\u2014 use what you already have, or change the arguments.\", \"loop_guard\": {\"tool_name\": \"base_readQuery\", \"repeats\": 3, \"ceiling\": 1}}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "nonstring_sql": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": {
+       "sql": "SELECT 1"
+      },
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "data": "argument 'sql' is not SQL text (got dict) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+       "error": "argument 'sql' is not SQL text (got dict) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "data": "argument 'sql' is not SQL text (got dict) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "error": "argument 'sql' is not SQL text (got dict) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"argument 'sql' is not SQL text (got dict) \\u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.\", \"data\": \"argument 'sql' is not SQL text (got dict) \\u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.\"}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "nonstring_then_loop": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": 7,
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "data": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+       "error": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    },
+    {
+     "returned": {
+      "executed_sql": 7,
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "repeated_identical_call",
+       "error_message": "This exact call to 'database_query' has already been made 1\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \u2014 use what you already have, or change the arguments.",
+       "loop_guard": {
+        "ceiling": 1,
+        "repeats": 2,
+        "tool_name": "database_query"
+       },
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    },
+    {
+     "returned": {
+      "executed_sql": 7,
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "error": "repeated_identical_call",
+       "error_message": "This exact call to 'database_query' has already been made 1\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \u2014 use what you already have, or change the arguments.",
+       "loop_guard": {
+        "ceiling": 1,
+        "repeats": 3,
+        "tool_name": "database_query"
+       },
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "data": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "error": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    },
+    {
+     "returned": {
+      "data": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "error": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    },
+    {
+     "returned": {
+      "data": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "error": "argument 'sql' is not SQL text (got int) \u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"argument 'sql' is not SQL text (got int) \\u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.\", \"data\": \"argument 'sql' is not SQL text (got int) \\u2014 the upstream reference produced no SQL. This is not retryable: reference a phase whose result carries a 'sql' field (e.g. a query_product compile), or write the statement explicitly.\"}",
+      null
+     ]
+    },
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"repeated_identical_call\", \"error_message\": \"This exact call to 'base_readQuery' has already been made 1\\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \\u2014 use what you already have, or change the arguments.\", \"loop_guard\": {\"tool_name\": \"base_readQuery\", \"repeats\": 2, \"ceiling\": 1}}",
+      null
+     ]
+    },
+    {
+     "returned": [
+      "{\"status\": \"error\", \"error\": \"repeated_identical_call\", \"error_message\": \"This exact call to 'base_readQuery' has already been made 1\\u00d7 this turn with identical arguments and returned the same result. Repeating it will not produce new information \\u2014 use what you already have, or change the arguments.\", \"loop_guard\": {\"tool_name\": \"base_readQuery\", \"repeats\": 3, \"ceiling\": 1}}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "preflight_observe": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM nosuch.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM nosuch.t",
+      "notes": [],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM nosuch.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM nosuch.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "preflight_unknown_db": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM nosuch.t",
+      "notes": [],
+      "outcome": "refused",
+      "result": {
+       "data": "[Preflight] Database 'nosuch' does not exist \u2014 referenced database(s) not in the catalog: nosuch. The query was NOT executed. Discover the correct database/table before retrying.",
+       "error": "Database 'nosuch' does not exist",
+       "preflight": true,
+       "status": "error"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "data": "[Preflight] Database 'nosuch' does not exist \u2014 referenced database(s) not in the catalog: nosuch. The query was NOT executed. Discover the correct database/table before retrying.",
+      "error": "Database 'nosuch' does not exist",
+      "preflight": true,
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      "{\"status\": \"error\", \"preflight\": true, \"error\": \"Database 'nosuch' does not exist\", \"data\": \"[Preflight] Database 'nosuch' does not exist \\u2014 referenced database(s) not in the catalog: nosuch. The query was NOT executed. Discover the correct database/table before retrying.\"}",
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": []
+  }
+ },
+ "read_empty": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE name = 'zz'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t WHERE name = 'zz'",
+      "notes": [],
+      "outcome": "success",
+      "result": {
+       "results": [],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE name = 'zz'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE name = 'zz'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": []}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "read_success": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id, name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id, name FROM db1.t",
+      "notes": [],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id, name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id, name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "registry_on": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id, name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id, name FROM db1.t",
+      "notes": [],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": [
+    {
+     "n": 1,
+     "rows": 2,
+     "statement": "SELECT id, name FROM db1.t"
+    }
+   ],
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id, name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "results": [
+       {
+        "id": 1,
+        "name": "a"
+       },
+       {
+        "id": 2,
+        "name": "b"
+       }
+      ],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": [
+    {
+     "n": 1,
+     "rows": 2,
+     "statement": "SELECT id, name FROM db1.t"
+    }
+   ],
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id, name FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": [
+    {
+     "n": 1,
+     "rows": 2,
+     "statement": "SELECT id, name FROM db1.t"
+    }
+   ],
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "teradata_limit_retry": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t LIMIT 5",
+    "SELECT TOP 5 id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT TOP 5 id FROM db1.t",
+      "notes": [
+       "[Uderia rewrote this query before it ran; executed SQL: SELECT TOP 5 id FROM db1.t]"
+      ],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": [
+       {
+        "changes": [],
+        "executed_sql": "SELECT TOP 5 id FROM db1.t",
+        "kind": "dialect",
+        "original_sql": "SELECT id FROM db1.t LIMIT 5"
+       }
+      ]
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t LIMIT 5"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "error": "[Error 3706] Syntax error: expected something between 'db1.t' and 'LIMIT'",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "error",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t LIMIT 5",
+    "SELECT TOP 5 id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       },
+       {
+        "text": "[Uderia rewrote this query before it ran: Teradata takes its row limit as `SELECT TOP n \u2026` (no LIMIT; TOP never after ORDER BY). Write it that way next time. Executed SQL: SELECT TOP 5 id FROM db1.t]",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "teradata_limit_retry_registry": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t LIMIT 5",
+    "SELECT TOP 5 id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT TOP 5 id FROM db1.t",
+      "notes": [
+       "[Uderia rewrote this query before it ran; executed SQL: SELECT TOP 5 id FROM db1.t]"
+      ],
+      "outcome": "success",
+      "result": {
+       "results": [
+        {
+         "id": 1,
+         "name": "a"
+        },
+        {
+         "id": 2,
+         "name": "b"
+        }
+       ],
+       "status": "success"
+      },
+      "rewrites": [
+       {
+        "changes": [],
+        "executed_sql": "SELECT TOP 5 id FROM db1.t",
+        "kind": "dialect",
+        "original_sql": "SELECT id FROM db1.t LIMIT 5"
+       }
+      ]
+     }
+    }
+   ],
+   "registry": [
+    {
+     "n": 1,
+     "rows": 2,
+     "statement": "SELECT TOP 5 id FROM db1.t"
+    }
+   ],
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t LIMIT 5"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "error": "[Error 3706] Syntax error: expected something between 'db1.t' and 'LIMIT'",
+      "status": "error"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": [],
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "error",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t LIMIT 5",
+    "SELECT TOP 5 id FROM db1.t"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": [{\"id\": 1, \"name\": \"a\"}, {\"id\": 2, \"name\": \"b\"}]}",
+        "type": "text"
+       },
+       {
+        "text": "[Uderia rewrote this query before it ran: Teradata takes its row limit as `SELECT TOP n \u2026` (no LIMIT; TOP never after ORDER BY). Write it that way next time. Executed SQL: SELECT TOP 5 id FROM db1.t]",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": [
+    {
+     "n": 1,
+     "rows": 2,
+     "statement": "SELECT TOP 5 id FROM db1.t"
+    }
+   ],
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "unverified_literal_budget": {
+  "navigator": {
+   "budget_used": {
+    "claims": 0,
+    "notes": 1,
+    "refusals": 0,
+    "steps": 1
+   },
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE city = 'Atlantis'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t WHERE city = 'Atlantis'",
+      "notes": [
+       "[Preflight:value] 0 rows \u2014 but nothing in this turn established that 'Atlantis' occurs in city (t declares no value list for it, and no result row has shown it). A zero on an unverified value is a claim about the FILTER, not about the data: it means 'Atlantis' matched nothing, not that nothing exists. Before reporting an absence, check the value: SELECT TOP 20 city, COUNT(*) AS n FROM t GROUP BY 1 ORDER BY 2 DESC \u2014 or filter on the attribute that carries the concept by NAME rather than a code remembered from elsewhere. Filtered: city = 'Atlantis'.",
+       "[Budget] 1 of 3 steps used."
+      ],
+      "outcome": "success",
+      "result": {
+       "results": [],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": [],
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": {
+    "claims": 0,
+    "notes": 1,
+    "refusals": 0,
+    "steps": 1
+   },
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE city = 'Atlantis'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "preflight_note": "[Preflight:value] 0 rows \u2014 but nothing in this turn established that 'Atlantis' occurs in city (t declares no value list for it, and no result row has shown it). A zero on an unverified value is a claim about the FILTER, not about the data: it means 'Atlantis' matched nothing, not that nothing exists. Before reporting an absence, check the value: SELECT TOP 20 city, COUNT(*) AS n FROM t GROUP BY 1 ORDER BY 2 DESC \u2014 or filter on the attribute that carries the concept by NAME rather than a code remembered from elsewhere. Filtered: city = 'Atlantis'.",
+      "preflight_unverified": [
+       "t.city='Atlantis'"
+      ],
+      "results": [],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": [],
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "preflight_note",
+      "preflight_unverified",
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": {
+    "claims": 0,
+    "notes": 1,
+    "refusals": 0,
+    "steps": 1
+   },
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE city = 'Atlantis'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": []}",
+        "type": "text"
+       },
+       {
+        "text": "[Preflight:value] 0 rows \u2014 but nothing in this turn established that 'Atlantis' occurs in city (t declares no value list for it, and no result row has shown it). A zero on an unverified value is a claim about the FILTER, not about the data: it means 'Atlantis' matched nothing, not that nothing exists. Before reporting an absence, check the value: SELECT TOP 20 city, COUNT(*) AS n FROM t GROUP BY 1 ORDER BY 2 DESC \u2014 or filter on the attribute that carries the concept by NAME rather than a code remembered from elsewhere. Filtered: city = 'Atlantis'.",
+        "type": "text"
+       },
+       {
+        "text": "[Budget] 1 of 3 steps used.",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": [],
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ },
+ "unverified_literal_empty": {
+  "navigator": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE city = 'Atlantis'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "executed_sql": "SELECT id FROM db1.t WHERE city = 'Atlantis'",
+      "notes": [
+       "[Preflight:value] 0 rows \u2014 but nothing in this turn established that 'Atlantis' occurs in city (t declares no value list for it, and no result row has shown it). A zero on an unverified value is a claim about the FILTER, not about the data: it means 'Atlantis' matched nothing, not that nothing exists. Before reporting an absence, check the value: SELECT TOP 20 city, COUNT(*) AS n FROM t GROUP BY 1 ORDER BY 2 DESC \u2014 or filter on the attribute that carries the concept by NAME rather than a code remembered from elsewhere. Filtered: city = 'Atlantis'."
+      ],
+      "outcome": "success",
+      "result": {
+       "results": [],
+       "status": "success"
+      },
+      "rewrites": []
+     }
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "database_query",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "optimize": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE city = 'Atlantis'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": {
+      "preflight_note": "[Preflight:value] 0 rows \u2014 but nothing in this turn established that 'Atlantis' occurs in city (t declares no value list for it, and no result row has shown it). A zero on an unverified value is a claim about the FILTER, not about the data: it means 'Atlantis' matched nothing, not that nothing exists. Before reporting an absence, check the value: SELECT TOP 20 city, COUNT(*) AS n FROM t GROUP BY 1 ORDER BY 2 DESC \u2014 or filter on the attribute that carries the concept by NAME rather than a code remembered from elsewhere. Filtered: city = 'Atlantis'.",
+      "preflight_unverified": [
+       "t.city='Atlantis'"
+      ],
+      "results": [],
+      "status": "success"
+     },
+     "tokens": [
+      0,
+      0
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "preflight_note",
+      "preflight_unverified",
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  },
+  "react": {
+   "budget_used": null,
+   "db_saw": [
+    "SELECT id FROM db1.t WHERE city = 'Atlantis'"
+   ],
+   "denied": [],
+   "outs": [
+    {
+     "returned": [
+      [
+       {
+        "text": "{\"status\": \"success\", \"results\": []}",
+        "type": "text"
+       },
+       {
+        "text": "[Preflight:value] 0 rows \u2014 but nothing in this turn established that 'Atlantis' occurs in city (t declares no value list for it, and no result row has shown it). A zero on an unverified value is a claim about the FILTER, not about the data: it means 'Atlantis' matched nothing, not that nothing exists. Before reporting an absence, check the value: SELECT TOP 20 city, COUNT(*) AS n FROM t GROUP BY 1 ORDER BY 2 DESC \u2014 or filter on the attribute that carries the concept by NAME rather than a code remembered from elsewhere. Filtered: city = 'Atlantis'.",
+        "type": "text"
+       }
+      ],
+      null
+     ]
+    }
+   ],
+   "registry": null,
+   "scans": [
+    [
+     "base_readQuery",
+     [
+      "results",
+      "status"
+     ]
+    ]
+   ]
+  }
+ }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "explain-plan-expert",
+  "version": "1.0.0",
+  "description": "Judgement for the EXPLAIN Plan component (TDA_ExplainPlan): which plan finding to lead with, what each means for the query and what changes it, and how to present optimizer estimates honestly.",
+  "author": "Uderia",
+  "tags": ["explain", "query plan", "performance", "teradata"],
+  "keywords": ["explain", "plan", "slow", "product join", "statistics", "redistribution", "spool", "TDA_ExplainPlan"],
+  "use_cases": [
+    "Explaining why a query is slow from its EXPLAIN",
+    "Recommending statistics or a join rewrite from plan findings",
+    "Comparing the plans of two versions of a query"
+  ],
+  "main_file": "explain-plan-expert.md",
+  "last_updated": "2026-10-02",
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "graph"
+  }
+}

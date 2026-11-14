@@ -1,0 +1,44 @@
+{
+  "name": "data-extract",
+  "version": "1.0.0",
+  "extension_id": "extract",
+  "display_name": "Data Extractor",
+  "description": "Extracts structured data (numbers, percentages, entities) from the LLM answer using deterministic regex patterns. Also returns ONE bare value via a first/last/max/min/sum selector, or a precise /regex/ capture — ideal for a flow decision node.",
+  "author": "TDA Core Team",
+  "license": "MIT",
+  "category": "Transform",
+  "extension_tier": "simple",
+  "requires_llm": false,
+  "keywords": ["extract", "numbers", "entities", "percentages", "structured", "parsing", "selector", "regex"],
+  "files": {
+    "extension": "extract.py"
+  },
+  "output_target": "silent",
+  "parameters": {
+    "supported": true,
+    "description": "A type filter (numbers/percentages/entities), a scalar selector (first/last/max/min/sum → one bare number), or a /regex/ capture (first group, coerced to a number when numeric).",
+    "examples": ["numbers", "max", "first", "/(\\d+)\\s+products/"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "numbers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "value": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        }
+      },
+      "percentages": { "type": "array", "items": { "type": "number" } },
+      "entities": { "type": "array", "items": { "type": "string" } },
+      "source_length": { "type": "integer" }
+    }
+  },
+  "metadata": {
+    "tags": ["built-in", "transform", "core"]
+  }
+}

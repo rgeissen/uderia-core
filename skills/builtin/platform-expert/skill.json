@@ -1,0 +1,20 @@
+{
+  "name": "platform-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on answering questions about Uderia itself with TDA_Platform — finding the right operation, asking for only the fields a question needs, presenting agents the way the platform names them, and handling a person's acts honestly.",
+  "author": "Uderia",
+  "tags": ["platform", "agents", "administration", "introspection"],
+  "keywords": ["platform", "agents", "profiles", "configuration", "TDA_Platform"],
+  "use_cases": [
+    "Answering which agents the user has and how each is configured",
+    "Looking up an agent's components, skills or classification",
+    "Explaining what the user must do themselves when an act is a person's"
+  ],
+  "main_file": "platform-expert.md",
+  "last_updated": "2026-10-31",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "server"
+  }
+}

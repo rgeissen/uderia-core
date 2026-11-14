@@ -1,0 +1,95 @@
+{
+ "id": "prod_0aa3a650_top_customers_then_names",
+ "graph": {
+  "name": "airlines_core"
+ },
+ "source": "prod session 0aa3a650 (2026-09-19), @IDAIRL, gemini-3.1-flash-lite \u2014 the failing run: turn 1 joined booking_segment_id = ffp_member_id, turn 2 took 7 LLM rounds / 4 SQL and paired names positionally",
+ "notes": "agent_calls are the RECORDED (wrong) SQL \u2014 the bench replays the conversation as it happened and measures the enrichment against what a correct answer needs",
+ "turns": [
+  {
+   "query": "What are my top 5 customers based on miles flown",
+   "agent_calls": [
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5\n    M.ffp_member_id,\n    SUM(A.base_miles) AS TotalBaseMiles\nFROM airlines_core.mileage_accrual A\nJOIN airlines_core.ffp_member M ON A.booking_segment_id = M.ffp_member_id\nGROUP BY M.ffp_member_id\nORDER BY TotalBaseMiles DESC"
+     }
+    }
+   ],
+   "expect": {
+    "tables": [
+     "mileage_accrual",
+     "ffp_member"
+    ],
+    "join_pairs": [
+     [
+      "mileage_accrual",
+      "ffp_member"
+     ]
+    ],
+    "identity_for": [
+     "ffp_member"
+    ],
+    "columns": [
+     "mileage_accrual.base_miles",
+     "mileage_accrual.ffp_member_id"
+    ]
+   },
+   "recorded": {
+    "llm_steps": 4,
+    "sql_calls": 1,
+    "input_tokens": 48710
+   }
+  },
+  {
+   "query": "Give me the names of those customers",
+   "agent_calls": [
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5 B.ffp_member_id, C.customer_name, SUM(B.miles_flown) AS total_miles\nFROM airlines_core.boarding_event B\nJOIN airlines_core.accounts_receivable C ON B.ffp_member_id = C.customer_account_number\nGROUP BY B.ffp_member_id, C.customer_name\nORDER BY total_miles DESC"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5 * FROM airlines_core.boarding_event"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5 B.ffp_member_id, C.customer_name, SUM(B.boarding_event_id) AS total_events\nFROM airlines_core.boarding_event B\nJOIN airlines_core.accounts_receivable C ON B.ffp_member_id = CAST(C.customer_account_number AS INTEGER)\nGROUP BY B.ffp_member_id, C.customer_name\nORDER BY total_events DESC"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5 customer_account_number, customer_name FROM airlines_core.accounts_receivable"
+     }
+    }
+   ],
+   "expect": {
+    "tables": [
+     "ffp_member"
+    ],
+    "identity_for": [
+     "ffp_member"
+    ],
+    "columns": [
+     "ffp_member.member_first_name",
+     "ffp_member.member_last_name"
+    ],
+    "carry_over": true
+   },
+   "recorded": {
+    "llm_steps": 7,
+    "sql_calls": 4,
+    "input_tokens": 99647
+   },
+   "recall_exempt": {
+    "airlines_core.boarding_event": "read only by recorded statements built on boarding_event.miles_flown, a column that does not exist (the agent invented it after turn 1's wrong join). It reached this turn at HEAD only through a 5-point description mention ('Customer Experience' on the boarding metric) that the weak-mention seed rule now drops; the correct answer reads ffp_member alone."
+   }
+  }
+ ]
+}

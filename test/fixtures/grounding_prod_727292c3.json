@@ -1,0 +1,78 @@
+{
+ "_about": "Prod session 727292c3 turn 1 (2026-10-14, @UDERIA rag_focused, gemini-3.1-flash-lite). The grounding gate withheld a well-grounded answer: T2 paired a short quotation's closer with the next quotation's opener and reported the answer's own prose as unsupported quotes; the judge saw docs[:8] and called chunk 8's terms absent. Pinned so neither can recur.",
+ "question": "what is obda?",
+ "answer": "**OBDA** stands for **Ontology-Based Data Access**. It is a subsystem within the Uderia platform designed to govern and restrict what an agent is permitted to **read** from the warehouse.\n\nAccording to the documentation, here are the key aspects of OBDA:\n\n### Core Functionality\n*   **Data Governance:** OBDA ensures that an agent is confined to a specific \"data slice.\" Under this system, the only way an agent can query the warehouse is by using a **signed data product**.\n*   **The \"Read\" Counterpart:** OBDA acts as the \"read half\" of the platform's trust architecture. Its counterpart, **ACT**, governs what an agent is permitted to **write** (using signed action types). Both systems are built on the same pattern and share underlying implementation mechanisms.\n*   **Enforcement:** When OBDA is active, the agent's \"data surface\" (configured in the profile editor) defines its entire data authority. This is enforced at critical chokepoints, preventing the agent from querying outside of its assigned slice.\n\n### The Master Switch (`OBDA_ENABLED`)\nThe behavior of the platform changes significantly based on the `OBDA_ENABLED` master switch found in **Admin → App Config → Trust**:\n*   **When OFF (Default):** The platform behaves as if OBDA were never installed. The system provides a \"byte-identical baseline,\" meaning no data confinement occurs. Tools like `query_product` or `list_products` will refuse to operate, returning an `obda_disabled` error code and advising the agent to use ordinary data tools.\n*   **When ON:** The platform enforces confinement. Any attempt to access data outside of the signed products on an agent's surface will be rejected.\n\n### Observability and Assurance\n*   **Receipts:** Every governed consumption is sealed into the turn's Ed25519 chain as an offline-verifiable receipt.\n*   **Evaluation:** The system tracks metrics like the `governed_data_ratio` and `surface_violation` to provide observability into how agents interact with governed data.\n*   **\"Substituted Grain\":** If the master switch is off, but an agent is incorrectly instructed to use `query_product`, it may be rejected and forced to use a \"substituted grain\" (a fallback mechanism) to attempt to complete its task.\n\nFor further technical details, you can refer to the primary design documentation in `OBDA_ARCHITECTURE.md` and the status assessments, such as `OBDA_STATUS_ASSESSMENT_2026-08.md`.\n\n*Sources: OBDA — Signed Data Products (Ontology-Based Data Access), ACT_ARCHITECTURE.md, Agent Trust & Assurance — Administrator Operations Guide*",
+ "chunks": [
+  {
+   "source": "ACT_ARCHITECTURE.md",
+   "collection_name": "Uderia Documentation",
+   "content": "[OBDA](OBDA_ARCHITECTURE.md) governs what an agent may **read**: a signed data product is the\nonly shape of question it may ask of the warehouse. ACT governs what it may **write**: a signed\naction type is the only shape of change it may make. The two were built on the same pattern,\nand where they share a mechanism it is one implementation, not two copies:",
+   "similarity_score": 0.6010233759880066
+  },
+  {
+   "source": "ACT Architecture — acting on the model, and through it",
+   "collection_name": "Uderia Documentation",
+   "content": "## 0a. ACT and OBDA — the write half and the read half\n\n[OBDA](OBDA_ARCHITECTURE.md) governs what an agent may **read**: a signed data product is the\nonly shape of question it may ask of the warehouse. ACT governs what it may **write**: a signed\naction type is the only shape of change it may make. The two were built on the same pattern,\nand where they share a mechanism it is one implementation, not two copies:",
+   "similarity_score": 0.49213963747024536
+  },
+  {
+   "source": "Agent Trust &amp; Assurance — Administrator Operations Guide",
+   "collection_name": "Uderia Documentation",
+   "content": "**Choosing what an agent may plan with.** The `OBDA_ENABLED` master (Admin → App Config →\n**Trust** → *Governed Data (OBDA)*) ships **off**: with it off the platform behaves as if OBDA\nwere not installed — no product contracts reach any planner, `query_product` refuses, nothing\nis confined. With it on, each agent's **Data surface** (profile editor → Trust Configuration →\n*Agent Authority* card) is one of three choices:",
+   "similarity_score": 0.48223841190338135
+  },
+  {
+   "source": "Trust UX — Frequently Asked Questions",
+   "collection_name": "Uderia Documentation",
+   "content": "Two things override all three: the `OBDA_ENABLED` **master** (App Config → Trust) —\noff means the whole family is deactivated and the platform behaves as if OBDA were\nnot installed (the card says so: *deactivated — master off*); and product **trust** —\nonly signed-and-intact products are ever served.\n\n### 8.8 The answer carries a note about a \"substituted grain\". What is that?",
+   "similarity_score": 0.4714546203613281
+  },
+  {
+   "source": "ASSURANCE_INSTRUMENTS_ARCHITECTURE.md",
+   "collection_name": "Uderia Documentation",
+   "content": "**`governed_data` (GROUNDED) reads the OBDA-READ lane stamp** and knows all four lanes\n(Aug 2026): `governed` → pass · `free-form`/`mixed` → the advisory warn (\"shown\nhonestly\") · **`confined` → pass** — every raw-SQL attempt was DENIED by the data\nsurface and nothing executed, so the confinement holding is the mechanism *working*,\nnever a warn (a warn there punishes the agent for being protected). With\nthe OBDA-READ component off for the agent (`obda_planes.plane_enabled(\"read\", …)` — the\nplane is a component since Oct 2026; there is no master switch) the scan writes no stamp and\nthe reading is `na` (structurally absent) — GROUNDED never sees a permanent advisory warn on an\nagent that has not adopted governed data.",
+   "similarity_score": 0.45638734102249146
+  },
+  {
+   "source": "Agent Authority Architecture — the Agent Principal (Tier 5 Step 4 / P3)",
+   "collection_name": "Uderia Documentation",
+   "content": "**Scope (updated Aug 2026).** The original delivery was the *attainable* form of P3: a\nscoped principal + audit attribution + fail-closed enforcement over **capabilities**\n(tools, writes, connectors, budget). The *fuller* vision — an agent confined to a data\nslice (\"cannot query outside its slice\") — shipped with **OBDA Phase C**: the\n**data surface** (§2a below) makes the set of signed data products on an agent's\nsurface its entire data authority, enforced through this same principal at the same\nchokepoints. See [OBDA_ARCHITECTURE.md §6](OBDA_ARCHITECTURE.md).\n\n## 2. The model — pure, deterministic, subset-only\n\n`core/agent_authority.py` is pure: the model + the enforcement *decision*. It **never grants** —\na scope only ever *removes* the owner's authority (subset invariant by construction, so an\nagent with no config behaves exactly as today — byte-identical baseline, charter #15).",
+   "similarity_score": 0.44442039728164673
+  },
+  {
+   "source": "OBDA — Signed Data Products (Ontology-Based Data Access)",
+   "collection_name": "Uderia Documentation",
+   "content": "# OBDA — Signed Data Products (Ontology-Based Data Access)\n\n> **The live contract** for the OBDA subsystem — what is built, by which rules, and where\n> the honest boundaries sit. The binding *design* is [TIER_5.5_OBDA_SCOPE.md](../roadmap/TIER_5.5_OBDA_SCOPE.md)\n> (normative MUST/REJECT language; its §13 stop-line governs); the per-increment build\n> record is [OBDA_STATUS_ASSESSMENT_2026-08.md](../assessments/OBDA_STATUS_ASSESSMENT_2026-08.md).\n> Status: **v1 complete** (branch `feature/obda-phase-a`, Aug 2026) — Phases A–D, V7 live\n> probes, O2 receipts, E1–E5 enforcement, K5, and the P1–P3 compositional ratchet.\n>\n> **The write half** is ACT — signed action types, built on this pattern: see §10a and\n> [ACT_ARCHITECTURE.md](ACT_ARCHITECTURE.md).",
+   "similarity_score": 0.44229912757873535
+  },
+  {
+   "source": "OBDA — Signed Data Products (Ontology-Based Data Access)",
+   "collection_name": "Uderia Documentation",
+   "content": "**The master switch.** `OBDA_ENABLED` (admin → App Config → Trust) defaults **OFF**:\noff = byte-identical baseline — **the platform behaves as if OBDA never shipped**\n(operator-restated design imperative). Every face honours it: no scan, no stamp, no\nREST surface, no Designer button, no scorer banding, **no product contracts in the KG\nenrichment, no product seeding, `query_product`/`list_products` refuse\n(`error_code: obda_disabled`, recovery-shaped — \"use your ordinary data tools\"), and\nthe data surface does not confine** — gated ONCE at `agent_authority.parse_scope`\n(the surface is dropped at parse, so the tool chokepoints, the enrichment cut, the\nchampion filter and the catalog marking all inherit from one seam; gating each\nconsumer separately is how the enrichment and the agent face were missed — found\nlive, session d51cf073: with the master off a planner was still told \"you MUST use\nquery_product\", queried a product, was REJECTed, and substituted a nonsense grain).",
+   "similarity_score": 0.439477801322937
+  },
+  {
+   "source": "ACT_ARCHITECTURE.md",
+   "collection_name": "Uderia Documentation",
+   "content": "obda` stamp (only where `OBDA_ENABLED` is on; ACT's own `actions` stamp and act log do not depend on it) |\n| Receipts | `obda.consumption` steps sealed in the turn's Ed25519 chain | `action.performed` steps sealed in the same chain; an act outside a sealed turn carries a receipt signed on its own |\n| Faces | agent · REST (`/v1/data-products/*`) · MCP | the same three, plus flow · scheduler · dashboard tile · Assurance Inbox |\n| Eval | `governed_data_ratio`, `surface_violation`, the `surface-escape` probe | `action_safety`, the `write-escape` probe |\n| Master switch | `OBDA_ENABLED` | `TDA_ACT` |",
+   "similarity_score": 0.4383249878883362
+  },
+  {
+   "source": "Agent Ops & Evaluation Architecture",
+   "collection_name": "Uderia Documentation",
+   "content": "deliberately *neither* lane: counting it free-formed would punish the agent for being protected). Its sibling **`surface_violation`** (BOUNDED, ACT) counts the surface's own denials — non-gating by design, a steady nonzero being a producer-side *product gap made measurable*. Both read the **same trace the OBDA Live Status card is built from** — observability and eval are two ends of one signal, sharing the pure classifier `agent/obda.py`. Every governed consumption additionally seals an offline-verifiable receipt into the turn's EPC (§6.4c). Full architecture: [OBDA_ARCHITECTURE.md](OBDA_ARCHITECTURE.md).",
+   "similarity_score": 0.4201992154121399
+  }
+ ],
+ "collections": [
+  "Uderia Documentation"
+ ],
+ "gate_as_shipped": {
+  "unsupported_claims": [
+   "Under this system, the only way an agent can query the warehouse is by using a **signed data product**.\n*   **The",
+   "Counterpart:** OBDA acts as the",
+   "of the platform's trust architecture. Its counterpart, **ACT**, governs what an agent is permitted to **write** (using signed action types). Both systems are built on the same pattern and share underlying implementation mechanisms.\n*   **Enforcement:** When OBDA is active, the agent's"
+  ],
+  "judge_reason": "enforce — judge: unsupported by the knowledge base: panel 0✓/1✗/0? — The answer includes multiple specific claims about the platform name and metrics/technical details (e.g., Uderia, Ed25519 chain, governed_data_ratio) that are entirely absent from the provided source documents."
+ }
+}

@@ -1,0 +1,245 @@
+{
+  "template_id": "kg_andp_semantic_v1",
+  "template_name": "Knowledge Graph Constructor - AI-Native Data Product",
+  "template_version": "1.0.0",
+  "template_type": "knowledge_graph",
+  "description": "Deterministic construction of a Knowledge Graph from a DEPLOYED AI-Native Data Product's own semantic module. No LLM, no MCP, no guessing — the product publishes an agent-discoverable catalog of itself (data_product_map, entity_metadata, column_metadata, table_relationship) and that catalog is walked directly into the two-layer topology.",
+  "status": "active",
+  "created_at": "2026-08-12T00:00:00Z",
+  "updated_at": "2026-08-12T00:00:00Z",
+  "icon": {
+    "type": "knowledge_graph",
+    "color": "purple"
+  },
+  "_surface_legend": "surface ∈ {deploy, edit, both}: 'deploy'=per-build only, 'edit'=template config only, 'both'=Edit sets default + Deploy overrides. 'none'=identity field, never user-editable.",
+  "input_variables": {
+    "profile_id": {
+      "type": "string",
+      "required": true,
+      "surface": "deploy",
+      "description": "Profile that will own the knowledge graph (any KG-capable profile; no MCP tools required)."
+    },
+    "connection_id": {
+      "type": "select",
+      "required": true,
+      "surface": "deploy",
+      "options_source": "database-connections",
+      "description": "Database connection holding the deployed data product. Credentials are resolved through the platform's encrypted connection store — never entered here."
+    },
+    "product": {
+      "type": "select",
+      "required": true,
+      "surface": "deploy",
+      "options_source": "andp-products",
+      "description": "The AI-Native Data Product to read. Discovered deterministically by scanning the connection for products publishing a data_product_map."
+    },
+    "semantic_database": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Override discovery and read this semantic database directly. Leave empty to use the standard's own discovery order (registry → {Product}_Semantic convention → dictionary scan)."
+    },
+    "discovery_mode": {
+      "type": "hidden",
+      "required": false,
+      "surface": "none",
+      "default": "andp_semantic",
+      "options": [
+        "andp_semantic"
+      ],
+      "description": "Strategy selector — fixed for this template."
+    },
+    "include_columns": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": true,
+      "description": "Include attribute and column nodes, carrying each column's meaning, PII/sensitivity classification and decoded value codes. Off = a compact entity-level graph."
+    },
+    "include_physical": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": true,
+      "description": "Include the physical layer (schema/table/column) with real, queryable identifiers and types read from the data dictionary. Required for the grounding gate's trusted scope to resolve."
+    },
+    "include_product_knowledge": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": true,
+      "description": "Include the product's own description of itself: business glossary, proven query recipes, design decisions, naming standards, lineage and data-quality readings — each linked to the entity or table it concerns."
+    },
+    "include_non_business_modules": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": true,
+      "description": "Include the product's self-describing modules (Semantic, Memory, Observability) as structure. Off = business Domain module only."
+    },
+    "max_value_codes": {
+      "type": "number",
+      "required": false,
+      "surface": "both",
+      "default": 60,
+      "description": "Cap on decoded values kept per attribute, keeping node payloads bounded on columns with very large code lists."
+    },
+    "graph_name": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Display name for the knowledge graph (defaults to the product name)."
+    },
+    "description": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Description for the knowledge graph."
+    },
+    "kg_store_config_id": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Graph store backend to build into (defaults to the profile's configured backend)."
+    }
+  },
+  "construction": {
+    "endpoint": "/api/v1/knowledge-graph/generate",
+    "method": "POST",
+    "deterministic": true,
+    "requires_llm": false,
+    "requires_mcp": false,
+    "estimated_tokens": 0
+  },
+  "output_schema": {
+    "logical_layer": {
+      "description": "The product's meaning — what an analyst reasons about.",
+      "entity_types": [
+        "database",
+        "domain",
+        "entity",
+        "attribute"
+      ],
+      "relationship_types": [
+        "contains",
+        "has_property",
+        "foreign_key"
+      ]
+    },
+    "physical_layer": {
+      "description": "The deployed, queryable realization — what SQL actually addresses.",
+      "entity_types": [
+        "schema",
+        "table",
+        "column"
+      ],
+      "relationship_types": [
+        "contains",
+        "implements",
+        "foreign_key"
+      ]
+    },
+    "source_tag": "andp_semantic_constructor"
+  },
+  "notes": {
+    "type_rule": "Meaning comes from the ontology; types come from the data dictionary. A product's declared column types drift from what was deployed, so physical column nodes carry the dictionary type and the logical attribute keeps the declared type as the semantic fact it is. Disagreements are counted and reported, never silently reconciled.",
+    "governance": "Each column's is_pii / data_classification declaration rides onto both its logical and physical nodes, so guardrails are driven by the product's own declaration rather than a hand-written rule.",
+    "resync": "The graph stores a source descriptor and can be re-synced when the product's catalog changes."
+  },
+  "extraction_phases": {
+    "structural": {
+      "phase": 1,
+      "description": "Deterministic read of the product's semantic module into the two-layer topology. Physical column types come from the data dictionary, never from the product's declared type.",
+      "requires_llm": false,
+      "always_runs": true,
+      "extracts": {
+        "entity_types": [
+          "database",
+          "domain",
+          "entity",
+          "attribute",
+          "schema",
+          "table",
+          "column"
+        ],
+        "relationship_types": [
+          "contains",
+          "has_property",
+          "implements",
+          "foreign_key"
+        ]
+      },
+      "source_tag": "andp_semantic_constructor",
+      "parsing_rules": {
+        "database": "The data product itself (root node).",
+        "domain": "One per module from data_product_map, enriched from Module_Registry.",
+        "entity": "One per entity_metadata row; carries the declared temporal_pattern.",
+        "attribute": "One per column_metadata row: meaning, PII/sensitivity class, decoded value codes.",
+        "schema_table_column": "The deployed realization; types read from DBC.ColumnsV.",
+        "implements": "Physical table -> logical entity, physical column -> logical attribute.",
+        "foreign_key": "From table_relationship, mirrored into the physical namespace when both column nodes exist."
+      }
+    },
+    "product_knowledge": {
+      "phase": 2,
+      "description": "What the product publishes ABOUT itself, each item linked to the entity or table it concerns.",
+      "requires_llm": false,
+      "always_runs": false,
+      "enabled_by": "include_product_knowledge",
+      "extracts": {
+        "entity_types": [
+          "business_concept",
+          "query_recipe",
+          "design_decision",
+          "quality_metric",
+          "naming_standard"
+        ],
+        "relationship_types": [
+          "relates_to",
+          "depends_on",
+          "measures",
+          "derives_from"
+        ]
+      },
+      "source_tag": "andp_semantic_constructor",
+      "parsing_rules": {
+        "business_concept": "Business_Glossary; linked to the entity/attribute it defines.",
+        "query_recipe": "Query_Cookbook; linked to the entities it queries (declared target_tables wins over SQL inference).",
+        "design_decision": "Design_Decision (current versions only); linked to the table it affects.",
+        "naming_standard": "naming_standard; governs the product root.",
+        "quality_metric": "data_quality_metric; linked by `measures` to what it reads.",
+        "lineage": "data_lineage; table-to-table becomes `derives_from`. An EXTERNAL source (a file) becomes provenance on the target rather than an invented node."
+      }
+    }
+  },
+  "output_configuration": {
+    "target": "knowledge_graph",
+    "import_method": "GraphStore.import_bulk()",
+    "upsert_semantics": true,
+    "deterministic": true,
+    "resyncable": true,
+    "notes": "Output goes to the SQLite/Neo4j-backed GraphStore. The KG stores a source descriptor so it can be re-synced when the product's catalog changes."
+  },
+  "usage_examples": [
+    {
+      "title": "Build from a deployed product",
+      "description": "Pick the connection, choose a discovered product, build. Everything else is read from the product.",
+      "inputs": {
+        "connection_id": "dbconn_...",
+        "product": "NIBRS_Source",
+        "include_columns": true,
+        "include_physical": true,
+        "include_product_knowledge": true
+      }
+    },
+    {
+      "title": "Compact entity-level graph",
+      "description": "Skip columns for a small navigable schema graph on a very wide product.",
+      "inputs": {
+        "connection_id": "dbconn_...",
+        "product": "NIBRS_Source",
+        "include_columns": false
+      }
+    }
+  ]
+}

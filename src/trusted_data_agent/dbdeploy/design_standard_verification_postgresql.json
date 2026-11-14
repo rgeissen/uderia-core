@@ -1,0 +1,69 @@
+{
+ "backend": "postgresql",
+ "on": "2026-10-07",
+ "rules": {
+  "analyze_after_create": {
+   "statements": [
+    "c6f139844bdab781aba69532c5d1e1c29bf3b59d5b4e7114250f6bb7285154a8",
+    "ec295811e522072c4e6b678cec65f465fb846bd9f16e93d7844733acf3915c22"
+   ]
+  },
+  "boolean_native": {
+   "statements": [
+    "85d142d781573b10620062778892ae67c21e4fd5409d9c412993e138f500fd13"
+   ]
+  },
+  "comment_full": {
+   "statements": [
+    "17481147e207261047a55737fe114bb1e6959912c74d8755f8b16a044a1d91ac"
+   ]
+  },
+  "encoding_utf8": {
+   "statements": [
+    "5d7096daeaf54775c1402635ec30c838e50f5bbbfb69b41e7cceee7cba1e7d6e"
+   ]
+  },
+  "foreign_key_enforced": {
+   "statements": [
+    "4334e85bd2821ac5fe953d580f5ec14498a4f253dd31b9113314e7884dfb147b",
+    "0a4b9372302eb1cfdb4d808e330f63c0229449ddac011b2c7302a9b56c5643b1",
+    "ceca3412451f41a87f2185f3a4b5686fc767eb9b281bb541d645f3e49f3b7cf1"
+   ]
+  },
+  "heap_without_key": {
+   "statements": [
+    "6ee8baadb28de002f8d1c554c564c18feaa562d1f1483c1f8118d5f1a39fb9d1",
+    "ac590146160143d089aad5914b862a1423c8ff26d3355cd082a4e778d3964155"
+   ]
+  },
+  "identifiers_quoted": {
+   "statements": [
+    "3596d1f444df3556f99887584d5ede86c983175fdfd6f1826ce8b25ed962218b",
+    "419aac8f6d4a5e306739cbb089ba543fc2bb0442bdc777bfc3a1d62ad9e42462"
+   ]
+  },
+  "key_not_null": {
+   "statements": [
+    "667e660941248162afedb173fe1c99ca5855ed08692a67c649c1a261e4b2f7db"
+   ]
+  },
+  "primary_key_from_key": {
+   "statements": [
+    "112164be35d2d49789bab4e8ed73b0e911906ba1949068e93e748a1e9db1d956",
+    "a0e2e4ab628ee86fc1106e46d7192beb150f1660e990ac952114a748b41e52c8"
+   ]
+  },
+  "reference_indexed": {
+   "statements": [
+    "12868cc1c7649fccd25bb4eda27adae0c0159c303638e3e9fa2f1f33549d6c46"
+   ]
+  },
+  "timestamp_with_zone": {
+   "statements": [
+    "c33b577f477fbb6b7090d0c58dabe401f7551ede827f4b3c0ddab5f643e91bda"
+   ]
+  }
+ },
+ "standard": "postgresql/1.0",
+ "system": "PostgreSQL 17.11"
+}

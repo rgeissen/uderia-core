@@ -1,0 +1,23 @@
+{
+  "name": "scheduler-expert",
+  "version": "1.1.0",
+  "description": "Expert guidance on using the Task Scheduler component (TDA_Scheduler) well — writing cron/interval schedules (UTC), choosing overlap policy and session context, scheduling flows, and designing recurring tasks.",
+  "author": "Uderia",
+  "tags": ["scheduler", "automation", "cron", "recurring", "tasks"],
+  "keywords": ["schedule", "cron", "interval", "recurring", "overlap", "session_context", "UTC", "automate", "TDA_Scheduler"],
+  "use_cases": [
+    "Translating a natural-language cadence into a cron or interval string",
+    "Choosing the right overlap policy for a recurring task",
+    "Deciding between current and new session context",
+    "Scheduling a flow to run automatically",
+    "Designing month-end, weekday, or hourly schedules in UTC",
+    "Choosing where a recurring result goes (Files, email, webhook)"
+  ],
+  "main_file": "scheduler-expert.md",
+  "last_updated": "2026-10-24",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "clock"
+  }
+}

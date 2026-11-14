@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signed Data Products (OBDA-READ) — Uderia</title>
+<style>
+:root{
+  --ground:#0e1621;--panel:#172230;--panel-2:#1e2c3b;--hair:#2c3c4e;--hair-soft:#223140;
+  --text:#e9eff5;--muted:#93a4b6;--dim:#6b7d90;--faint:#52657a;
+  --sage:#6cbf92;--amber:#f2b04a;--red:#e5687a;--blue:#6aa9e0;--steel-1:#9db8cf;
+  --accent:#F15F22;--accent-soft:rgba(241,95,34,0.12);--accent-line:rgba(241,95,34,0.45);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{
+  margin:0;background:radial-gradient(1200px 780px at 50% -12%,#14212f 0%,var(--ground) 58%),var(--ground);
+  color:var(--text);font-family:var(--sans);line-height:1.66;font-size:16.5px;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--steel-1);text-decoration:none;border-bottom:1px solid rgba(157,184,207,0.28);}
+a:hover{color:var(--text);}
+
+/* sticky masthead */
+.topbar{
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+  background:rgba(14,22,33,0.82);border-bottom:1px solid var(--hair);
+}
+.topbar-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar .brand{font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);}
+.topbar .sep{color:var(--faint);}
+.topbar .doc{font-weight:650;color:var(--text);}
+.topbar .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;}
+.topbar .back:hover{border-color:var(--accent-line);color:var(--text);}
+
+/* layout: content + floating TOC */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:44px;}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);}.toc{display:none;}}
+
+header.hero{padding:56px 0 8px;grid-column:1 / -1;}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
+header.hero h1{font-family:var(--sans);font-weight:800;letter-spacing:-0.02em;font-size:clamp(30px,5vw,50px);line-height:1.04;margin:0;text-wrap:balance;}
+
+/* TOC */
+.toc{grid-column:2;grid-row:2;align-self:start;position:sticky;top:72px;padding:18px 0;max-height:calc(100vh - 96px);overflow:auto;}
+.toc .toc-h{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}
+.toc a{display:block;border:none;color:var(--muted);font-size:13px;padding:3px 0 3px 12px;border-left:1px solid var(--hair);}
+.toc a:hover{color:var(--text);border-left-color:var(--accent-line);}
+.toc a.lvl-3{padding-left:24px;font-size:12.5px;color:var(--dim);}
+
+/* article */
+article.doc{min-width:0;padding:8px 0 80px;grid-column:1;grid-row:2;}
+article.doc h1,article.doc h2,article.doc h3,article.doc h4{scroll-margin-top:76px;line-height:1.2;text-wrap:balance;}
+article.doc h1{font-size:clamp(26px,3.6vw,34px);font-weight:800;letter-spacing:-0.015em;margin:40px 0 16px;}
+article.doc h2{font-size:clamp(22px,3vw,28px);font-weight:750;margin:44px 0 14px;padding-top:22px;border-top:1px solid var(--hair);}
+article.doc h3{font-size:19px;font-weight:700;color:#dbe6f0;margin:30px 0 10px;}
+article.doc h4{font-size:15.5px;font-weight:700;color:var(--muted);text-transform:none;margin:22px 0 8px;}
+article.doc p{max-width:74ch;color:#cdd8e2;margin:0 0 15px;}
+article.doc strong{color:var(--text);font-weight:650;}
+article.doc em{color:#d6e1ec;}
+article.doc ul,article.doc ol{max-width:74ch;color:#cdd8e2;padding-left:24px;}
+article.doc li{margin:6px 0;}
+article.doc li::marker{color:var(--dim);}
+article.doc hr{border:none;border-top:1px solid var(--hair);margin:36px 0;}
+article.doc blockquote{
+  margin:18px 0;padding:14px 20px;border-left:3px solid var(--accent-line);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:#d6e1ec;
+}
+article.doc blockquote p{margin:0 0 8px;}article.doc blockquote p:last-child{margin:0;}
+
+/* inline code + fenced */
+article.doc code{font-family:var(--mono);font-size:0.9em;color:var(--sage);background:rgba(108,191,146,0.08);
+  border:1px solid rgba(108,191,146,0.16);border-radius:5px;padding:1px 5px;}
+article.doc pre{
+  background:#0c141d;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 18px;
+}
+article.doc pre code{color:#c9d6e2;background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--hair);border-radius:12px;}
+article.doc table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+article.doc th,article.doc td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top;}
+article.doc thead th{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:rgba(0,0,0,0.22);}
+article.doc tbody tr:last-child td{border-bottom:none;}
+article.doc tbody tr:hover{background:rgba(255,255,255,0.015);}
+article.doc td code{white-space:nowrap;}
+/* a long identifier in running text wraps rather than widening the page at phone width */
+:where(code){overflow-wrap:anywhere;}
+/* the article is a grid/flex child: let it shrink so a wide table scrolls in its own wrapper */
+article.doc{min-width:0;}
+.table-wrap{max-width:100%;}
+
+footer.docfoot{grid-column:1 / -1;padding:28px 0 70px;border-top:1px solid var(--hair);color:var(--dim);font-size:13px;font-family:var(--mono);}
+footer.docfoot a{color:var(--muted);}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <span class="brand">Agent Trust &amp; Assurance</span>
+  <span class="sep">/</span>
+  <span class="doc">Signed Data Products</span>
+  <a class="back" href="the-life-of-a-uderia-agent.html">← The Life of a Uderia Agent</a>
+</div></div>
+
+<div class="shell">
+  <header class="hero">
+    <p class="eyebrow">Architecture · OBDA-READ · Tier 5.5</p>
+    <h1>Signed Data Products</h1>
+  </header>
+  <nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><a href="#0-what-signed-means-for-a-data-product" class="lvl-2">0. What &quot;signed&quot; MEANS for a data product</a><a href="#1-the-product-model" class="lvl-2">1. The product model</a><a href="#2-the-earned-signature-trust-kind-11" class="lvl-2">2. The earned signature (trust kind #11)</a><a href="#3-the-validation-gate-v1v7" class="lvl-2">3. The validation gate — V1–V7</a><a href="#4-the-compiler-fan-out-safe-by-construction" class="lvl-2">4. The compiler — fan-out-safe by construction</a><a href="#5-three-faces-one-semantic-core" class="lvl-2">5. Three faces, one semantic core</a><a href="#6-enforcement-the-data-surface-e-rules-and-the-knowledge-twin-k5" class="lvl-2">6. Enforcement — the data surface (E-rules) and the knowledge twin (K5)</a><a href="#61-authorityconfigdatasurface-agent-authority" class="lvl-3">6.1 authorityConfig.dataSurface (Agent Authority)</a><a href="#61a-the-enforcement-scope-is-a-declared-choice-enforce_interactive" class="lvl-3">6.1a The enforcement scope is a declared choice (enforce_interactive)</a><a href="#61b-surface-aware-enrichment-the-contract-alone-the-operators-cut" class="lvl-3">6.1b Surface-aware enrichment — the contract ALONE (the operator&#x27;s cut)</a><a href="#61c-deterministic-consumption-pipeline-no-llm-where-nothing-is-left-to-decide" class="lvl-3">6.1c Deterministic consumption pipeline (no LLM where nothing is left to decide)</a><a href="#61d-the-learning-loop-is-authority-aware" class="lvl-3">6.1d The learning loop is authority-aware</a><a href="#62-k5-requiresignedknowledge-the-knowledge-modality-twin" class="lvl-3">6.2 K5 — requireSignedKnowledge (the knowledge-modality twin)</a><a href="#7-observability-receipts-eval-two-ends-of-one-signal" class="lvl-2">7. Observability, receipts &amp;amp; eval — two ends of one signal</a><a href="#71-the-lane-scanner-agentobdapy" class="lvl-3">7.1 The lane scanner (agent/obda.py)</a><a href="#72-o2-the-consumption-receipt-sealed" class="lvl-3">7.2 O2 — the consumption receipt, sealed</a><a href="#73-eval-red-team" class="lvl-3">7.3 Eval + red-team</a><a href="#8-the-compositional-ratchet-p1p3" class="lvl-2">8. The compositional ratchet (P1–P3)</a><a href="#9-lifecycle-portability-governance" class="lvl-2">9. Lifecycle, portability, governance</a><a href="#10-honest-boundaries-the-stop-line-held" class="lvl-2">10. Honest boundaries (the stop-line, held)</a><a href="#10a-the-write-half-obda-act" class="lvl-2">10a. The write half — OBDA-ACT</a><a href="#11-file-gate-map" class="lvl-2">11. File &amp;amp; gate map</a></nav>
+  <article class="doc">
+<blockquote>
+<p><strong>The live contract</strong> for the OBDA-READ subsystem — what is built, by which rules, and where
+the honest boundaries sit. The binding <em>design</em> is <code>TIER_5.5_OBDA_SCOPE.md</code>
+(normative MUST/REJECT language; its §13 stop-line governs); the per-increment build
+record is <code>OBDA_STATUS_ASSESSMENT_2026-08.md</code>.
+Status: <strong>v1 complete</strong> (branch <code>feature/obda-phase-a</code>, Aug 2026) — Phases A–D, V7 live
+probes, O2 receipts, E1–E5 enforcement, K5, and the P1–P3 compositional ratchet. Since
+Oct 2026 the plane is a component (no master switch) with a per-plane policy. Checked
+against code 2026-10-30.</p>
+<p><strong>The family:</strong> OBDA-MODEL defines and extends the model, OBDA-READ (this document) reads
+through it, OBDA-ACT writes through it (<a href="ACT_ARCHITECTURE.html">ACT_ARCHITECTURE.md</a>).</p>
+<p><strong>The write half</strong> is OBDA-ACT — signed action types, built on this pattern: see §10a and
+<a href="ACT_ARCHITECTURE.html">ACT_ARCHITECTURE.md</a>.</p>
+</blockquote>
+<p><strong>One sentence:</strong> a <em>data product</em> is a producer-declared, machine-validated,
+Ed25519-signed subgraph of the ontology (entities + frozen deployed mappings + declared
+joins + measures), and OBDA-READ is the single deterministic surface — agent, BI, and MCP —
+through which it is consumed; consumption is a pure function of
+<code>(product version, request)</code>, so a signed product cannot answer differently, drift,
+or invent.</p>
+<hr>
+<h2 id="0-what-signed-means-for-a-data-product">0. What "signed" MEANS for a data product</h2>
+<p>The Trust Membrane makes "signed" mean <em>attested + intact</em>. A data product's signature is
+<strong>stronger</strong> (scope §2.4): <em>"the producer approved this definition AND the platform
+mechanically verified that every request in its admissible space compiles to
+deterministic, aggregation-safe SQL."</em> Three readings coincide in one act:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Reading</th>
+<th>What the signature asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cryptographic</strong></td>
+<td>attested by an authorized signer, byte-intact since (Ed25519, the shared provenance key)</td>
+</tr>
+<tr>
+<td><strong>Semantic</strong></td>
+<td>same request → same governed SQL → same rows — deterministic by machine proof, not by promise</td>
+</tr>
+<tr>
+<td><strong>Trust</strong></td>
+<td>reproducible ⇒ governable: the signature is <strong>earned</strong> through the V-gate, never a rubber stamp (S1)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Because the <em>proof travels inside the signature</em> (§2), an edited manifest, a stale
+report, or a drifted member cannot hide behind an intact-looking seal.</p>
+<p><strong>Availability is the component's (Oct 2026 — no master switch).</strong> OBDA-READ is the builtin
+component <strong><code>obda_read</code></strong> (tool <code>TDA_DataProduct</code>), and whether the plane exists for a
+deployment, a user or an agent is decided the way it is for every component: the admin
+pane's global gate (Administration → Components → OBDA-READ), the per-user override, the
+agent's own toggle (Capabilities), and relevance — a knowledge graph bound to the agent.
+ONE reader answers for every face: <code>core/obda_planes.plane_available</code> (deployment · user)
+and <code>plane_enabled</code> (this agent), over <code>components.enablement</code>. With the plane off
+Uderia behaves as if OBDA-READ never shipped: no scan, no stamp, no REST surface
+(<code>403 obda_read_off</code>, naming the admin pane), no Designer button, no scorer banding
+(the <code>data_governance</code> property declares its lane as <code>component:obda_read</code>), <strong>no product
+contracts in the KG enrichment, no product seeding, <code>query_product</code>/<code>list_products</code>
+refuse (<code>obda_not_enabled_for_agent</code>, recovery-shaped — "use your ordinary data tools"),
+and the data surface does not confine</strong> — the surface is dropped ONCE at
+<code>agent_authority.parse_scope</code> (<code>planes=</code> from <code>obda_planes.planes_for</code>), so the tool
+chokepoints, the enrichment cut, the champion filter and the catalog marking all inherit
+from one seam (gating each consumer separately is how the enrichment and the agent face
+were once missed — session d51cf073). The former <code>OBDA_ENABLED</code> master was migrated once
+at startup into component availability (<code>auth/database._migrate_obda_masters</code>): a
+persisted <em>off</em> disabled the component for the deployment; every agent that carried a
+data surface had <code>obda_read</code> switched on. The component keeps the moved actions on the
+knowledge-graph tool as unadvertised aliases (stored champion plans keep working), has
+its own split panel and Workspace section, and the companion skill <code>obda-read-expert</code>.
+Like every component it declares its <strong>signals</strong> in its manifest (<code>instances: agent</code> — the
+products it keeps belong to an agent's graph; it announces <code>created</code> · <code>deleted</code> ·
+<code>validated</code> from the product routes via <code>@_signals.announces_route</code>, and its panel follows
+<code>uderia:component-changed</code>), so a product defined, validated or deleted anywhere redraws an
+open panel and the Workspace without a refresh (COMPONENT_ARCHITECTURE § Component Signals).</p>
+<p><strong>The policy — "contracts only", one per plane (Oct 2026).</strong> Availability says whether a
+plane EXISTS; the policy says what the deployment REQUIRES of every agent once it does.
+<code>APP_CONFIG.OBDA_POLICY</code> (<code>{read, model, act}</code>, each <code>off · observe · enforce</code> — the preflight
+ladder; Administration → App Config → Trust → <em>OBDA policy</em>; persisted in
+<code>system_settings.agent_eval.obda_policy</code>; the ONE normalizer <code>obda_planes.normalize_policy</code>
+reads an unknown mode as <em>off</em>, never <em>enforce</em>). Applied ONCE at
+<code>agent_authority.derive_principal</code> (<code>apply_policy</code>, pure): <strong>enforce</strong> on <em>read</em> writes an
+EXCLUSIVE data surface over the agent's granted products into its scope (none granted ⇒ an
+empty surface — nothing readable but through a product); on <em>act</em> an EXCLUSIVE write surface
+over its granted actions, and command tools (<code>_looks_like_command</code>: a shell, a script, a
+terminal — writes no classifier sees) refused; on <em>model</em> the knowledge-graph component
+refuses the four DIRECT graph edits (<code>add_entity</code> · <code>add_relationship</code> · <code>declare_concept</code> ·
+<code>restore</code>) for an agent, recovery-shaped — the graph changes through a proposal a person
+publishes. Because enforce is written INTO the scope, every consumer inherits it without a
+gate of its own: the three tool chokepoints, the tool surface, the enrichment cut, the champion
+filter, <code>describe_scope</code> ("deployment policy: writes contracts-only") and the BOUNDED station.
+<strong>observe</strong> changes no field: at the chokepoint (<code>enforce_tool</code>) the call is allowed and what
+enforce WOULD have refused is recorded as a <code>policy_observed</code> trust event (warning; BOUNDED;
+the Assurance Inbox) naming the plane, the tool and the agent — the pre-enforcement
+rehearsal: see which agents would break before any breaks. An active policy (any plane not
+<em>off</em>) applies to EVERY turn, interactive included (<code>enforces_interactive</code> yields to it — a
+present human sees prose, not SQL). People are untouched: the graph editors, Govern, the
+designers and the REST faces act under the person's own authority. The stamp carries a
+<code>policy</code> key only for planes under policy (the baseline hash is unchanged at <em>off</em>). Gate:
+<code>test/test_obda_policy.py</code>.</p>
+<p><strong>The per-agent tri-state</strong> (operator model, 2026-08-17; resolved by ONE rule,
+<code>agent/obda.py:profile_obda(profile) → (mode, products)</code>, read by the enrichment
+render/seed/event, both agent actions, the <code>governed_execution</code> planner pass, the lane
+scan and the champion filter):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Stored shape (<code>authorityConfig.dataSurface</code>)</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A — Disable OBDA-READ</strong> (the DEFAULT: every unconfigured profile, an empty product list, and always the answer with the master off)</td>
+<td>absent / <code>null</code></td>
+<td>no products visible to the planner (subgraph, contracts, seed, event all clean), <code>query_product</code>/<code>list_products</code> refuse (<code>obda_not_enabled_for_agent</code>), no OBDA-READ planner behaviour, no lane stamp (the ring reads pre-OBDA-READ), OBDA-READ champions not offered</td>
+</tr>
+<tr>
+<td><strong>B — Surface Full</strong></td>
+<td><code>{products, exclusive: true, advisory}</code></td>
+<td>only the listed products; contract-only enrichment; raw SQL denied fail-closed (Agent Authority); <code>advisory</code> is the observe-only dev sub-toggle</td>
+</tr>
+<tr>
+<td><strong>C — Products + regular paths</strong></td>
+<td><code>{products, exclusive: false}</code></td>
+<td>the listed products render as contracts BESIDE the full KG paths — the LLM decides per question. <strong>The list is still the grant</strong>: <code>query_product</code> refuses products not on it (config-driven, so it holds on interactive turns that carry no principal)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Profile editor: Agent Authority → <em>Data surface (OBDA-READ)</em> — a three-option radio;
+an empty product list saves as A (the editor never shows a mode that does not act);
+switching to A genuinely clears a stored surface. Enforcement (raw-SQL denial) stays
+with the ambient principal; planning <strong>visibility</strong> follows the profile's
+configuration on every turn.</p>
+<hr>
+<h2 id="1-the-product-model">1. The product model</h2>
+<p>A product is a <strong><code>data_product</code> node on the ontology</strong> (gold <code>#eab308</code> in the inspector;
+<code>member</code> edges to the entities it exposes; excluded from the ontology's own content hash
+— see §2). Its <code>properties.manifest</code> is the contract:</p>
+<pre><code>product / version / backend / description
+entities:  name · deployed (frozen resolver output, M1) · key (the grain, M2) · attributes (the allowlist, M4)
+joins:     from (the MANY side) → to · on-pairs · cardinality N:1|1:1 (M3 — REQUIRED, never inferred) · role
+measures:  name · anchor entity · expr (dialect-checked)
+</code></pre>
+<p><code>dbdeploy/product_model.py</code> is the pure model: frozen dataclasses, <code>parse_manifest</code>
+enforcing every manifest-decidable M-rule with a <strong>closed REJECT-code set</strong>
+(<code>ERROR_CODES</code>) and difflib near-miss hints — a rejection is self-correction food, never
+a guess. Canonicalization (<code>canonical_json</code> → <code>manifest_hash</code>) is byte-identical to the
+Trust Membrane's discipline, so the two formulas can never drift.</p>
+<p>Composed products (§8) declare <code>members</code> + <code>bridges</code> <em>only</em> — their entities and
+measures come from the flatten.</p>
+<hr>
+<h2 id="2-the-earned-signature-trust-kind-11">2. The earned signature (trust kind #11)</h2>
+<p><code>core/trust/products.py</code> + the <code>data_product</code> validator in <code>core/trust/validators.py</code>.
+<strong>Five refusal conditions</strong>, each machine-readable, checked at every sign-off:</p>
+<ol>
+<li><code>invalid_manifest</code> — the manifest (or, composed, its flat form) fails an M-rule;</li>
+<li><code>unvalidated</code> — no stored V-gate report exists (S1: the signature is earned);</li>
+<li><code>stale_report</code> — the stored report validated a <strong>different</strong> manifest
+   (<code>report.manifest_hash</code> mismatch — the ratchet: edit ⇒ re-validate ⇒ re-sign);</li>
+<li><code>gate_blocked</code> — the report exists but says not signable (V-gate blockers);</li>
+<li><code>unsigned_ingredient</code> / <code>unsigned_member</code> — the ontology (or, composed, a member
+   product) is not signed-and-intact — the bottom-up rule, extended compositionally.</li>
+</ol>
+<p><strong>Signable content</strong> = <code>hash{manifest_hash, validation_report_hash}</code> (+ <code>member_hashes</code>
+for composed products, §8) — <em>the proof is inside the signature.</em> <code>live_hash</code> recomputes
+the same formula from the node's current state, so an edited manifest or refreshed
+report reads 🟠 CHANGED, never silently intact. An unresolvable attested product reads
+CHANGED (fail-safe), an unattested one UNSIGNED.</p>
+<p><strong>The ontology-hash exclusion (load-bearing).</strong> <code>kg_content_hash</code> <strong>excludes</strong>
+<code>data_product</code> nodes and <code>member</code> edges: the ontology's signable content is the
+<em>knowledge model</em>; a product is a contract <strong>stacked on</strong> it, protected by its own
+attestation. Without this rule, authoring a product flipped its own ontology CHANGED and
+forced a rubber-stamp re-sign loop (found live in Phase A, fixed at the root).</p>
+<p>Products are removable: <code>DELETE /v1/data-products/&lt;name&gt;</code> deletes the node <strong>and
+revokes the attestation</strong> — a dangling signature over a deleted contract attests
+nothing; the ontology's seal is untouched by construction.</p>
+<hr>
+<h2 id="3-the-validation-gate-v1v7">3. The validation gate — V1–V7</h2>
+<p><code>dbdeploy/product_validation.py:validate_product</code> — deterministic (two runs hash
+byte-identically; no timestamps in the report), evidence-mode-honest (S2):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What it proves</th>
+<th>Evidence mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>V1</strong></td>
+<td>every entity resolves to exactly its frozen <code>deployed</code> table (drift → "re-validate + re-sign")</td>
+<td><code>schema</code> with a live resolver, else <code>structural</code>, stated honestly</td>
+</tr>
+<tr>
+<td><strong>V2</strong></td>
+<td>join columns exist</td>
+<td>schema / structural</td>
+</tr>
+<tr>
+<td><strong>V3</strong></td>
+<td>join graph connected; every request-restrictable subgraph resolves to a <strong>unique tree</strong> (parallel role edges are alternatives, not cycles)</td>
+<td>structural</td>
+</tr>
+<tr>
+<td><strong>V4</strong></td>
+<td>every expression parses + transpiles; anchor-column rule</td>
+<td>structural</td>
+</tr>
+<tr>
+<td><strong>V5</strong></td>
+<td>the <strong>grain-safety matrix</strong> — every measure × dimension pair classified <code>safe</code> or <code>rejected:&lt;the 1:N hop, named&gt;</code> (G3: published, so a query-time grain_conflict can only mean the consumer ignored it)</td>
+<td>structural</td>
+</tr>
+<tr>
+<td><strong>V6</strong></td>
+<td>the <strong>determinism battery</strong> — built FROM the admissible map (per-measure safe set · the multi-anchor common set · grand total · entity reads), compiled <strong>twice, byte-identical</strong>; an in-battery REJECT is a FAIL naming the map/compiler divergence, never a skip</td>
+<td>structural</td>
+</tr>
+<tr>
+<td><strong>V7</strong></td>
+<td><strong>live probes</strong> (opt-in, needs a DB connection): every battery query executes with limit 1 at the REAL target (TOP form on Teradata); every declared N:1/1:1 spot-checked empirically — the one-side must be UNIQUE on the join's to-columns (the composite-safe <code>GROUP BY … HAVING COUNT(*) &gt; 1 → zero groups</code> form; a 1:1 also checks the from-side); every entity's declared key checked unique</td>
+<td><code>live</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>V7 verdicts:</strong> a probe <strong>contradicting</strong> a declaration fails V7 <em>naming the
+declaration</em> → not signable. A probe that cannot <em>execute</em> also fails — live was
+attempted, and signing a half-probed report as "live" would be dishonest (re-validate
+without a connection to sign structurally: an explicit choice). No connection ⇒ V7
+skips and the report says <code>mode: "structural"</code> — and <strong>the mode is attested content</strong>
+(it changes the report hash), so an empirically-verified signature is distinguishable
+from a declaration-trusting one.</p>
+<p><strong>Two injection-safety layers, deliberately separate:</strong> the compiler path quotes and
+double-escapes identifiers (a hostile <code>deployed</code> stays inert inside a quoted
+identifier); the hand-built dup-groups probes use bare identifiers and therefore
+<strong>refuse</strong> any identifier failing a shape check rather than execute it.</p>
+<p>The REST seam (<code>POST /v1/data-products/&lt;name&gt;/validate</code>, <code>connection_id</code> or
+<code>live:true</code>) pre-executes the probe plan through the same read-only executor as product
+queries and serves the pure gate from a cache; <code>live</code> with no usable connection falls
+back to structural with an honest <code>live_note</code>, never N failed probes.</p>
+<hr>
+<h2 id="4-the-compiler-fan-out-safe-by-construction">4. The compiler — fan-out-safe by construction</h2>
+<p><code>dbdeploy/product_compiler.py:compile_request(manifest, request)</code> — the §3/§4 rules:</p>
+<ul>
+<li><strong>J1/J2</strong> — join resolution over the declared edges only, unique-tree; a BARE
+  dimension across parallel role edges is REJECTED demanding its role (<code>entity@role.attr</code>)
+  — a silent pick would make the answer depend on traversal order.</li>
+<li><strong>G1/G2</strong> — grain safety: a measure × dimension pair is safe iff every hop
+  anchor→dimension is N:1/1:1 in that direction; a rejection <strong>names the 1:N hop</strong>.</li>
+<li><strong>A1/A2/A3</strong> — assembly: per-anchor sub-aggregates <strong>FULL-OUTER-JOINed on the
+  NULL-safe dimension tuple</strong> (<code>l = r OR (l IS NULL AND r IS NULL)</code>) with COALESCE — an
+  absent slice renders as an honest NULL measure, never a dropped row, and the naive
+  flat join's row multiplication is <strong>provably impossible</strong> (CI executes both forms on a
+  real engine against hand-computed truth).</li>
+<li><strong>Closed filter set</strong> with typed literals escaped in-compiler (LIKE wildcards
+  neutralized) — no SQL fragment ever crosses the boundary, permanently.</li>
+<li><strong>R4</strong> — full determinism including row order (tiebreak).</li>
+<li><strong>D2 dialect seam</strong> — <code>_apply_limit</code>: Teradata has no LIMIT → <code>SELECT TOP n</code>;
+  <code>backend:"sqlite"</code> makes compiled SQL executable in CI.</li>
+<li><strong>The admissible map</strong> (<code>admissible_map</code>) — measures, dimensions, the grain matrix,
+  filter ops, time grains — derived from the <em>same</em> grain function the compiler
+  enforces, published on the definition endpoint (§3.2) and ridden along on every
+  REJECT for one-step self-correction.</li>
+<li><strong>Entity-read form</strong> — <code>{entity, attributes}</code> for the non-aggregate case.</li>
+</ul>
+<hr>
+<h2 id="5-three-faces-one-semantic-core">5. Three faces, one semantic core</h2>
+<p>Every face compiles through the ONE compiler — byte-identical SQL by construction:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Face</th>
+<th>Surface</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Agent</strong></td>
+<td>the <strong><code>obda_read</code> component</strong> — <code>TDA_DataProduct</code> actions <code>list_products</code> / <code>query_product</code> (the <code>TDA_KnowledgeGraph</code> actions of the same names remain unadvertised ALIASES for stored champion plans; one implementation)</td>
+<td><strong>Compiles, never executes</strong> (the probe_bridge doctrine): in-component SQL would bypass the Agent-Authority chokepoint. The agent runs the returned statement through its own governed data tool; the OBDA-READ scanner recognises that execution as governed (§7). A REJECT reads as a FAILED tool call (<code>spec.error</code>) carrying the verbatim code + admissible members — correction food, never a silent success. Products render in the KG enrichment as <strong>consumption contracts</strong> (measures, entities, validation state, "plan query_product, never hand-written SQL").</td>
+</tr>
+<tr>
+<td><strong>BI / REST</strong></td>
+<td><code>GET/POST/DELETE /v1/data-products*</code>, <code>POST …/compile</code>, <code>POST …/query</code></td>
+<td>Query executes read-only under the caller's own DB connection (single-SELECT recheck; no connection → honest 409 <em>with</em> the SQL). Every query carries the <strong>governed provenance stamp</strong> <code>{product, version, request_hash, trust, lane:"governed", row_count}</code>. REJECTs are 422 with code + closest names.</td>
+</tr>
+<tr>
+<td><strong>MCP</strong></td>
+<td><code>list_data_products</code> / <code>query_data_product</code> on the Uderia MCP server, <strong>user tier</strong></td>
+<td>An external agent queries a cryptographically signed product through MCP; REJECTs and the disabled switch return as structured error dicts, never bare exceptions.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Composed products resolve through <strong>one loader</strong> (<code>product_model.load_flat_manifest</code>) at
+every face — base passes through, composed flattens — so composition is transparent to
+every consumer.</p>
+<hr>
+<h2 id="6-enforcement-the-data-surface-e-rules-and-the-knowledge-twin-k5">6. Enforcement — the data surface (E-rules) and the knowledge twin (K5)</h2>
+<h3 id="61-authorityconfigdatasurface-agent-authority">6.1 <code>authorityConfig.dataSurface</code> (Agent Authority)</h3>
+<pre><code class="language-json">&quot;dataSurface&quot;: { &quot;products&quot;: [&quot;fitness_sales&quot;], &quot;exclusive&quot;: true, &quot;advisory&quot;: false }
+</code></pre>
+<ul>
+<li><strong>products alone</strong> = ADDITIVE capability (E3) — the raw lane stays available and
+  monitored; never a restriction.</li>
+<li><strong><code>exclusive</code></strong> = <strong>surface-only</strong> (E1): when the agent runs autonomously, raw SQL is
+  denied <strong>fail-closed</strong> at all three tool chokepoints (MCP adapter, component manager,
+  ReAct wrapper) with the arguments threaded through <code>is_tool_allowed</code>. Only
+  signed-and-intact (🟢) products are served (E2/E4 in the handler — off-surface →
+  <code>not_on_surface</code>, non-trusted → <code>unsigned_product</code>, both fail-closed). <em>"Cannot query
+  outside its slice", literally.</em> Deliberately <strong>no <code>TDA_</code> exemption</strong> on E1 (canvas SQL
+  is the same escape hatch). Downgrade-guarded in the config contract
+  (<code>flag_paths</code> — a pack republish cannot silently relax it).</li>
+<li><strong><code>advisory</code></strong> = observe-only (E4's development mode): nothing denied, violations
+  observed and scored.</li>
+<li><strong>The ONE exception — the turn-scoped governed-SQL registry:</strong> <code>query_product</code>
+  registers its compiled statement (<code>register_governed_sql</code>), so the only raw SQL a
+  surface-only agent can execute is a statement the surface itself produced <em>this turn</em>;
+  an <strong>edited</strong> statement forfeits the contract. The registry is a <strong>mutable set in a
+  contextvar</strong>, created at <code>set_current_principal</code> and mutated by reference — a <code>.set()</code>
+  in a child task is invisible to sibling tasks (contextvars propagate parent→child
+  only, and Optimize runs parallel phases; the gate caught the first version).</li>
+<li><strong>Recovery-shaped denial:</strong> a surface denial spells out the NEXT STEP (call
+  <code>query_product</code>, execute the returned statement verbatim) — the blanket "do not retry;
+  report this limitation" tail is reserved for categorical denials, because the live
+  acceptance proved the model obeys the stop clause over a fix named two sentences
+  earlier. Keyed on ONE <code>SURFACE_DENIAL_MARKER</code>.</li>
+<li><strong>E5 — the empirical monitor:</strong> free-formed SQL <em>executed</em> by a surface-only agent
+  means the confinement LEAKED. <code>_record_surface_breach</code> (the one scan seam) records a
+  DANGER <code>surface_breach</code> incident — <em>"a hole report, not agent misbehaviour"</em> — plus a
+  live broadcast. Fires <strong>only</strong> on the breach (advisory / additive / governed /
+  interactive turns all silent); registered in all four event maps (severity, both
+  station maps — BOUNDED, it is an authority event — and the inbox titles).</li>
+</ul>
+<h3 id="61a-the-enforcement-scope-is-a-declared-choice-enforce_interactive">6.1a The enforcement scope is a declared choice (<code>enforce_interactive</code>)</h3>
+<p>By default a principal is derived only for <code>AUTONOMOUS_ORIGINS</code> — an interactive turn
+has none, on the reasoning that a present human is the control. A live walkthrough
+showed that reasoning is thinner than it looks: the operator ticked <em>Surface-only
+(structural confinement)</em> and then watched the agent hand-write raw SQL four times,
+because what the human sees is prose, not SQL. So the SCOPE is now a declared choice:
+<strong><code>authorityConfig.enforce_interactive: true</code></strong> applies the agent's WHOLE authority to
+interactive turns too (widens the scope, never replaces it — autonomous origins still
+derive a principal regardless). Absent/false is byte-identical to the historic
+behaviour; only an explicit <code>True</code> opts in (a migrated <code>"true"</code> string must never start
+denying tools); turning it OFF is a pack-import downgrade (<code>flag_paths</code>). Editor:
+Agent Authority card → <em>Apply to interactive turns too</em>.</p>
+<h3 id="61b-surface-aware-enrichment-the-contract-alone-the-operators-cut">6.1b Surface-aware enrichment — the contract ALONE (the operator's cut)</h3>
+<p>Under an <strong>exclusive</strong> surface the KG enrichment renders the consumption contract and
+NOTHING else. Observed before this: filtering the product contracts removed three of
+four <em>product</em> doors but left every <em>table</em> door standing — TABLE SCHEMAS, joinable
+columns, entity listings exist solely to help an agent WRITE SQL, and a surface-only
+agent cannot execute SQL it writes. With the schemas present the planner kept reaching
+for <code>SELECT COUNT(*) FROM Customers</code> even with a one-door contract in front of it
+(proven twice on identical context, once each way — raw-SQL patterns outweigh any
+instruction). The confined enrichment is therefore:</p>
+<ul>
+<li>the <strong>SURFACE-ONLY headline</strong> (raw SQL will be denied; <code>query_product</code> then execute
+  the returned statement exactly),</li>
+<li>the <strong>on-surface contracts</strong> — each naming its <em>measures</em> and its <em>qualified</em>
+  dimensions (<code>Entity.Attribute</code> — the form a request must use; the unqualified form
+  is what a model reaches for and what gets REJECTed),</li>
+<li>the <strong>off-surface line</strong> — locked products NAMED, never silently dropped (a product
+  that vanishes is indistinguishable from one that does not exist, and the agent goes
+  looking for it by other means),</li>
+<li>one honest line stating what was withheld and why. Even the <code>compile_metric</code>
+  preamble is cut: metric SQL is NOT in the governed registry, so that hint compiles a
+  statement the runtime then denies.</li>
+</ul>
+<p>Advisory / non-exclusive surfaces keep the full enrichment (they can write SQL — for
+them the schemas are information, not bait). The grounding gate's trusted scope
+(<code>scope_databases</code>/<code>scope_entities</code>) is computed from the FULL subgraph and is
+deliberately untouched by the text cut. The enrichment EVENT carries
+<code>data_products</code> (the contracts actually shown — ONE shared rule with the renderer, so
+event and prompt cannot disagree), <code>data_products_off_surface</code>, and <code>surface_only</code>;
+the Live-Status title distinguishes <strong>ANALYSED from INJECTED</strong>
+(<em>"surface-only — injected 1 data product contract: …; schemas withheld, 51 entities
+analysed for scope"</em>). Signed products are ALWAYS seeded into the enrichment
+regardless of the question's wording — a product is named for its subject area, a
+question names entities, so the lexical match loses essentially every time, and an
+absent product is a missing OPTION, not a missing fact. <code>list_products</code> mirrors the
+same fact mid-turn: rows carry <code>on_surface</code>, surface rows sort first, and a
+<code>surface_note</code> states the rule.</p>
+<h3 id="61c-deterministic-consumption-pipeline-no-llm-where-nothing-is-left-to-decide">6.1c Deterministic consumption pipeline (no LLM where nothing is left to decide)</h3>
+<p>The walkthrough hardened the Optimize path end-to-end so the governed lane is
+deterministic once the model has chosen it:</p>
+<ul>
+<li><strong><code>governed_execution</code> rewrite pass</strong> — a compile phase (<code>query_product</code> /
+  <code>compile_metric</code>) whose result NOTHING consumes gains a following executor phase
+  wired to <code>{"source": "result_of_phase_N", "key": "sql"}</code> (the component compiles and
+  never executes — the probe_bridge doctrine — so the PLAN must carry the execution).
+  Fires only on the provably broken shape; a correctly planned seam is byte-identical.</li>
+<li><strong>Dead-phase rewiring</strong> — under an exclusive surface, a literal-SQL phase following
+  a compile is REWRITTEN IN PLACE into the reference-executor (denied-by-construction
+  code is dead code; in place, not removed — removal+renumber once sent a report's
+  reference pointing at itself). Never on unconfined turns; never without a preceding
+  compile (a literal-only plan keeps its phase — the recovery-shaped denial is the
+  teaching mechanism).</li>
+<li><strong>The consolidation pass never merges a runtime reference</strong> (a placeholder is not
+  SQL; handing it to the consolidation LLM made it INVENT a query from the goal).</li>
+<li><strong>FASTPATH accepts the canonical reference</strong> — <code>{"source": …, "key": "sql"}</code> is
+  deterministically resolvable, so the phase never visits the tactical LLM (which
+  could re-emit and flatten the dict, losing <code>key</code>).</li>
+<li><strong>A key-less reference resolves by the argument's OWN name first</strong>
+  (<code>sql: "result_of_phase_1"</code> means <em>the sql from phase 1</em>); the single-value unwrap
+  survives as the fallback for scalar references.</li>
+<li><strong><code>SurfaceRefusalStrategy</code></strong> — an off-surface refusal naming exactly ONE surface
+  product is corrected by swapping <code>product_name</code>, ZERO LLM (the refusal names its own
+  remedy; reading it is not judgement). A multi-product surface falls through to the
+  LLM. Sibling rules: a <strong>non-string SQL argument fails fast + definitively</strong> at BOTH
+  chokepoints (<code>tool_enforcement.nonstring_sql_block</code> — MCP adapter AND ReAct wrapper;
+  retrying cannot change what the upstream produced), and the compiler <strong>coerces the
+  common filter shapes</strong> onto <code>{attr, op, value}</code> (accepted SYNTAX widens, accepted
+  MEANING never — <code>not_filterable</code> still refuses).</li>
+<li><strong>Dependency-failure skip</strong> — a phase whose referenced upstream FAILED skips before
+  argument resolution (no tool call, no correction rounds), records its own honest
+  error result so later references cascade, and closes <code>status: skipped</code>.</li>
+</ul>
+<h3 id="61d-the-learning-loop-is-authority-aware">6.1d The learning loop is authority-aware</h3>
+<p>Pre-governance turns seed champions teaching literal raw-SQL plans; once the agent is
+surface-only those champions guide the planner into plans the runtime denies with
+certainty — and can never self-demote, because a confined turn ends <code>status=success</code>
+(an honest refusal). Two durable rules: <strong>retrieval</strong> — a champion whose plan the
+ambient principal would deny is not OFFERED (<code>champion_blocked_by_surface</code>; not
+demoted, not deleted — unconfine the agent and it is valid again; fails OPEN, the
+trust-aware-routing precedent); <strong>seeding</strong> — a turn whose OBDA-READ lane is <code>confined</code>
+never seeds (its plan proved nothing; defence-in-depth beside the generic success
+criteria, pinned against criteria drift).</p>
+<h3 id="62-k5-requiresignedknowledge-the-knowledge-modality-twin">6.2 K5 — <code>requireSignedKnowledge</code> (the knowledge-modality twin)</h3>
+<p><code>knowledgeConfig.requireSignedKnowledge</code>: only collections whose <strong>integrity signature
+is signed-and-intact</strong> back the agent's answers — <code>changed</code> and <code>unsigned</code> corpora are
+excluded at the ONE retrieval seam (<code>rag_retriever.retrieve_examples</code>, which Focus,
+Ideate, and the <code>knowledge_context</code> module all route through), exactly like the
+<code>maxSensitivity</code> ceiling. Pure core <code>filter_signed_collections</code>; rules that matter:
+signed means <em>intact</em>; unattributable chunks (no collection id) cannot be signed;
+the trust suite physically absent fails <strong>open with a loud warning</strong> (the
+trust-aware-routing precedent — silently emptying the knowledge lane would be worse
+than not enforcing); one unresolvable collection beside real states is excluded, never
+a fail-open trigger. The knob is <strong>signed</strong> content and downgrade-guarded; the editor
+toggle is modeled in carryForward so unchecking actually takes.</p>
+<p>K3/O5 (source-provenance stamps on retrieval + the capsule) and K6 (bound collections
+as agent-badge ingredients) are delivered by
+<code>KNOWLEDGE_RETRIEVAL_ARCHITECTURE.md</code> /
+<a href="TRUST_MEMBRANE_ARCHITECTURE.html">TRUST_MEMBRANE_ARCHITECTURE.md</a>'s earlier waves.</p>
+<hr>
+<h2 id="7-observability-receipts-eval-two-ends-of-one-signal">7. Observability, receipts &amp; eval — two ends of one signal</h2>
+<h3 id="71-the-lane-scanner-agentobdapy">7.1 The lane scanner (<code>agent/obda.py</code>)</h3>
+<p><code>scan_obda</code> classifies a turn's data operations, consumed by BOTH the Live-Status card
+and the eval scorer (one source):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lane</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>governed</strong></td>
+<td>a <code>compile_metric</code>/<code>query_product</code> op — or a raw-SQL call whose statement <strong>matches a governed compile's output from the same turn</strong> (<code>execute_governed</code>, whitespace/semicolon-tolerant): the component compiles, the agent executes, and the scanner knows the truth of that split</td>
+</tr>
+<tr>
+<td><strong>free-formed</strong></td>
+<td>the agent wrote raw SQL itself — advisory, judgement in the loop</td>
+</tr>
+<tr>
+<td><strong>confined</strong></td>
+<td>every raw-SQL attempt was <strong>DENIED</strong> by the surface — <em>neither</em> lane: nothing executed. Counting a denial as free-formed would record the confinement working as the escape it prevented, and <code>governed_data_ratio</code> would punish the agent for being confined (found live in C4, fixed at the root: <code>denied_count</code>, its own card, GROUNDED reads <em>pass</em>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Beside the lanes, the scan carries <strong><code>rejected_count</code></strong> — requests the CONTRACT refused
+(an <code>unknown_member</code>, a grain conflict, …). A REJECT moved no data: it is the governance
+working, not a data operation, so it is <strong>reported, never folded into a lane</strong> (found
+live, session 2fcbb51f: an M4 allowlist REJECT counted beside the real compile+execute
+pair read "3 governed data operations"). Same rule as <code>denied_count</code>, one layer up: the
+surface denies at the door, the contract rejects inside it. A rejected compile also never
+seeds the governed-SQL allowlist (a REJECT produced no statement to pair an execution
+against). The capsule's lane chip and the GROUNDED "Governed data" reading both name the
+count (<code>… · 1 request rejected by the contract</code>).</p>
+<p><strong>The REJECT tail splits by REJECT kind</strong> (<code>handler._handle_query_product</code>): a <em>typo</em>
+(the <code>closest declared:</code> hint fired) or a non-member reject (<code>empty_request</code>,
+<code>grain_conflict</code>, …) keeps the mechanical retry tail — the fix is a reshape. A genuinely
+<strong>undeclared member</strong> (<code>unknown_member</code> + "does not expose", no closest hint — the
+allowlist working, M4) instead instructs: answer with an admissible dimension <strong>and state
+explicitly that the requested member is not exposed</strong>, or report that the question cannot
+be answered at that grain — <strong>never silently substitute</strong> a coarser dimension and present
+it as the asked one. The one-size retry tail had literally commanded the substitution
+observed live ("which customer has the most tickets?" answered at state grain over a
+100-way per-customer tie). The safety net behind the instruction is deterministic: the
+honesty gate's <code>grain_substitution</code> verdict (<code>agent/honesty/gate.assess_grain_substitution</code>,
+0-token) detects an un-disclosed substitution post-hoc — observe flags it; annotate/enforce
+<strong>APPEND</strong> the disclosure naming the refused member and the grain actually used (never a
+replacement, never parked: the figure itself is correctly computed governed data — what
+was missing is the admission of which question it answers).</p>
+<p><strong>The substitution can also happen at PLAN time, with no REJECT at all</strong> (session
+7b9b5a25: "which customer has the most tickets?" was planned straight onto
+<code>customer_count × Customers.State</code> — admissible, governed, fluent, answering a
+different question — so every REJECT-keyed layer was blind). Three layers close it:
+<strong>(1)</strong> the rendered contract itself now states the rule where the decision is made
+("These are the ONLY members … NEVER silently answer at a different grain") — the
+REJECT tail's doctrine moved to plan time; <strong>(2)</strong> a REJECT-free honesty-gate trigger
+(<code>primitives.entity_grain_mismatch</code>, deterministic, deliberately narrow: a
+ranking-shaped question naming a queried product ENTITY but none of that entity's
+queried dimensions — "which <strong>customer</strong> …" grouped by <code>Customers.State</code> trips,
+"which <strong>state</strong> has the most tickets" names the used grain and is clean) feeding the
+same append-only verdict, tagged <code>trigger: entity</code> vs the precise <code>trigger: reject</code>;
+<strong>(3)</strong> because (2) is a heuristic, the agent can opt into the
+<strong><code>grain_faithfulness</code> LLM judge</strong> (<code>honestyConfig.grainJudge</code>, OFF by default,
+configurable in the profile editor's Honesty card): the heuristic escalates to the
+judge before acting — a judge PASS <strong>withdraws</strong> the verdict (recorded, never
+silent), a FAIL/timeout/absence keeps the deterministic append (fail-safe keeps the
+protection, the grounding gate's own rule). The judge is also a registered
+post-hoc quality dimension (the 54th), owned by the honesty gate at GROUNDED and
+declared in <code>POINT_JUDGES</code> — the Assurance Guide renders it gate-consulted. The
+precise <code>reject</code> trigger is never judge-gated: an observed REJECT-then-retry is
+not a heuristic.</p>
+<h3 id="72-o2-the-consumption-receipt-sealed">7.2 O2 — the consumption receipt, sealed</h3>
+<p>Every governed consumption seals an <strong><code>obda.consumption</code> step</strong> into the turn's Ed25519
+provenance chain: <code>{product, version, request_hash, sql_hash, row_count, trust_state}</code>
+— <code>row_count</code> supplied by the paired execution call; a REJECTed compile carries none
+(nothing was consumed). The sealed content is <code>obda.receipt_content(op)</code> — a <strong>closed
+field tuple</strong> (a stray presentation field can never enter the seal), canonical JSON —
+and <code>provenance.verify_content</code> re-derives it from the turn's stamped
+<code>obda.operations</code> with the SAME function, so the sealed receipt and the displayed
+record are checked against each other; a receipt matching no stamped operation is a
+<strong>named mismatch</strong>, never a silent skip. The answer capsule renders a <strong>Data products</strong>
+row (<code>fitness_sales v1 · trusted · 32 rows</code>, hashes + seal note in the tooltip), and
+the existing "Export receipt" carries the consumption inside the signed chain —
+offline-verifiable with the public key alone.</p>
+<h3 id="73-eval-red-team">7.3 Eval + red-team</h3>
+<ul>
+<li><strong><code>governed_data_ratio</code></strong> (JUDGED scorecard, station label GROUNDED) — the incentive
+  gradient toward the governed lane; abstains with OBDA-READ off or no data ops.</li>
+<li><strong><code>surface_violation</code></strong> (BOUNDED, ACT moment) — counts surface denials, matched on
+  the surface's own policy reason so another authority rule never misattributes.
+  <strong>Non-gating by design</strong>: a steady nonzero is a <em>product gap made measurable</em>
+  (producer backlog, not consumer fault).</li>
+<li><strong><code>surface-escape</code> red-team probe</strong> — lures "skip the data product layer", then
+  adjudicates from the turn's own stamps: denial in the trace → held; a free-formed
+  lane stamp → the escape; governed → held; no signal → honestly unknown. The live runner
+  scores each probe against its PERSISTED turn (<code>live_redteam.with_turn</code>): until Oct 2026 it
+  scored the task result alone, which carries no tool calls and no lane stamp, so only the
+  refusal-in-words branch could ever fire live. Its sibling for writes is <code>write-escape</code>
+  (OBDA-ACT, see AGENT_AUTHORITY_ARCHITECTURE).</li>
+</ul>
+<hr>
+<h2 id="8-the-compositional-ratchet-p1p3">8. The compositional ratchet (P1–P3)</h2>
+<p>A <strong>composed product</strong> declares <code>members</code> (≥ 2 base products, same ontology, same
+backend) + <code>bridges</code> (the stitching joins — cardinality + on-pairs, as always). Then:</p>
+<ul>
+<li><strong>P1 — signed ∘ signed → mechanically signable.</strong> Consumption and validation run on
+  the <strong>flattened</strong> manifest through the <em>unchanged</em> pipeline (V7 probes the flat form,
+  bridges included) — composition preserved determinism and the gate proves it, so
+  sign-off proceeds <strong>without re-judgement</strong>. The attestation binds
+  <code>{composed manifest hash, flat report hash, member ATTESTED hashes}</code> — <strong>product
+  lineage</strong>, inside the signature, offline-verifiable.</li>
+<li><strong>P2 — anything ∘ unsigned → not signable.</strong> The validator refuses <code>unsigned_member</code>
+  <strong>naming the members</strong> (the agent shield's bottom-up rule, one level down). The
+  validator stays pure — <code>sign_product</code> resolves members, flat form and states at the
+  one impure seam and injects them.</li>
+<li><strong>P3 — structurally free.</strong> <code>live_hash</code> recomputes the lineage from the members'
+  <em>current</em> attestations, so a parent's re-sign flips composed children 🟠
+  CHANGED (stale-ingredient). The cascade splits honestly: a <strong>version-only</strong> parent
+  bump moves the lineage (child CHANGED) but the flat contract is byte-identical, so
+  the child re-signs <em>without</em> re-validation — re-judgement would be ceremony; a
+  <strong>shape</strong> change moves the flat hash, so the child's stored report proves nothing and
+  re-sign refuses <code>stale_report</code> until re-validated.</li>
+</ul>
+<p>Flatten refusals are precise, never silent: <code>nested_composition</code> (v1 stop-line),
+<code>member_backend_mismatch</code>, <code>member_entity_collision</code> / <code>member_measure_collision</code>
+(naming BOTH members), <code>bridge_unknown_entity</code> (naming what IS exposed),
+<code>unknown_member_product</code>.</p>
+<hr>
+<h2 id="9-lifecycle-portability-governance">9. Lifecycle, portability, governance</h2>
+<ul>
+<li><strong>L1 — closed by composition</strong> (deliberate, recorded): the sign-off ceremony <em>is</em> the
+  product-scoped release act; E4 <em>is</em> release-gates-consumption (a surface-only
+  consumer is served only 🟢 versions); the ontology's Tier 4.3 lifecycle governs the
+  estate layer. A second per-product draft/propose/approve state machine would
+  duplicate the attestation's own semantics. Honest boundary: a per-product approval
+  <em>workflow</em> finer than the signer-tier gate is not built (future opt-in).</li>
+<li><strong>L2 — portability for free:</strong> products are KG nodes, so they travel inside KG
+  export/import and agent packs; attestations travel via the shipped
+  <code>capture</code>/<code>reinstate</code> honesty gate (byte-identical ⇒ 🟢 survives the copy, else
+  honest ⚪).</li>
+<li><strong>Sign-off authorization:</strong> <code>POST /v1/trust/data-product/&lt;kg_id&gt;/&lt;name&gt;/sign-off</code> —
+  switch-gated, signer-tier-gated, ontology-ownership-scoped (TC-30).</li>
+<li><strong>UI:</strong> the Designer (gold <strong>Products</strong> button on Intelligence-tab KG cards, rendered
+  only with the switch on) — catalog with trust chips, the V1–V7 progressive checklist
+  with evidence modes, the <strong>Verification selector</strong> (Structural / Live per DB
+  connection), the grain-safety grid (dashed cells name their 1:N hop on hover), the
+  sign ceremony stating exactly what is attested, a manifest editor rendering the
+  REJECT taxonomy verbatim. The profile editor's Trust section carries the
+  <strong>Data surface</strong> card; <code>authorityScope</code> reads "surface-only: N data product(s)".</li>
+</ul>
+<hr>
+<h2 id="10-honest-boundaries-the-stop-line-held">10. Honest boundaries (the stop-line, held)</h2>
+<p>Refused by name, never silently (scope §13): no marketplace listings of <em>standalone</em>
+products (v1 ships them inside ontologies/packs); no non-SQL backends; no
+cross-ontology members; no <strong>nested</strong> composition (<code>nested_composition</code>); row-level
+policy stays the pinned minimal v1 form. The grounding gate stays ON for surface-only
+agents (E5's monitor — prevention subsumes detection, but detection is kept as the
+audit of prevention).</p>
+<hr>
+<h2 id="10a-the-write-half-obda-act">10a. The write half — OBDA-ACT</h2>
+<p>OBDA-READ governs reading. Its write-side counterpart is <strong>OBDA-ACT</strong>
+(<a href="ACT_ARCHITECTURE.html">ACT_ARCHITECTURE.md</a>, PROP-008): a signed <strong>action type</strong> is the only
+shape of change an agent may make to the warehouse, as a signed data product is the only shape
+of question it may ask. OBDA-ACT was built on OBDA-READ's pattern; where the two share a mechanism it is
+one implementation:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>OBDA-READ — reading</th>
+<th>OBDA-ACT — writing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The contract</td>
+<td>a <strong>data product</strong> manifest (<code>dbdeploy/product_model.py</code>)</td>
+<td>an <strong>action type</strong> manifest (<code>dbdeploy/action_model.py</code>)</td>
+</tr>
+<tr>
+<td>The gate</td>
+<td>V1–V7, with live probes (<code>dbdeploy/product_validation.py</code>)</td>
+<td>A1–A6, with live probes (<code>dbdeploy/action_validation.py</code>)</td>
+</tr>
+<tr>
+<td>The earned signature</td>
+<td>trust kind <code>data_product</code>, signed over <code>{manifest_hash, validation_report_hash}</code></td>
+<td>trust kind <code>action_type</code>, the same shape — the proof is inside the signature in both</td>
+</tr>
+<tr>
+<td>Bottom-up rule</td>
+<td>a product needs a signed ontology (<code>unsigned_ingredient</code>)</td>
+<td>an action needs a signed ontology (<code>unsigned_ingredient</code>)</td>
+</tr>
+<tr>
+<td>On the graph</td>
+<td><code>data_product</code> node + <code>member</code> edges</td>
+<td><code>action_type</code> node + <code>acts_on</code> edge</td>
+</tr>
+<tr>
+<td>Never moves the ontology's seal</td>
+<td>both are <strong>stacked contracts</strong> — one rule, <code>kgstore.types.is_stacked_contract</code>, read by trust composition, governance and extension signing</td>
+<td></td>
+</tr>
+<tr>
+<td>Who executes</td>
+<td>Uderia <strong>compiles, the agent executes</strong> through its governed data tool, so the read keeps the SQL gate</td>
+<td>Uderia <strong>executes</strong> (<code>dbdeploy/action_runner.py</code>): a write needs pre-checks, statement, post-checks and ledger in one transaction, which a data tool cannot hold</td>
+</tr>
+<tr>
+<td>Agent Authority</td>
+<td><code>dataSurface</code> with <code>exclusive</code> → raw SQL refused as <code>surface-only</code></td>
+<td><code>actions</code> with <code>actions_exclusive</code> → raw writes refused as <code>action-only</code> — the <strong>same chokepoint</strong> (<code>agent_authority.is_tool_allowed</code>)</td>
+</tr>
+<tr>
+<td>The lane scanner (<code>agent/obda.py</code>)</td>
+<td>governed · free-formed · confined</td>
+<td>the <strong>acted</strong> lane: <code>acted_count</code> / <code>refused_count</code> in the same <code>obda</code> stamp (only where the agent's OBDA-READ plane is on; OBDA-ACT's own <code>actions</code> stamp and act log do not depend on it)</td>
+</tr>
+<tr>
+<td>Receipts</td>
+<td><code>obda.consumption</code> steps sealed in the turn's Ed25519 chain</td>
+<td><code>action.performed</code> steps sealed in the same chain; an act outside a sealed turn carries a receipt signed on its own</td>
+</tr>
+<tr>
+<td>Faces</td>
+<td>agent · REST (<code>/v1/data-products/*</code>) · MCP</td>
+<td>the same three, plus flow · scheduler · dashboard tile · Assurance Inbox</td>
+</tr>
+<tr>
+<td>Eval</td>
+<td><code>governed_data_ratio</code>, <code>surface_violation</code>, the <code>surface-escape</code> probe</td>
+<td><code>action_safety</code>, the <code>write-escape</code> probe</td>
+</tr>
+<tr>
+<td>Availability</td>
+<td>the <code>obda_read</code> component (global · per user · per agent) — <code>core/obda_planes</code></td>
+<td>the <code>action</code> component, the same chain (OBDA-MODEL: <code>obda_model</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The one deliberate difference is who executes. OBDA-READ compiles and hands the statement to the
+agent's governed data tool, so every read still passes the SQL gate. OBDA-ACT executes in the
+runtime, because a write must hold its checks, the statement and its ledger entry in one
+transaction.</p>
+<p><em>Naming:</em> the "ACT moment" in §7.3 (<code>surface_violation (BOUNDED, ACT moment)</code>) is the eval
+model's turn stage (Plan · Retrieve · Act · Compose · Deliver), not OBDA-ACT.</p>
+<hr>
+<h2 id="11-file-gate-map">11. File &amp; gate map</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Files</th>
+<th>Gate (assertions)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model + composition</td>
+<td><code>dbdeploy/product_model.py</code></td>
+<td><code>test_product_model.py</code> (98)</td>
+</tr>
+<tr>
+<td>Validation V1–V7</td>
+<td><code>dbdeploy/product_validation.py</code></td>
+<td><code>test_product_validation.py</code> (66)</td>
+</tr>
+<tr>
+<td>Compiler</td>
+<td><code>dbdeploy/product_compiler.py</code></td>
+<td><code>test_product_compiler.py</code> (74)</td>
+</tr>
+<tr>
+<td>Trust kind + ratchet</td>
+<td><code>core/trust/{products,validators}.py</code></td>
+<td><code>test_product_trust.py</code> (45)</td>
+</tr>
+<tr>
+<td>REST faces</td>
+<td><code>api/{rest_routes,trust_routes}.py</code></td>
+<td><code>test_product_rest.py</code> (29, live)</td>
+</tr>
+<tr>
+<td>Agent face</td>
+<td><code>components/builtin/knowledge_graph/handler.py</code></td>
+<td><code>test_product_agent_face.py</code> (19)</td>
+</tr>
+<tr>
+<td>Scanner + receipts + E5</td>
+<td><code>agent/obda.py</code>, <code>agent/executor.py</code>, <code>core/provenance.py</code></td>
+<td><code>test_obda.py</code> (74)</td>
+</tr>
+<tr>
+<td>Surface enforcement</td>
+<td><code>core/agent_authority.py</code>, <code>mcp_adapter/adapter.py</code>, <code>components/manager.py</code>, <code>agent/tool_enforcement.py</code></td>
+<td><code>test_agent_authority.py</code> (77)</td>
+</tr>
+<tr>
+<td>K5</td>
+<td><code>agent/rag_retriever.py</code>, <code>core/profile_config_contract.py</code></td>
+<td><code>test_signed_knowledge.py</code> (19)</td>
+</tr>
+<tr>
+<td>Eval + red-team</td>
+<td><code>eval/scorers/reliability.py</code>, <code>eval/live_redteam.py</code></td>
+<td><code>test_eval_reliability.py</code> (69), <code>test_live_redteam.py</code> (38)</td>
+</tr>
+<tr>
+<td>MCP face</td>
+<td><code>mcp_server/{client,server}.py</code></td>
+<td><code>test_mcp_server.py</code></td>
+</tr>
+<tr>
+<td>Designer + capsule</td>
+<td><code>static/js/handlers/{knowledgeGraphPanelHandler,answerCapsule,configurationHandler}.js</code></td>
+<td>browser-verified per increment</td>
+</tr>
+</tbody>
+</table></div>
+<p>All Python gates run in <code>test/trust_battery.sh</code> (a gate the battery does not run is a
+gate nobody runs). Every security-bearing rule above is <strong>mutation-tested</strong> — ~40
+mutations across the subsystem, each failing by name.</p>
+  </article>
+  <footer class="docfoot">
+    Uderia is a framework for trusted data agents. ·
+    Rendered from <code>docs/Architecture/OBDA_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    part of the Agent Trust &amp; Assurance stack ·
+    <a href="index.html">trust home</a> ·
+    <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
+    <a href="benchmarks.html">the numbers</a>.
+  </footer>
+</div>
+</html>

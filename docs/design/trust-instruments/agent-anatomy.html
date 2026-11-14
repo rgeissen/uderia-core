@@ -1,0 +1,450 @@
+<title>Agent Anatomy — unified design language</title>
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   Agent Anatomy in the Assurance Ring / Trust Circle language.
+   Three changes: the star becomes schematic and carries the selectable plus;
+   colour stops encoding CATEGORY (it collided with the trust palette) and goes
+   back to meaning attention; the two foundations report their real posture
+   instead of rendering green while one agent in nine enforces.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+    --map: #8ab4e8;
+    --map-soft: rgba(138, 180, 232, .30);
+    --map-dim: rgba(138, 180, 232, .13);
+    --trust-pass: #34d399; --trust-pass-bg: rgba(52,211,153,.12);
+    --trust-warn: #fbbf24; --trust-warn-bg: rgba(251,191,36,.12);
+    --trust-danger: #f87171; --trust-danger-bg: rgba(248,113,113,.12);
+    --trust-na: #94a3b8; --accent: #F15F22;
+    --accent-soft: rgba(241, 95, 34, .14);
+    --stage-a: rgba(127, 127, 127, .03); --stage-b: rgba(0, 0, 0, .10);
+    --bg: #0b0f14; --card-bg: #141a21; --card-bg-2: #1a222b;
+    --text-primary: #e6edf3; --text-secondary: #b3becb; --text-muted: #7d8896;
+    --border-primary: #29323d; --border-secondary: #1f2731; --rule: #232c36;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --map: #2f6fb0;
+        --map-soft: rgba(47, 111, 176, .28);
+        --map-dim: rgba(47, 111, 176, .10);
+        --trust-pass: #059669; --trust-pass-bg: rgba(5,150,105,.10);
+        --trust-warn: #b45309; --trust-warn-bg: rgba(180,83,9,.10);
+        --trust-danger: #dc2626; --trust-danger-bg: rgba(220,38,38,.08);
+        --trust-na: #64748b; --accent-soft: rgba(241, 95, 34, .09);
+        --stage-a: rgba(255,255,255,.75); --stage-b: rgba(19,28,37,.035);
+        --bg: #eef1f4; --card-bg: #ffffff; --card-bg-2: #f4f6f8;
+        --text-primary: #131c25; --text-secondary: #3b4855; --text-muted: #667585;
+        --border-primary: #d5dce4; --border-secondary: #e4e9ee; --rule: #e0e6ec;
+    }
+}
+:root[data-theme="light"] {
+    --map: #2f6fb0;
+    --map-soft: rgba(47, 111, 176, .28);
+    --map-dim: rgba(47, 111, 176, .10);
+    --trust-pass: #059669; --trust-pass-bg: rgba(5,150,105,.10);
+    --trust-warn: #b45309; --trust-warn-bg: rgba(180,83,9,.10);
+    --trust-danger: #dc2626; --trust-danger-bg: rgba(220,38,38,.08);
+    --trust-na: #64748b; --accent-soft: rgba(241, 95, 34, .09);
+    --stage-a: rgba(255,255,255,.75); --stage-b: rgba(19,28,37,.035);
+    --bg: #eef1f4; --card-bg: #ffffff; --card-bg-2: #f4f6f8;
+    --text-primary: #131c25; --text-secondary: #3b4855; --text-muted: #667585;
+    --border-primary: #d5dce4; --border-secondary: #e4e9ee; --rule: #e0e6ec;
+}
+:root[data-theme="dark"] {
+    --map: #8ab4e8;
+    --map-soft: rgba(138, 180, 232, .30);
+    --map-dim: rgba(138, 180, 232, .13);
+    --trust-pass: #34d399; --trust-pass-bg: rgba(52,211,153,.12);
+    --trust-warn: #fbbf24; --trust-warn-bg: rgba(251,191,36,.12);
+    --trust-danger: #f87171; --trust-danger-bg: rgba(248,113,113,.12);
+    --trust-na: #94a3b8; --accent-soft: rgba(241, 95, 34, .14);
+    --stage-a: rgba(127,127,127,.03); --stage-b: rgba(0,0,0,.10);
+    --bg: #0b0f14; --card-bg: #141a21; --card-bg-2: #1a222b;
+    --text-primary: #e6edf3; --text-secondary: #b3becb; --text-muted: #7d8896;
+    --border-primary: #29323d; --border-secondary: #1f2731; --rule: #232c36;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: var(--sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.page { max-width: 1240px; margin: 0 auto; padding: 36px 22px 80px; }
+.eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); }
+
+.masthead { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.masthead h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.02em; }
+.masthead p { margin: 0; max-width: 66ch; color: var(--text-secondary); font-size: 15px; text-wrap: pretty; }
+
+.frame { background: var(--card-bg); border: 1px solid var(--border-primary); border-radius: 14px; padding: 16px; }
+.head { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.head .mark { width: 17px; height: 17px; }
+.head .mark * { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+.head h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.split { display: grid; grid-template-columns: minmax(430px, 600px) 1fr; gap: 26px; align-items: start; }
+@media (max-width: 1000px) { .split { grid-template-columns: 1fr; } }
+.stage { background: linear-gradient(180deg, var(--stage-a), var(--stage-b)); border: 1px solid var(--border-secondary); border-radius: 14px; padding: 6px; }
+svg.anat { display: block; width: 100%; height: auto; }
+
+/* ── schematic geometry ──────────────────────────────────────────────── */
+.membrane { fill: none; stroke: var(--map-soft); stroke-width: 1.5; stroke-dasharray: 5 6; opacity: .75; }
+.mem-l { font-family: var(--mono); font-size: 10px; letter-spacing: .26em; fill: var(--text-muted); opacity: .8; }
+.constel { fill: var(--map); opacity: .34; }
+/* the universe of agents — every one a star, deterministically placed and
+   filtered against every plate, so the field is texture and never noise. */
+.starfield { fill: var(--map); opacity: .16; }
+.constel-line { stroke: var(--map); stroke-width: .8; opacity: .26; fill: none; }
+.spoke { stroke: var(--map-soft); stroke-width: 1.2; }
+.fac.on .spoke { stroke: var(--accent); opacity: .8; }
+
+/* the subject — schematic, and it CARRIES THE PLUS because an agent can be
+   chosen here. Star alone would say the subject is fixed. */
+.star-f { fill: none; stroke: var(--map); stroke-width: 1.3; opacity: .9; stroke-linejoin: round; }
+.star-i { fill: var(--map); opacity: .09; stroke: none; }
+.subject-pick { cursor: pointer; }
+.star-hit { fill: transparent; stroke: none; }
+.subject-plus { stroke: var(--map); stroke-width: 2.1; stroke-linecap: round; opacity: .85; }
+.subject-pick:hover .subject-plus, .subject-pick:focus-visible .subject-plus { stroke: var(--accent); opacity: 1; }
+.subject-pick:hover .star-f { stroke: var(--accent); opacity: 1; }
+.subject-pick:hover .core-l { fill: var(--accent); }
+.subject-pick:focus { outline: none; }
+.subject-pick:focus-visible .star-ring { stroke: var(--accent); stroke-width: 1.4; }
+.star-ring { fill: none; stroke: none; }
+.core-l { font-family: var(--mono); font-size: 16px; letter-spacing: .14em; fill: var(--text-primary); }
+.core-s { font-family: var(--serif); font-style: italic; font-size: 12px; fill: var(--text-muted); }
+
+/* faculty plates — the Trust Circle's engraved plate, same three lines.
+   Category is carried by TYPE, not colour: colour means attention here too. */
+.fac { cursor: pointer; transition: opacity 120ms ease; }
+.fac.dim { opacity: .3; }
+.fac:focus { outline: none; }
+.fac:focus-visible .fac-hit { stroke: var(--accent); stroke-width: 1.3; }
+.fac-hit { fill: transparent; stroke: none; rx: 6; }
+.fac-eye { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; fill: var(--map); text-transform: uppercase; }
+.fac-name { font-family: var(--mono); font-size: 14.5px; letter-spacing: .05em; fill: var(--text-primary); }
+.fac.on .fac-name { fill: var(--accent); }
+.fac-stat { font-family: var(--mono); font-size: 12px; letter-spacing: .02em; fill: var(--text-secondary); }
+.fac-node { fill: var(--card-bg); stroke: var(--map); stroke-width: 1.5; }
+.fac.on .fac-node { stroke: var(--accent); }
+
+/* the two foundations DO carry trust colour — they have a real posture */
+.found-box { stroke-width: 1.5; }
+.f-pass .found-box { stroke: var(--trust-pass); fill: var(--trust-pass-bg); }
+.f-warn .found-box { stroke: var(--trust-warn); fill: var(--trust-warn-bg); }
+.f-danger .found-box { stroke: var(--trust-danger); fill: var(--trust-danger-bg); }
+.f-na .found-box { stroke: var(--trust-na); fill: none; stroke-dasharray: 3 3.5; opacity: .6; }
+.found-k { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; fill: var(--text-primary); }
+.found-v { font-family: var(--mono); font-size: 11px; letter-spacing: .02em; }
+.f-pass .found-v { fill: var(--trust-pass); } .f-warn .found-v { fill: var(--trust-warn); }
+.f-danger .found-v { fill: var(--trust-danger); } .f-na .found-v { fill: var(--trust-na); }
+.found-s { font-family: var(--serif); font-style: italic; font-size: 10.5px; fill: var(--text-muted); }
+.found { cursor: pointer; }
+.found:focus { outline: none; }
+.found:focus-visible .found-box { stroke: var(--accent); stroke-width: 2; }
+
+/* ── panel ───────────────────────────────────────────────────────────── */
+.panel { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.p-eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+.p-head { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.015em; line-height: 1.28; text-wrap: balance; }
+.p-body { margin: 0; font-size: 14px; color: var(--text-secondary); max-width: 62ch; text-wrap: pretty; }
+.chip { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 10px; letter-spacing: .05em; padding: 1px 8px; border-radius: 3px; border: 1px solid; white-space: nowrap; }
+.chip-pass { color: var(--trust-pass); border-color: var(--trust-pass); background: var(--trust-pass-bg); }
+.chip-warn { color: var(--trust-warn); border-color: var(--trust-warn); background: var(--trust-warn-bg); }
+.chip-na { color: var(--trust-na); border-color: var(--trust-na); border-style: dashed; }
+.reading { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.r-head { display: flex; align-items: center; gap: 9px; padding: 10px 12px; background: var(--card-bg-2); border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.r-station { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.r-body { padding: 12px; }
+.r-line { margin: 0 0 11px; font-size: 14.5px; line-height: 1.42; text-wrap: pretty; }
+.slots { border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.slot { display: grid; grid-template-columns: 104px 1fr; gap: 11px; padding: 8px 11px; align-items: baseline; }
+.slot + .slot { border-top: 1px solid var(--rule); }
+.slot-a { background: var(--card-bg-2); }
+.slot-k { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
+.slot-v { font-size: 13px; color: var(--text-secondary); }
+.slot-a .slot-v { color: var(--text-primary); }
+.slot-why { border-top: 1px dashed var(--border-primary); }
+.slot-why .slot-v { font-family: var(--serif); font-style: italic; color: var(--text-muted); font-size: 12.5px; }
+.acts { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
+.act { font: inherit; font-size: 12.5px; padding: 5px 12px; border-radius: 5px; cursor: pointer; border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+.act:hover { background: var(--accent-soft); }
+.act.sec { border-color: var(--border-primary); color: var(--text-secondary); }
+.act.sec:hover { background: var(--card-bg-2); }
+.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--text-secondary); }
+.legend div { display: flex; align-items: baseline; gap: 8px; }
+.lk { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); min-width: 96px; }
+.storylink { font-size: 13px; color: var(--text-secondary); text-decoration: none; border-bottom: 1px dotted var(--border-primary); align-self: flex-start; }
+.storylink:hover { color: var(--text-primary); }
+
+.notes { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.note { background: var(--card-bg); padding: 15px 15px 17px; display: flex; flex-direction: column; gap: 6px; }
+.note h3 { margin: 2px 0 0; font-size: 13.5px; font-weight: 600; }
+.note p { margin: 0; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="page">
+    <div class="masthead">
+        <div class="eyebrow">Uderia · Anatomy</div>
+        <h1>Agent Anatomy — in the ring's language</h1>
+        <p>Same schematic star, same engraved plates, same rule about what colour is allowed to mean.</p>
+    </div>
+
+    <div class="frame">
+        <div class="head">
+            <svg class="mark" viewBox="0 0 24 24"><path d="M12 2.6l2.9 6.2 6.6.7-4.9 4.4 1.4 6.5L12 17l-6 3.4 1.4-6.5-4.9-4.4 6.6-.7z"/></svg>
+            <h2>Agent Anatomy</h2>
+        </div>
+        <div class="split">
+            <div class="stage"><svg class="anat" id="anat" viewBox="0 0 960 740" role="group" aria-label="Agent anatomy"></svg></div>
+            <div class="panel" id="panel"></div>
+        </div>
+    </div>
+
+    <div class="notes">
+        <div class="note">
+            <div class="eyebrow">Change 1 · correctness</div>
+            <h3>The foundations were green while one agent in nine enforces</h3>
+            <p>Grounding and Guardrails carry real posture, so they read in the trust grammar — worst-of across the estate. Eight agents observing is <em>worth a look</em>, not quiet. Green there contradicted the Trust Circle's own reading of the same fact.</p>
+        </div>
+        <div class="note">
+            <div class="eyebrow">Change 2 · colour</div>
+            <h3>Colour stopped meaning “category”</h3>
+            <p>The old legend spent green and orange on <em>what kind of label this is</em> — and its green sat a hair from <code>--trust-pass</code>, so a map read as a health reading. Category now travels in type; colour means attention, here as everywhere.</p>
+        </div>
+        <div class="note">
+            <div class="eyebrow">Change 3 · the subject</div>
+            <h3>Schematic star, and it keeps the plus</h3>
+            <p>An agent <em>can</em> be chosen here, so the star carries the plus — the same mark the Trust Circle uses and the Live Status dial deliberately omits. One glyph, one meaning, across all three surfaces.</p>
+        </div>
+        <div class="note">
+            <div class="eyebrow">Unchanged</div>
+            <h3>The metaphor stays</h3>
+            <p>Five faculties, two foundations, the membrane, the constellation. Reduction is for decoration, not for content — the map is the point, and every plate is still a door to the surface that configures it.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    /* Re-solved so the two lower faculty plates clear the foundations and the
+       widest stat clears the canvas edge — the first layout put Intelligence and
+       Components straight through the GROUNDING / GUARDRAILS boxes. */
+    var CX = 480, CY = 296, RT = 146, LOFF = 56, FY = 560, FW = 236, FG = 28,
+        MEM = { x: 20, y: 28, w: 920, h: 660, r: 18 };
+
+    /* Five faculties on the star's tips; two foundations beneath it. Posture is
+       aggregated worst-of, exactly as the Trust Circle does — the anatomy must
+       not report a fact more kindly than the ring reporting the same fact. */
+    var FAC = [
+        { k: 'memory', eye: 'local / global remembrance', name: 'Memory', stat: 'none remember yet',
+          head: 'No agent has remembered anything about you yet.',
+          what: 'durable facts about the user, recalled into every session',
+          state: 'no memories stored across 9 agents',
+          why: 'a faculty that exists but has nothing in it — not a fault, just untouched',
+          acts: [['Open Agent Memory', 1]] },
+        { k: 'awareness', eye: 'situational consciousness', name: 'Awareness', stat: '4 context types · 5 primed',
+          head: 'Five of nine agents carry a tuned context window.',
+          what: 'the working memory of a single conversation',
+          state: '4 context-window types in use · 5 agents bound to one',
+          why: 'the other four inherit the balanced default, which is a choice, not a gap',
+          acts: [['Open Memory settings', 1], ['Compare types', 0]] },
+        { k: 'intelligence', eye: 'knowledge & expertise', name: 'Intelligence', stat: '1 repo · 1 KG',
+          head: 'One knowledge repository and one knowledge graph feed this estate.',
+          what: 'the corpora and ontologies an agent grounds on',
+          state: '1 repository · 1 knowledge graph · 1 planner store',
+          why: 'a single ontology is the estate’s whole grounding boundary',
+          acts: [['Open Intelligence', 1], ['Open the ontology', 0]] },
+        { k: 'components', eye: 'acquired instruments', name: 'Components', stat: '3 across 9 agents',
+          head: 'Three components are enabled somewhere in the estate.',
+          what: 'the tools an agent can operate — charts, canvas, flows, memory',
+          state: '3 distinct components · enabled on 9 agents',
+          why: 'components are per-agent, so the count is a union, not a total',
+          acts: [['Open Components', 1]] },
+        { k: 'configuration', eye: 'dna · brain · senses', name: 'Configuration', stat: '9 agents · 2 brains · 1 source',
+          head: 'Nine agents draw on two models and one data source.',
+          what: 'where agents are born — profile, model, MCP server',
+          state: '9 profiles · 2 LLM configurations · 1 MCP server',
+          why: 'one source means one blast radius, and one thing to lose',
+          acts: [['Open Agent Profiles', 1], ['Open LLMs', 0]] }
+    ];
+    var FOUND = [
+        { k: 'grounding', name: 'GROUNDING', sub: 'truth · faithfulness', s: 'warn',
+          val: '1 enforcing · 8 observing',
+          head: 'Eight agents observe grounding without acting on it.',
+          what: 'the gate that keeps an answer inside its declared scope',
+          state: '1 of 9 agents acts · 8 record only',
+          why: 'worst-of across the estate — observe records drift, it does not withhold',
+          acts: [['Open the posture matrix', 1]] },
+        { k: 'guardrails', name: 'GUARDRAILS', sub: 'rules · safety', s: 'warn',
+          val: '1 enforcing · 8 observing',
+          head: 'The guards run everywhere; eight agents only record what they find.',
+          what: 'inbound and outbound screening for injection, personal data and harm',
+          state: '1 of 9 agents acts · 8 record only',
+          why: 'worst-of across the estate — observe cannot redact or block',
+          acts: [['Open the posture matrix', 1]] }
+    ];
+    var WORD = { pass: 'quiet', warn: 'worth a look', danger: 'needs you now', na: 'not turned on' };
+    var ANCH = ['middle', 'start', 'start', 'end', 'end'];
+    var LDY  = [-34, -18, -6, -6, -18];
+
+    var anat = document.getElementById('anat'), panel = document.getElementById('panel');
+    var hovered = null, pinned = null;
+
+    function pol(r, d) { var a = (d - 90) * Math.PI / 180; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+    /* One star generator for both scales — the centre mark and every constellation
+       node. "A star made of stars" is the coordination metaphor, so the nodes have
+       to BE stars; dots said something else. */
+    function star(cx, cy, r) {
+        var p = [], inner = r * 0.382;
+        for (var i = 0; i < 10; i++) {
+            var a = (i * 36 - 90) * Math.PI / 180, rad = i % 2 ? inner : r;
+            p.push((i ? 'L' : 'M') + (cx + rad * Math.cos(a)).toFixed(2) + ' ' + (cy + rad * Math.sin(a)).toFixed(2));
+        }
+        return p.join(' ') + ' Z';
+    }
+    function starPath(r) { return star(CX, CY, r); }
+
+    function draw() {
+        var o = '';
+        o += '<rect class="membrane" x="' + MEM.x + '" y="' + MEM.y + '" width="' + MEM.w + '" height="' + MEM.h + '" rx="' + MEM.r + '"/>';
+        o += '<text class="mem-l" x="' + (MEM.x + MEM.w - 8) + '" y="' + (MEM.y - 10) + '" text-anchor="end">TRUST MEMBRANE</text>';
+
+        // the universe of agents, behind everything
+        var FIELD = [[211,39,2.3],[277,49,3.3],[347,64,2.7],[582,58,3],[663,67,3.1],[713,63,2.6],[762,49,2],[839,51,2.4],[905,41,2],[147,103,2.9],[216,113,1.8],[304,103,1.8],[344,125,2.6],[391,113,2.1],[522,123,2.4],[580,106,1.8],[632,111,2.8],[690,106,2.9],[756,104,2.1],[177,164,2.8],[238,154,2.1],[271,179,2.9],[642,164,1.9],[704,157,3.3],[64,226,3.3],[643,215,2.4],[881,227,2.3],[48,273,2.6],[105,266,2.7],[153,280,2.2],[241,290,3.1],[302,281,2.6],[646,278,2.3],[707,264,2.5],[770,286,2.6],[820,289,2.6],[877,284,2.6],[58,348,3.1],[89,345,3.2],[172,322,2.2],[213,326,3],[287,317,2],[655,330,3.3],[710,320,2.1],[778,347,2.9],[807,343,2.4],[880,323,2],[29,376,2],[118,373,3],[170,386,2.1],[213,394,2.2],[290,407,2.3],[723,405,3.1],[752,378,1.8],[832,399,1.9],[872,375,1.9],[27,455,3.2],[163,439,1.7],[395,430,2.7],[481,446,2.8],[546,450,2.5],[590,460,1.8],[661,432,2.5],[709,428,2.3],[765,435,2.5],[837,441,2.8],[903,452,2.8],[43,485,2],[172,489,2.1],[219,509,1.8],[304,511,3.1],[420,493,2.9],[460,486,2.5],[542,493,2.5],[586,515,2.3],[779,502,3],[892,505,3.2],[44,559,2.3],[99,540,3.3],[163,546,2],[477,570,2.1],[761,557,3],[807,573,2],[891,545,2.1],[50,619,3],[120,602,2],[171,612,2.6],[210,610,2.9],[477,610,3],[785,620,3.2],[820,617,2.7],[904,629,2.4]];
+        FIELD.forEach(function (f) { o += '<path class="starfield" d="' + star(f[0], f[1], f[2]) + '"/>'; });
+
+        // constellation — the coordination metaphor, quieted to decoration weight
+        /* The constellation lives in the two bands NO plate occupies: above the
+           Configuration plate on the left, above the Awareness plate on the right.
+           It is decoration, so it yields to content — and it is now modelled as an
+           obstacle in the layout check, which is why it was drifting into both. */
+        var CON = [[60,110],[112,92],[88,150],[44,180],[146,132],
+                   [806,110],[872,146],[824,84],[896,182],[768,158],
+                   [74,452],[134,492],[50,528],[858,452],[808,504],[892,528]];
+        CON.forEach(function (c, i) {
+            o += '<path class="constel" d="' + star(c[0], c[1], i % 3 === 0 ? 6.2 : 4.6) + '"/>';
+        });
+        o += '<path class="constel-line" d="M60 110 L112 92 L88 150 L44 180 L146 132"/>';
+        o += '<path class="constel-line" d="M806 110 L872 146 L824 84 L896 182 L768 158"/>';
+        o += '<text class="fac-eye" x="' + (MEM.x + 18) + '" y="' + (MEM.y + 28) + '">COORDINATION · GENIE</text>';
+        o += '<text class="core-s" x="' + (MEM.x + 18) + '" y="' + (MEM.y + 45) + '">a star made of stars</text>';
+
+        FAC.forEach(function (f, i) {
+            var A = i * 72, tip = pol(RT, A), lp = pol(RT + LOFF, A), an = ANCH[i], dy = LDY[i];
+            var pad = an === 'middle' ? 0 : (an === 'start' ? 14 : -14);
+            var mid = pol(RT + 22, A);
+            o += '<g class="fac" data-fac="' + f.k + '" tabindex="0" role="button" aria-label="' + esc(f.name) + '">' +
+                '<line class="spoke" x1="' + tip[0].toFixed(1) + '" y1="' + tip[1].toFixed(1) +
+                '" x2="' + mid[0].toFixed(1) + '" y2="' + mid[1].toFixed(1) + '"/>' +
+                '<circle class="fac-node" cx="' + mid[0].toFixed(1) + '" cy="' + mid[1].toFixed(1) + '" r="5.5"/>' +
+                '<text class="fac-eye" x="' + (lp[0] + pad).toFixed(1) + '" y="' + (lp[1] + dy).toFixed(1) + '" text-anchor="' + an + '">' + esc(f.eye) + '</text>' +
+                '<text class="fac-name" x="' + (lp[0] + pad).toFixed(1) + '" y="' + (lp[1] + dy + 18).toFixed(1) + '" text-anchor="' + an + '">' + esc(f.name) + '</text>' +
+                '<text class="fac-stat" x="' + (lp[0] + pad).toFixed(1) + '" y="' + (lp[1] + dy + 34).toFixed(1) + '" text-anchor="' + an + '">' + esc(f.stat) + '</text>' +
+                '<rect class="fac-hit" x="' + (Math.min(lp[0] + pad, lp[0] + pad - (an === 'end' ? 190 : 0)) - (an === 'middle' ? 95 : 0)).toFixed(1) +
+                '" y="' + (lp[1] + dy - 14).toFixed(1) + '" width="190" height="56"/>' +
+                '</g>';
+        });
+
+        // the subject — schematic star WITH the plus: an agent can be chosen here
+        o += '<g class="subject-pick" tabindex="0" role="button" aria-label="Choose an agent — currently the whole estate">' +
+             '<circle class="star-ring" cx="' + CX + '" cy="' + (CY - 16) + '" r="' + (RT - 62) + '"/>' +
+             '<circle class="star-hit" cx="' + CX + '" cy="' + (CY - 16) + '" r="' + (RT - 52) + '"/>' +
+             '<path class="star-i" d="' + starPath(RT) + '"/><path class="star-f" d="' + starPath(RT) + '"/>' +
+             '<path class="subject-plus" d="M ' + (CX - 8) + ' ' + (CY - 48) + ' H ' + (CX + 8) + '"/>' +
+             '<path class="subject-plus" d="M ' + CX + ' ' + (CY - 56) + ' V ' + (CY - 40) + '"/>' +
+             '<text class="core-l" x="' + CX + '" y="' + (CY - 20) + '" text-anchor="middle">AGENT</text>' +
+             '<text class="core-l" x="' + CX + '" y="' + CY + '" text-anchor="middle">IDENTITY</text>' +
+             '<text class="core-s" x="' + CX + '" y="' + (CY + 18) + '" text-anchor="middle">9 agents</text>' +
+             '</g>';
+
+        FOUND.forEach(function (f, i) {
+            var w = FW, h = 54, gap = FG, y = FY;
+            var x = CX - w - gap / 2 + i * (w + gap);
+            o += '<g class="found f-' + f.s + '" data-found="' + f.k + '" tabindex="0" role="button" aria-label="' +
+                esc(f.name + ' — ' + WORD[f.s]) + '">' +
+                '<rect class="found-box" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="7"/>' +
+                '<text class="found-k" x="' + (x + w / 2) + '" y="' + (y + 21) + '" text-anchor="middle">' + esc(f.name) + '</text>' +
+                '<text class="found-v" x="' + (x + w / 2) + '" y="' + (y + 38) + '" text-anchor="middle">' + esc(f.val) + '</text>' +
+                '<text class="found-s" x="' + (x + w / 2) + '" y="' + (y - 8) + '" text-anchor="middle">' + esc(f.sub) + '</text>' +
+                '</g>';
+        });
+        anat.innerHTML = o;
+
+        Array.prototype.forEach.call(anat.querySelectorAll('[data-fac],[data-found]'), function (g) {
+            var k = g.getAttribute('data-fac') || g.getAttribute('data-found');
+            g.addEventListener('mouseenter', function () { hovered = k; paint(); });
+            g.addEventListener('mouseleave', function () { hovered = null; paint(); });
+            g.addEventListener('focus', function () { hovered = k; paint(); });
+            g.addEventListener('blur', function () { hovered = null; paint(); });
+            g.addEventListener('click', function () { pinned = (pinned === k) ? null : k; hovered = null; paint(); });
+            g.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pinned = (pinned === k) ? null : k; hovered = null; paint(); }
+                if (e.key === 'Escape') { pinned = null; paint(); }
+            });
+        });
+    }
+
+    function find(k) {
+        var a = FAC.filter(function (f) { return f.k === k; })[0];
+        return a || FOUND.filter(function (f) { return f.k === k; })[0];
+    }
+
+    function paint() {
+        var key = hovered || pinned;
+        Array.prototype.forEach.call(anat.querySelectorAll('.fac,.found'), function (g) {
+            var k = g.getAttribute('data-fac') || g.getAttribute('data-found');
+            g.classList.toggle('on', k === key);
+            g.classList.toggle('dim', !!key && k !== key);
+        });
+        panel.innerHTML = key ? reading(find(key), pinned === key) : atlas();
+        var c = panel.querySelector('[data-close]');
+        if (c) c.addEventListener('click', function () { pinned = null; paint(); });
+    }
+
+    function atlas() {
+        var acting = FOUND.filter(function (f) { return f.s === 'warn' || f.s === 'danger'; });
+        return '<div class="p-eyebrow">The capability atlas</div>' +
+            '<h3 class="p-head">The whole platform, laid out as one agent.</h3>' +
+            '<p class="p-body">Five faculties and two foundations, inside the trust membrane — every part a real door ' +
+            'to the surface that configures it. Hover to learn; click to keep it open. The plus at the star’s centre ' +
+            'means you can pick a single agent and see <em>its</em> anatomy.</p>' +
+            (acting.length ? '<div class="reading"><div class="r-head">' +
+                '<span class="r-station">Foundations</span><span class="chip chip-warn">' + acting.length +
+                ' worth a look</span></div><div class="r-body"><p class="r-line" style="margin:0">' +
+                esc(acting.map(function (f) { return f.name.toLowerCase(); }).join(' and ')) +
+                ' record what they find but do not act — on eight of nine agents.</p></div></div>' : '') +
+            '<div class="legend">' +
+            '<div><span class="lk">Blueprint</span><span>the star, its spokes and the faculty labels — the <em>map</em> layer. It never reports state.</span></div>' +
+            '<div><span class="lk">Trust</span><span>green, amber, red — reserved for the two foundations, the only parts with a posture.</span></div>' +
+            '<div><span class="lk">Accent</span><span>what you can act on: hover, focus, and the plus at the star’s centre.</span></div>' +
+            '</div>' +
+            '<a class="storylink" href="#">Read the anatomy of trust  ↗</a>';
+    }
+
+    function reading(d, open) {
+        var hasState = !!d.s;
+        return '<div class="reading"><div class="r-head"><span class="r-station">' + esc(d.name) + '</span>' +
+            (hasState ? '<span class="chip chip-' + d.s + '">' + esc(WORD[d.s]) + '</span>'
+                      : '<span class="chip chip-na">a map, not a reading</span>') +
+            (open ? '<span style="flex:1 1 auto"></span><button type="button" class="act sec" data-close>Close</button>' : '') +
+            '</div><div class="r-body"><p class="r-line">' + esc(d.head) + '</p><div class="slots">' +
+            '<div class="slot slot-a"><span class="slot-k">What it is</span><span class="slot-v">' + esc(d.what) + '</span></div>' +
+            '<div class="slot"><span class="slot-k">In this estate</span><span class="slot-v">' + esc(d.state) + '</span></div>' +
+            '<div class="slot slot-why"><span class="slot-k">Why</span><span class="slot-v">' + esc(d.why) + '</span></div>' +
+            '</div>' +
+            (open ? '<div class="acts">' + d.acts.map(function (a) {
+                return '<button type="button" class="act' + (a[1] ? '' : ' sec') + '">' + esc(a[0]) + '</button>';
+            }).join('') + '</div>'
+                  : '<p class="slot-v" style="margin:11px 0 0;font-family:var(--serif);font-style:italic">Click to keep this open and go to the surface that configures it.</p>') +
+            '</div></div>';
+    }
+
+    draw();
+    paint();
+})();
+</script>

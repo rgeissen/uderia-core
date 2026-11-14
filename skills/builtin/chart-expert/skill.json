@@ -1,0 +1,22 @@
+{
+  "name": "chart-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on producing high-quality charts with the Charting component (TDA_Charting) — deciding when to visualize, choosing the right chart type for the question, mapping fields, and avoiding visualization anti-patterns.",
+  "author": "Uderia",
+  "tags": ["chart", "visualization", "data-display", "graphs"],
+  "keywords": ["chart", "visualize", "bar", "line", "pie", "scatter", "histogram", "mapping", "top N", "TDA_Charting"],
+  "use_cases": [
+    "Deciding whether a data result deserves a chart or reads better as a table",
+    "Choosing the chart type that fits the user's question shape",
+    "Mapping data columns to the correct visual roles",
+    "Producing top/bottom-N charts with sort and row limit",
+    "Avoiding visualization anti-patterns (overloaded pies, single-value charts)"
+  ],
+  "main_file": "chart-expert.md",
+  "last_updated": "2026-06-28",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "bar-chart-3"
+  }
+}

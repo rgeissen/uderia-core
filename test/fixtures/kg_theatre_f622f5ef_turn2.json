@@ -1,0 +1,2225 @@
+{
+"_source": "local session f622f5ef-fa77-497f-ae37-7bd3b4392c57, turn 2 (@PXPROD, 2026-10-05). Trimmed: value domains to offence_code, result preview, table_columns_full. Event ORDER is as persisted: invoked, completed, rewrite.",
+"user_query": "What hacking evidence was collected in this case?",
+"kg_enrichment_event": {
+"enrichments": [
+{
+"kg_owner_profile_id": "profile-9788d6a4-3aa3-4c98-bedf-2627835af3f0",
+"kg_id": "fc347159-f8b2-49e1-b400-f2ee7c2d2f22",
+"kg_name": "Policing Core Model (NIBRS + CASE)",
+"entity_count": 128,
+"relationship_count": 140,
+"entity_types": [
+"product_bridge",
+"column",
+"table",
+"domain",
+"entity",
+"attribute"
+],
+"entity_names": [
+"Policing Core.Property.date_recovered_text",
+"Policing Core.Property.description",
+"Policing Core.Property.description_code",
+"Policing Core.Property.incident_number",
+"Policing Core.Property.loss_type",
+"Policing Core.Property.loss_type_code",
+"Policing Core.Property.ori",
+"Policing Core.Property.property_seq",
+"Policing Core.Property.value_amount",
+"Policing Core.Url.domain_name",
+"Policing Core.Url.object_id",
+"Policing Core.Url.url_address",
+"Policing Core.Victim.age",
+"Policing Core.Victim.ethnicity",
+"Policing Core.Victim.ethnicity_code",
+"Policing Core.Victim.incident_number",
+"Policing Core.Victim.ori",
+"Policing Core.Victim.race",
+"Policing Core.Victim.race_code",
+"Policing Core.Victim.relationship_to_offender",
+"Policing Core.Victim.relationship_to_offender_code",
+"Policing Core.Victim.resident_status_code",
+"Policing Core.Victim.sex_code",
+"Policing Core.Victim.victim_type_code",
+"Policing Core.Weapon.incident_number",
+"Policing Core.Weapon.ori",
+"Policing Core.Weapon.weapon_force",
+"Policing Core.Weapon.weapon_force_code",
+"Policing Core.Weapon.weapon_seq",
+"Policing_Core.v_ChainOfCustody.evidence_object_id",
+"Policing Core.crime",
+"Policing Core.evidence",
+"Policing Core.Agency",
+"Policing Core.Arrestee",
+"Policing Core.Bias",
+"Policing Core.CaseObject",
+"Policing Core.ChainOfCustody",
+"Policing Core.EmailMessage",
+"Policing Core.File",
+"Policing Core.Incident",
+"Policing Core.Offence",
+"Policing Core.Offence_SuspectedOfUsing",
+"Policing Core.Offender",
+"Policing Core.Property",
+"Policing Core.Url",
+"Policing Core.Victim",
+"Policing Core.Weapon",
+"Policing Core.bridge.Offence__CaseObject",
+"Policing_Core.v_CaseObject",
+"Policing Core.Agency.agency_type",
+"Policing Core.Agency.agency_type_code",
+"Policing Core.Agency.city",
+"Policing Core.Agency.core_city",
+"Policing Core.Agency.core_city_code",
+"Policing Core.Agency.country_division",
+"Policing Core.Agency.country_division_code",
+"Policing Core.Agency.country_region",
+"Policing Core.Agency.country_region_code",
+"Policing Core.Agency.nibrs_active_code",
+"Policing Core.Agency.population_group_code",
+"Policing Core.Agency.state_abbr",
+"Policing Core.Arrestee.age",
+"Policing Core.Arrestee.armed_with",
+"Policing Core.Arrestee.armed_with_code",
+"Policing Core.Arrestee.arrest_date_text",
+"Policing Core.Arrestee.arrest_offence",
+"Policing Core.Arrestee.arrest_offence_code",
+"Policing Core.Arrestee.arrest_type",
+"Policing Core.Arrestee.arrest_type_code",
+"Policing Core.Arrestee.ethnicity_code",
+"Policing Core.Arrestee.incident_number",
+"Policing Core.Arrestee.race_code",
+"Policing Core.Arrestee.sex_code",
+"Policing Core.Bias.bias_motivation",
+"Policing Core.Bias.bias_motivation_code",
+"Policing Core.Bias.bias_seq",
+"Policing Core.Bias.incident_number",
+"Policing Core.Bias.ori",
+"Policing Core.CaseObject.created_at",
+"Policing Core.CaseObject.object_id",
+"Policing Core.CaseObject.primary_type",
+"Policing Core.CaseObject.source_bundle_id",
+"Policing Core.ChainOfCustody.action_name",
+"Policing Core.ChainOfCustody.evidence_object_id",
+"Policing Core.ChainOfCustody.exhibit_description",
+"Policing Core.ChainOfCustody.exhibit_number",
+"Policing Core.ChainOfCustody.seizure_or_acquisition_time",
+"Policing Core.ChainOfCustody.tool_id",
+"Policing Core.EmailMessage.body",
+"Policing Core.EmailMessage.from_address",
+"Policing Core.EmailMessage.object_id",
+"Policing Core.EmailMessage.sent_time",
+"Policing Core.EmailMessage.subject",
+"Policing Core.EmailMessage.to_address",
+"Policing Core.File.file_extension",
+"Policing Core.File.file_name",
+"Policing Core.File.object_id",
+"Policing Core.Incident.cargo_theft",
+"Policing Core.Incident.cargo_theft_code",
+"Policing Core.Incident.exceptional_clearance",
+"Policing Core.Incident.exceptional_clearance_code",
+"Policing Core.Incident.exceptional_clearance_date_text",
+"Policing Core.Incident.incident_date_text",
+"Policing Core.Incident.incident_number",
+"Policing Core.Incident.ori",
+"Policing Core.Incident.state_code",
+"Policing Core.Offence.attempt_complete",
+"Policing Core.Offence.attempt_complete_code",
+"Policing Core.Offence.location_type",
+"Policing Core.Offence.location_type_code",
+"Policing Core.Offence.method_of_entry",
+"Policing Core.Offence.method_of_entry_code",
+"Policing Core.Offence.offence_code",
+"Policing Core.Offence.offence_seq",
+"Policing Core.Offence.offence_type",
+"Policing Core.Offence.premises_entered",
+"Policing Core.Offence_SuspectedOfUsing.suspected_of_using",
+"Policing Core.Offence_SuspectedOfUsing.suspected_of_using_code",
+"Policing Core.Offender.age",
+"Policing Core.Offender.ethnicity",
+"Policing Core.Offender.ethnicity_code",
+"Policing Core.Offender.incident_number",
+"Policing Core.Offender.offender_seq",
+"Policing Core.Offender.ori",
+"Policing Core.Offender.race",
+"Policing Core.Offender.race_code",
+"Policing Core.Offender.sex",
+"Policing Core.Offender.sex_code"
+],
+"grounding": {
+"mode": "live"
+},
+"semantic_seeding": {
+"state": "ready",
+"hits": 9,
+"bridged": [
+{
+"name": "Policing Core.Offence_SuspectedOfUsing",
+"score": 0.442
+},
+{
+"name": "Policing Core.Offence_SuspectedOfUsing.suspected_of_using",
+"score": 0.423
+},
+{
+"name": "Policing Core.Offence_SuspectedOfUsing.suspected_of_using_code",
+"score": 0.408
+}
+],
+"bridged_dropped": 3
+},
+"scope_databases": [
+"Policing_Core"
+],
+"scope_entities": [
+"Policing Core.Agency",
+"Policing Core.Arrestee",
+"Policing Core.Bias",
+"Policing Core.CaseObject",
+"Policing Core.ChainOfCustody",
+"Policing Core.EmailMessage",
+"Policing Core.File",
+"Policing Core.Incident",
+"Policing Core.Offence",
+"Policing Core.Offence_SuspectedOfUsing",
+"Policing Core.Offender",
+"Policing Core.Property",
+"Policing Core.Url",
+"Policing Core.Victim",
+"Policing Core.Weapon",
+"Policing Core.bridge.Offence__CaseObject"
+],
+"table_columns": {
+"Policing_Core.v_Agency": [
+"core_city_code",
+"country_region",
+"agency_type_code",
+"state_abbr",
+"country_division",
+"agency_type",
+"city",
+"core_city",
+"nibrs_active_code",
+"population_group_code",
+"country_region_code",
+"country_division_code"
+],
+"Policing_Core.v_Arrestee": [
+"armed_with",
+"race_code",
+"arrest_type_code",
+"age",
+"arrest_type",
+"sex_code",
+"arrest_offence",
+"arrest_offence_code",
+"ethnicity_code",
+"arrest_date_text",
+"incident_number",
+"armed_with_code"
+],
+"Policing_Core.v_Bias": [
+"bias_motivation",
+"incident_number",
+"ori",
+"bias_motivation_code",
+"bias_seq"
+],
+"Policing_Core.v_CaseObject": [
+"object_id",
+"created_at",
+"primary_type",
+"source_bundle_id"
+],
+"Policing_Core.v_ChainOfCustody": [
+"seizure_or_acquisition_time",
+"action_name",
+"evidence_object_id",
+"exhibit_description",
+"exhibit_number",
+"tool_id"
+],
+"Policing_Core.v_EmailMessage": [
+"subject",
+"from_address",
+"to_address",
+"body",
+"sent_time",
+"object_id"
+],
+"Policing_Core.v_File": [
+"object_id",
+"file_extension",
+"file_name"
+],
+"Policing_Core.v_Incident": [
+"cargo_theft_code",
+"exceptional_clearance_date_text",
+"cargo_theft",
+"ori",
+"incident_date_text",
+"incident_number",
+"exceptional_clearance",
+"state_code",
+"exceptional_clearance_code"
+],
+"Policing_Core.v_Offence": [
+"location_type_code",
+"attempt_complete",
+"method_of_entry_code",
+"offence_seq",
+"location_type",
+"method_of_entry",
+"premises_entered",
+"offence_code",
+"offence_type",
+"attempt_complete_code"
+],
+"Policing_Core.v_Offence_SuspectedOfUsing": [
+"suspected_of_using",
+"suspected_of_using_code"
+],
+"Policing_Core.v_Offender": [
+"offender_seq",
+"incident_number",
+"ethnicity",
+"sex_code",
+"age",
+"ethnicity_code",
+"race_code",
+"race",
+"ori",
+"sex"
+],
+"Policing_Core.v_Property": [
+"incident_number",
+"loss_type_code",
+"loss_type",
+"property_seq",
+"ori",
+"date_recovered_text",
+"description",
+"value_amount",
+"description_code"
+],
+"Policing_Core.v_Url": [
+"object_id",
+"domain_name",
+"url_address"
+],
+"Policing_Core.v_Victim": [
+"relationship_to_offender_code",
+"relationship_to_offender",
+"race",
+"ori",
+"ethnicity",
+"sex_code",
+"race_code",
+"victim_type_code",
+"age",
+"incident_number",
+"resident_status_code",
+"ethnicity_code"
+],
+"Policing_Core.v_Weapon": [
+"weapon_force_code",
+"weapon_force",
+"ori",
+"incident_number",
+"weapon_seq"
+]
+},
+"metrics": [],
+"fanout_keys": [],
+"join_keys": [
+{
+"tables": [
+"v_agency",
+"v_incident"
+],
+"key": [
+"ori"
+]
+},
+{
+"tables": [
+"v_arrestee",
+"v_incident"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_bias",
+"v_incident"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_incident",
+"v_offence"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_incident",
+"v_offender"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_incident",
+"v_property"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_incident",
+"v_victim"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_incident",
+"v_weapon"
+],
+"key": [
+"ori",
+"incident_number"
+]
+},
+{
+"tables": [
+"v_offence",
+"v_offence_suspectedofusing"
+],
+"key": [
+"ori",
+"incident_number",
+"offence_seq"
+]
+}
+],
+"subject_areas": {
+"v_agency": "crime",
+"v_arrestee": "crime",
+"v_bias": "crime",
+"v_caseobject": "evidence",
+"v_chainofcustody": "evidence",
+"v_emailmessage": "evidence",
+"v_file": "evidence",
+"v_incident": "crime",
+"v_offence": "crime",
+"v_offence_suspectedofusing": "crime",
+"v_offender": "crime",
+"v_property": "crime",
+"v_url": "evidence",
+"v_victim": "crime",
+"v_weapon": "crime"
+},
+"class_bridges": [
+{
+"name": "Offence__CaseObject",
+"tables": [
+"v_caseobject",
+"v_offence"
+],
+"areas": [
+"crime",
+"evidence"
+],
+"basis": "Robbery (120) and Burglary (220) offences -- the Incident Profile characterising the Crossover Heist -- correspond to the CLASSES of digital evidence collected in the case investigation (emails, files, URLs, disk images, registry keys, exhibits). This is a CLASS-level correspondence between the deployed Offence (NIBRS) and CaseObject (CASE) entities: those offence KINDS correspond to those evidence KINDS -- state it directly. It is not a per-record join: the products share no per-record key, so it never pairs a specific offence with a specific exhibit and no single figure spans both.",
+"from_values": [
+"120",
+"220"
+],
+"to_values": [
+"uco-observable:EmailMessage",
+"uco-observable:File",
+"uco-observable:URL",
+"uco-observable:Disk",
+"uco-observable:WindowsRegistryKey"
+],
+"from_class": "Offence",
+"from_table": "v_offence",
+"from_column": "offence_code",
+"from_domain": {
+"120": "Robbery",
+"220": "Burglary/Breaking and Entering",
+"267": "Hacking/Computer Invasion"
+},
+"to_class": "CaseObject",
+"to_table": "v_caseobject",
+"to_column": "primary_type"
+}
+],
+"text_date_columns": [
+{
+"table": "Policing_Core.v_Arrestee",
+"columns": [
+{
+"name": "arrest_date_text",
+"type": "VARCHAR(11)",
+"shape": "DD-MMM-YYYY",
+"sample": "01-APR-2023",
+"unparseable": 0.0,
+"unparseable_sampled": true,
+"span": [
+"2023-01-01",
+"2024-04-03"
+],
+"span_sampled": true
+}
+]
+},
+{
+"table": "Policing_Core.v_Incident",
+"columns": [
+{
+"name": "exceptional_clearance_date_text",
+"type": "VARCHAR(11)",
+"shape": "DD-MMM-YYYY",
+"sample": "01-APR-2023",
+"unparseable": 0.0,
+"unparseable_sampled": true,
+"span": [
+"2023-01-01",
+"2024-03-31"
+],
+"span_sampled": true
+},
+{
+"name": "incident_date_text",
+"type": "CHAR(11)",
+"shape": "DD-MMM-YYYY",
+"sample": "01-APR-2023",
+"unparseable": 0.0,
+"unparseable_sampled": true,
+"span": [
+"2023-01-01",
+"2023-12-31"
+],
+"span_sampled": true
+}
+]
+},
+{
+"table": "Policing_Core.v_Property",
+"columns": [
+{
+"name": "date_recovered_text",
+"type": "VARCHAR(11)",
+"shape": "DD-MMM-YYYY",
+"sample": "01-APR-2023",
+"unparseable": 0.0,
+"unparseable_sampled": true,
+"span": [
+"2023-01-01",
+"2024-04-05"
+],
+"span_sampled": true
+}
+]
+}
+],
+"value_domains": [
+{
+"table": "Policing_Core.v_Offence",
+"columns": [
+{
+"name": "offence_code",
+"values": {
+"91": "Murder/Nonnegligent Manslaughter",
+"92": "Negligent Manslaughter",
+"93": "Justifiable Homicide",
+"100": "Kidnaping/Abduction",
+"111": "Rape",
+"112": "Sodomy",
+"113": "Sexual Assault With An Object",
+"114": "Fondling (Indecent Liberties/Child Molesting)",
+"120": "Robbery",
+"131": "Aggravated Assault",
+"132": "Simple Assault",
+"133": "Intimidation",
+"200": "Arson",
+"210": "Extortion/Blackmail",
+"220": "Burglary/Breaking and Entering",
+"231": "Pocket-picking",
+"232": "Purse-snatching",
+"233": "Shoplifting",
+"234": "Theft From Building",
+"235": "Theft From Coin-Operated Machine or Device",
+"236": "Theft From Motor Vehicle",
+"237": "Theft of Motor Vehicle Parts/Accessories",
+"238": "All Other Larceny",
+"240": "Motor Vehicle Theft",
+"250": "Counterfeiting/Forgery",
+"261": "False Pretenses/Swindle/Confidence Game",
+"262": "Credit Card/Automatic Teller Machine Fraud",
+"263": "Impersonation",
+"264": "Welfare Fraud",
+"265": "Wire Fraud",
+"266": "Identity Theft",
+"267": "Hacking/Computer Invasion",
+"270": "Embezzlement",
+"280": "Stolen Property Offenses",
+"290": "Destruction/Damage/Vandalism of Property",
+"351": "Drug/Narcotic Violations",
+"352": "Drug Equipment Violations",
+"361": "Incest",
+"362": "Statutory Rape",
+"370": "Pornography/Obscene Material",
+"391": "Betting/Wagering",
+"392": "Operating/Promoting/Assisting Gambling",
+"393": "Gambling Equipment Violations",
+"394": "Sports Tampering",
+"401": "Prostitution",
+"402": "Assisting or Promoting Prostitution",
+"403": "Purchasing Prostitution",
+"510": "Bribery",
+"520": "Weapon Law Violations",
+"641": "Human Trafficking- Commercial Sex Acts"
+},
+"kind": "code",
+"pair": "offence_type"
+}
+]
+}
+],
+"question_terms": [
+"hacking",
+"evidence",
+"collected",
+"case"
+],
+"seeds": [
+{
+"name": "Policing Core.evidence",
+"type": "domain",
+"score": 100,
+"reasons": [
+"exact identifier"
+],
+"terms": [
+"evidence"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.bridge.Offence__CaseObject",
+"type": "product_bridge",
+"score": 70,
+"reasons": [
+"identifier word"
+],
+"terms": [
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing_Core.v_CaseObject",
+"type": "table",
+"score": 70,
+"reasons": [
+"identifier word"
+],
+"terms": [
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.CaseObject.created_at",
+"type": "attribute",
+"score": 65,
+"reasons": [
+"description mentions",
+"owning entity"
+],
+"terms": [
+"evidence",
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.CaseObject.object_id",
+"type": "attribute",
+"score": 65,
+"reasons": [
+"description mentions",
+"owning entity"
+],
+"terms": [
+"evidence",
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.CaseObject.primary_type",
+"type": "attribute",
+"score": 65,
+"reasons": [
+"owning entity",
+"description mentions"
+],
+"terms": [
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.CaseObject.source_bundle_id",
+"type": "attribute",
+"score": 65,
+"reasons": [
+"owning entity",
+"description mentions"
+],
+"terms": [
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.CaseObject",
+"type": "entity",
+"score": 50,
+"reasons": [
+"description mentions",
+"identifier prefix"
+],
+"terms": [
+"evidence",
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.ChainOfCustody.evidence_object_id",
+"type": "attribute",
+"score": 45,
+"reasons": [
+"identifier prefix",
+"description mentions"
+],
+"terms": [
+"evidence"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing_Core.v_ChainOfCustody.evidence_object_id",
+"type": "column",
+"score": 40,
+"reasons": [
+"identifier prefix"
+],
+"terms": [
+"evidence"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.ChainOfCustody.action_name",
+"type": "attribute",
+"score": 15,
+"reasons": [
+"description mentions"
+],
+"terms": [
+"evidence",
+"collected",
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.ChainOfCustody.exhibit_number",
+"type": "attribute",
+"score": 35,
+"reasons": [
+"description leads",
+"description mentions"
+],
+"terms": [
+"evidence",
+"case"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.EmailMessage.object_id",
+"type": "attribute",
+"score": 30,
+"reasons": [
+"description leads"
+],
+"terms": [
+"evidence"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.File.object_id",
+"type": "attribute",
+"score": 30,
+"reasons": [
+"description leads"
+],
+"terms": [
+"evidence"
+],
+"channel": "lexical"
+},
+{
+"name": "Policing Core.Offence.offence_code",
+"type": "attribute",
+"score": 25,
+"reasons": [
+"decoded value"
+],
+"terms": [
+"hacking"
+],
+"channel": "lexical"
+}
+],
+"provenance": {
+"Policing Core.CaseObject": "seed",
+"Policing Core.evidence": "seed",
+"Policing Core.ChainOfCustody": "seed",
+"Policing Core.EmailMessage": "seed",
+"Policing Core.File": "seed",
+"Policing Core.Url": "seed",
+"Policing Core.bridge.Offence__CaseObject": "seed",
+"Policing Core.Offence": "seed",
+"Policing_Core.v_CaseObject": "seed",
+"Policing Core.CaseObject.created_at": "seed",
+"Policing Core.CaseObject.object_id": "seed",
+"Policing Core.CaseObject.primary_type": "seed",
+"Policing Core.CaseObject.source_bundle_id": "seed",
+"Policing Core.ChainOfCustody.evidence_object_id": "seed",
+"Policing_Core.v_ChainOfCustody.evidence_object_id": "seed",
+"Policing Core.ChainOfCustody.action_name": "seed",
+"Policing Core.ChainOfCustody.exhibit_number": "seed",
+"Policing Core.EmailMessage.object_id": "seed",
+"Policing Core.File.object_id": "seed",
+"Policing Core.Offence.offence_code": "seed",
+"Policing Core.Incident": "fk_chain",
+"Policing Core.Offence_SuspectedOfUsing": "fk_chain",
+"Policing Core.Agency": "fk_chain",
+"Policing Core.Arrestee": "fk_chain",
+"Policing Core.Bias": "fk_chain",
+"Policing Core.Offender": "fk_chain",
+"Policing Core.Property": "fk_chain",
+"Policing Core.Weapon": "fk_chain",
+"Policing Core.Victim": "fk_chain",
+"Policing Core.ChainOfCustody.seizure_or_acquisition_time": "column",
+"Policing Core.ChainOfCustody.tool_id": "column",
+"Policing Core.ChainOfCustody.exhibit_description": "column",
+"Policing Core.EmailMessage.body": "column",
+"Policing Core.EmailMessage.from_address": "column",
+"Policing Core.EmailMessage.sent_time": "column",
+"Policing Core.EmailMessage.subject": "column",
+"Policing Core.EmailMessage.to_address": "column",
+"Policing Core.File.file_name": "column",
+"Policing Core.File.file_extension": "column",
+"Policing Core.Offence.attempt_complete_code": "column",
+"Policing Core.Offence.location_type_code": "column",
+"Policing Core.Offence.method_of_entry_code": "column",
+"Policing Core.Offence.attempt_complete": "column",
+"Policing Core.Offence.location_type": "column",
+"Policing Core.Offence.method_of_entry": "column",
+"Policing Core.Offence.offence_seq": "column",
+"Policing Core.Offence.offence_type": "column",
+"Policing Core.Offence.premises_entered": "column",
+"Policing Core.Url.object_id": "column",
+"Policing Core.Url.domain_name": "column",
+"Policing Core.Url.url_address": "column",
+"Policing Core.Incident.incident_number": "column",
+"Policing Core.Incident.cargo_theft_code": "column",
+"Policing Core.Incident.exceptional_clearance_code": "column",
+"Policing Core.Incident.state_code": "column",
+"Policing Core.Incident.cargo_theft": "column",
+"Policing Core.Incident.exceptional_clearance": "column",
+"Policing Core.Incident.exceptional_clearance_date_text": "column",
+"Policing Core.Incident.incident_date_text": "column",
+"Policing Core.Incident.ori": "column",
+"Policing Core.Offence_SuspectedOfUsing.suspected_of_using_code": "column",
+"Policing Core.Offence_SuspectedOfUsing.suspected_of_using": "column",
+"Policing Core.Agency.city": "column",
+"Policing Core.Agency.core_city": "column",
+"Policing Core.Agency.country_region": "column",
+"Policing Core.Agency.state_abbr": "column",
+"Policing Core.Agency.agency_type_code": "column",
+"Policing Core.Agency.core_city_code": "column",
+"Policing Core.Agency.country_division_code": "column",
+"Policing Core.Agency.country_region_code": "column",
+"Policing Core.Agency.nibrs_active_code": "column",
+"Policing Core.Agency.population_group_code": "column",
+"Policing Core.Agency.agency_type": "column",
+"Policing Core.Agency.country_division": "column",
+"Policing Core.Arrestee.arrest_offence_code": "column",
+"Policing Core.Arrestee.incident_number": "column",
+"Policing Core.Arrestee.armed_with_code": "column",
+"Policing Core.Arrestee.arrest_type_code": "column",
+"Policing Core.Arrestee.ethnicity_code": "column",
+"Policing Core.Arrestee.race_code": "column",
+"Policing Core.Arrestee.sex_code": "column",
+"Policing Core.Arrestee.age": "column",
+"Policing Core.Arrestee.armed_with": "column",
+"Policing Core.Arrestee.arrest_date_text": "column",
+"Policing Core.Arrestee.arrest_offence": "column",
+"Policing Core.Arrestee.arrest_type": "column",
+"Policing Core.Bias.incident_number": "column",
+"Policing Core.Bias.bias_motivation_code": "column",
+"Policing Core.Bias.bias_motivation": "column",
+"Policing Core.Bias.bias_seq": "column",
+"Policing Core.Bias.ori": "column",
+"Policing Core.Offender.incident_number": "column",
+"Policing Core.Offender.ethnicity_code": "column",
+"Policing Core.Offender.race_code": "column",
+"Policing Core.Offender.sex_code": "column",
+"Policing Core.Offender.age": "column",
+"Policing Core.Offender.ethnicity": "column",
+"Policing Core.Offender.offender_seq": "column",
+"Policing Core.Offender.ori": "column",
+"Policing Core.Offender.race": "column",
+"Policing Core.Offender.sex": "column",
+"Policing Core.Property.incident_number": "column",
+"Policing Core.Property.description_code": "column",
+"Policing Core.Property.loss_type_code": "column",
+"Policing Core.Property.date_recovered_text": "column",
+"Policing Core.Property.description": "column",
+"Policing Core.Property.loss_type": "column",
+"Policing Core.Property.ori": "column",
+"Policing Core.Property.property_seq": "column",
+"Policing Core.Property.value_amount": "column",
+"Policing Core.Victim.age": "column",
+"Policing Core.Victim.incident_number": "column",
+"Policing Core.Victim.ethnicity_code": "column",
+"Policing Core.Victim.race_code": "column",
+"Policing Core.Victim.relationship_to_offender_code": "column",
+"Policing Core.Victim.resident_status_code": "column",
+"Policing Core.Victim.sex_code": "column",
+"Policing Core.Victim.victim_type_code": "column",
+"Policing Core.Victim.ethnicity": "column",
+"Policing Core.Victim.ori": "column",
+"Policing Core.Victim.race": "column",
+"Policing Core.Victim.relationship_to_offender": "column",
+"Policing Core.Weapon.incident_number": "column",
+"Policing Core.Weapon.weapon_force_code": "column",
+"Policing Core.Weapon.ori": "column",
+"Policing Core.Weapon.weapon_force": "column",
+"Policing Core.Weapon.weapon_seq": "column",
+"Policing Core.crime": "semantic"
+},
+"entity_relationships": [
+{
+"source": "Policing Core.Agency",
+"target": "Policing Core.Incident",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Agency__Incident",
+"from_columns": [
+"ori"
+],
+"to_columns": [
+"ori"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.CaseObject",
+"target": "Policing Core.ChainOfCustody",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "CaseObject__ChainOfCustody",
+"from_columns": [
+"object_id"
+],
+"to_columns": [
+"evidence_object_id"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.EmailMessage",
+"target": "Policing Core.CaseObject",
+"type": "is_a",
+"cardinality": null,
+"name": "EmailMessage__CaseObject",
+"from_columns": [
+"object_id"
+],
+"to_columns": [
+"object_id"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.File",
+"target": "Policing Core.CaseObject",
+"type": "is_a",
+"cardinality": null,
+"name": "File__CaseObject",
+"from_columns": [
+"object_id"
+],
+"to_columns": [
+"object_id"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Offence",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Offence",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Offender",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Offender",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Property",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Property",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Weapon",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Weapon",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Bias",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Bias",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Arrestee",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Arrestee",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Incident",
+"target": "Policing Core.Victim",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Incident__Victim",
+"from_columns": [
+"ori",
+"incident_number"
+],
+"to_columns": [
+"ori",
+"incident_number"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Offence",
+"target": "Policing Core.Offence_SuspectedOfUsing",
+"type": "foreign_key",
+"cardinality": "1:N",
+"name": "Offence__Offence_SuspectedOfUsing",
+"from_columns": [
+"ori",
+"incident_number",
+"offence_seq"
+],
+"to_columns": [
+"ori",
+"incident_number",
+"offence_seq"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.Url",
+"target": "Policing Core.CaseObject",
+"type": "is_a",
+"cardinality": null,
+"name": "Url__CaseObject",
+"from_columns": [
+"object_id"
+],
+"to_columns": [
+"object_id"
+],
+"mechanism": null
+},
+{
+"source": "Policing Core.bridge.Offence__CaseObject",
+"target": "Policing Core.Offence",
+"type": "relates_to",
+"cardinality": null,
+"name": null,
+"from_columns": [],
+"to_columns": [],
+"mechanism": null
+},
+{
+"source": "Policing Core.bridge.Offence__CaseObject",
+"target": "Policing Core.CaseObject",
+"type": "relates_to",
+"cardinality": null,
+"name": null,
+"from_columns": [],
+"to_columns": [],
+"mechanism": null
+}
+],
+"attribute_facts": {
+"Policing Core.Property": {
+"date_recovered_text": {
+"type": "VARCHAR(11)",
+"semantic": "date",
+"shape": "DD-MMM-YYYY",
+"span": [
+"2023-01-01",
+"2024-04-05"
+],
+"label": "date_recovered_text"
+},
+"description": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "description_code",
+"label": "description"
+},
+"description_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "description",
+"label": "description_code",
+"coded": true
+},
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"loss_type": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "loss_type_code",
+"label": "loss_type"
+},
+"loss_type_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "loss_type",
+"label": "loss_type_code",
+"coded": true
+},
+"ori": {
+"type": "CHAR(9)",
+"semantic": "identifier",
+"label": "ori",
+"pii": true
+},
+"property_seq": {
+"type": "BYTEINT",
+"semantic": "identifier",
+"label": "property_seq"
+},
+"value_amount": {
+"type": "VARCHAR(9)",
+"semantic": "measure",
+"label": "value_amount"
+}
+},
+"Policing Core.Url": {
+"domain_name": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "domain_name"
+},
+"object_id": {
+"type": "VARCHAR(255)",
+"semantic": "identifier",
+"label": "object_id"
+},
+"url_address": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "url_address"
+}
+},
+"Policing Core.Victim": {
+"age": {
+"type": "VARCHAR(2)",
+"semantic": "measure",
+"label": "age",
+"pii": true
+},
+"ethnicity": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "ethnicity_code",
+"label": "ethnicity",
+"pii": true
+},
+"ethnicity_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "ethnicity",
+"label": "ethnicity_code",
+"pii": true,
+"coded": true
+},
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"ori": {
+"type": "CHAR(9)",
+"semantic": "identifier",
+"label": "ori",
+"pii": true
+},
+"race": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "race_code",
+"label": "race",
+"pii": true
+},
+"race_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "race",
+"label": "race_code",
+"pii": true,
+"coded": true
+},
+"relationship_to_offender": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "relationship_to_offender_code",
+"label": "relationship_to_offender"
+},
+"relationship_to_offender_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "relationship_to_offender",
+"label": "relationship_to_offender_code",
+"coded": true
+},
+"resident_status_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "resident_status",
+"label": "resident_status_code",
+"coded": true
+},
+"sex_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "sex",
+"label": "sex_code",
+"pii": true,
+"coded": true
+},
+"victim_type_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "victim_type",
+"label": "victim_type_code",
+"pii": true,
+"coded": true
+}
+},
+"Policing Core.Weapon": {
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"ori": {
+"type": "CHAR(9)",
+"semantic": "identifier",
+"label": "ori",
+"pii": true
+},
+"weapon_force": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "weapon_force_code",
+"label": "weapon_force"
+},
+"weapon_force_code": {
+"type": "VARCHAR(3)",
+"semantic": "code",
+"decoded_as": "weapon_force",
+"label": "weapon_force_code",
+"coded": true
+},
+"weapon_seq": {
+"type": "BYTEINT",
+"semantic": "identifier",
+"label": "weapon_seq"
+}
+},
+"Policing_Core.v_ChainOfCustody": {
+"evidence_object_id": {
+"label": "evidence_object_id"
+}
+},
+"Policing Core.Agency": {
+"agency_type": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "agency_type_code",
+"label": "agency_type"
+},
+"agency_type_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "agency_type",
+"label": "agency_type_code",
+"coded": true
+},
+"city": {
+"type": "VARCHAR(25)",
+"semantic": "text",
+"label": "city"
+},
+"core_city": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "core_city_code",
+"label": "core_city"
+},
+"core_city_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "core_city",
+"label": "core_city_code",
+"coded": true
+},
+"country_division": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "country_division_code",
+"label": "country_division"
+},
+"country_division_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "country_division",
+"label": "country_division_code",
+"coded": true
+},
+"country_region": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "country_region_code",
+"label": "country_region"
+},
+"country_region_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "country_region",
+"label": "country_region_code",
+"coded": true
+},
+"nibrs_active_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "nibrs_active",
+"label": "nibrs_active_code",
+"coded": true
+},
+"population_group_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "population_group",
+"label": "population_group_code",
+"coded": true
+},
+"state_abbr": {
+"type": "CHAR(2)",
+"semantic": "text",
+"label": "state_abbr"
+}
+},
+"Policing Core.Arrestee": {
+"age": {
+"type": "VARCHAR(2)",
+"semantic": "measure",
+"label": "age",
+"pii": true
+},
+"armed_with": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "armed_with_code",
+"label": "armed_with"
+},
+"armed_with_code": {
+"type": "VARCHAR(3)",
+"semantic": "code",
+"decoded_as": "armed_with",
+"label": "armed_with_code",
+"coded": true
+},
+"arrest_date_text": {
+"type": "VARCHAR(11)",
+"semantic": "date",
+"shape": "DD-MMM-YYYY",
+"span": [
+"2023-01-01",
+"2024-04-03"
+],
+"label": "arrest_date_text"
+},
+"arrest_offence": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "arrest_offence_code",
+"label": "arrest_offence",
+"pii": true
+},
+"arrest_offence_code": {
+"type": "VARCHAR(3)",
+"semantic": "code",
+"decoded_as": "arrest_offence",
+"label": "arrest_offence_code",
+"pii": true,
+"coded": true
+},
+"arrest_type": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "arrest_type_code",
+"label": "arrest_type"
+},
+"arrest_type_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "arrest_type",
+"label": "arrest_type_code",
+"coded": true
+},
+"ethnicity_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "ethnicity",
+"label": "ethnicity_code",
+"pii": true,
+"coded": true
+},
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"race_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "race",
+"label": "race_code",
+"pii": true,
+"coded": true
+},
+"sex_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "sex",
+"label": "sex_code",
+"pii": true,
+"coded": true
+}
+},
+"Policing Core.Bias": {
+"bias_motivation": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "bias_motivation_code",
+"label": "bias_motivation"
+},
+"bias_motivation_code": {
+"type": "CHAR(2)",
+"semantic": "code",
+"decoded_as": "bias_motivation",
+"label": "bias_motivation_code",
+"coded": true
+},
+"bias_seq": {
+"type": "BYTEINT",
+"semantic": "identifier",
+"label": "bias_seq"
+},
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"ori": {
+"type": "CHAR(9)",
+"semantic": "identifier",
+"label": "ori",
+"pii": true
+}
+},
+"Policing Core.CaseObject": {
+"created_at": {
+"type": "TIMESTAMP WITH TIME ZONE",
+"semantic": "date",
+"label": "created_at"
+},
+"object_id": {
+"type": "VARCHAR(255)",
+"semantic": "identifier",
+"label": "object_id"
+},
+"primary_type": {
+"type": "VARCHAR(128)",
+"semantic": "category",
+"label": "primary_type"
+},
+"source_bundle_id": {
+"type": "INTEGER",
+"semantic": "identifier",
+"label": "source_bundle_id"
+}
+},
+"Policing Core.ChainOfCustody": {
+"action_name": {
+"type": "VARCHAR(255)",
+"semantic": "text",
+"label": "action_name"
+},
+"evidence_object_id": {
+"type": "VARCHAR(255)",
+"semantic": "identifier",
+"label": "evidence_object_id"
+},
+"exhibit_description": {
+"type": "VARCHAR(1000)",
+"semantic": "text",
+"label": "exhibit_description"
+},
+"exhibit_number": {
+"type": "VARCHAR(100)",
+"semantic": "identifier",
+"label": "exhibit_number",
+"pii": true
+},
+"seizure_or_acquisition_time": {
+"type": "TIMESTAMP WITH TIME ZONE",
+"semantic": "date",
+"label": "seizure_or_acquisition_time"
+},
+"tool_id": {
+"type": "VARCHAR(255)",
+"semantic": "identifier",
+"label": "tool_id"
+}
+},
+"Policing Core.EmailMessage": {
+"body": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "body",
+"pii": true
+},
+"from_address": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "from_address",
+"pii": true
+},
+"object_id": {
+"type": "VARCHAR(255)",
+"semantic": "identifier",
+"label": "object_id"
+},
+"sent_time": {
+"type": "VARCHAR(4000)",
+"semantic": "date",
+"label": "sent_time"
+},
+"subject": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "subject",
+"pii": true
+},
+"to_address": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "to_address",
+"pii": true
+}
+},
+"Policing Core.File": {
+"file_extension": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "file_extension"
+},
+"file_name": {
+"type": "VARCHAR(4000)",
+"semantic": "text",
+"label": "file_name"
+},
+"object_id": {
+"type": "VARCHAR(255)",
+"semantic": "identifier",
+"label": "object_id"
+}
+},
+"Policing Core.Incident": {
+"cargo_theft": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "cargo_theft_code",
+"label": "cargo_theft"
+},
+"cargo_theft_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "cargo_theft",
+"label": "cargo_theft_code",
+"coded": true
+},
+"exceptional_clearance": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "exceptional_clearance_code",
+"label": "exceptional_clearance"
+},
+"exceptional_clearance_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "exceptional_clearance",
+"label": "exceptional_clearance_code",
+"coded": true
+},
+"exceptional_clearance_date_text": {
+"type": "VARCHAR(11)",
+"semantic": "date",
+"shape": "DD-MMM-YYYY",
+"span": [
+"2023-01-01",
+"2024-03-31"
+],
+"label": "exceptional_clearance_date_text"
+},
+"incident_date_text": {
+"type": "CHAR(11)",
+"semantic": "date",
+"shape": "DD-MMM-YYYY",
+"span": [
+"2023-01-01",
+"2023-12-31"
+],
+"label": "incident_date_text"
+},
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"ori": {
+"type": "CHAR(9)",
+"semantic": "identifier",
+"label": "ori",
+"pii": true
+},
+"state_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"label": "state_code",
+"pii": true
+}
+},
+"Policing Core.Offence": {
+"attempt_complete": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "attempt_complete_code",
+"label": "attempt_complete"
+},
+"attempt_complete_code": {
+"type": "CHAR(1)",
+"semantic": "code",
+"decoded_as": "attempt_complete",
+"label": "attempt_complete_code",
+"coded": true
+},
+"location_type": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "location_type_code",
+"label": "location_type"
+},
+"location_type_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "location_type",
+"label": "location_type_code",
+"coded": true
+},
+"method_of_entry": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "method_of_entry_code",
+"label": "method_of_entry"
+},
+"method_of_entry_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "method_of_entry",
+"label": "method_of_entry_code",
+"coded": true
+},
+"offence_code": {
+"type": "VARCHAR(3)",
+"semantic": "code",
+"decoded_as": "offence_type",
+"label": "offence_code",
+"pii": true,
+"coded": true
+},
+"offence_seq": {
+"type": "BYTEINT",
+"semantic": "identifier",
+"label": "offence_seq"
+},
+"offence_type": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "offence_code",
+"label": "offence_type",
+"pii": true
+},
+"premises_entered": {
+"type": "VARCHAR(2)",
+"semantic": "measure",
+"label": "premises_entered",
+"pii": true
+}
+},
+"Policing Core.Offence_SuspectedOfUsing": {
+"suspected_of_using": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "suspected_of_using_code",
+"label": "suspected_of_using"
+},
+"suspected_of_using_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "suspected_of_using",
+"label": "suspected_of_using_code",
+"coded": true
+}
+},
+"Policing Core.Offender": {
+"age": {
+"type": "VARCHAR(2)",
+"semantic": "measure",
+"label": "age",
+"pii": true
+},
+"ethnicity": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "ethnicity_code",
+"label": "ethnicity",
+"pii": true
+},
+"ethnicity_code": {
+"type": "VARCHAR(1)",
+"semantic": "code",
+"decoded_as": "ethnicity",
+"label": "ethnicity_code",
+"pii": true,
+"coded": true
+},
+"incident_number": {
+"type": "VARCHAR(12)",
+"semantic": "identifier",
+"label": "incident_number",
+"pii": true
+},
+"offender_seq": {
+"type": "VARCHAR(2)",
+"semantic": "identifier",
+"label": "offender_seq",
+"pii": true
+},
+"ori": {
+"type": "CHAR(9)",
+"semantic": "identifier",
+"label": "ori",
+"pii": true
+},
+"race": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "race_code",
+"label": "race",
+"pii": true
+},
+"race_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "race",
+"label": "race_code",
+"pii": true,
+"coded": true
+},
+"sex": {
+"type": "VARCHAR(512)",
+"semantic": "category",
+"decoded_from": "sex_code",
+"label": "sex",
+"pii": true
+},
+"sex_code": {
+"type": "VARCHAR(2)",
+"semantic": "code",
+"decoded_as": "sex",
+"label": "sex_code",
+"pii": true,
+"coded": true
+}
+}
+},
+"entity_keys": {
+"Policing Core.Agency": [
+"ori"
+],
+"Policing Core.CaseObject": [
+"object_id",
+"source_bundle_id"
+],
+"Policing Core.Incident": [
+"ori",
+"incident_number"
+],
+"Policing Core.Offence": [
+"ori",
+"incident_number",
+"offence_seq"
+],
+"Policing Core.Property": [
+"incident_number",
+"ori",
+"property_seq"
+],
+"Policing Core.Url": [
+"object_id"
+],
+"Policing Core.Victim": [
+"incident_number",
+"ori"
+],
+"Policing Core.Weapon": [
+"incident_number",
+"ori",
+"weapon_seq"
+],
+"Policing Core.Arrestee": [
+"incident_number"
+],
+"Policing Core.Bias": [
+"bias_seq",
+"incident_number",
+"ori"
+],
+"Policing Core.ChainOfCustody": [
+"evidence_object_id",
+"exhibit_number",
+"tool_id"
+],
+"Policing Core.EmailMessage": [
+"object_id"
+],
+"Policing Core.File": [
+"object_id"
+],
+"Policing Core.Offender": [
+"incident_number",
+"offender_seq",
+"ori"
+]
+},
+"entity_foreign_keys": {
+"Policing Core.Incident": [
+"ori"
+],
+"Policing Core.ChainOfCustody": [
+"evidence_object_id"
+],
+"Policing Core.Offence": [
+"ori",
+"incident_number"
+],
+"Policing Core.Offender": [
+"ori",
+"incident_number"
+],
+"Policing Core.Property": [
+"ori",
+"incident_number"
+],
+"Policing Core.Weapon": [
+"ori",
+"incident_number"
+],
+"Policing Core.Bias": [
+"ori",
+"incident_number"
+],
+"Policing Core.Arrestee": [
+"ori",
+"incident_number"
+],
+"Policing Core.Victim": [
+"ori",
+"incident_number"
+],
+"Policing Core.Offence_SuspectedOfUsing": [
+"ori",
+"incident_number",
+"offence_seq"
+]
+},
+"entity_facts": {
+"Policing Core.Agency": {
+"type": "entity",
+"deployed": "Policing_Core.v_Agency",
+"area": "crime",
+"description": "A law-enforcement agency that reports incidents to NIBRS, identified by its Originating Agency Identifier (ORI).",
+"rows": 21908,
+"key_unique": true
+},
+"Policing Core.Arrestee": {
+"type": "entity",
+"deployed": "Policing_Core.v_Arrestee",
+"area": "crime",
+"description": "A person arrested in connection with an incident. Sourced one row per arrestee from the Arrestee segment.",
+"rows": 6124701,
+"key_unique": true
+},
+"Policing Core.Bias": {
+"type": "entity",
+"deployed": "Policing_Core.v_Bias",
+"area": "crime",
+"description": "A bias motivation behind an incident (the offender's bias against a victim group). NIBRS records up to five per offence; the extract carries the first offence's bias slots, surfaced here at incident grain.",
+"rows": 13969284,
+"key_unique": true
+},
+"Policing Core.CaseObject": {
+"type": "entity",
+"deployed": "Policing_Core.v_CaseObject",
+"area": "evidence",
+"description": "A digital-evidence object in a CASE/UCO investigation graph -- the umbrella node that every typed artefact (email, file, URL) specialises. Source: the CASE_Source 'Object Node' entity.",
+"rows": 44,
+"key_unique": true
+},
+"Policing Core.ChainOfCustody": {
+"type": "entity",
+"deployed": "Policing_Core.v_ChainOfCustody",
+"area": "evidence",
+"description": "The chain-of-custody record for a piece of evidence -- exhibit number, acquisition time and the forensic action that acquired it (CASE ProvenanceRecord + InvestigativeAction).",
+"rows": 2,
+"key_unique": true
+},
+"Policing Core.EmailMessage": {
+"type": "entity",
+"deployed": "Policing_Core.v_EmailMessage",
+"area": "evidence",
+"description": "An email message recovered as digital evidence (UCO EmailMessageFacet); a specialisation of CaseObject.",
+"rows": 1,
+"key_unique": true
+},
+"Policing Core.File": {
+"type": "entity",
+"deployed": "Policing_Core.v_File",
+"area": "evidence",
+"description": "A file recovered as digital evidence (UCO FileFacet); a specialisation of CaseObject.",
+"rows": 9,
+"key_unique": true
+},
+"Policing Core.Incident": {
+"type": "entity",
+"deployed": "Policing_Core.v_Incident",
+"area": "crime",
+"description": "A single reported criminal incident, the anchor of the crime area. One incident may carry up to three offences and any number of victims, offenders and arrestees.",
+"rows": 12351550,
+"key_unique": true
+},
+"Policing Core.Offence": {
+"type": "entity",
+"deployed": "Policing_Core.v_Offence",
+"area": "crime",
+"description": "An offence recorded within an incident. NIBRS holds up to three offences per incident in parallel numbered columns; each is one row here.",
+"rows": 13969284,
+"key_unique": true
+},
+"Policing Core.Offence_SuspectedOfUsing": {
+"type": "entity",
+"deployed": "Policing_Core.v_Offence_SuspectedOfUsing",
+"area": "crime",
+"description": "Whether an offender was suspected of using alcohol, drugs or computer equipment on an offence. Computer equipment is the digital-involvement signal.",
+"rows": 1507507,
+"key_unique": true
+},
+"Policing Core.Offender": {
+"type": "entity",
+"deployed": "Policing_Core.v_Offender",
+"area": "crime",
+"description": "An offender recorded in an incident. May be anonymous (demographics unknown). Sourced one row per offender from the Offender segment.",
+"rows": 13820065,
+"key_unique": true
+},
+"Policing Core.Property": {
+"type": "entity",
+"deployed": "Policing_Core.v_Property",
+"area": "crime",
+"description": "Property lost, stolen, recovered or otherwise involved in an incident. NIBRS records up to ten items per incident; the extract carries three item slots, each with its loss type, description, value and recovery date.",
+"rows": 12700335,
+"key_unique": true
+},
+"Policing Core.Url": {
+"type": "entity",
+"deployed": "Policing_Core.v_Url",
+"area": "evidence",
+"description": "A URL or domain name recovered as digital evidence (UCO URLFacet / DomainNameFacet); a specialisation of CaseObject.",
+"rows": 1,
+"key_unique": true
+},
+"Policing Core.Victim": {
+"type": "entity",
+"deployed": "Policing_Core.v_Victim",
+"area": "crime",
+"description": "A victim recorded in an incident - a person, business, financial institution, government, society or other. Sourced one row per victim from the Victim segment.",
+"rows": 13916424,
+"key_unique": true
+},
+"Policing Core.Weapon": {
+"type": "entity",
+"deployed": "Policing_Core.v_Weapon",
+"area": "crime",
+"description": "A weapon or force used in an incident. NIBRS records up to three per offence; the extract carries the first offence's weapon slots, surfaced here at incident grain.",
+"rows": 3351179,
+"key_unique": true
+},
+"Policing Core.bridge.Offence__CaseObject": {
+"type": "product_bridge",
+"basis": "Robbery (120) and Burglary (220) offences -- the Incident Profile characterising the Crossover Heist -- correspond to the CLASSES of digital evidence collected in the case investigation (emails, files, URLs, disk images, registry keys, exhibits). This is a CLASS-level correspondence between the deployed Offence (NIBRS) and CaseObject (CASE) entities: those offence KINDS correspond to those evidence KINDS -- state it directly. It is not a per-record join: the products share no per-record key, so it never pairs a specific offence with a specific exhibit and no single figure spans both.",
+"mechanism": "type_correspondence"
+},
+"Policing_Core.v_CaseObject": {
+"type": "table"
+}
+},
+"omitted_columns": {
+"Policing Core.Agency": 3,
+"Policing Core.Arrestee": 5,
+"Policing Core.Victim": 4
+},
+"data_products": [],
+"spanning_bridges": [
+"Offence__CaseObject"
+],
+"component_id": "knowledge_graph"
+}
+],
+"total_entities": 128,
+"total_relationships": 140,
+"session_id": "f622f5ef-fa77-497f-ae37-7bd3b4392c57"
+},
+"conversation_agent_events": [
+{
+"type": "conversation_tool_invoked",
+"payload": {
+"tool_name": "base_readQuery",
+"arguments": {
+"sql": "SELECT\n  C.primary_type,\n  COUNT(*) AS count\nFROM Policing_Core.v_CaseObject AS C\nGROUP BY 1"
+},
+"session_id": "f622f5ef-fa77-497f-ae37-7bd3b4392c57"
+},
+"timestamp": 1791197572.212258
+},
+{
+"type": "conversation_tool_completed",
+"payload": {
+"tool_name": "base_readQuery",
+"result_preview": "content=[{'type': 'text', 'text': '{\\n  \"status\": \"success\",\\n  \"results\": [\\n    {\\n      \"primary_type\": \"uco-observable:File\",\\n      \"count\": \"9\"\\n    },\\n    {\\n      \"primary_type\": \"uco-observable:Disk\",\\n      \"count\": \"1\"\\n    },\\n    {\\n      \"primary_type\": \"uco-observable:ContentData\",\\n",
+"duration_ms": 739,
+"success": true,
+"session_id": "f622f5ef-fa77-497f-ae37-7bd3b4392c57",
+"result_rows": 23
+},
+"timestamp": 1791197572.9529028
+},
+{
+"type": "conversation_tool_rewrite",
+"payload": {
+"tool_name": "base_readQuery",
+"kind": "reserved_alias",
+"original_sql": "SELECT\n  C.primary_type,\n  COUNT(*) AS count\nFROM Policing_Core.v_CaseObject AS C\nGROUP BY 1",
+"executed_sql": "SELECT C.primary_type, COUNT(*) AS \"count\" FROM Policing_Core.v_CaseObject AS C GROUP BY 1",
+"summary": "`count` is a Teradata reserved word \u2014 quoted it as a delimited identifier wherever the statement uses it",
+"changes": [],
+"session_id": "f622f5ef-fa77-497f-ae37-7bd3b4392c57",
+"label": "reserved word as alias"
+},
+"timestamp": 1791197572.953599
+}
+],
+"grounding": {
+"decision": "annotate",
+"reason": "flagged",
+"out_of_scope_dbs": [],
+"scope_databases": [
+"policing_core"
+],
+"ungrounded_numbers": [
+"120",
+"2018",
+"2023",
+"220"
+],
+"numeric_fidelity": 0.5,
+"annotation_md": "Some figures could not be matched to the retrieved data: `120`, `2018`, `2023`, `220`.",
+"needs_judge": false,
+"judged": false,
+"judge_passed": null,
+"answer_oos_refs": [],
+"numeric_concern": true,
+"ground": "scope",
+"judge_family": "scope_faithfulness",
+"judge_score": null,
+"judge_votes": null,
+"unsupported_claims": [],
+"second_chance_cleared": [],
+"claims_checked": 0,
+"ran": true,
+"acted": true
+},
+"honesty": {
+"decision": "disclosed",
+"reason": "The answer presents the evidence as relating to 'Hacking/Computer Invasion', but the declared correspondence 'Offence__CaseObject' binds only 120, 220 and no query filtered the evidence on that kind \u2014 the evidence shown is not evidence of it.",
+"band": "warn",
+"failed_query_count": 0,
+"mode": "enforce",
+"answer_contained": false,
+"kind": "correspondence_overreach",
+"overreach": [
+"267"
+],
+"disclosure_appended": true,
+"branch": "sql",
+"ran": true,
+"acted": true
+}
+}

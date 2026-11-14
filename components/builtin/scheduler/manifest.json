@@ -1,0 +1,134 @@
+{
+  "component_id": "scheduler",
+  "display_name": "Task Scheduler",
+  "icon_accent": "#d946ef",
+  "answer_surface": {
+    "open": true
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z\"/></svg>",
+  "description": "Talk to the scheduler — create, manage, and monitor scheduled agent tasks through natural conversation; results render as an interactive scheduling canvas in the chat",
+  "version": "2.0.0",
+  "component_type": "action",
+  "instances": "user",
+  "signals": {
+    "emits": [
+      "uderia:scheduler-background-run"
+    ],
+    "listens": [
+      "uderia:component-changed"
+    ],
+    "announces": [
+      "created",
+      "updated",
+      "deleted"
+    ],
+    "consumes_refs": false
+  },
+  "category": "Automation",
+  "tool_definition": {
+    "name": "TDA_Scheduler",
+    "description": "Manages scheduled tasks. Call when user wants to schedule, automate, list, cancel, pause, resume, trigger, or inspect task history.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "'create' | 'list' | 'update' | 'delete' | 'enable' | 'disable' | 'run_now' | 'history'",
+        "required": true
+      },
+      "name": {
+        "type": "string",
+        "description": "Task name (e.g. 'Daily Sales Report'). Required for create.",
+        "required": false
+      },
+      "prompt": {
+        "type": "string",
+        "description": "Query the agent will run on schedule. Required for create.",
+        "required": false
+      },
+      "schedule": {
+        "type": "string",
+        "description": "Cron (e.g. '0 9 * * *') or interval (e.g. 'interval:1h', 'interval:30m'). Required for create.",
+        "required": false
+      },
+      "action_spec": {
+        "type": "dict",
+        "description": "[[gate:act]]For create/update: schedule a SIGNED ACTION instead of a prompt — {action, invocation: {key, values}}. Runs with no LLM; the action's posture decides (enforce writes, review parks for the owner, observe records); this agent must be granted the action. prompt is then optional.[[/gate]]",
+        "required": false
+      },
+      "task_id": {
+        "type": "string",
+        "description": "Task ID. Required for update/delete/enable/disable/run_now/history.",
+        "required": false
+      },
+      "output_channel": {
+        "type": "string",
+        "description": "'email' | 'webhook' | 'files' | null — 'files' keeps each successful run's answer and tables in the user's Files",
+        "required": false
+      },
+      "output_config": {
+        "type": "dict",
+        "description": "email: {'to_address': 'addr'}  webhook: {'webhook_url': '...', 'bearer_token': '...'}  any channel: add 'keep_in_files': true to also keep the run in Files",
+        "required": false
+      },
+      "overlap_policy": {
+        "type": "string",
+        "description": "'skip' (default) | 'queue' | 'allow'",
+        "required": false
+      },
+      "max_tokens_per_run": {
+        "type": "integer",
+        "description": "Token budget per run. Null = unlimited.",
+        "required": false
+      },
+      "session_context": {
+        "type": "string",
+        "description": "'new' (default — fresh session each run, no history) | 'current' (run inside the user's current session, inheriting conversation history and profile context). Ask the user which they prefer when creating a task.",
+        "required": false
+      }
+    }
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_levels": [
+      "none",
+      "medium",
+      "heavy"
+    ],
+    "intensity_tooltips": {
+      "medium": "Use TDA_Scheduler when user explicitly asks about scheduling",
+      "heavy": "Proactively suggest scheduling for recurring or time-based queries"
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "SchedulerComponentHandler",
+    "fast_path": true
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderScheduler"
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline",
+      "sub_window"
+    ],
+    "sub_window": {
+      "title_template": "Scheduler",
+      "default_size": {
+        "width": 640,
+        "height": 520
+      }
+    }
+  },
+  "profile_defaults": {
+    "on_for_new_agents": false,
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ]
+  }
+}

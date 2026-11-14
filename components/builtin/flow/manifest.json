@@ -1,0 +1,188 @@
+{
+  "component_id": "flow",
+  "display_name": "Flow Orchestrator",
+  "icon_accent": "#f59e0b",
+  "answer_surface": {
+    "open": true,
+    "pin": true
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4\"/></svg>",
+  "description": "Design, execute, and monitor multi-step task flows — create flows through conversation or the visual canvas; execute them with live node-by-node animation",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "user",
+  "signals": {
+    "emits": [
+      "uderia:component-changed",
+      "uderia:flow-fix-node",
+      "uderia:flow-node-extensions-save",
+      "uderia:flow-open-canvas",
+      "uderia:flow-open-file",
+      "uderia:flow-patch",
+      "uderia:flow-scope-edit",
+      "uderia:flow-scope-rounds"
+    ],
+    "listens": [
+      "uderia:component-changed",
+      "uderia:flow-fix-node",
+      "uderia:flow-node-extensions-save",
+      "uderia:flow-patch",
+      "uderia:flow-run-event",
+      "uderia:flow-scope-edit",
+      "uderia:flow-scope-rounds"
+    ],
+    "announces": [
+      "created",
+      "updated",
+      "deleted",
+      "snapshot"
+    ],
+    "consumes_refs": false
+  },
+  "category": "Automation",
+  "tool_definition": {
+    "name": "TDA_Flow",
+    "description": "Manages task flows. Call when user wants to create, design, edit, execute, or inspect a workflow of connected tasks. Flows can include LLM tasks, function tasks, decision branches, judges, canvas artefacts, and loops over task segments.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "'create' | 'open' | 'get' | 'list' | 'update' | 'delete' | 'insert_node' | 'add_node' | 'remove_node' | 'update_node' | 'add_edge' | 'remove_edge' | 'create_scope' | 'update_scope' | 'delete_scope' | 'update_global_params' | 'execute' | 'get_run' | 'cancel_run'",
+        "required": true
+      },
+      "flow_id": {
+        "type": "string",
+        "description": "Flow ID. Required for all actions except 'create' and 'list'.",
+        "required": false
+      },
+      "name": {
+        "type": "string",
+        "description": "Flow name. Required for 'create'.",
+        "required": false
+      },
+      "description": {
+        "type": "string",
+        "description": "Flow description.",
+        "required": false
+      },
+      "node": {
+        "type": "dict",
+        "description": "Node definition for 'add_node'. Fields: id (optional, auto-generated), type ('task_llm'|'task_tool'|'task_prompt'|'task_function'|'decision'|'merge'|'start'|'end'[[gate:files]]|'file_input'|'file_output'[[/gate]]), label, data, position ({x,y}). data by type: task_llm {prompt, profile_id}; task_tool {tool_name, arguments}; [[gate:act]]task_action {action, invocation:{key, values}, profile_id} (a SIGNED action the agent performs unattended — its posture decides; the agent must be granted the action); [[/gate]]task_prompt {prompt_name, prompt_arguments, profile_id} (Optimize profiles only — runs an MCP prompt); task_function {expression}; decision {condition}; [[gate:files]]file_input {file_id} (reads a file kept in Files — a table arrives as rows, a document as its text; get the id from TDA_Files 'list'); file_output {source, format: 'auto'|'csv'|'md'|'json'|'txt', filename} (keeps its input in Files on every run); [[/gate]]",
+        "required": false
+      },
+      "node_id": {
+        "type": "string",
+        "description": "Node ID for 'remove_node', 'update_node'.",
+        "required": false
+      },
+      "node_updates": {
+        "type": "dict",
+        "description": "Fields to update on a node for 'update_node'.",
+        "required": false
+      },
+      "edge": {
+        "type": "dict",
+        "description": "Edge definition for 'add_edge'. Fields: id (optional), source (node_id), target (node_id), type ('normal'|'error'|'conditional'|'cycle'), condition ('true'|'false' for conditional edges).",
+        "required": false
+      },
+      "edge_id": {
+        "type": "string",
+        "description": "Edge ID for 'remove_edge'.",
+        "required": false
+      },
+      "after_node_id": {
+        "type": "string",
+        "description": "For 'insert_node': the node ID to insert after. The backend splices the new node into the existing outgoing edge automatically — no separate add_edge calls needed.",
+        "required": false
+      },
+      "scope": {
+        "type": "dict",
+        "description": "Loop definition for 'create_scope'. Fields: name, node_ids (steps that follow one another — a round starts at one step and ends at one), max_iterations (int 1–20, default 3), optional history_window (earlier rounds each step sees) and exit_when ({node: a Judge in the loop, mode: 'pass'}). The back edge is added for you.",
+        "required": false
+      },
+      "scope_id": {
+        "type": "string",
+        "description": "Loop (scope) ID for 'update_scope' or 'delete_scope'.",
+        "required": false
+      },
+      "scope_updates": {
+        "type": "dict",
+        "description": "Fields to update on a loop for 'update_scope': name, max_iterations (1–20), history_window (int or null = all rounds), exit_when ({node, mode:'pass'} | {node, mode:'threshold', threshold} | {node, mode:'expression', expression} | null). Members cannot be changed in place.",
+        "required": false
+      },
+      "input_params": {
+        "type": "dict",
+        "description": "Runtime parameter overrides for 'execute'. Merged with flow's global_params.",
+        "required": false
+      },
+      "run_id": {
+        "type": "string",
+        "description": "Run ID for 'get_run' and 'cancel_run'.",
+        "required": false
+      },
+      "global_params": {
+        "type": "dict",
+        "description": "Flow-level variables accessible to all nodes. For 'create' or 'update'.",
+        "required": false
+      },
+      "topology": {
+        "type": "string",
+        "description": "For 'create': start from a topology template — 'pipeline' | 'parallel' | 'fork-join' | 'conditional' | 'iterative' (one agent refines until a judge passes it; slots: worker) | 'debate' (debaters argue in rounds until a moderator calls consensus, then a synthesiser writes it up; slots: debater, synthesiser) | 'teacher-student' (slots: student, teacher — the teacher decides when the student passes) | 'pair-programming' (driver writes code into a canvas, navigator approves; slots: driver, navigator). Judge/moderator slots default to the eval judge panel. The skeleton's agent slots are then filled with 'fills' or later via update_node. Omit for a blank flow.",
+        "required": false
+      },
+      "params": {
+        "type": "dict",
+        "description": "For 'create' with a topology: its parameters, e.g. {stages: 3} (pipeline), {tasks: 3} (parallel), {branches: 3} (fork-join / conditional), {max_rounds: 3} (iterative / teacher-student / pair-programming), {debaters: 3, max_rounds: 3} (debate). Values are clamped to each template's range.",
+        "required": false
+      },
+      "fills": {
+        "type": "dict",
+        "description": "For 'create' with a topology: which agent fills which slot — keyed by slot ROLE with a list in slot order (e.g. {stage: ['@A','@B','@C']}) or a single @TAG for every slot of that role (e.g. {synthesiser: '@S'}), or by slot node_id. An unknown @TAG is rejected, never written.",
+        "required": false
+      }
+    }
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_levels": [
+      "none",
+      "medium",
+      "heavy"
+    ],
+    "intensity_tooltips": {
+      "medium": "Use TDA_Flow when user explicitly asks about creating or running a workflow",
+      "heavy": "Proactively suggest flows for multi-step, recurring, or complex tasks"
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "FlowComponentHandler",
+    "fast_path": false
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderFlow"
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline",
+      "sub_window"
+    ],
+    "sub_window": {
+      "title_template": "Flow: {name}",
+      "resizable": true,
+      "interactive": true
+    }
+  },
+  "supports_instance_io": true,
+  "profile_defaults": {
+    "on_for_new_agents": false,
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ]
+  }
+}

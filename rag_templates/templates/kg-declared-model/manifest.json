@@ -1,0 +1,143 @@
+{
+  "name": "kg-declared-model",
+  "version": "1.0.0",
+  "template_id": "kg_declared_model_v1",
+  "display_name": "Knowledge Graph Constructor - Declared Model (ISO/IEC 11179)",
+  "description": "Build a Knowledge Graph deterministically from a model that stores its metadata WITH itself as an ISO/IEC 11179 metadata registry (object_class / data_element / value_domain / permissible_value / association). Entities, attributes with meanings and PII classes, decoded value codes, declared joins, is_a supertypes and cross-domain type correspondences are walked directly into the two-layer topology; the deployed types come from the data dictionary. No LLM, no MCP, zero tokens, re-syncable.",
+  "author": "TDA Core Team",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/rgeissen/uderia-core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rgeissen/uderia-core"
+  },
+  "keywords": [
+    "knowledge-graph",
+    "iso-11179",
+    "metadata-registry",
+    "declared-model",
+    "core-model",
+    "integration-model",
+    "teradata",
+    "deterministic",
+    "ldm",
+    "pdm",
+    "no-llm",
+    "governance",
+    "pii"
+  ],
+  "compatibility": {
+    "min_app_version": "1.0.0",
+    "max_app_version": "2.x.x"
+  },
+  "dependencies": {
+    "templates": [],
+    "python_packages": ["teradatasql"]
+  },
+  "files": {
+    "template": "kg_declared_model_v1.json",
+    "readme": "README.md"
+  },
+  "permissions": [
+    "knowledge_graph"
+  ],
+  "ui_components": {
+    "config_panel": false,
+    "preview_renderer": false
+  },
+  "population_modes": {
+    "auto_generate": {
+      "supported": true,
+      "requires_llm": false,
+      "requires_mcp_context": false,
+      "input_method": "deployed_metadata_registry",
+      "generation_endpoint": "/api/v1/knowledge-graph/generate",
+      "description": "Deterministic, zero-token construction: connect to a database connection, discover which ISO/IEC 11179 registries are deployed there, read the chosen registry plus the data dictionary, and walk it into entities and relationships. Reproducible, free, and re-syncable when the registry changes.",
+      "input_variables": {
+        "connection_id": {
+          "required": true,
+          "type": "select",
+          "options_source": "database-connections",
+          "description": "Database connection holding the registry and the model it describes. Credentials are resolved through the platform's encrypted connection store."
+        },
+        "catalog_database": {
+          "required": true,
+          "type": "select",
+          "options_source": "declared-registries",
+          "description": "The database holding the five ISO/IEC 11179 registry tables, discovered from the selected connection.",
+          "example": "Policing_Core_Semantic"
+        },
+        "core_database": {
+          "required": false,
+          "type": "string",
+          "description": "The database the model's entities deploy into (the graph's anchor and the grounding gate's trusted scope). Empty = read from the registry's own deployed_object column."
+        },
+        "model_name": {
+          "required": false,
+          "type": "string",
+          "description": "Display name of the logical model root (e.g. Policing Core). Every entity is qualified by it."
+        },
+        "discovery_mode": {
+          "required": false,
+          "type": "hidden",
+          "description": "Strategy selector — fixed for this template.",
+          "default": "declared_model",
+          "options": ["declared_model"]
+        },
+        "include_columns": {
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "description": "Include attribute and column nodes carrying each data element's definition, PII/sensitivity classification, declared vs deployed type and decoded permissible values. Off = a compact entity-level graph."
+        },
+        "include_physical": {
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "description": "Include the physical layer (schema/table/column) with real queryable identifiers and types read from the data dictionary — views included. Required for the grounding gate's trusted scope."
+        },
+        "max_value_codes": {
+          "required": false,
+          "type": "number",
+          "default": 60,
+          "description": "Cap on decoded permissible values kept per attribute, bounding node payloads on large code lists."
+        },
+        "validate_with_source": {
+          "required": false,
+          "type": "boolean",
+          "default": false,
+          "description": "Probe the deployed objects for row counts, declared-key uniqueness, stored date shapes and blank ratios, and stamp them on the graph."
+        }
+      }
+    },
+    "manual": {
+      "supported": false,
+      "description": "Knowledge graphs are populated via the constructor."
+    },
+    "document_upload": {
+      "supported": false,
+      "description": "Knowledge graphs are populated from the deployed registry, not documents."
+    }
+  },
+  "output_schema": {
+    "logical_entities": {
+      "description": "Logical layer — the model's meaning, from the registry",
+      "entity_types": ["database", "domain", "entity", "attribute", "product_bridge"],
+      "relationship_types": ["contains", "foreign_key", "is_a", "relates_to"],
+      "source_tag": "declared_model_constructor"
+    },
+    "physical_entities": {
+      "description": "Physical layer — the deployed, queryable realization (tables AND views)",
+      "entity_types": ["schema", "table", "column"],
+      "relationship_types": ["contains", "implements"]
+    }
+  },
+  "metadata": {
+    "category": "Knowledge Graph",
+    "difficulty": "beginner",
+    "estimated_tokens": {
+      "construction": 0
+    },
+    "tags": ["built-in", "knowledge-graph", "iso-11179", "declared-model", "deterministic", "declarative", "resyncable"]
+  }
+}

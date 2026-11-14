@@ -1,0 +1,115 @@
+{
+ "id": "local_96941a28_three_turn_followups",
+ "graph": {
+  "name": "airlines_core"
+ },
+ "source": "local verification session 96941a28 (2026-09-19), scratch @IDAIRL on the same Teradata \u2014 the fixed run: turn 2 answered from history (0 SQL), turn 3 joined miles_balance on the declared key",
+ "notes": "three turns: the third needs a table (miles_balance) neither previous turn read \u2014 carry-over must not crowd it out",
+ "turns": [
+  {
+   "query": "What are my top 5 customers based on miles flown",
+   "agent_calls": [
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5\n    m.member_first_name || ' ' || m.member_last_name AS customer_name,\n    SUM(a.base_miles) AS total_miles_flown\nFROM airlines_core.ffp_member m\nJOIN airlines_core.mileage_accrual a ON m.ffp_member_id = a.ffp_member_id\nGROUP BY 1\nORDER BY 2 DESC;"
+     }
+    }
+   ],
+   "expect": {
+    "tables": [
+     "mileage_accrual",
+     "ffp_member"
+    ],
+    "join_pairs": [
+     [
+      "mileage_accrual",
+      "ffp_member"
+     ]
+    ],
+    "identity_for": [
+     "ffp_member"
+    ],
+    "columns": [
+     "mileage_accrual.base_miles",
+     "mileage_accrual.ffp_member_id"
+    ]
+   },
+   "recorded": {
+    "llm_steps": 6,
+    "sql_calls": 1,
+    "input_tokens": 145552
+   }
+  },
+  {
+   "query": "Give me the names of those customers",
+   "agent_calls": [],
+   "expect": {
+    "tables": [
+     "ffp_member"
+    ],
+    "identity_for": [
+     "ffp_member"
+    ],
+    "columns": [
+     "ffp_member.member_first_name",
+     "ffp_member.member_last_name"
+    ],
+    "carry_over": true
+   },
+   "recorded": {
+    "llm_steps": 1,
+    "sql_calls": 0,
+    "input_tokens": 22100
+   }
+  },
+  {
+   "query": "What are their home airports and current miles balances?",
+   "agent_calls": [
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT \n    m.ffp_member_id,\n    m.address_line_1,\n    m.home_airport_code,\n    b.total_miles_balance\nFROM airlines_core.ffp_member m\nJOIN airlines_core.miles_balance b ON m.ffp_member_id = b.ffp_member_id\nWHERE m.address_line_1 IN ('Juan Stevens', 'Diana Garza', 'Kathryn Wood', 'Valentina Mendez', 'Barbara Meyer')"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT \n    m.member_first_name || ' ' || m.member_last_name AS customer_name,\n    m.home_airport_code,\n    b.total_miles_balance\nFROM airlines_core.ffp_member m\nJOIN airlines_core.miles_balance b ON m.ffp_member_id = b.ffp_member_id\nWHERE customer_name IN ('Juan Stevens', 'Diana Garza', 'Kathryn Wood', 'Valentina Mendez', 'Barbara Meyer')"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT \n    m.member_first_name || ' ' || m.member_last_name AS customer_name,\n    m.home_airport_code,\n    MAX(b.total_miles_balance) AS current_miles_balance\nFROM airlines_core.ffp_member m\nJOIN airlines_core.miles_balance b ON m.ffp_member_id = b.ffp_member_id\nWHERE customer_name IN ('Juan Stevens', 'Diana Garza', 'Kathryn Wood', 'Valentina Mendez', 'Barbara Meyer')\nGROUP BY customer_name, m.home_airport_code"
+     }
+    }
+   ],
+   "expect": {
+    "tables": [
+     "ffp_member",
+     "miles_balance"
+    ],
+    "join_pairs": [
+     [
+      "ffp_member",
+      "miles_balance"
+     ]
+    ],
+    "identity_for": [
+     "ffp_member"
+    ],
+    "columns": [
+     "ffp_member.home_airport_code",
+     "miles_balance.total_miles_balance"
+    ],
+    "carry_over": true
+   },
+   "recorded": {
+    "llm_steps": 6,
+    "sql_calls": 3,
+    "input_tokens": 183879
+   }
+  }
+ ]
+}

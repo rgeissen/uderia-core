@@ -1,0 +1,91 @@
+{
+  "agent_version": "0.7.1",
+  "model_requirements": {
+    "model_conventions": {
+      "table_id_type": "BIGINT",
+      "deployment_catalog": "acme_mvm",
+      "cataloging_style": "one_catalog"
+    }
+  },
+  "model": {
+    "type": "business",
+    "name": "Acme",
+    "description": "PDM converter fixture (all datatypes + PI edge cases).",
+    "domains": [
+      {
+        "name": "sales",
+        "division": "operations",
+        "database_name": "sales",
+        "description": "Sales domain.",
+        "products": [
+          {
+            "name": "order",
+            "table_name": "order",
+            "primary_key": "order_id",
+            "type": "Transaction",
+            "description": "Order header record.",
+            "attributes": [
+              {"name": "order_id", "column_name": "order_id", "type": "BIGINT", "tags": "primary_key", "description": "Order surrogate key.", "foreign_key_to": ""},
+              {"name": "customer_id", "column_name": "customer_id", "type": "BIGINT", "tags": "foreign_key", "description": "FK to customer.", "foreign_key_to": "crm.customer.customer_id"},
+              {"name": "order_ts", "column_name": "order_ts", "type": "TIMESTAMP", "description": "Order timestamp.", "foreign_key_to": ""},
+              {"name": "order_date", "column_name": "order_date", "type": "DATE", "description": "Order date.", "foreign_key_to": ""},
+              {"name": "total_amount", "column_name": "total_amount", "type": "DECIMAL(18,2)", "description": "Order total.", "foreign_key_to": ""},
+              {"name": "is_paid", "column_name": "is_paid", "type": "BOOLEAN", "description": "Whether the order is paid.", "foreign_key_to": ""},
+              {"name": "note", "column_name": "note", "type": "STRING", "description": "Free text note with an apostrophe: don't.", "foreign_key_to": ""},
+              {"name": "tags_list", "column_name": "tags_list", "type": "ARRAY<STRING>", "description": "Unsupported array column.", "foreign_key_to": ""},
+              {"name": "ghost_id", "column_name": "ghost_id", "type": "BIGINT", "description": "Dangling FK target.", "foreign_key_to": "void.nope.nope_id"}
+            ]
+          },
+          {
+            "name": "order_line",
+            "table_name": "order_line",
+            "primary_key": "order_id, line_no",
+            "type": "Transaction",
+            "description": "Order line (composite PK).",
+            "attributes": [
+              {"name": "order_id", "column_name": "order_id", "type": "BIGINT", "tags": "primary_key, foreign_key", "description": "Part of PK and FK to order.", "foreign_key_to": "sales.order.order_id"},
+              {"name": "line_no", "column_name": "line_no", "type": "INTEGER", "tags": "primary_key", "description": "Line number.", "foreign_key_to": ""},
+              {"name": "qty", "column_name": "qty", "type": "INTEGER", "description": "Quantity ordered.", "foreign_key_to": ""}
+            ]
+          },
+          {
+            "name": "event_log",
+            "table_name": "event_log",
+            "primary_key": "",
+            "type": "Log",
+            "description": "No-PK log table.",
+            "attributes": [
+              {"name": "event_ts", "column_name": "event_ts", "type": "TIMESTAMP", "description": "Event time.", "foreign_key_to": ""},
+              {"name": "payload", "column_name": "payload", "type": "STRING", "description": "Event payload.", "foreign_key_to": ""}
+            ]
+          }
+        ]
+      },
+      {
+        "name": "crm",
+        "division": "business",
+        "database_name": "crm",
+        "description": "CRM domain.",
+        "products": [
+          {
+            "name": "customer",
+            "table_name": "customer",
+            "primary_key": "customer_id",
+            "type": "Master",
+            "description": "Customer master record.",
+            "attributes": [
+              {"name": "customer_id", "column_name": "customer_id", "type": "BIGINT", "tags": "primary_key", "description": "Customer surrogate key.", "foreign_key_to": ""},
+              {"name": "full_name", "column_name": "full_name", "type": "STRING", "description": "Customer full name.", "foreign_key_to": ""}
+            ]
+          }
+        ]
+      }
+    ],
+    "metric_views": [
+      {"view_name": "order_metrics", "owner_domain": "sales", "owner_product": "order", "dimensions_count": 1, "measures_count": 2,
+       "sql": "CREATE OR REPLACE VIEW `acme_mvm`.`_metrics`.`order_metrics`\nWITH METRICS\nLANGUAGE YAML\nAS $$\n  source: \"`acme_mvm`.`sales`.`order`\"\n  dimensions:\n    - name: order_date\n      expr: order_date\n  measures:\n    - name: total_amount\n      expr: SUM(CAST(total_amount AS DOUBLE))\n    - name: order_count\n      expr: COUNT(1)\n$$;"},
+      {"view_name": "ghost_metrics", "owner_domain": "sales", "owner_product": "order", "dimensions_count": 0, "measures_count": 1,
+       "sql": "CREATE OR REPLACE VIEW `acme_mvm`.`_metrics`.`ghost_metrics`\nWITH METRICS\nLANGUAGE YAML\nAS $$\n  source: \"`acme_mvm`.`void`.`nope`\"\n  dimensions: []\n  measures:\n    - name: c\n      expr: COUNT(1)\n$$;"}
+    ]
+  }
+}

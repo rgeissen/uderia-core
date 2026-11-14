@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Numbers — Uderia Trust Benchmarks</title>
+<style>
+  :root {
+    --ground: #0e1621; --panel: #172230; --panel-2: #1e2c3b; --hair: #2c3c4e;
+    --text: #e9eff5; --muted: #93a4b6; --dim: #6b7d90;
+    --sage: #6cbf92; --amber: #f2b04a; --red: #e5687a; --blue: #6aa9e0;
+    --accent: #F15F22; --accent-line: rgba(241,95,34,0.45); --accent-soft: rgba(241,95,34,0.12);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--sans); color: var(--text); line-height: 1.62; font-size: 17px;
+    background: radial-gradient(1200px 720px at 50% -12%, #14212f 0%, var(--ground) 58%), var(--ground);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 72px 0 6px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin: 0 0 18px; }
+  .eyebrow a { color: var(--dim); text-decoration: none; }
+  .eyebrow a:hover { color: var(--muted); }
+  h1 { font-weight: 800; letter-spacing: -0.02em; font-size: clamp(32px, 5.4vw, 52px); line-height: 1.04; margin: 0; }
+  h1 .thin { font-weight: 300; color: var(--muted); }
+  .epigraph { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 2.2vw, 21px); color: #c6d3df; max-width: 62ch; margin: 24px 0 0; padding-left: 20px; border-left: 2px solid var(--accent-line); }
+  section { margin: 58px 0 0; }
+  .sec-label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
+  h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .sub { color: var(--muted); max-width: 72ch; margin: 0 0 22px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 22px 0; }
+  @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+  .tile { background: var(--panel); border: 1px solid var(--hair); border-radius: 14px; padding: 18px 16px 15px; }
+  .tile .big { font-family: var(--mono); font-weight: 700; font-size: clamp(24px, 3.4vw, 34px); letter-spacing: -0.01em; }
+  .tile .big.sage { color: var(--sage); } .tile .big.amber { color: var(--amber); } .tile .big.blue { color: var(--blue); }
+  .tile .lab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-top: 6px; }
+  .tile .why { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .honest { background: var(--panel-2); border: 1px solid var(--hair); border-left: 3px solid var(--amber); border-radius: 12px; padding: 16px 18px; margin: 18px 0; }
+  .honest .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); margin: 0 0 8px; }
+  .honest p { margin: 0 0 8px; color: var(--muted); font-size: 15px; } .honest p:last-child { margin: 0; }
+  .honest strong { color: var(--text); }
+  .found { border-left-color: var(--blue); } .found .k { color: var(--blue); }
+  .repro { background: #0b1420; border: 1px solid var(--hair); border-radius: 10px; padding: 13px 16px; font-family: var(--mono); font-size: 13px; color: var(--sage); overflow-x: auto; white-space: nowrap; margin: 16px 0 4px; }
+  .repro .c { color: var(--dim); }
+  table.matrix { border-collapse: collapse; font-family: var(--mono); font-size: 13px; margin: 14px 0 6px; }
+  table.matrix th, table.matrix td { border: 1px solid var(--hair); padding: 7px 14px; text-align: center; }
+  table.matrix th { color: var(--dim); font-weight: 500; background: var(--panel); }
+  table.matrix td { color: var(--text); }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  @media (max-width: 720px) { .vs { grid-template-columns: 1fr; } }
+  .vs .col { background: var(--panel); border: 1px solid var(--hair); border-radius: 14px; padding: 20px 20px; }
+  .vs .col h3 { margin: 0 0 6px; font-size: 17px; }
+  .vs .col .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 10px; }
+  .vs .col.live .k { color: var(--amber); } .vs .col.det .k { color: var(--sage); }
+  .vs .col p { color: var(--muted); font-size: 14.5px; margin: 0; }
+  .callout { background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 14px; padding: 20px 22px; margin: 40px 0 0; }
+  .callout .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 8px; }
+  .callout p { margin: 0; color: #dbe5ee; }
+  code { font-family: var(--mono); font-size: 0.88em; background: rgba(255,255,255,0.05); border: 1px solid var(--hair); border-radius: 5px; padding: 1px 5px; }
+  a { color: var(--blue); text-decoration: none; border-bottom: 1px solid rgba(106,169,224,0.3); }
+  a:hover { color: var(--text); }
+  footer { padding: 52px 0 72px; color: var(--dim); font-size: 13px; font-family: var(--mono); }
+  footer a { color: var(--muted); border-bottom-color: rgba(147,164,182,0.25); margin-right: 18px; }
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow"><a href="index.html">Agent Trust &amp; Assurance</a> · The proof</p>
+    <h1>The Numbers<br><span class="thin">two published benchmarks, both honest</span></h1>
+    <p class="epigraph">A benchmark that only reports the win is propaganda. These two publish recall <em>and</em> the misses, precision <em>and</em> the cost — and both improved Uderia before they proved it.</p>
+  </header>
+
+  <!-- ── Benchmark 1: anti-hallucination (scope lane) ─────────────────────── -->
+  <section>
+    <p class="sec-label">Benchmark 1 · the structured lane · live, judge-labelled</p>
+    <h2>Anti-hallucination — does the gate catch governance drift?</h2>
+    <p class="sub">36 curated queries (12 in-scope · 18 out-of-scope · 6 ambiguous) driven as <strong>real turns</strong> against a knowledge-graph-scoped agent (rerun 2026-10-31), with ground truth labelled by the same <code>scope_faithfulness</code> judge Uderia uses everywhere — never a benchmark-private prompt. It scores the cheap deterministic <em>trigger's</em> coverage of judge-confirmed drift.</p>
+    <div class="tiles">
+      <div class="tile"><div class="big amber">60%</div><div class="lab">trigger recall</div><div class="why">3 of 5 judge-confirmed governance drifts reached the judge</div></div>
+      <div class="tile"><div class="big amber">2</div><div class="lab">false negatives</div><div class="why">drifts delivered unflagged — each published below by case id</div></div>
+      <div class="tile"><div class="big sage">14% → 6%</div><div class="lab">net drift reaching the user</div><div class="why">observe → judge-backed enforce</div></div>
+      <div class="tile"><div class="big blue">$0.33</div><div class="lab">full 36-case run</div><div class="why">$0.25 agent turns + $0.08 judge panels</div></div>
+    </div>
+    <table class="matrix">
+      <tr><th></th><th>judge: drifted</th><th>judge: faithful</th></tr>
+      <tr><th>trigger fired</th><td>TP 3</td><td>FP 5</td></tr>
+      <tr><th>trigger silent</th><td><strong>FN 2</strong></td><td>TN 26</td></tr>
+    </table>
+    <div class="honest">
+      <p class="k">Published limits — not footnotes</p>
+      <p><strong>The trigger does recall; the judge does precision.</strong> A false positive costs one judge call that clears the answer — never a wrong verdict, never a withheld honest refusal (all five of this run's are exactly that: honest refusals that named the database they could not read). The number that matters is the false-negative count, and it is <strong>2</strong>, not the 0 this page published in June.</p>
+      <p><strong>The two misses, by case id.</strong> <code>oos09</code> ("manufacturing, retail, and healthcare cores contain vendor data") names no identifier at all — plain words only the judge can read. <code>oos03</code> lists real identifiers (<code>manufacturing_core, retail_core</code>) after "several schemas, including" — the trigger reads a name standing next to a container word, not a list after one. Both stay published as the honest gap. <strong>One run is a reading, not a constant:</strong> the weak model drifts on different questions each run (19% and 14% across the two October runs), so the misses move too.</p>
+      <p><strong>Recall climbed 0% → 25% → 100% in June</strong> across three iterations — the first run <em>disproved</em> the naïve deterministic-block design (it blocked 10 honest "not in my scope" refusals and missed a prose-only drift), which forced the tiered trigger-plus-judge architecture the framework now ships. The benchmark redesigned the framework.</p>
+    </div>
+    <div class="honest found">
+      <p class="k">What the reruns found</p>
+      <p><strong>October: the gate had gone blind, and nothing else noticed.</strong> The first rerun measured <strong>0% recall, 7 false negatives</strong>. A September fix taught the trigger that a name the turn's own results contain is a value, not a source — and the agent now finds databases by searching the <em>catalog</em>, whose listing names every database. So each out-of-scope database it reported was excused. Catalog results no longer count as data, and a Markdown code span counts as a quote; recall is back to 60%, every case pinned in CI. The same run found that a REST call asking for an agent that could not be loaded was silently answered by the default agent — recorded, open. A benchmark you rerun is a benchmark that can catch a regression the tests missed.</p>
+      <p><strong>June:</strong> 36 back-to-back sessions exposed a multi-thread SQLite deadlock that froze the whole server — eliminated with a process-wide serialization layer before the benchmark could even finish. A benchmark hard enough to break things is a benchmark worth publishing.</p>
+    </div>
+  </section>
+
+  <!-- ── Benchmark 2: corpus grounding (knowledge lane) ───────────────────── -->
+  <section>
+    <p class="sec-label">Benchmark 2 · the knowledge lane · deterministic, offline, zero tokens</p>
+    <h2>Corpus grounding — does the answer stick to the retrieved knowledge?</h2>
+    <p class="sub">18 curated (answer · retrieved-chunks · question) cases — supported answers with benign near-misses, unsupported claims across numbers, verbatim quotes and identifiers, and second-chance cases the first retrieval missed but the corpus supports. Scored by the <strong>same production primitive the live gate runs</strong> — and because that trigger is deterministic, the whole benchmark reproduces offline with <strong>no server, no model, no credentials</strong>.</p>
+    <div class="tiles">
+      <div class="tile"><div class="big sage">85.7%</div><div class="lab">recall</div><div class="why">unsupported claims flagged; the one miss is published by case id</div></div>
+      <div class="tile"><div class="big sage">0%</div><div class="lab">false positives</div><div class="why">no supported answer wrongly flagged — the number that makes enforce deployable</div></div>
+      <div class="tile"><div class="big sage">100%</div><div class="lab">second-chance recovery</div><div class="why">claims the first retrieval missed but the corpus supports — cleared, not blamed</div></div>
+      <div class="tile"><div class="big blue">0 tokens</div><div class="lab">to reproduce</div><div class="why">pure function of (answer, chunks, question)</div></div>
+    </div>
+    <div class="repro"><span class="c"># anyone with the repo, offline:</span><br>python -m trusted_data_agent.eval.benchmarks.corpus_grounding.harness</div>
+    <div class="honest">
+      <p class="k">Published limits — not footnotes</p>
+      <p><strong>The one false negative is deliberate.</strong> Case <code>uns-id-01</code> fails because a single novel identifier never triggers alone — the ≥3-identifier floor is the false-positive discipline that keeps the 0% column at 0%. The miss is published by case id and pinned in CI rather than tuned away.</p>
+      <p><strong>"Unsupported" never means "false."</strong> The trigger checks support in the retrieved corpus — after a targeted second-chance re-search — and says exactly that, on the card and in the answer itself.</p>
+    </div>
+    <div class="honest found">
+      <p class="k">What the first run found</p>
+      <p>A supported quote ending in a period inside the quotation marks read as unsupported — trailing-punctuation brittleness in the quote matcher. Fixed in the production primitive; the failing case stays in the dataset as the regression. The benchmark improved Uderia on day one.</p>
+    </div>
+  </section>
+
+  <!-- ── Why two kinds ────────────────────────────────────────────────────── -->
+  <section>
+    <p class="sec-label">Method</p>
+    <h2>Two proof forms — and why the second is stronger</h2>
+    <div class="vs">
+      <div class="col live">
+        <p class="k">Live + judge-labelled (structured lane)</p>
+        <h3>Real turns, real drift, real cost</h3>
+        <p>Ground truth needs semantic judgement ("did this answer drift?"), so an LLM judge labels it — the same judge the framework ships. Honest, but reproducing it needs a running server, credentials, and ~$0.30.</p>
+      </div>
+      <div class="col det">
+        <p class="k">Deterministic + offline (knowledge lane)</p>
+        <h3>A pure function anyone can re-run</h3>
+        <p>"Is this claim in these chunks?" is decidable in code, so the benchmark <em>is</em> the production primitive on a committed dataset. Zero tokens, zero infrastructure — the published numbers are pinned in CI, and any change that moves them fails the build.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <span class="tag">The standard</span>
+      <p>Every enforcement claim in these stories traces to one of these two benchmarks or to a named CI suite — <strong>24,284 assertions across 371 suites</strong> at the last full run (2026-10-31). If a number on this page moves, a test fails first.</p>
+    </div>
+  </section>
+
+  <footer>
+    <a href="index.html">← Trust home</a>
+    <a href="the-life-of-a-uderia-agent.html">The Life of a Uderia Agent</a>
+    <a href="agent-anatomy-of-trust.html">An Anatomy of Trust</a>
+    <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">Agent Ops &amp; Evaluation</a>
+    <a href="AGENT_TRUST_AND_ASSURANCE.html">Operations Guide</a>
+    <br>Uderia is a framework for trusted data agents.
+  </footer>
+</div>
+</html>

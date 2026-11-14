@@ -1,0 +1,89 @@
+{
+  "id": "quality-analyst",
+  "title": "Quality Analyst",
+  "status": "active",
+  "effects": [
+    "read",
+    "write"
+  ],
+  "description": "Finds what goes wrong and why: which checks fail and for which agents, when a regression started and what changed around it, what waits in the Assurance Inbox and the review queue, and what a proposed policy would have done. It may score a turn again; acknowledging, approving and resetting stay the owner's, and the instance-wide evaluation store is not offered to agents.",
+  "operations": [
+    "evals.*",
+    "assurance.*",
+    "trust.*",
+    "sessions.*",
+    "consumption.*",
+    "profiles.list",
+    "profiles.overview"
+  ],
+  "playbooks": [
+    "platform-playbooks:trust/*",
+    "platform-playbooks:quality/*"
+  ],
+  "needs": [],
+  "rank": 5,
+  "examples": [
+    {
+      "ask": "Which quality checks fail most across my agents, and which agent is doing worst?",
+      "outcome": "One call to the scoreboard; it names the check and the agent with the number of turns behind each figure, and offers to open that agent's failing turns."
+    },
+    {
+      "ask": "When did @SALES get worse?",
+      "outcome": "It reads the agent's timeline, its trust history and its scored runs around the step, and names the likely cause with its time — or says nothing in its history changed then."
+    },
+    {
+      "ask": "What would enforcing grounding have done to @SALES?",
+      "outcome": "A replay of past turns at no token cost: how many answers would have been withheld, flagged or sent to a judge. Nothing is changed."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Acknowledging an incident; approving, rejecting or withdrawing a request",
+      "why": "Saying you looked, and the approval itself, are the controls — an agent cannot be its own reviewer.",
+      "ops": [
+        "assurance.inbox_ack",
+        "assurance.inbox_ack_derived",
+        "assurance.review_decide",
+        "assurance.review_withdraw"
+      ]
+    },
+    {
+      "what": "Starting an agent's trust readings afresh",
+      "why": "Where a new leg begins decides what its readings count; that is the owner's judgement.",
+      "ops": [
+        "assurance.trust_trip_reset"
+      ]
+    },
+    {
+      "what": "Signing anything, attesting a deployment, or withdrawing a signature",
+      "why": "A signature is your statement that you checked it. An agent signing — or unsigning — its own work proves nothing.",
+      "ops": [
+        "trust.*_sign_off",
+        "trust.agent_attest_deployment",
+        "trust.revoke_signature"
+      ]
+    },
+    {
+      "what": "Other users' quality, usage or conversations",
+      "why": "Even when your tier lets you see them, an agent acting for you never can — a request an agent makes carries none of the features that reach other users.",
+      "ops": [
+        "consumption.users",
+        "trust.unassigned",
+        "trust.unassigned_assign"
+      ],
+      "args": [
+        "evals.kpi_dashboard:scope",
+        "evals.online_dashboard:scope",
+        "sessions.list:all_users"
+      ]
+    },
+    {
+      "what": "The instance-wide evaluation store — datasets, offline runs, annotations",
+      "why": "It holds every user's turns; it belongs to the operators and is not offered to agents."
+    },
+    {
+      "what": "Changing an agent's posture or the deployment's policy",
+      "why": "It shows what a policy would do; deciding is yours."
+    }
+  ]
+}

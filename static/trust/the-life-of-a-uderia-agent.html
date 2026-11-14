@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Life of a Uderia Agent — Trust &amp; Assurance</title>
+<style>
+  :root {
+    --ground: #0e1621;
+    --panel: #172230;
+    --panel-2: #1e2c3b;
+    --panel-3: #22344a;
+    --hair: #2c3c4e;
+    --hair-soft: #223140;
+    --text: #e9eff5;
+    --muted: #93a4b6;
+    --dim: #6b7d90;
+    --faint: #52657a;
+
+    --sage: #6cbf92;      /* trusted · observe · green */
+    --amber: #f2b04a;     /* changed · review · annotate */
+    --red: #e5687a;       /* blocked · danger · withhold */
+    --blue: #6aa9e0;      /* crypto · prove */
+    --steel-1: #9db8cf;
+    --steel-2: #43597a;
+    --accent: #F15F22;    /* Uderia orange · enforce · differentiator */
+    --accent-soft: rgba(241,95,34,0.12);
+    --accent-line: rgba(241,95,34,0.45);
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 780px at 50% -12%, #14212f 0%, var(--ground) 58%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.62;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  a { color: var(--steel-1); text-decoration: none; border-bottom: 1px solid rgba(157,184,207,0.28); }
+  a:hover { color: var(--text); }
+
+  /* ---------- Masthead ---------- */
+  header.masthead { padding: 78px 0 18px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 800; letter-spacing: -0.02em;
+    font-size: clamp(36px, 6.4vw, 64px); line-height: 1.0; margin: 0; text-wrap: balance;
+  }
+  h1 .thin { font-weight: 300; color: var(--muted); }
+  .epigraph {
+    font-family: var(--serif); font-style: italic; font-size: clamp(18px, 2.4vw, 23px);
+    line-height: 1.5; color: #c6d3df; max-width: 62ch; margin: 30px 0 0;
+    padding-left: 20px; border-left: 2px solid var(--accent-line); text-wrap: pretty;
+  }
+
+  /* ---------- The umbrella arc (stepper) ---------- */
+  .arc {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2px;
+    margin: 40px 0 6px; padding: 18px 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.14));
+    border: 1px solid var(--hair); border-radius: 14px;
+  }
+  .arc .node {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.04em;
+    color: var(--muted); padding: 5px 10px; border-radius: 999px;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .arc .node b { color: var(--text); font-weight: 600; }
+  .arc .sep { color: var(--faint); font-family: var(--serif); padding: 0 2px; }
+  .arc .node.sign { color: var(--sage); }
+  .arc .node.act { color: var(--accent); }
+  .arc .node.prove { color: var(--blue); }
+
+  /* ---------- How-to-read strip ---------- */
+  .howto {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin: 22px 0 0; padding: 16px 20px;
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 12px;
+    font-size: 14.5px; color: var(--muted);
+  }
+  .howto .onion-mini { flex: 0 0 auto; }
+  .howto b { color: var(--text); font-weight: 650; }
+  .howto .kbd {
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    border: 1px solid var(--hair); border-radius: 6px; padding: 2px 7px; background: rgba(0,0,0,0.25);
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding: 54px 0; border-top: 1px solid var(--hair); }
+  .act-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .act-num {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--dim);
+  }
+  .sec-label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--dim); margin: 0 0 14px;
+  }
+  h2 { font-size: clamp(25px, 3.6vw, 34px); font-weight: 800; letter-spacing: -0.015em; margin: 6px 0 14px; line-height: 1.12; text-wrap: balance; }
+  h3.stage-h { margin: 0; font-size: 19px; font-weight: 750; letter-spacing: 0.01em; }
+  p { max-width: 70ch; margin: 0 0 16px; color: #cdd8e2; }
+  p.lead { color: var(--text); font-size: 19px; max-width: 66ch; }
+  strong { color: var(--text); font-weight: 650; }
+  em.term { font-style: normal; font-family: var(--mono); font-size: 0.9em; color: var(--sage); }
+  em.crypt { font-style: normal; font-family: var(--mono); font-size: 0.9em; color: var(--blue); }
+
+  /* ---------- Stage / onion diagram ---------- */
+  .stage-svg {
+    margin: 30px auto 8px; max-width: 720px;
+    background: radial-gradient(600px 380px at 50% 40%, rgba(255,255,255,0.02), transparent 70%);
+    border-radius: 16px; padding: 6px;
+  }
+  .stage-svg svg { display: block; width: 100%; height: auto; }
+  .onion-ring { cursor: pointer; transition: opacity .25s ease, transform .25s ease; }
+  .onion-ring:hover { opacity: 0.92; }
+  .onion-ring:hover .ring-band { filter: brightness(1.18); }
+  .ring-label { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.04em; pointer-events: none; }
+  .ring-core-t { font-family: var(--sans); font-weight: 800; letter-spacing: 0.02em; pointer-events: none; }
+  .ring-hint { font-family: var(--serif); font-style: italic; font-size: 12px; fill: var(--dim); pointer-events: none; }
+  .caption { text-align: center; font-size: 13.5px; color: var(--muted); margin: 6px 0 0; }
+  .caption .kbd { font-family: var(--mono); font-size: 11.5px; color: var(--text); border: 1px solid var(--hair); border-radius: 5px; padding: 1px 6px; }
+
+  /* ---------- Onion stack (progressive disclosure) ---------- */
+  .stack { display: flex; flex-direction: column; gap: 16px; margin-top: 26px; }
+  .peel {
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 16px;
+    overflow: hidden; scroll-margin-top: 20px;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  .peel.flash { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .peel-head {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+    padding: 20px 22px; cursor: pointer; user-select: none;
+  }
+  .peel-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+  .peel-idx {
+    font-family: var(--mono); font-size: 12px; color: var(--dim); letter-spacing: 0.1em;
+    border: 1px solid var(--hair); border-radius: 999px; padding: 4px 11px; white-space: nowrap;
+  }
+  .peel[data-accent="sage"] .peel-idx { color: var(--sage); border-color: rgba(108,191,146,0.35); }
+  .peel[data-accent="accent"] .peel-idx { color: var(--accent); border-color: var(--accent-line); }
+  .peel[data-accent="blue"] .peel-idx { color: var(--blue); border-color: rgba(106,169,224,0.35); }
+  .peel[data-accent="amber"] .peel-idx { color: var(--amber); border-color: rgba(242,176,74,0.35); }
+  .peel-title { min-width: 0; }
+  .peel-title .surf { display: block; color: #d6e1ec; font-size: 15px; margin-top: 3px; font-weight: 400; }
+  /* depth pips */
+  .pips { display: inline-flex; gap: 5px; align-items: center; }
+  .pip { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--faint); background: transparent; transition: background .2s, border-color .2s; }
+  .peel[data-depth="1"] .pip:nth-child(1),
+  .peel[data-depth="2"] .pip:nth-child(-n+2),
+  .peel[data-depth="3"] .pip:nth-child(-n+3) { background: var(--sage); border-color: var(--sage); }
+  .peel[data-accent="accent"][data-depth="1"] .pip:nth-child(1),
+  .peel[data-accent="accent"][data-depth="2"] .pip:nth-child(-n+2),
+  .peel[data-accent="accent"][data-depth="3"] .pip:nth-child(-n+3) { background: var(--accent); border-color: var(--accent); }
+  .peel[data-accent="blue"][data-depth="1"] .pip:nth-child(1),
+  .peel[data-accent="blue"][data-depth="2"] .pip:nth-child(-n+2),
+  .peel[data-accent="blue"][data-depth="3"] .pip:nth-child(-n+3) { background: var(--blue); border-color: var(--blue); }
+  .peel[data-accent="amber"][data-depth="1"] .pip:nth-child(1),
+  .peel[data-accent="amber"][data-depth="2"] .pip:nth-child(-n+2),
+  .peel[data-accent="amber"][data-depth="3"] .pip:nth-child(-n+3) { background: var(--amber); border-color: var(--amber); }
+  .peel-cta {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono);
+    font-size: 12px; letter-spacing: 0.08em; color: var(--muted); white-space: nowrap;
+  }
+  .peel-cta .chev { transition: transform .25s ease; }
+  .peel[data-depth="3"] .peel-cta .chev { transform: rotate(180deg); }
+  .peel[data-depth="3"] .peel-cta .lbl::after { content: "collapse"; }
+  .peel[data-depth="0"] .peel-cta .lbl::after { content: "peel →"; }
+  .peel[data-depth="1"] .peel-cta .lbl::after { content: "peel deeper →"; }
+  .peel[data-depth="2"] .peel-cta .lbl::after { content: "full detail →"; }
+
+  .skin { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .4s ease, opacity .3s ease; }
+  .peel[data-depth="1"] .skin-1,
+  .peel[data-depth="2"] .skin-1, .peel[data-depth="2"] .skin-2,
+  .peel[data-depth="3"] .skin-1, .peel[data-depth="3"] .skin-2, .peel[data-depth="3"] .skin-3 {
+    max-height: 4000px; opacity: 1;
+  }
+  .skin-inner { padding: 2px 22px 24px; border-top: 1px dashed var(--hair-soft); margin-top: 4px; }
+  .skin .depth-tag {
+    display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--dim); margin: 16px 0 8px;
+  }
+  .skin p { font-size: 15px; color: var(--muted); max-width: none; }
+  .skin p strong { color: #dbe5ef; }
+
+  /* per-act reveal controls */
+  .reveal-bar { display: flex; gap: 10px; align-items: center; margin: 4px 0 0; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--text);
+    background: rgba(0,0,0,0.25); border: 1px solid var(--hair); border-radius: 999px;
+    padding: 7px 15px; cursor: pointer; transition: border-color .2s, background .2s;
+  }
+  .btn:hover { border-color: var(--accent-line); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- Callouts ---------- */
+  .callout {
+    background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 14px;
+    padding: 24px 26px; margin: 26px 0 0;
+  }
+  .callout.blue { background: rgba(106,169,224,0.10); border-color: rgba(106,169,224,0.4); }
+  .callout.sage { background: rgba(108,191,146,0.10); border-color: rgba(108,191,146,0.4); }
+  .callout .tag {
+    display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-line);
+    border-radius: 999px; padding: 3px 11px; margin-bottom: 14px;
+  }
+  .callout.blue .tag { color: var(--blue); border-color: rgba(106,169,224,0.4); }
+  .callout.sage .tag { color: var(--sage); border-color: rgba(108,191,146,0.4); }
+  .callout p { margin-bottom: 12px; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ---------- State chips ---------- */
+  .states { display: flex; gap: 14px; flex-wrap: wrap; margin: 18px 0 4px; }
+  .state {
+    flex: 1 1 200px; background: rgba(0,0,0,0.22); border: 1px solid var(--hair);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .state .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: -1px; margin-right: 8px; }
+  .state.unsigned { border-color: rgba(107,125,144,0.5); }
+  .state.unsigned .dot { background: var(--dim); }
+  .state.trusted { border-color: rgba(108,191,146,0.5); }
+  .state.trusted .dot { background: var(--sage); }
+  .state.changed { border-color: rgba(242,176,74,0.5); }
+  .state.changed .dot { background: var(--amber); }
+  .state.deployment { border-color: rgba(106,169,224,0.5); }
+  .state.deployment .dot { background: var(--blue); }
+  .state h4 { margin: 0 0 4px; font-size: 15px; }
+  .state p { font-size: 13.5px; margin: 0; color: var(--muted); max-width: none; }
+
+  /* ---------- Detail tables ---------- */
+  .tbl-scroll { overflow-x: auto; margin: 6px 0 0; }
+  table.detail { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 520px; }
+  table.detail th, table.detail td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair-soft); vertical-align: top; }
+  table.detail th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+  table.detail td:first-child { font-family: var(--mono); color: var(--steel-1); white-space: nowrap; }
+  table.detail td code, .skin code { font-family: var(--mono); font-size: 12.5px; color: var(--sage); }
+  .skin code.crypt { color: var(--blue); }
+
+  /* mini list */
+  ul.tight { margin: 4px 0 0; padding-left: 20px; }
+  ul.tight li { font-size: 15px; color: var(--muted); margin-bottom: 8px; }
+  ul.tight li strong { color: #dbe5ef; }
+
+  /* ---------- Pipeline (Act II hero) ---------- */
+  .pipe { margin: 30px 0 6px; background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.14)); border: 1px solid var(--hair); border-radius: 16px; padding: 8px; }
+  .pipe svg { display: block; width: 100%; height: auto; }
+  .p-num { font-family: var(--mono); font-size: 11px; fill: var(--dim); }
+  .p-lab { font-family: var(--sans); font-size: 12.5px; font-weight: 600; }
+  .p-sub { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  footer { padding: 46px 0 80px; color: var(--dim); font-size: 13px; font-family: var(--mono); border-top: 1px solid var(--hair); }
+  footer a { color: var(--muted); }
+
+  .divider-note { font-family: var(--serif); font-style: italic; color: var(--dim); font-size: 15px; margin: 0 0 6px; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Agent Trust &amp; Assurance · A visual story</p>
+    <h1>The Life of a<br><span class="thin">Uderia&nbsp;Agent</span></h1>
+    <p class="epigraph">An answer you can trust is not an accident. It is earned twice — once when the agent is <em>signed</em>, and again on every turn, as it is <em>observed, enforced, proved</em> — and then <em>kept in check</em>, as its own conduct feeds back into the badge. This is that story, told from the outside in.</p>
+
+    <div class="arc" aria-label="The arc of an agent's life">
+      <span class="node sign"><b>Born</b></span><span class="sep">→</span>
+      <span class="node sign">Composed</span><span class="sep">→</span>
+      <span class="node sign"><b>Signed</b></span><span class="sep">→</span>
+      <span class="node act"><b>Runs</b></span><span class="sep">→</span>
+      <span class="node act">Observed</span><span class="sep">→</span>
+      <span class="node act">Enforced</span><span class="sep">→</span>
+      <span class="node prove"><b>Proved</b></span><span class="sep" style="color:var(--amber)">↻</span>
+      <span class="node" style="color:var(--amber)"><b>Kept in check</b></span>
+    </div>
+
+    <div class="howto">
+      <svg class="onion-mini" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">
+        <circle cx="23" cy="23" r="21" fill="none" stroke="#3a4c60" stroke-width="1.4" stroke-dasharray="3 3"/>
+        <circle cx="23" cy="23" r="15" fill="none" stroke="#5b7288" stroke-width="1.6"/>
+        <circle cx="23" cy="23" r="9" fill="none" stroke="#8aa0b6" stroke-width="1.8"/>
+        <circle cx="23" cy="23" r="3.4" fill="#F15F22"/>
+      </svg>
+      <div>
+        <b>Read it like an onion.</b> Every panel opens in plain language. Click <span class="kbd">peel →</span> to reveal the mechanism, then <span class="kbd">peel deeper →</span> for the full technical detail — the crypto, the files, the tables. Peel only as far as you care to.
+      </div>
+    </div>
+  </header>
+</div>
+
+<!-- ================================================================ -->
+<!-- ACT I — SIGNING                                                   -->
+<!-- ================================================================ -->
+<div class="wrap">
+  <section id="act-1">
+    <div class="act-head">
+      <span class="act-num">Act I</span>
+      <h2 style="margin:0">Born, then trusted — signing an agent</h2>
+    </div>
+    <p class="lead">Trust in Uderia is a <strong>badge on the agent</strong>, not a promise in a document. A signed agent is trusted <em>exactly</em> when its whole composition is — every part it is made of must itself be signed and intact. You build trust from the inside out; you read it from the outside in.</p>
+
+    <div class="reveal-bar">
+      <button class="btn" data-act="act-1" data-op="all">Reveal all detail</button>
+      <button class="btn" data-act="act-1" data-op="none">Collapse all</button>
+    </div>
+
+    <!-- Hero onion for signing -->
+    <div class="stage-svg">
+      <svg viewBox="0 0 720 480" role="img" aria-label="Concentric onion for signing an agent: from the outer badge inward through composition, sign-off, validation, to the ingredients at the core.">
+        <defs>
+          <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#254a37"/><stop offset="1" stop-color="#16261d"/>
+          </radialGradient>
+          <filter id="ring-soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#000" flood-opacity="0.4"/>
+          </filter>
+        </defs>
+
+        <!-- Ring 5 : Badge (outer) -->
+        <g class="onion-ring" data-target="s1-1">
+          <circle class="ring-band" cx="300" cy="240" r="210" fill="none" stroke="#3a4c60" stroke-width="18" stroke-dasharray="10 8" opacity="0.55"/>
+          <text class="ring-label" x="300" y="52" text-anchor="middle" fill="#8aa0b6">① THE BADGE — 🟢 trusted &middot; verifiable</text>
+        </g>
+        <!-- Ring 4 : Compose -->
+        <g class="onion-ring" data-target="s1-2">
+          <circle class="ring-band" cx="300" cy="240" r="168" fill="none" stroke="#43597a" stroke-width="20" opacity="0.8"/>
+          <text class="ring-label" x="300" y="96" text-anchor="middle" fill="#9db8cf">② COMPOSE — the bottom-up gate</text>
+        </g>
+        <!-- Ring 3 : Validate -->
+        <g class="onion-ring" data-target="s1-3">
+          <circle class="ring-band" cx="300" cy="240" r="128" fill="none" stroke="#5a7590" stroke-width="20" opacity="0.85"/>
+          <text class="ring-label" x="300" y="138" text-anchor="middle" fill="#b7c8d8">③ VALIDATE — 10 signable kinds</text>
+        </g>
+        <!-- Ring 2 : Sign-off (crypto) -->
+        <g class="onion-ring" data-target="s1-4">
+          <circle class="ring-band" cx="300" cy="240" r="90" fill="none" stroke="#4d7fa8" stroke-width="20" opacity="0.9"/>
+          <text class="ring-label" x="300" y="180" text-anchor="middle" fill="#6aa9e0">④ SIGN — Ed25519, content-bound</text>
+        </g>
+        <!-- Core : Ingredients -->
+        <g class="onion-ring" data-target="s1-2">
+          <circle cx="300" cy="240" r="56" fill="url(#coreGlow)" stroke="#6cbf92" stroke-width="2" filter="url(#ring-soft)"/>
+          <text class="ring-core-t" x="300" y="234" text-anchor="middle" font-size="16" fill="#eaf1f8">INGREDIENTS</text>
+          <text class="ring-hint" x="300" y="256" text-anchor="middle">ontology · skills</text>
+        </g>
+        <text class="ring-hint" x="300" y="466" text-anchor="middle">Click a ring to peel to its layer.</text>
+      </svg>
+    </div>
+    <p class="caption">Signing runs <strong>core → out</strong>: validate &amp; sign each ingredient, then the agent. You read it <strong>out → core</strong>: the badge you see, and everything true beneath it.</p>
+
+    <!-- ===== Onion stack ===== -->
+    <div class="stack" id="stack-act-1">
+
+      <!-- 1. Three states -->
+      <article class="peel" id="s1-1" data-depth="0" data-accent="sage">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">① BADGE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Four states, one honest badge</h3>
+            <span class="surf">Every artefact wears one of four seals — and by default a fresh deployment wears none.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <div class="states">
+            <div class="state unsigned"><h4><span class="dot"></span>Unsigned</h4><p>Nobody has attested it. The default state of everything — a byte-identical baseline. Sharing still works; trust is simply not yet claimed.</p></div>
+            <div class="state trusted"><h4><span class="dot"></span>Trusted</h4><p>Signed <em>and</em> its content still matches what was signed. For an agent, this also means every ingredient is trusted too.</p></div>
+            <div class="state changed"><h4><span class="dot"></span>Changed</h4><p>Signed once, but the content has drifted since. Tamper-evident: any edit flips 🟢 → 🟠 automatically.</p></div>
+            <div class="state deployment"><h4><span class="dot"></span>Deployment unattested</h4><p>The artefact is signed and intact — but <em>this</em> instance's model, reachable tools and connector opt-ins have not been attested here. What a freshly installed pack honestly looks like: the author vouched, you have not.</p></div>
+          </div>
+          <p style="margin-top:16px"><strong>Badge, not gate.</strong> Trust is <em>shown and verifiable</em>; by default it <em>informs</em> rather than blocks. Sharing an agent stays completely open — the badge tells a consumer what they are getting; it does not lock the door.</p>
+        </div></div>
+
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>Trust is <strong>computed, never re-derived</strong>. The state is resolved on read from two facts: does a valid signature exist, and does the live content hash still equal the signed one. There is no separate "trust database" to fall out of sync.</p>
+          <p>The whole capability ships inside the physically-isolatable <strong>Ontology Suite</strong>, governed by one switch (<code>core/enterprise.py</code>). With no attestations present, every artefact is ⚪ and nothing about the deployment changes.</p>
+        </div></div>
+
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · guarantees</span>
+          <ul class="tight">
+            <li><strong>Byte-identical baseline</strong> — no attestations ⇒ every artefact ⚪; behaviour is unchanged.</li>
+            <li><strong>Tamper-evident</strong> — any content edit flips 🟢 → 🟠 via hash mismatch, with no re-signing.</li>
+            <li><strong>Offline-verifiable</strong> — an Ed25519 signature verifies with only the signer's public key, no server call.</li>
+            <li><strong>Trust ≠ access</strong> — a signed artefact is <em>validated</em>, not <em>authorized</em>; secrets never travel with it.</li>
+          </ul>
+          <p style="margin-top:14px">Reference: <a href="TRUST_MEMBRANE_ARCHITECTURE.html">TRUST_MEMBRANE_ARCHITECTURE</a> · module <code>core/trust/</code> · UI <code>static/js/handlers/trustBadge.js</code>.</p>
+        </div></div>
+      </article>
+
+      <!-- 2. Ingredients + bottom-up gate -->
+      <article class="peel" id="s1-2" data-depth="0" data-accent="sage">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">② COMPOSE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">You can only sign an agent bottom-up</h3>
+            <span class="surf">An agent is made of ingredients. It cannot be trusted until each of them is.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>An agent's ingredients are its <strong>active ontology</strong> (its knowledge graph), its <strong>active skills</strong>, and the <strong>knowledge and planner repositories it consumes</strong> — a knowledge-focused agent <em>is</em> its corpus, so the corpus must be screened and signed before the agent can be. The sign gate refuses to seal the agent until <em>every</em> ingredient is already 🟢. If one is unsigned or changed, it appears in a <strong>"sign these first"</strong> list — the guided path that makes the composition legible.</p>
+          <p>The seal covers one thing more: the agent's <strong>safety posture</strong> — the grounding, guardrail and honesty modes that decide what it will and will not say. Two agents with the same ontology and the same skills but opposite enforcement are not the same agent, so they no longer carry the same fingerprint. Weaken a gate and the badge turns 🟠, exactly as editing a skill would. Signing also says whether that posture actually <em>acts</em>: <strong>clean</strong> when at least one gate enforces, <strong>partial</strong> when every gate is merely watching. An unhardened agent is never refused — it is labelled honestly.</p>
+          <p>So trust is genuinely compositional: <strong>a signed agent contains only signed parts.</strong> The consumer reads one badge on the agent; the catalog of parts hides behind it, each already vouched for.</p>
+        </div></div>
+
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>The rule is a single pure function, <code>agent_signable(ingredients)</code>, which returns the blocking list. The <em>same</em> rule composes one level up for <strong>agent packs</strong>: a pack is "an agent whose ingredients are its members", resolved by <code>pack.member_refs → agent_signable</code>. One idea, applied recursively.</p>
+          <p>Config artefacts — MCP servers, LLM configs, vector/graph backends — are <strong>not attestable by design</strong>. Their content is credentials, and trust ≠ access. They are senses and organs the agent is born with, not things to be vouched for.</p>
+          <p>The same boundary keeps an agent's <strong>authority</strong> — what it may do autonomously, on whose behalf — out of the seal, even though its posture is inside it. Authority is a strict subset of the deploying owner's own permissions and legitimately differs from one deployment to the next; sealing it would make 🟠 mean "someone adapted this correctly" as often as "someone tampered", and a signal that cries wolf is not a signal. Authority is guarded instead by fail-closed enforcement at every tool call, and by the audit trail.</p>
+        </div></div>
+
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · the compositional truth</span>
+          <p>Agent trust resolves as: <strong>🟢 agent ⟺ its attestation is intact <em>and</em> every ingredient resolves 🟢</strong> (<code>resolve_agent_trust</code>). The composition itself is fingerprinted with an <strong>id- and order-independent</strong> <code class="crypt">composition_hash</code>, so re-ordering ingredients or remapping ids never changes the badge — only real content change does.</p>
+          <p>Modules: <code>core/trust/composition.py</code> (profile → ingredients → live <code>AgentTrust</code>) · <code>core/trust/pack.py</code> (pack composition) · <code>core/trust/attestation.py</code> (<code>agent_signable</code>, <code>resolve_agent_trust</code>).</p>
+        </div></div>
+      </article>
+
+      <!-- 3. Validators -->
+      <article class="peel" id="s1-3" data-depth="0" data-accent="sage">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">③ VALIDATE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Before anything is signed, it is checked</h3>
+            <span class="surf">Ten kinds of artefact, one closed set of checks — each pure, deterministic, and free.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>Signing is never a rubber stamp. Each signable kind runs a <strong>validator</strong> that returns one of three bands: <strong style="color:var(--sage)">clean</strong> (signs freely), <strong style="color:var(--amber)">partial</strong> (signs with a caveat noted on the badge), or <strong style="color:var(--red)">blocked</strong> (cannot be signed until fixed). An ontology that isn't conformant, a skill that carries a prompt-injection, a flow whose query is unsafe — each is caught here, before a signature exists.</p>
+        </div></div>
+
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · the ten signable kinds</span>
+          <p>Every kind maps onto one <strong>closed archetype set</strong> — the two shipped poles (conformance, content-safety) plus code-safety, query-safety, integrity, and aggregate. Eight kinds have a per-kind validator registered by <code>kind</code>; the two <em>aggregate</em> kinds (agent, agent pack) are signed only when all their parts are. Each validator is pure and 0-token, so adding a new kind is one function with no forks.</p>
+          <div class="tbl-scroll"><table class="detail">
+            <thead><tr><th>Artefact</th><th>kind</th><th>What is signed</th><th>Archetype</th></tr></thead>
+            <tbody>
+              <tr><td>Ontology (KG)</td><td><code>ontology</code></td><td>entities + relationships</td><td>conformance</td></tr>
+              <tr><td>Skill</td><td><code>skill</code></td><td>instruction text</td><td>content-safety</td></tr>
+              <tr><td>Agent</td><td><code>agent</code></td><td>composition over ingredients</td><td>aggregate</td></tr>
+              <tr><td>Extension</td><td><code>extension</code></td><td>handler source + manifest</td><td>code + content</td></tr>
+              <tr><td>Knowledge repo</td><td><code>knowledge</code></td><td>sorted per-doc hash + embedding</td><td>integrity + content</td></tr>
+              <tr><td>Planner repo</td><td><code>planner</code></td><td>sorted per-case hash</td><td>integrity + query-safety</td></tr>
+              <tr><td>Agent pack</td><td><code>agent_pack</code></td><td>composition over members</td><td>aggregate</td></tr>
+              <tr><td>Flow</td><td><code>flow</code></td><td>node/edge logic (positions excluded)</td><td>code + query + content</td></tr>
+              <tr><td>Dashboard</td><td><code>dashboard</code></td><td>tile structure + data source</td><td>query-safety</td></tr>
+              <tr><td>Canvas</td><td><code>canvas</code></td><td>markup</td><td>markup/XSS + content</td></tr>
+            </tbody>
+          </table></div>
+        </div></div>
+
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · the scanners</span>
+          <p>Validators lean on shared deterministic 0-token scanners: <code>content_safety_scan</code> (prompt-injection), <code>code_safety_scan</code> (AST), <code>sql_safety_scan</code>, <code>markup_safety_scan</code> (XSS), combined by <code>aggregate_verdict</code>. A <code>ScanResult</code> splits findings into <strong>blocking</strong> vs <strong>caveats</strong>, which is exactly what maps to blocked vs partial.</p>
+          <p>The ontology validator is special: it wraps the Tier 4.3 conformance gate, so a non-conformant ontology is <em>not signable</em> and a partially-conformant one signs with a badge note. Files: <code>core/trust/validators.py</code>, <code>core/trust/scanners.py</code>, <code>core/trust/content.py</code> (the canonical per-kind content resolver).</p>
+        </div></div>
+      </article>
+
+      <!-- 4. Sign / crypto -->
+      <article class="peel" id="s1-4" data-depth="0" data-accent="blue">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">④ SIGN</span>
+          <span class="peel-title">
+            <h3 class="stage-h">The signature is bound to content, not to a name</h3>
+            <span class="surf">One Ed25519 key seals the exact bytes — so the seal survives a copy, and breaks on an edit.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>To sign, Uderia computes a <strong>content hash</strong> of the exact signable bytes and signs <code class="crypt">kind|version_hash</code> with the deployment's <strong>Ed25519 provenance key</strong>. Because the signature is over <em>content</em> and not over an id or a filename, it is portable and self-describing — and any later edit changes the hash, so the signature no longer matches and the badge flips to 🟠.</p>
+        </div></div>
+
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>The store persists each attestation with its <strong>signer public key</strong> alongside the signature, so a consumer on a different Uderia instance can verify with the publisher's key — no shared secret, no phone-home. <code>content.py</code> is the one canonical place that defines "what bytes are signed" per kind, shared by sign-off, badge-state resolution, and marketplace portability, so they can never drift apart.</p>
+        </div></div>
+
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · one key, reused three times</span>
+          <p>The signer behind trust is not a new key. <code>eval/online.py:sign_payload()</code> — the deployment's provenance key — is reused <em>verbatim</em> by <code>core/trust/store.py:sign()</code>. So <strong>one Ed25519 key signs three things</strong>: the execution trajectory (the EPC), the evaluation verdict that grades it, and the trust badge that says the agent is made of validated ingredients. All three verify offline with the same committed verifier.</p>
+          <p>REST: <code>POST /v1/trust/&lt;kind&gt;/&lt;id&gt;/sign-off</code>, <code>POST /v1/trust/verify</code>, <code>GET /v1/trust/agent/&lt;id&gt;</code>. Table <code>trust_attestations</code> (self-applying). Reference: <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">AGENT_OPS_EVAL_ARCHITECTURE §6.4</a>.</p>
+        </div></div>
+      </article>
+
+      <!-- 5. Portability -->
+      <article class="peel" id="s1-5" data-depth="0" data-accent="blue">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">⑤ TRAVEL</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Trust travels — but only honestly</h3>
+            <span class="surf">A shared copy is 🟢 only if it is byte-identical to what the publisher signed.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>When an agent (or KG, skill, pack) is published to the marketplace and later installed, its ids are remapped to the new instance — but because signatures are bound to content, the attestation survives the remap. A publisher's green badge can reappear on the consumer's copy… <strong>if and only if</strong> the copy's live hash matches what was signed. If anything changed in transit, the badge honestly shows ⚪/🟠 instead.</p>
+        </div></div>
+
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>Every marketplace surface uses the same two calls: <code>capture(kind, id)</code> at publish and <code>reinstate(kind, new_id, claim)</code> at materialize, gated by the <strong>honesty gate</strong>. The claim carries the signer's public key, so cross-instance verification uses the publisher's key. Wired into KG, agent-pack (and per-member), skill, extension, and component-instance flows; collections inherit trust for free via the reference model.</p>
+        </div></div>
+
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>Live-verified end to end: a signed KG published → forked to a <em>new</em> kg-id → resolves 🟢 with <code>verified:true</code> (the id remap survived), while the honesty gate refuses to re-establish a signature on a mismatched composition. Module: <code>core/trust/portability.py</code> (<code>capture</code> / <code>reinstate</code> / <code>claim_state</code> + honesty gate). 132 assertions in <code>test/test_trust_membrane.py</code> cover the three-state truth, hashing, the compositional truth table, all ten validators, and cross-instance public-key round-trip.</p>
+        </div></div>
+      </article>
+
+    </div><!-- /stack -->
+
+    <div class="callout sage" style="margin-top:30px">
+      <span class="tag">The one line to keep</span>
+      <p><strong>Signing proves an agent and its parts are intact and unchanged — it grants no permissions.</strong> A checked thing is not an authorised thing. Whether the agent may <em>act</em>, and on whose behalf, is a separate story — Act II.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================ -->
+<!-- ACT II — OBSERVE → ENFORCE → PROVE                                -->
+<!-- ================================================================ -->
+<div class="wrap">
+  <section id="act-2">
+    <div class="act-head">
+      <span class="act-num">Act II</span>
+      <h2 style="margin:0">Then it acts — observe → enforce → prove</h2>
+    </div>
+    <p class="lead">A signed agent is trustworthy <em>at rest</em>. But an agent earns trust <em>in motion</em>, one turn at a time. Every turn passes through a pipeline of independent checks — and the check that <strong>grades</strong> a turn is the same check that can <strong>stop</strong> one. Not an eval suite beside a guardrail: one set of primitives doing three jobs — observe, enforce, and <strong>prove</strong> the result with a signed, published benchmark.</p>
+
+    <!-- The turn pipeline -->
+    <div class="pipe">
+      <svg viewBox="0 0 1120 262" role="img" aria-label="The trust pipeline of a single agent turn: inbound guardrail, authority, grounding scope, engine with authority-enforced tool calls, outbound guard, grounding, eval, provenance sealed.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#5a7590"/>
+          </marker>
+        </defs>
+        <!-- baseline -->
+        <line x1="44" y1="128" x2="1030" y2="128" stroke="#334455" stroke-width="1.5" marker-end="url(#ah)"/>
+        <text x="26" y="132" font-family="var(--mono)" font-size="11" fill="#6b7d90" text-anchor="end">in</text>
+        <text x="1044" y="132" font-family="var(--mono)" font-size="12" fill="#6cbf92">answer</text>
+
+        <!-- stage nodes -->
+        <g text-anchor="middle">
+          <!-- 1 inbound guard (top) -->
+          <circle cx="115" cy="128" r="15" fill="#1e2c3b" stroke="#F15F22" stroke-width="1.6"/>
+          <text class="p-num" x="115" y="132" fill="#F15F22">①</text>
+          <text class="p-lab" x="115" y="78" fill="#e9eff5">Inbound guard</text>
+          <text class="p-sub" x="115" y="94" fill="#93a4b6">injection</text>
+          <!-- 2 authority (bottom) -->
+          <circle cx="245" cy="128" r="15" fill="#1e2c3b" stroke="#9db8cf" stroke-width="1.6"/>
+          <text class="p-num" x="245" y="132" fill="#9db8cf">②</text>
+          <text class="p-lab" x="245" y="176" fill="#e9eff5">Authority</text>
+          <text class="p-sub" x="245" y="192" fill="#93a4b6">who acts</text>
+          <!-- 3 grounding scope (top) -->
+          <circle cx="375" cy="128" r="15" fill="#1e2c3b" stroke="#6cbf92" stroke-width="1.6"/>
+          <text class="p-num" x="375" y="132" fill="#6cbf92">③</text>
+          <text class="p-lab" x="375" y="78" fill="#e9eff5">Grounding</text>
+          <text class="p-sub" x="375" y="94" fill="#93a4b6">scope stamped</text>
+          <!-- 4 engine / tools — label lives INSIDE the box (two lines) so it can't collide -->
+          <rect x="460" y="100" width="140" height="56" rx="9" fill="#22344a" stroke="#43597a"/>
+          <text class="p-lab" x="530" y="123" fill="#e9eff5" font-size="12.5">engine runs</text>
+          <text x="530" y="141" text-anchor="middle" font-family="var(--mono)" font-size="9.5" letter-spacing="0.04em" fill="#F15F22">④ authority-enforced</text>
+          <!-- 5 outbound guard (bottom) -->
+          <circle cx="690" cy="128" r="15" fill="#1e2c3b" stroke="#F15F22" stroke-width="1.6"/>
+          <text class="p-num" x="690" y="132" fill="#F15F22">⑤</text>
+          <text class="p-lab" x="690" y="176" fill="#e9eff5">Outbound guard</text>
+          <text class="p-sub" x="690" y="192" fill="#93a4b6">PII · toxicity</text>
+          <!-- 6 grounding (top) -->
+          <circle cx="820" cy="128" r="15" fill="#1e2c3b" stroke="#6cbf92" stroke-width="1.6"/>
+          <text class="p-num" x="820" y="132" fill="#6cbf92">⑥</text>
+          <text class="p-lab" x="820" y="78" fill="#e9eff5">Grounding</text>
+          <text class="p-sub" x="820" y="94" fill="#93a4b6">withhold drift</text>
+          <!-- 7 eval (bottom) -->
+          <circle cx="920" cy="128" r="15" fill="#1e2c3b" stroke="#6cbf92" stroke-width="1.6"/>
+          <text class="p-num" x="920" y="132" fill="#6cbf92">⑦</text>
+          <text class="p-lab" x="920" y="176" fill="#e9eff5">Eval</text>
+          <text class="p-sub" x="920" y="192" fill="#93a4b6">scored</text>
+          <!-- 8 provenance (top) -->
+          <circle cx="1005" cy="128" r="15" fill="#1e2c3b" stroke="#6aa9e0" stroke-width="1.6"/>
+          <text class="p-num" x="1005" y="132" fill="#6aa9e0">⑧</text>
+          <text class="p-lab" x="1005" y="78" fill="#e9eff5">Sealed</text>
+          <text class="p-sub" x="1005" y="94" fill="#6aa9e0">signed</text>
+        </g>
+
+        <!-- foundation note -->
+        <text x="560" y="242" text-anchor="middle" font-family="var(--serif)" font-style="italic" font-size="13" fill="#6b7d90">everything grounds on ⓪ the ontology · the whole flow is watched in ⑩ observability</text>
+      </svg>
+    </div>
+    <p class="caption">Order <em>is</em> the process. You cannot withhold an answer after it has streamed — so grounding and guardrails sit <strong>before</strong> the answer leaves the building.</p>
+
+    <div class="reveal-bar" style="margin-top:24px">
+      <button class="btn" data-act="act-2" data-op="all">Reveal all detail</button>
+      <button class="btn" data-act="act-2" data-op="none">Collapse all</button>
+    </div>
+
+    <!-- Hero onion: observe / enforce / prove -->
+    <div class="stage-svg" style="max-width:640px">
+      <svg viewBox="0 0 640 420" role="img" aria-label="Three concentric rings: observe (outer), enforce (middle), prove (core).">
+        <g class="onion-ring" data-target="s2-1">
+          <circle class="ring-band" cx="320" cy="210" r="180" fill="none" stroke="#6cbf92" stroke-width="26" opacity="0.28"/>
+          <text class="ring-label" x="320" y="48" text-anchor="middle" fill="#6cbf92">OBSERVE — score every turn</text>
+        </g>
+        <g class="onion-ring" data-target="s2-4">
+          <circle class="ring-band" cx="320" cy="210" r="128" fill="none" stroke="#F15F22" stroke-width="26" opacity="0.34"/>
+          <text class="ring-label" x="320" y="104" text-anchor="middle" fill="#F15F22">ENFORCE — act before harm</text>
+        </g>
+        <g class="onion-ring" data-target="s2-7">
+          <circle cx="320" cy="210" r="76" fill="rgba(106,169,224,0.12)" stroke="#6aa9e0" stroke-width="2"/>
+          <text class="ring-core-t" x="320" y="206" text-anchor="middle" font-size="17" fill="#eaf1f8">PROVE</text>
+          <text class="ring-hint" x="320" y="228" text-anchor="middle" fill="#6aa9e0">signed &middot; published</text>
+        </g>
+        <text class="ring-hint" x="320" y="406" text-anchor="middle">One set of primitives, three jobs — they can never disagree.</text>
+      </svg>
+    </div>
+
+    <!-- ===== OBSERVE stack ===== -->
+    <p class="sec-label" style="margin-top:36px">Observe — measuring every turn</p>
+    <div class="stack" id="stack-act-2">
+
+      <article class="peel" id="s2-1" data-depth="0" data-accent="sage">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">OBSERVE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Grade in code first; ask a model only for the rest</h3>
+            <span class="surf">Most of quality is measurable deterministically — free, reproducible, zero tokens.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>Every executed turn is scored against a <strong>profile-class-aware suite of deterministic scorers</strong> — did it complete, stay in cost, avoid tool loops, cite its sources, keep numbers faithful, stay in scope. This runs in code (CI-pure, 0 tokens), on by default, backgrounded so it can never block or slow a turn.</p>
+          <p>Only the open-ended residue — "is this answer actually supported?" — is handed to LLM judges, and only on a sample.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · the deterministic core</span>
+          <p>19 core scorers + 13 reliability/quality scorers, derived entirely from the trace already persisted. Metrics are <strong>3-banded</strong> — <strong style="color:var(--sage)">healthy</strong> / <strong style="color:var(--amber)">review</strong> / <strong style="color:var(--red)">danger</strong> — where review passes the gate but is flagged ("warn, don't gate"). The philosophy: <strong>grade what matters, not the path</strong> — tool assertions use subset / must-not-call semantics, never an exact sequence.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>Files: <code>eval/scorers/deterministic.py</code> · <code>eval/scorers/reliability.py</code>. A scorer abstains (<code>passed=None</code>) rather than fabricate a verdict when its input is absent — abstention is first-class. Runs across all five agent classes; adding a metric is one class + one <code>register_scorer</code> call. Reference: <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">AGENT_OPS_EVAL_ARCHITECTURE §5.2</a>.</p>
+        </div></div>
+      </article>
+
+      <article class="peel" id="s2-2" data-depth="0" data-accent="sage">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">OBSERVE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">A panel of judges, calibrated against humans</h3>
+            <span class="surf">For the questions code can't grade, a diverse panel votes — advisory here, and <em>decisive</em> when the grounding gate escalates to it in-path.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>The open-ended dimensions — answer correctness, groundedness, instruction-following, synthesis quality, and semantic content safety — go to a <strong>panel of independent models</strong> that each score one dimension in isolation, cite evidence, and may answer "unknown". Consensus is a majority vote that ignores abstentions.</p>
+          <p>Because Uderia already speaks to ten LLM providers, a diverse-family panel is essentially free — and diversity is what mitigates a single judge's self-preference and correlated error.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · calibration</span>
+          <p>A judge starts <strong>non-gating</strong>. It is only promoted to gate a release once it agrees with human SME labels at <strong>Cohen's κ ≥ 0.6</strong> (substantial agreement). Human labels come from an annotation queue where reviewers agree/disagree with verdicts. Judges refine what a code grader can only approximate — they never replace the deterministic floor.</p>
+          <p><strong>Two roles, one panel — and this is the whole argument.</strong> As a <em>measurement</em> it runs after the turn, on a sample, and stays advisory until calibrated. As an <em>escalation</em> it is what the grounding gate asks when a trigger fires — and there its vote is not advisory at all: <code>panel 0✓/3✗</code> is an answer withheld before anyone read it. Same models, same code, opposite consequence — which is what "one set of primitives, three jobs" means in practice.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · the 8 decomposed judges</span>
+          <div class="tbl-scroll"><table class="detail">
+            <thead><tr><th>Judge</th><th>Dimension</th><th>Abstains unless</th></tr></thead>
+            <tbody>
+              <tr><td>answer_correctness</td><td>vs a reference</td><td>reference present</td></tr>
+              <tr><td>groundedness</td><td>Focus / RAG</td><td>retrieved docs present</td></tr>
+              <tr><td>instruction_following</td><td>Ideate</td><td>answer present</td></tr>
+              <tr><td>tool_arg_optimality</td><td>tool classes</td><td>tool calls present</td></tr>
+              <tr><td>answer_groundedness</td><td>tool classes</td><td>tool results present</td></tr>
+              <tr><td>scope_faithfulness</td><td>tool classes</td><td>KG scope declared</td></tr>
+              <tr><td>synthesis_quality</td><td>Coordinate</td><td>experts invoked</td></tr>
+              <tr><td>content_safety</td><td>all classes</td><td>answer present</td></tr>
+            </tbody>
+          </table></div>
+          <p style="margin-top:12px"><code>content_safety</code> is the semantic complement to the deterministic outbound guardrail — it catches the residue only meaning can (sarcastic or coded abuse, harm-enabling instructions, indirect personal identification), advisory and never blocking the answer path.</p>
+          <p style="margin-top:12px">Files: <code>eval/judge.py</code>, <code>eval/scorers/judges.py</code>, <code>eval/calibration.py</code>. Every judge run is a visible, reload-safe Live Status step and its token cost is allocated to the turn exactly like any other spend.</p>
+        </div></div>
+      </article>
+
+      <article class="peel" id="s2-3" data-depth="0" data-accent="sage">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">OBSERVE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">"Is <em>this agent</em> good?" — the health roster</h3>
+            <span class="surf">Not a firehose of runs. An agent-first scoreboard, banded by health.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>A stream of traces shows how each turn ran; the real question is "is this <em>agent</em> regressing?" So the lead UX is an <strong>agent health roster</strong> — one card per agent, IFOC-coloured, worst-health-first, with honest "unevaluated" empty states rather than fake numbers.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · 4-class health &amp; pass^k</span>
+          <p>One banded scale everywhere: 🟢 <strong>Healthy</strong> (≥ 0.80) · 🟡 <strong>Review</strong> (0.50–0.79) · 🔴 <strong>Danger</strong> (&lt; 0.50) · ⚪ <strong>Inactive</strong>. Offline reliability uses <strong>pass^k</strong> — the fraction of cases that pass on <em>all k</em> reps — which surfaces the long tail that single-shot accuracy hides. A regression gate turns this into a CI exit code.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>Two lenses over the same records: <strong>Sessions</strong> (instance — "what happened in this run?") and <strong>Agents</strong> (entity — "is this agent good?"), bridged by a trajectory verdict overlay. Files: <code>agentPerformanceHandler.js</code>, <code>eval/analysis.py</code>, <code>eval/runner.py</code>, <code>eval/gate.py</code>. Coordinators expand into a master/slave trace tree; flows are graded as whole agents.</p>
+        </div></div>
+      </article>
+    </div>
+
+    <!-- ===== ENFORCE stack ===== -->
+    <p class="sec-label" style="margin-top:40px">Enforce — on the request path</p>
+    <div class="stack">
+
+      <article class="peel" id="s2-4" data-depth="0" data-accent="accent">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">ENFORCE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Grounding — pass, annotate, or withhold</h3>
+            <span class="surf">A 0-token check flags the claim; the <em>same judge panel</em> rules on it. The one place a measurement becomes a decision.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>Grounding checks every answer against the scope the agent's knowledge model actually declared. It closes Uderia's own documented failure: an agent received a complete, scope-correct enrichment, <em>ignored it</em>, brute-forced 19 calls across unrelated databases, and produced a confident, wrong 230-day answer. In <strong>enforce</strong> mode that answer is now withheld.</p>
+          <div class="states">
+            <div class="state"><h4 style="color:var(--muted)">observe</h4><p>measure only, change nothing (default) · <em style="color:var(--amber)">+ disclose</em> — append an honest note to the answer (stored: <code>annotate</code>)</p></div>
+            <div class="state" style="border-color:var(--accent-line)"><h4 style="color:var(--accent)">enforce</h4><p>withhold a confirmed drift — the original retained, recoverable · <em style="color:var(--amber)">+ keep for my review</em> — every withholding becomes owed human work (stored: <code>review</code>)</p></div>
+          </div>
+          <p style="margin-top:8px"><em>Two postures, each with one property — not four levels.</em> Disclosure is a property of <strong>observing</strong> (same watching, the reader is told); retention is a property of <strong>enforcing</strong> (same withholding, a human is on the hook). The four stored modes survive as the two composites; see Act III. And the agent has <strong>one hardening intent</strong>: an agent-level posture every gate inherits unless it overrides — the editor names, per gate, what actually applies and where it came from.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · tiered — cheap trigger, judged decision</span>
+          <p>A first benchmark disproved a naïve deterministic block: it over-blocked honest "not in my scope" refusals <em>and</em> missed prose-only drift. So enforcement is <strong>tiered</strong>: a cheap deterministic trigger does <em>recall</em> (flags any structural data reference not on the KG allowlist — never starving the judge), then the <code>scope_faithfulness</code> judge does <em>precision</em> — <strong>drifted → withhold · faithful → deliver · unavailable → annotate</strong>. An honest refusal always survives.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · two lanes, one gate — the knowledge lane too</span>
+          <p>The same gate now grounds answers built from <strong>retrieved knowledge</strong>, not only from SQL scope. A second trigger family checks the answer's numbers, verbatim quotes, and named identifiers against the chunks that were actually retrieved — and, before flagging anything, runs a <strong>second-chance targeted retrieval</strong> so a claim the first search missed but the corpus <em>does</em> support is cleared, not blamed. What survives escalates to the <code>groundedness</code> judge. In the answer itself, an unsupported span gets a dotted underline — "unsupported by the knowledge base" is drawn <em>in place</em>, and it never means "false". A companion honesty check stops the opposite failure: when retrieval finds almost nothing yet the answer asserts specifics, it says "the knowledge base does not cover this" instead of inventing.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · never breaks a turn</span>
+          <p>Observe/annotate/off never reach the judge → zero added latency or cost by default; only enforce pays a judge call, and only when the trigger fires. The path <strong>fails open</strong> (a gate error delivers the original answer) and in enforce <strong>fails safe to annotate</strong> on any judge unavailability. Crucially, the live gate's "out of scope" is the <em>same primitives</em> the off-path <code>scope_adherence</code> scorer uses — observe and enforce can never disagree. A confirmed withhold is written into the Ed25519 provenance chain. Files: <code>agent/grounding/{primitives,corpus,gate,enforce,runtime,adapter}.py</code>, <code>agent/honesty/</code>. One implementation for all five engines, SQL scope and retrieved knowledge alike.</p>
+        </div></div>
+      </article>
+
+      <article class="peel" id="s2-5" data-depth="0" data-accent="accent">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">ENFORCE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Guardrails — protection on both edges</h3>
+            <span class="surf">A hidden instruction can't hijack it; personal data and toxicity can't leave it.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p><strong>Inbound</strong>: the incoming request is screened before the agent reads it; a prompt-injection is refused. <strong>Outbound</strong>: the drafted answer is screened; personal data is masked and toxic content withheld. Both are fast and free — deterministic, zero extra model calls — so they cost nothing to run on every turn.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>Outbound events carry <strong>category labels only — never the raw personal-data value</strong>, so the audit trail itself never leaks. Guardrails are a request-path enforcement primitive (a sibling of grounding, not a component), default observe, and — like everything here — fail open so they can never break a turn. On enforce, a blocked inbound turn produces a self-contained refusal; the injected text never reaches the model.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>Deterministic 0-token detectors: prompt-injection, PII (email/SSN/Luhn-validated card/phone/keys/IBAN/IP) with redaction, closed-set toxicity, and <strong>exfiltration-shaped URLs</strong> — the classic RAG leak where a poisoned document plants <code>https://evil/?q={secret}</code> that exfiltrates on render. A URL that is both <em>novel</em> (not in the turn's own sources) <em>and</em> exfil-shaped is <strong>defanged</strong> — its text kept, the link made dead — never silently deleted. Master switch <code>GUARDRAILS_ENABLED</code> (default off); per-profile <code>guardrailConfig</code> mode ladder off/observe/annotate/enforce, plus a per-gate retention property — "keep withheld originals for my review" (stored as the composite mode <code>review</code> = enforce with retention; see Act III). Under plain enforce a FULL withholding still retains its original as a recoverable entry; routine PII redactions never auto-park (the parked content would be the raw PII). Files: <code>agent/guardrails/</code>. Rendered as a Live Status card, live + reload, for all five engines.</p>
+        </div></div>
+      </article>
+
+      <article class="peel" id="s2-6" data-depth="0" data-accent="accent">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">ENFORCE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Agent Authority — a borrowed identity, strictly bounded</h3>
+            <span class="surf">When an agent acts on its own, it acts as a scoped subset of its owner — checked before every action.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>A scheduled task, a sub-agent, a flow node — anything running <strong>unattended</strong> — must not run with your full permissions, unattributed. Instead it takes on a <strong>limited version of its owner</strong>: autonomy on/off, read-only, a denied-tool list, a connector allow-list, a per-run budget. Every attempted action is checked against that limit <em>before</em> it happens, and every autonomous action is attributed to the agent, not to you.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · fail-closed at every chokepoint</span>
+          <p>The agent's authority is a <strong>strict subset</strong> of its owner's — never a grant. Enforcement is fail-closed: if the check itself errors, the action is <em>denied</em>. Autonomy is set per turn at the boundary via an async-task-local security context, so concurrent sessions stay isolated with no signature threading. An interactive user turn leaves it unset → baseline, no gating.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · honest scope</span>
+          <p>Three tool chokepoints read the ambient principal and deny before executing: MCP tools, component tools, connectors. <strong>Read-only means read-only</strong>, even for a write smuggled through a read-named tool — <code>deny_writes</code> classifies the <em>SQL statement</em>, not just the tool name, so <code>base_readQuery(sql="DELETE …")</code> is refused. And the <strong>per-run budget is checked in flight</strong>, before each model call is paid for, on every autonomous engine — not merely flagged once the money is spent. Beyond capability scoping, two structural boundaries now exist. On the <strong>read</strong> side, a <em>Surface Full</em> agent may query only the signed data products on its surface — raw SQL is refused as <code>surface-only</code> (see <a href="the-anatomy-of-a-signed-data-product.html">The Anatomy of a Signed Data Product</a>). On the <strong>write</strong> side, an <em>action-only</em> agent may change rows only through signed, granted action types — a raw write is refused as <code>action-only</code>, and every act is prepared, confirmed or approved, and receipted (see <a href="the-anatomy-of-a-signed-action.html">The Anatomy of a Signed Action</a>). Files: <code>core/agent_authority.py</code>, <code>agent/tool_enforcement.py</code> (<code>classify_sql_write</code>, <code>check_budget_before_call</code>), wired at <code>agent/execution_service.py</code>. Reference: <a href="AGENT_AUTHORITY_ARCHITECTURE.html">AGENT_AUTHORITY_ARCHITECTURE</a>.</p>
+        </div></div>
+      </article>
+    </div>
+
+    <!-- ===== PROVE stack ===== -->
+    <p class="sec-label" style="margin-top:40px">Prove — evidence, not claims</p>
+    <div class="stack">
+
+      <article class="peel" id="s2-7" data-depth="0" data-accent="blue">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">PROVE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Every verdict is bound to the trajectory it grades</h3>
+            <span class="surf">The score isn't a note next to the trace — it's cryptographically fused to it.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>Every turn already produces an <strong>Ed25519-signed Execution Provenance Chain</strong> — a hash-chained record of exactly what happened. When the turn is scored, the verdict digest is bound to that chain's tip and signed, so a quality claim can be audited alongside the exact trajectory it grades. Tamper the trace, and the signature no longer matches.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · one key, three signatures</span>
+          <p>This is where Act I and Act II meet. The <em>same</em> Ed25519 provenance key signs <strong>three</strong> things:</p>
+          <ul class="tight">
+            <li><strong>the trajectory</strong> — what the agent did (the EPC);</li>
+            <li><strong>the verdict</strong> — how good it was (the eval attestation);</li>
+            <li><strong>the badge</strong> — that the agent is made of validated ingredients (the trust attestation).</li>
+          </ul>
+          <p style="margin-top:10px">All three verify offline with the same committed verifier and the signer's public key alone. Since October 2026 each turn also seals its <strong>bill of materials</strong> — every signed part the agent used, as it was at that moment — so the badge is recorded per answer, not only per agent: see <a href="the-anatomy-of-an-answers-evidence.html">The Anatomy of an Answer's Evidence</a>.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p><code>eval/online.py:sign_payload()</code> is the shared signer; <code>core/trust/store.py:sign()</code> reuses it verbatim. A reproducible signed-attestation sample + a standalone offline verifier ship as the A6 proof-pack (<code>docs/proof-packs/samples/verify_attestation.py</code>) — anyone can confirm digest match, key fingerprint, Ed25519 signature, and that a tampered payload is rejected, with no Uderia install.</p>
+        </div></div>
+      </article>
+
+      <article class="peel" id="s2-8" data-depth="0" data-accent="blue">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">PROVE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">The benchmarks — published, and honest</h3>
+            <span class="surf">Enforcement quality is a reproducible number with its misses shown, not a marketing claim — one benchmark per lane.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>The grounding system is turned into a <strong>published, reproducible proof</strong> — one benchmark per lane. The structured lane: 36 real turns, judge-labelled — <strong>60% trigger recall, 2 false negatives, net drift 14% → 6%</strong> (rerun 2026-10-31, after the rerun caught and fixed a regression). The knowledge lane: 18 curated cases scored by the production trigger itself — <strong>85.7% recall, 0% false positives, 100% second-chance recovery</strong>, reproducible offline at zero tokens. Both publish their misses by case id. <a href="benchmarks.html">Read the numbers →</a></p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · the matrix</span>
+          <div class="tbl-scroll"><table class="detail">
+            <thead><tr><th></th><th>judge: drifted</th><th>judge: faithful</th></tr></thead>
+            <tbody>
+              <tr><td>trigger fires → judged</td><td style="color:var(--sage)">TP (caught)</td><td style="color:var(--amber)">FP (extra judge call, never a wrong verdict)</td></tr>
+              <tr><td>trigger passes → delivered</td><td style="color:var(--red)">FN (the honest gap, shown)</td><td style="color:var(--muted)">TN</td></tr>
+            </tbody>
+          </table></div>
+          <p style="margin-top:12px">Honest by construction: false negatives and false positives are <strong>published, not hidden</strong>. The recall-first trigger exists precisely to shrink the FN corner.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>A 36-case dataset (in-scope / out-of-scope / ambiguous); a pure scoring core (<code>eval/benchmarks/grounding/report.py</code>) is the single source of truth the harness and any view in the runtime render from, so they can never diverge. The knowledge-lane twin (<code>eval/benchmarks/corpus_grounding/</code>) is <strong>fully deterministic</strong> — anyone with the repo reproduces the published numbers offline, and the numbers are pinned in CI so drift fails the build. Both, side by side, with limits stated: <a href="benchmarks.html">The Numbers</a>. Reference: <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">§6b</a>.</p>
+        </div></div>
+      </article>
+    </div>
+
+    <div class="callout blue" style="margin-top:32px">
+      <span class="tag">Where the two acts meet</span>
+      <p><strong>One Ed25519 key signs the trajectory, the verdict, and the badge.</strong> That is why Trust &amp; Assurance is one system, not three products bolted together: the thing that proves <em>what the agent is made of</em> (Act I) and the thing that proves <em>how it behaved</em> (Act II) rest on a single cryptographic root — offline-verifiable by anyone, with nothing but a public key.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================ -->
+<!-- ACT III — THE LOOP CLOSES                                         -->
+<!-- ================================================================ -->
+<div class="wrap">
+  <section id="act-3">
+    <div class="act-head">
+      <span class="act-num">Act III</span>
+      <h2 style="margin:0">The loop closes — trust that responds</h2>
+    </div>
+    <p class="lead">Observing and enforcing is not the end of the story. What these checks <em>measure</em> feeds back: the badge on the agent breathes with its conduct, a human can be put in the loop, no indirect path stays silent, and you decide policy on evidence, not faith. Trust is a <strong>closed loop</strong> — measured behaviour changes the trust state, the trust state can change enforcement, and every step stays visible and verifiable.</p>
+
+    <div class="reveal-bar">
+      <button class="btn" data-act="act-3" data-op="all">Reveal all detail</button>
+      <button class="btn" data-act="act-3" data-op="none">Collapse all</button>
+    </div>
+
+    <div class="stack" id="stack-act-3">
+
+      <!-- Behavioral trust + breaker -->
+      <article class="peel" id="s3-1" data-depth="0" data-accent="amber">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">RESPOND</span>
+          <span class="peel-title">
+            <h3 class="stage-h">The badge breathes — behavioral trust</h3>
+            <span class="surf">A signature proves an agent is unchanged. It cannot prove it is behaving. So the badge earns and withdraws trust as conduct is measured.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>The <strong>Behavioral Trust Score</strong> fuses the static integrity of the sign-off (🟢/🟠/⚪) with the agent's live track record — a recency-weighted pass rate, extra weight on the trust-critical checks (scope, groundedness, governed-data ratio) — into one composite state that <em>moves</em>: <strong>provisional → at-risk → watch → proven → trusted</strong>. Sustained good conduct earns trust; decline visibly withdraws it. Integrity can only <em>cap</em> conduct, never promote it — an unsigned agent can never read fully trusted, no matter how well it behaves.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · the circuit breaker</span>
+          <p>When an agent's trailing conduct enters <strong>at-risk</strong> (volume-gated, so a couple of bad turns on a new agent can't trip it), an opt-in <strong>circuit breaker</strong> responds — <em>notify</em> the owner, or <em>freeze autonomy</em>: it sets the agent's Agent-Authority <code>autonomous=false</code>, suspending only its <strong>unattended</strong> use until a human reviews. Interactive use is never touched; the freeze is visible and reversible. This is the loop closing — a measurement changing an enforcement.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>Pure decision in <code>eval/trust_behavior.py</code> (integrity × track-record fusion, staleness decay, volume gates); the breaker runs at the end of the online-eval hook on the transition edge into at-risk (<code>eval/online.py:_run_trust_breaker</code>). Default off ⇒ read-side only, byte-identical baseline. On the roster the state renders as a <strong>seal + ring glyph</strong> — the seal is integrity, the ring fills with conduct. Reference: <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">§6c.1–6c.2</a>.</p>
+        </div></div>
+      </article>
+
+      <!-- Human review -->
+      <article class="peel" id="s3-2" data-depth="0" data-accent="amber">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">REVIEW</span>
+          <span class="peel-title">
+            <h3 class="stage-h">A human in the loop — review mode</h3>
+            <span class="surf">Enforce discards a risky answer. Review withholds it exactly the same — but keeps the original for a person to approve or uphold.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>Not a fourth strictness level but a <strong>property of enforcement</strong>: <strong>review</strong> — the per-gate "keep withheld originals for my review" checkbox. It withholds or redacts exactly like enforce, but parks the ORIGINAL answer as owed work for the owner to disposition — <strong>nothing lost, nothing silently delivered</strong>. Ideal for the scheduled and autonomous runs nobody was watching. It is the framework's human-oversight mechanism, not a promise. (Plain enforce, by contrast, retains a full withholding's original as a quiet <em>recovery-ledger</em> entry — recoverable, but nothing owed and no oversight claimed.)</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · append-only release</span>
+          <p>Approve = "I've seen the original and accept it"; uphold = the withholding stands. Either way the decision is recorded on the turn's trace. Release is <strong>append-only</strong> — the delivered conversation is never rewritten; an approved original surfaces in that answer's trust capsule, always labelled as a human decision. Parked items and incidents land in an <strong>Assurance Inbox</strong> that turns trust events into worked items instead of buried log lines.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p><code>review</code> is a <em>runtime composite</em>, not a config-ladder mode: the runtime detects the raw profile mode, substitutes enforce for evaluation, then parks the withheld original in <code>core/review_queue.py</code> and re-tags the event. REST: <code>GET /v1/assurance/reviews</code>, <code>POST …/&lt;id&gt;/approve|reject</code>. Trust incidents flow through <code>core/trust_events.py</code>. Reference: <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">§6c.4</a>.</p>
+        </div></div>
+      </article>
+
+      <!-- Injection firewalls -->
+      <article class="peel" id="s3-3" data-depth="0" data-accent="accent">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">FIREWALL</span>
+          <span class="peel-title">
+            <h3 class="stage-h">No silent path — the three injection firewalls</h3>
+            <span class="surf">The inbound guard screens what the user types. A hidden instruction can still arrive three other ways — each is now closed.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>Indirect injection is the lane the entry guard cannot see. Three firewalls close it: a poisoned <strong>memory</strong> write is <em>quarantined</em> (stored but never recalled — closing the persistent-compromise vector); a poisoned <strong>retrieved document</strong> is <em>defused</em> (kept, but wrapped in an untrusted-data label the model must not obey); and a poisoned <strong>tool result</strong> — a database row, or a fetched <strong>web page / browser / files / Slack result</strong>, that says "ignore all previous instructions" — is <em>flagged</em>. The tool-result firewall reaches every tool-output path through one shared entry: the database-tool call, the <strong>connector/web return</strong> (the highest-risk lane), and the ReAct engine (whose output re-enters the model's context directly). All three firewalls ride the same guardrails master switch and cost zero tokens.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>The memory and retrieval firewalls alter what the model reads (quarantine / label); the tool-result firewall is deliberately <strong>observe-only</strong> — it flags but never rewrites the row, so a false positive can never corrupt real data. Each records an Assurance-Inbox event (labels only, never the poisoned content) and broadcasts a live notice. Every detector <strong>normalizes first</strong> — folding away confusable and zero-width characters — so one Cyrillic lookalike or an invisible space can't slip an injection past the regex. Files: <code>components/builtin/memory/store.py</code> (<code>screen_memory_content</code>), <code>knowledge_context</code> handler, <code>agent/tool_enforcement.py</code> (<code>scan_result</code>, the one shared firewall entry) → <code>agent/guardrails/runtime.py</code> (<code>scan_tool_result</code>). Reference: <a href="AGENT_TRUST_AND_ASSURANCE.html">TIER_1.3 §5</a>.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · and one lane earlier — at ingest</span>
+          <p>All three reuse the one deterministic <code>detect_prompt_injection</code> primitive the inbound guard uses, and all fail open. Earlier still, an <strong>ingest firewall</strong> screens every document as it enters a knowledge repository — injection patterns, personal-data categories (counts only, never the values), exfil URLs — recording the result without ever blocking an upload. "We screen what the model <em>reads</em>, not just what the user types" — the indirect-injection triad the edge guard alone cannot cover, now backed by screening at the source.</p>
+        </div></div>
+      </article>
+
+      <!-- The knowledge lane, made trustworthy -->
+      <article class="peel" id="s3-3b" data-depth="0" data-accent="blue">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">CLOSE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">The knowledge lane, on par — and beyond</h3>
+            <span class="surf">Retrieved knowledge is judgement, so it stays monitored — but monitored as strongly as monitoring can be, and shown honestly.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>A knowledge repository can never be a <em>signed data product</em> — retrieval matches on meaning and synthesis is judgement, so it can't be a deterministic contract. What it <em>can</em> earn is honesty about its source. Every answer now shows <strong>where</strong> its knowledge came from: the corpus's integrity signature (🟢 signed · 🟠 changed · ⚪ unsigned — a guarantee about the <em>source</em>, never the answer), how stale that source is ("verified 94 days ago" / "sync off"), and its sensitivity. A repository's own signature was made <strong>earned</strong>: it can be signed only once it is fully screened and its critical findings resolved — either quarantined, or acknowledged with a recorded reason. A poisoned document is one click from <strong>quarantine</strong>: excluded from retrieval, still visible, reversible.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail · two signature meanings, never conflated</span>
+          <p>The corpus signature and a data-product signature mean different things and the interface keeps them visually distinct: one attests <em>source integrity</em> (this document set, this embedding model, unchanged), the other a <em>deterministic consumption contract</em>. The answer stays in the monitored lane and says so — the badge is a source guarantee, not a consumption one. Quarantining a document changes the corpus, so the signature honestly reads "changed" until re-signed: the ratchet working, not a bug.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail · further controls</span>
+          <p>Three further controls: <strong>retrieval-anomaly monitoring</strong> (a document retrieved across many <em>unrelated</em> queries is a suspicious embedding hub — flagged for your disposition, never auto-quarantined; honestly labelled statistical, not proven poisoning); <strong>sensitivity levels</strong> (a per-agent ceiling on which repositories it may read, and a note when an answer draws on a confidential one); and a <strong>source-consistency judge</strong> that surfaces when two retrieved documents disagree instead of silently picking one. Files: <code>agent/grounding/corpus.py</code>, <code>agent/guardrails/corpus_screen.py</code>, <code>core/knowledge_provenance.py</code>, <code>eval/retrieval_anomaly.py</code>, <code>eval/scorers/{reliability,judges}.py</code>.</p>
+        </div></div>
+      </article>
+
+      <!-- Decide on evidence -->
+      <article class="peel" id="s3-4" data-depth="0" data-accent="blue">
+        <div class="peel-head" role="button" tabindex="0" aria-expanded="false">
+          <span class="peel-idx">EVIDENCE</span>
+          <span class="peel-title">
+            <h3 class="stage-h">Decide on evidence — backtest, red-team, receipts</h3>
+            <span class="surf">Before you tighten a switch, replay it. Probe the agent. And hand the consumer a receipt they can verify.</span>
+          </span>
+          <span class="peel-cta"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><span class="lbl"></span><span class="chev">▾</span></span>
+        </div>
+        <div class="skin skin-1"><div class="skin-inner">
+          <span class="depth-tag">Mechanism</span>
+          <p>The observe → enforce climb is an anxiety problem, so it's decided on evidence. <strong>Policy backtesting</strong> replays a proposed grounding/guardrail policy over your real, persisted history — deterministically, at zero token cost — and reports exactly what it <em>would have</em> blocked, masked, or escalated. <strong>Red-teaming</strong> probes an agent with an adversarial corpus and scores whether its guards held. And every answer carries a consumer-facing <strong>"Why trust this answer?"</strong> receipt — sources, the governed-vs-free-formed data lane, guard findings, and the signed provenance chain, exportable and verifiable offline.</p>
+        </div></div>
+        <div class="skin skin-2"><div class="skin-inner">
+          <span class="depth-tag">Detail</span>
+          <p>Backtest guardrail projections are <strong>exact</strong> (the same policy engine on stored text); grounding projections are trigger-level and honestly do not simulate the judge (a flagged turn reads "would escalate", never a certain block). The deterministic red-team scores in-path detector recall for free; an opt-in, budget-capped <strong>live</strong> red-team drives real probe turns — including a <strong>corpus lane</strong> that plants a real poisoned document in a test collection, asks the question that retrieves it, scores whether the firewall and the answer held, and deletes the payload afterward (with the cleanup status reported, never silent). A <strong>signed audit pack</strong> bundles posture + eval + incidents + an EU AI Act / NIST / GDPR control map, Ed25519-signed and offline-verifiable.</p>
+        </div></div>
+        <div class="skin skin-3"><div class="skin-inner">
+          <span class="depth-tag">Full detail</span>
+          <p>Files: <code>eval/backtest.py</code>, <code>eval/redteam.py</code> (deterministic self-test), <code>eval/live_redteam.py</code> (real probe turns), the answer capsule (<code>static/js/handlers/answerCapsule.js</code>). REST: <code>POST /v1/evals/backtest</code>, <code>/v1/assurance/resilience-test</code>, <code>/live-redteam</code>, <code>/audit-pack</code>. And a per-turn <strong>Trust Journey</strong> strip renders the whole pipeline — inbound guard → authority → scope → tools → outbound → grounding → seal — as one glanceable row. Reference: <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">§6c.3–6c.5</a>.</p>
+        </div></div>
+      </article>
+    </div>
+
+    <div class="callout">
+      <span class="tag">The idea</span>
+      <p>Trust is neither only <em>filtering</em> (guardrails that block) nor only <em>reporting</em> (dashboards that observe). Uderia builds it as <strong>closed-loop, verifiable trust</strong>: measured behaviour changes the trust state, the trust state can change enforcement, and every step of that loop — down to the individual answer's receipt — is cryptographically provable.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================ -->
+<!-- CLOSING                                                           -->
+<!-- ================================================================ -->
+<div class="wrap">
+  <section id="closing">
+    <p class="sec-label">The membrane holds</p>
+    <h2>Safe by default, rigorous by choice</h2>
+    <p class="lead">Nothing here is imposed on you. Every capability ships <strong>off, or observe-only</strong> — a fresh deployment behaves exactly like an ungoverned one until you turn something on. You opt into rigor deliberately, one layer at a time, and you can always <em>see</em> and <em>verify</em> what each layer did.</p>
+    <p class="divider-note">Signed, so you know what it is made of. Observed, so decline is visible. Enforced, so drift never reaches the user. Proved, so the claim is checkable — offline, by anyone. And kept in check, so trust reflects how it actually behaves.</p>
+    <div class="callout">
+      <span class="tag">The whole story, in one breath</span>
+      <p>A Uderia agent is <strong>born</strong> from its configuration, <strong>composed</strong> of validated ingredients, <strong>signed</strong> into a trusted whole — and then, on every turn it <strong>runs</strong>, it is <strong>observed</strong> for quality, <strong>enforced</strong> against hallucination, out-of-scope drift, leakage, and borrowed authority, and <strong>proved</strong> with a signature anyone can check. And the loop closes: its measured conduct feeds back into the badge itself, a human can be put in the loop, and every answer carries a receipt. Trust, earned — and kept.</p>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <footer>
+    Uderia is a framework for trusted data agents. The Life of a Uderia Agent · a visual companion to the Agent Trust &amp; Assurance stack.<br>
+    Deeper reading — <a href="AGENT_TRUST_AND_ASSURANCE.html">Operations Guide</a> ·
+    <a href="TRUST_MEMBRANE_ARCHITECTURE.html">Trust Membrane</a> ·
+    <a href="AGENT_OPS_EVAL_ARCHITECTURE.html">Agent Ops &amp; Evaluation</a> ·
+    <a href="AGENT_AUTHORITY_ARCHITECTURE.html">Agent Authority</a> ·
+    <a href="OBDA_ARCHITECTURE.html">Signed Data Products (OBDA-READ)</a> ·
+    <a href="ACT_ARCHITECTURE.html">OBDA-MODEL &amp; OBDA-ACT</a>.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var MAX = 3;
+
+  function setDepth(peel, depth) {
+    depth = Math.max(0, Math.min(MAX, depth));
+    peel.setAttribute("data-depth", String(depth));
+    var head = peel.querySelector(".peel-head");
+    if (head) head.setAttribute("aria-expanded", depth > 0 ? "true" : "false");
+  }
+
+  // Peel one level per click on the header/CTA (cycles back to 0 after full detail).
+  function onHeadActivate(peel) {
+    var d = parseInt(peel.getAttribute("data-depth") || "0", 10);
+    setDepth(peel, d >= MAX ? 0 : d + 1);
+  }
+
+  document.querySelectorAll(".peel").forEach(function (peel) {
+    var head = peel.querySelector(".peel-head");
+    head.addEventListener("click", function () { onHeadActivate(peel); });
+    head.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onHeadActivate(peel); }
+    });
+  });
+
+  // Per-act reveal-all / collapse-all
+  document.querySelectorAll(".btn[data-op]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var actId = btn.getAttribute("data-act");
+      var op = btn.getAttribute("data-op");
+      var scope = document.getElementById(actId);
+      if (!scope) return;
+      scope.querySelectorAll(".peel").forEach(function (peel) {
+        setDepth(peel, op === "all" ? MAX : 0);
+      });
+    });
+  });
+
+  // Onion hero rings → peel + scroll the matching stage
+  document.querySelectorAll(".onion-ring[data-target]").forEach(function (ring) {
+    ring.addEventListener("click", function () {
+      var id = ring.getAttribute("data-target");
+      var peel = document.getElementById(id);
+      if (!peel) return;
+      if (parseInt(peel.getAttribute("data-depth") || "0", 10) === 0) setDepth(peel, 1);
+      peel.scrollIntoView({ behavior: "smooth", block: "center" });
+      peel.classList.add("flash");
+      setTimeout(function () { peel.classList.remove("flash"); }, 1200);
+    });
+  });
+})();
+</script>
+</html>

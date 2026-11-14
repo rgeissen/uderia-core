@@ -1,0 +1,104 @@
+{
+  "component_id": "compute",
+  "display_name": "Compute with Lineage",
+  "icon_accent": "#14b8a6",
+  "answer_surface": {
+    "open": false,
+    "kind": "compute",
+    "word": "Compute"
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z\"/></svg>",
+  "description": "Exact arithmetic over the turn's query results — sums, averages, rankings, pivots, differences, joins, percent change, filters — computed in-process by code, never by model-written code. Every figure it produces carries a receipt (operation · rows · statement) that the answer's numbers are traced back to.",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "none",
+  "signals": {
+    "emits": [],
+    "listens": [],
+    "announces": [],
+    "consumes_refs": false
+  },
+  "category": "General",
+  "tool_definition": {
+    "name": "TDA_Compute",
+    "description": "Computes an exact figure over the rows a previous data query returned this turn (addressed by statement number; the latest by default). Use it instead of doing arithmetic yourself: the result is exact and carries a receipt. Operations: sum, avg, min, max, count, rank (top N by a column), pivot (aggregate by a group column), filter (rows matching one predicate), pct_change (first→last change of a column), join and diff (two statements on a shared column).[[gate:compute_sql]] Combine: op \"sql\" runs ONE read-only SELECT (DuckDB SQL) over this turn's results, each a table named s1, s2, … by its statement number — for joining or unioning results that came from DIFFERENT data sources, which no single query can reach.[[/gate]]",
+    "args": {
+      "op": {
+        "type": "string",
+        "description": "One of: sum | avg | min | max | count | rank | pivot | filter | pct_change | join | diff[[gate:compute_sql]] | sql[[/gate]]",
+        "required": true
+      },
+      "column": {
+        "type": "string",
+        "description": "The column to compute over. Optional when the result set has exactly one numeric column.",
+        "required": false
+      },
+      "statement": {
+        "type": "integer",
+        "description": "Which data query's rows to use — its statement number in this turn (1 = the first query). Omit for the latest.",
+        "required": false
+      },
+      "statement_b": {
+        "type": "integer",
+        "description": "The second statement for join / diff.",
+        "required": false
+      },
+      "by": {
+        "type": "string",
+        "description": "pivot: the column to group by.",
+        "required": false
+      },
+      "agg": {
+        "type": "string",
+        "description": "pivot: the aggregate per group — sum (default) | avg | min | max | count.",
+        "required": false
+      },
+      "n": {
+        "type": "integer",
+        "description": "rank: how many rows to keep (default 10).",
+        "required": false
+      },
+      "order": {
+        "type": "string",
+        "description": "rank: desc (default) | asc.",
+        "required": false
+      },
+      "where": {
+        "type": "string",
+        "description": "filter: ONE predicate as 'column op value', op in = != > < >= <= contains startswith (e.g. \"miles > 1000\").",
+        "required": false
+      },
+      "on": {
+        "type": "string",
+        "description": "join / diff: the shared key column.",
+        "required": false
+      },
+      "order_by": {
+        "type": "string",
+        "description": "pct_change: the column that orders the rows (e.g. the month) before measuring the change.",
+        "required": false
+      },
+      "sql": {
+        "type": "string",
+        "required": false,
+        "description": "[[gate:compute_sql]]op \"sql\": ONE SELECT in DuckDB SQL over the tables s1, s2, … (this turn's statement numbers; their columns are the result's columns). Read-only; no files, no network, no other tables. In a plan, name a phase's result p1, p2, … (its phase number).[[/gate]]"
+      }
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "ComputeHandler"
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed"
+  },
+  "profile_defaults": {
+    "enabled_for": [
+      "llm_only",
+      "tool_enabled",
+      "genie",
+      "rag_focused"
+    ]
+  }
+}

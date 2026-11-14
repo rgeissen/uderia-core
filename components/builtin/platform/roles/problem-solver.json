@@ -1,0 +1,68 @@
+{
+  "id": "problem-solver",
+  "title": "Problem Solver",
+  "status": "active",
+  "effects": [
+    "read"
+  ],
+  "asks": true,
+  "description": "Gets a question answered that none of the user's agents can answer alone: reads what each agent is for, how trusted it is and how well it does, asks the ones that fit, and puts their answers together — each part naming the agent that answered it, and any part no agent could answer named as a gap. Asks a second agent for a second opinion. When an agent is missing, says which one would close the gap and from what — and, held together with the Agent Builder, submits it for the user's approval. Changes nothing itself.",
+  "operations": [
+    "profiles.list",
+    "profiles.overview",
+    "profiles.active_for_consumption",
+    "profiles.skills",
+    "profiles.components",
+    "profiles.create",
+    "trust.agents",
+    "trust.agent",
+    "evals.kpi_dashboard",
+    "evals.trust_behavior",
+    "rag.collections",
+    "rag.collection",
+    "knowledge_graph.list",
+    "knowledge_graph.context",
+    "mcp.servers",
+    "data_products.catalog"
+  ],
+  "playbooks": [
+    "platform-playbooks:solving/*"
+  ],
+  "needs": [],
+  "rank": 9,
+  "examples": [
+    {
+      "ask": "What is the Trust Circle, and which of my agents are signed?",
+      "outcome": "It answers the second part from the platform itself, asks the documentation agent the first, and gives both — saying which agent answered which part."
+    },
+    {
+      "ask": "Check this answer about Q3 revenue with @FINANCE.",
+      "outcome": "It asks @FINANCE the same question in full and reports where the two answers agree and where they differ — never which one is right unless the data says so."
+    },
+    {
+      "ask": "Can any of my agents tell me which claims are overdue?",
+      "outcome": "It reads what each agent is for and its data sources. When none covers claims, it says so and names the agent that would: its class and the source or repository it would be built on — or that the data itself is missing."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Building the agent it finds missing",
+      "why": "Proposing an agent is the Agent Builder's. Give an agent both roles and it submits what it found for your approval; with this role alone it describes the agent and stops.",
+      "ops": [
+        "profiles.create"
+      ]
+    },
+    {
+      "what": "Asking an agent you have not listed, or one that is not activated",
+      "why": "You choose whom it may ask (Capabilities → Platform), and an agent answers other agents only once you have activated it — both are your decisions, not the asking agent's."
+    },
+    {
+      "what": "Asking when the deployment does not allow it",
+      "why": "Asking spends other agents' tokens; an administrator turns it on and sets its limits for everyone (Administration → Components → Platform → Agent asking)."
+    },
+    {
+      "what": "Changing anything",
+      "why": "It reads and asks. The agents it asks act under their own authority — whatever they may change, they change under their own rules, never this agent's."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "registry_version": "1.0",
+  "description": "Assurance-module packs shipped with the platform (PROP-003). Third-party packs live in ~/.tda/assurance_modules/ and are discovered without an entry here. Nothing in this file binds anything: installing a pack makes its modules available, and an operator assigns them in Config → Trust → Assessment modules.",
+  "modules": [
+    {
+      "pack_id": "sample_compliance",
+      "plugin_directory": "sample_compliance",
+      "status": "disabled",
+      "notes": "The reference implementation. Shipped DISABLED — it asserts a disclaimer rule no real deployment shares, and is here to be read and copied, not run."
+    }
+  ]
+}

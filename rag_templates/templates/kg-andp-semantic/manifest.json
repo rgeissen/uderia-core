@@ -1,0 +1,143 @@
+{
+  "name": "kg-andp-semantic",
+  "version": "1.0.0",
+  "template_id": "kg_andp_semantic_v1",
+  "display_name": "Knowledge Graph Constructor - AI-Native Data Product",
+  "description": "Build a Knowledge Graph deterministically from a DEPLOYED AI-Native Data Product. The product already publishes an agent-discoverable catalog of itself — modules, entities, columns with meanings and PII classifications, join paths, a business glossary, proven query recipes, design decisions, naming standards, lineage and data-quality readings. All of it is walked directly into the two-layer topology. No LLM, no MCP, zero tokens.",
+  "author": "TDA Core Team",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/rgeissen/uderia-core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rgeissen/uderia-core"
+  },
+  "keywords": [
+    "knowledge-graph",
+    "ai-native-data-product",
+    "andp",
+    "semantic-module",
+    "data-product",
+    "teradata",
+    "deterministic",
+    "ldm",
+    "pdm",
+    "no-llm",
+    "governance",
+    "pii"
+  ],
+  "compatibility": {
+    "min_app_version": "1.0.0",
+    "max_app_version": "2.x.x"
+  },
+  "dependencies": {
+    "templates": [],
+    "python_packages": ["teradatasql"]
+  },
+  "files": {
+    "template": "kg_andp_semantic_v1.json",
+    "readme": "README.md"
+  },
+  "permissions": [
+    "knowledge_graph"
+  ],
+  "ui_components": {
+    "config_panel": false,
+    "preview_renderer": false
+  },
+  "population_modes": {
+    "auto_generate": {
+      "supported": true,
+      "requires_llm": false,
+      "requires_mcp_context": false,
+      "input_method": "deployed_data_product",
+      "generation_endpoint": "/api/v1/knowledge-graph/generate",
+      "description": "Deterministic, zero-token construction: connect to a database connection, discover which AI-Native Data Products are deployed there, read the chosen product's own catalog, and walk it into entities and relationships. Reproducible, free, and re-syncable when the product's catalog changes.",
+      "input_variables": {
+        "connection_id": {
+          "required": true,
+          "type": "select",
+          "options_source": "database-connections",
+          "description": "Database connection holding the deployed product. Credentials are resolved through the platform's encrypted connection store."
+        },
+        "product": {
+          "required": true,
+          "type": "select",
+          "options_source": "andp-products",
+          "description": "The AI-Native Data Product to read, discovered from the selected connection.",
+          "example": "NIBRS_Source, CASE_Source"
+        },
+        "semantic_database": {
+          "required": false,
+          "type": "string",
+          "description": "Override discovery and read this semantic database directly. Empty = the standard's own discovery order (registry → {Product}_Semantic convention → dictionary scan)."
+        },
+        "discovery_mode": {
+          "required": false,
+          "type": "hidden",
+          "description": "Strategy selector — fixed for this template.",
+          "default": "andp_semantic",
+          "options": ["andp_semantic"]
+        },
+        "include_columns": {
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "description": "Include attribute and column nodes carrying each column's meaning, PII/sensitivity classification and decoded value codes. Off = a compact entity-level graph."
+        },
+        "include_physical": {
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "description": "Include the physical layer (schema/table/column) with real queryable identifiers and types read from the data dictionary. Required for the grounding gate's trusted scope."
+        },
+        "include_product_knowledge": {
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "description": "Include the product's own description of itself: business glossary, proven query recipes, design decisions, naming standards, lineage and data-quality readings — each linked to the entity or table it concerns."
+        },
+        "include_non_business_modules": {
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "description": "Include the product's self-describing modules (Semantic, Memory, Observability) as structure. Off = business Domain module only."
+        },
+        "max_value_codes": {
+          "required": false,
+          "type": "number",
+          "default": 60,
+          "description": "Cap on decoded values kept per attribute, bounding node payloads on columns with very large code lists."
+        }
+      }
+    },
+    "manual": {
+      "supported": false,
+      "description": "Knowledge graphs are populated via the constructor."
+    },
+    "document_upload": {
+      "supported": false,
+      "description": "Knowledge graphs are populated from the deployed product, not documents."
+    }
+  },
+  "output_schema": {
+    "logical_entities": {
+      "description": "Logical layer — the product's meaning, plus what it publishes about itself",
+      "entity_types": ["database", "domain", "entity", "attribute", "business_concept", "query_recipe", "design_decision", "quality_metric", "naming_standard"],
+      "relationship_types": ["contains", "has_property", "foreign_key", "relates_to", "depends_on", "measures"],
+      "source_tag": "andp_semantic_constructor"
+    },
+    "physical_entities": {
+      "description": "Physical layer — the deployed, queryable realization",
+      "entity_types": ["schema", "table", "column"],
+      "relationship_types": ["contains", "implements", "foreign_key", "derives_from"]
+    }
+  },
+  "metadata": {
+    "category": "Knowledge Graph",
+    "difficulty": "beginner",
+    "estimated_tokens": {
+      "construction": 0
+    },
+    "tags": ["built-in", "knowledge-graph", "ai-native-data-product", "deterministic", "declarative", "resyncable"]
+  }
+}

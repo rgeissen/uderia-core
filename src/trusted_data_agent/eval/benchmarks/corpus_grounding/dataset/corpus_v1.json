@@ -1,0 +1,137 @@
+{
+  "dataset": "corpus_v1",
+  "description": "Curated corpus-grounding cases for the Wave 1 corpus-support trigger. Each case is a self-contained (answer, chunks, question) triple with a ground-truth class. Supported answers must NOT trigger; unsupported must; second_chance are unsupported on first retrieval but cleared by a targeted re-search. Covers T1 numbers, T2 verbatim quotes, T3 identifiers, and benign near-misses.",
+  "cases": [
+    {
+      "case_id": "sup-num-01",
+      "class": "supported",
+      "question": "How many chart types does Uderia support?",
+      "answer": "Uderia supports 16 chart types.",
+      "chunks": ["The Uderia platform supports 16 chart types across bar, line, pie and more."]
+    },
+    {
+      "case_id": "sup-num-02",
+      "class": "supported",
+      "question": "What is the revenue and margin?",
+      "answer": "Revenue was 1,234,567 with a 42% margin.",
+      "chunks": ["Q3 results: revenue reached 1234567 dollars at a 42 percent margin."]
+    },
+    {
+      "case_id": "sup-quote-01",
+      "class": "supported",
+      "question": "What does the doc say about the planner repository?",
+      "answer": "The doc states: \"The planner repository stores successful execution strategies.\"",
+      "chunks": ["Overview. The planner repository stores successful execution strategies for reuse."]
+    },
+    {
+      "case_id": "sup-id-01",
+      "class": "supported",
+      "question": "Which module adds server-side embedding?",
+      "answer": "The teradata_backend module adds server-side embedding via Bedrock.",
+      "chunks": ["Knowledge repositories: the teradata_backend module adds server-side embedding through Amazon Bedrock."]
+    },
+    {
+      "case_id": "sup-question-01",
+      "class": "supported",
+      "question": "Confirm the SLA is 99.9 percent.",
+      "answer": "Yes, the SLA is 99.9 percent as you noted.",
+      "chunks": ["Service overview: uptime commitments vary by tier."]
+    },
+    {
+      "case_id": "sup-smalltalk-01",
+      "class": "supported",
+      "question": "Thanks!",
+      "answer": "You're welcome — happy to help with anything else.",
+      "chunks": ["The knowledge base covers onboarding, billing, and support policies."]
+    },
+    {
+      "case_id": "sup-nearmiss-01",
+      "class": "supported",
+      "question": "Summarize the caching guidance.",
+      "answer": "Results are garbage-collected hourly and the dashboard refreshes on demand.",
+      "chunks": ["Caching: query results are garbage-collected hourly. The dashboard refreshes on demand when a tile is opened."]
+    },
+    {
+      "case_id": "sup-multi-01",
+      "class": "supported",
+      "question": "Give me the key numbers and the module.",
+      "answer": "There are 16 chart types and 12 rewrite passes, handled by the fusion_optimizer module.",
+      "chunks": ["The platform supports 16 chart types.", "The fusion_optimizer module runs 12 rewrite passes during strategic planning."]
+    },
+
+    {
+      "case_id": "uns-num-01",
+      "class": "unsupported",
+      "question": "How many chart types does Uderia support?",
+      "answer": "Uderia supports 42 chart types.",
+      "chunks": ["The Uderia platform supports 16 chart types."]
+    },
+    {
+      "case_id": "uns-num-02",
+      "class": "unsupported",
+      "question": "What was the revenue?",
+      "answer": "Revenue was 9,876,543 dollars last quarter.",
+      "chunks": ["Q3 revenue reached 1,234,567 dollars."]
+    },
+    {
+      "case_id": "uns-quote-01",
+      "class": "unsupported",
+      "question": "What is the platform's stated guarantee?",
+      "answer": "The documentation says \"governance is fully automated everywhere with zero configuration.\"",
+      "chunks": ["Governance is configurable per profile and defaults to observe mode."]
+    },
+    {
+      "case_id": "uns-id-01",
+      "class": "unsupported",
+      "question": "Where is the data stored?",
+      "answer": "The data lives in the phantom_ledger.secret_table and the shadow_cache module.",
+      "chunks": ["The platform uses ChromaDB by default for vector storage."]
+    },
+    {
+      "case_id": "uns-capseq-01",
+      "class": "unsupported",
+      "question": "What delivery service is used?",
+      "answer": "Deliveries are handled by the Interstellar Freight Consortium via the Maintenance Work Order and the Galactic Routing Table.",
+      "chunks": ["Standard delivery takes three to five business days."]
+    },
+    {
+      "case_id": "uns-fabricated-num-01",
+      "class": "unsupported",
+      "question": "What is the average delivery time?",
+      "answer": "The average delivery time is 230 days.",
+      "chunks": ["Shipping policy: standard delivery is 3-5 business days; express is next-day."]
+    },
+    {
+      "case_id": "uns-mixed-01",
+      "class": "unsupported",
+      "question": "Summarize the retention policy.",
+      "answer": "Records are kept for 3650 days in the compliance_vault.archive per the SOX_2019_amendment.",
+      "chunks": ["Retention: records are kept for the period required by the applicable regulation."]
+    },
+
+    {
+      "case_id": "sc-num-01",
+      "class": "second_chance",
+      "question": "How many rewrite passes does the planner run?",
+      "answer": "The planner runs 12 rewrite passes.",
+      "chunks": ["The Fusion Optimizer performs strategic and tactical planning."],
+      "second_chance": ["The planner applies 12 rewrite passes before execution."]
+    },
+    {
+      "case_id": "sc-id-01",
+      "class": "second_chance",
+      "question": "Which backend handles graph storage?",
+      "answer": "Graph storage is handled by the neo4j_backend module.",
+      "chunks": ["The KG store abstraction supports multiple backends."],
+      "second_chance": ["The neo4j_backend module provides Bolt-driver graph storage for enterprise deployments."]
+    },
+    {
+      "case_id": "sc-quote-01",
+      "class": "second_chance",
+      "question": "What is the documented default mode?",
+      "answer": "The docs say \"grounding defaults to observe mode to preserve today's behaviour.\"",
+      "chunks": ["Grounding is a per-profile capability."],
+      "second_chance": ["Grounding defaults to observe mode to preserve today's behaviour; enforce is opt-in."]
+    }
+  ]
+}

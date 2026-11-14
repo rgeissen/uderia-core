@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Uderia Agent — An Anatomy of Trust</title>
+<style>
+  :root {
+    --ground: #0e1621;
+    --panel: #172230;
+    --panel-2: #1e2c3b;
+    --hair: #2c3c4e;
+    --text: #e9eff5;
+    --muted: #93a4b6;
+    --dim: #6b7d90;
+    --sage: #6cbf92;
+    --steel-1: #9db8cf;
+    --steel-2: #43597a;
+    --accent: #F15F22;
+    --accent-soft: rgba(241,95,34,0.12);
+    --accent-line: rgba(241,95,34,0.45);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #14212f 0%, var(--ground) 55%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    font-size: 17px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- Masthead ---- */
+  header { padding: 72px 0 20px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: clamp(34px, 6vw, 60px);
+    line-height: 1.02;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h1 .thin { font-weight: 300; color: var(--muted); }
+  .epigraph {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(18px, 2.4vw, 23px);
+    line-height: 1.5;
+    color: #c6d3df;
+    max-width: 60ch;
+    margin: 28px 0 0;
+    padding-left: 20px;
+    border-left: 2px solid var(--accent-line);
+    text-wrap: pretty;
+  }
+
+  /* ---- Diagram ---- */
+  .stage {
+    margin: 44px 0 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.12));
+    border: 1px solid var(--hair);
+    border-radius: 16px;
+    padding: 8px;
+  }
+  .stage svg { display: block; width: 100%; height: auto; }
+
+  .key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    justify-content: center;
+    margin: 14px 0 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .key b { font-weight: 600; }
+  .key .swatch {
+    display: inline-block; width: 11px; height: 11px; border-radius: 3px;
+    margin-right: 7px; vertical-align: baseline; transform: translateY(1px);
+  }
+  .key code { font-family: var(--mono); font-size: 12.5px; color: var(--text); }
+
+  /* SVG text classes */
+  .t-metaphor { font-family: var(--sans); font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; fill: var(--sage); }
+  .t-platform { font-family: var(--mono); font-size: 16px; fill: var(--text); }
+  .t-why      { font-family: var(--sans); font-size: 12.5px; fill: var(--dim); }
+  .t-kind     { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; fill: var(--muted); text-transform: uppercase; }
+  .t-core     { font-family: var(--sans); font-weight: 800; letter-spacing: 0.04em; fill: #eaf1f8; }
+  .t-core-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; fill: rgba(234,241,248,0.7); }
+  .t-found    { font-family: var(--sans); font-weight: 700; letter-spacing: 0.16em; fill: #eaf1f8; text-transform: uppercase; }
+  .t-found-sub{ font-family: var(--sans); font-style: italic; font-size: 13px; fill: var(--sage); }
+  .t-membrane { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; fill: var(--muted); text-transform: uppercase; }
+  .t-accent   { fill: var(--accent) !important; }
+
+  /* ---- Sections ---- */
+  section { padding: 46px 0; border-top: 1px solid var(--hair); }
+  section:first-of-type { border-top: none; }
+  .sec-label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--dim); margin: 0 0 14px;
+  }
+  h2 {
+    font-size: clamp(23px, 3.4vw, 31px); font-weight: 800; letter-spacing: -0.015em;
+    margin: 0 0 16px; line-height: 1.15; text-wrap: balance;
+  }
+  p { max-width: 68ch; margin: 0 0 16px; color: #cdd8e2; }
+  p.lead { color: var(--text); font-size: 19px; }
+  strong { color: var(--text); font-weight: 650; }
+  em.term { font-style: normal; font-family: var(--mono); font-size: 0.92em; color: var(--sage); }
+
+  /* Differentiator callout */
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    border-radius: 14px;
+    padding: 26px 28px;
+    margin: 8px 0 0;
+  }
+  .callout .tag {
+    display: inline-block; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+    border: 1px solid var(--accent-line); border-radius: 999px;
+    padding: 3px 11px; margin-bottom: 14px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .vs {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch;
+    margin: 22px 0 4px;
+  }
+  .vs .card {
+    background: rgba(0,0,0,0.22); border: 1px solid var(--hair);
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .vs .card h4 { margin: 0 0 6px; font-size: 15px; letter-spacing: 0.02em; }
+  .vs .card.sense h4 { color: var(--sage); }
+  .vs .card.tool h4 { color: var(--steel-1); }
+  .vs .card p { font-size: 14.5px; margin: 0; color: var(--muted); max-width: none; }
+  .vs .card .home { font-family: var(--mono); font-size: 12px; color: var(--dim); display: block; margin-top: 10px; }
+  .vs .div { align-self: center; font-family: var(--serif); font-style: italic; color: var(--dim); font-size: 15px; }
+  @media (max-width: 620px) {
+    .vs { grid-template-columns: 1fr; }
+    .vs .div { padding: 4px 0; }
+  }
+
+  /* Faculties grid */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 8px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  .fac {
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 20px 22px; position: relative;
+  }
+  .fac.dna { border-color: var(--accent-line); background: linear-gradient(180deg, var(--accent-soft), var(--panel)); }
+  .fac .kind {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  .fac.dna .kind { color: var(--accent); }
+  .fac .meta { font-family: var(--sans); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; color: var(--sage); margin: 0 0 2px; }
+  .fac .plat { font-family: var(--mono); font-size: 20px; color: var(--text); margin: 0 0 10px; }
+  .fac .desc { font-size: 14.5px; color: var(--muted); margin: 0; max-width: none; }
+
+  /* Foundations + membrane */
+  .found { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  @media (max-width: 620px) { .found { grid-template-columns: 1fr; } }
+  .found .col {
+    background: var(--panel-2); border: 1px solid var(--hair); border-radius: 14px; padding: 22px 24px;
+  }
+  .found .col h3 { margin: 0 0 2px; font-size: 20px; letter-spacing: 0.02em; }
+  .found .col .role { font-family: var(--serif); font-style: italic; color: var(--sage); font-size: 15px; margin: 0 0 12px; }
+  .found .col p { font-size: 14.5px; color: var(--muted); margin: 0; max-width: none; }
+  .found .col .impl { font-family: var(--mono); font-size: 12px; color: var(--dim); display: block; margin-top: 12px; }
+
+  /* Revisions ledger */
+  .ledger { border-collapse: collapse; width: 100%; font-size: 14.5px; margin-top: 4px; }
+  .ledger th, .ledger td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  .ledger th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+  .ledger td:first-child { font-family: var(--mono); color: var(--sage); white-space: nowrap; }
+  .ledger td em { font-style: normal; color: var(--dim); }
+  .ledger-scroll { overflow-x: auto; }
+
+  footer { padding: 40px 0 72px; color: var(--dim); font-size: 13px; font-family: var(--mono); border-top: 1px solid var(--hair); }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Platform Ontology · Revision</p>
+    <h1>The Uderia Agent<br><span class="thin">an anatomy of trust</span></h1>
+    <p class="epigraph">An agent is not a program you configure. It is an entity with a constitution, senses, memory, and a brain to reason with — everything it is, bounded by a single membrane of trust.</p>
+  </header>
+</div>
+
+<div class="wrap">
+  <div class="stage">
+    <svg viewBox="0 0 1000 700" role="img" aria-label="A five-pointed star labelled Agent Identity, with five faculties — Memory, Configuration (DNA, brain and basic senses), Session, Components, and Intelligence — each tied by a leader line to a point of the star, all enclosed by a dashed Trust Membrane whose bottom line seats two foundations side by side — Grounding and Guardrails — and framed by a faint constellation representing Coordination, the Genie mode.">
+      <defs>
+        <linearGradient id="starFill" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0" stop-color="#a6c0d6"/>
+          <stop offset="1" stop-color="#3c5273"/>
+        </linearGradient>
+        <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.45"/>
+        </filter>
+        <g id="mstar"><path d="M0,-11 L2.7,-3.72 L10.46,-3.4 L4.37,1.42 L6.47,8.9 L0,4.6 L-6.47,8.9 L-4.37,1.42 L-10.46,-3.4 L-2.7,-3.72 Z"/></g>
+      </defs>
+
+      <!-- Trust membrane -->
+      <rect x="16" y="16" width="968" height="644" rx="14"
+            fill="none" stroke="#3a4c60" stroke-width="1.5" stroke-dasharray="9 7"/>
+      <text class="t-membrane" x="966" y="44" text-anchor="end">Trust Membrane</text>
+
+      <!-- Coordination · Genie — the outer constellation: one agent can compose many -->
+      <g class="genie-ring">
+        <g stroke="#4a5c72" stroke-width="1" opacity="0.16" fill="none">
+          <polyline points="86,120 150,210 60,330 110,470"/>
+          <polyline points="900,150 940,300 890,470"/>
+          <polyline points="60,330 120,650"/>
+        </g>
+        <g fill="#7f9bb5" opacity="0.5">
+          <use href="#mstar" transform="translate(86,120) scale(1.0)"/>
+          <use href="#mstar" transform="translate(150,210) scale(0.68)"/>
+          <use href="#mstar" transform="translate(60,330) scale(0.85)"/>
+          <use href="#mstar" transform="translate(110,470) scale(0.6)"/>
+          <use href="#mstar" transform="translate(900,150) scale(0.9)"/>
+          <use href="#mstar" transform="translate(940,300) scale(0.62)"/>
+          <use href="#mstar" transform="translate(890,470) scale(0.8)"/>
+          <use href="#mstar" transform="translate(120,650) scale(0.7)"/>
+          <use href="#mstar" transform="translate(900,640) scale(0.75)"/>
+        </g>
+        <text class="t-membrane" x="34" y="44" text-anchor="start" style="fill:#8aa0b6">Coordination · Genie</text>
+        <text x="34" y="62" style="font-family:var(--serif);font-style:italic;font-size:12px;fill:var(--dim)">a star made of stars</text>
+      </g>
+
+      <!-- Foundations — side by side, seated on the bottom line of the trust membrane -->
+      <text class="t-found-sub" x="360" y="622" text-anchor="middle">truth · faithfulness</text>
+      <text class="t-found-sub" x="640" y="622" text-anchor="middle">rules · safety</text>
+      <rect x="250" y="634" width="220" height="52" rx="8" fill="#294056" stroke="#3d5570" stroke-width="1"/>
+      <rect x="530" y="634" width="220" height="52" rx="8" fill="#294056" stroke="#3d5570" stroke-width="1"/>
+      <text class="t-found" x="360" y="666" text-anchor="middle">Grounding</text>
+      <text class="t-found" x="640" y="666" text-anchor="middle">Guardrails</text>
+
+      <!-- Star -->
+      <path filter="url(#soft)"
+            d="M500,130 L549.4,272.1 L699.7,275.1 L579.9,366 L623.5,509.9 L500,434 L376.5,509.9 L420.1,366 L300.3,275.1 L450.6,272.1 Z"
+            fill="url(#starFill)" stroke="#12314f" stroke-width="2" stroke-linejoin="round"/>
+      <text class="t-core" x="500" y="334" text-anchor="middle" font-size="27">AGENT</text>
+      <text class="t-core" x="500" y="366" text-anchor="middle" font-size="27">IDENTITY</text>
+
+      <!-- Leader lines: each tip → its label -->
+      <g stroke="#4a5c72" stroke-width="1.2" opacity="0.9">
+        <line x1="500" y1="126" x2="500" y2="100"/>
+        <line x1="295" y1="273" x2="258" y2="261"/>
+        <line x1="705" y1="273" x2="742" y2="261"/>
+        <line x1="372" y1="514" x2="349" y2="546"/>
+        <line x1="628" y1="514" x2="651" y2="546"/>
+      </g>
+      <!-- Tip dots (orange = the differentiator, green = the metaphor) -->
+      <circle cx="500" cy="130" r="3.5" fill="#6cbf92"/>
+      <circle cx="300" cy="275" r="3.5" fill="#F15F22"/>
+      <circle cx="700" cy="275" r="3.5" fill="#6cbf92"/>
+      <circle cx="376" cy="510" r="3.5" fill="#6cbf92"/>
+      <circle cx="624" cy="510" r="3.5" fill="#6cbf92"/>
+
+      <!-- Memory (top) -->
+      <text class="t-metaphor" x="500" y="70" text-anchor="middle">Local / Global Remembrance</text>
+      <text class="t-platform" x="500" y="92" text-anchor="middle">Memory</text>
+
+      <!-- Configuration / DNA (upper left) — the differentiator -->
+      <text class="t-metaphor t-accent" x="248" y="257" text-anchor="end" font-size="12.5">DNA · Brain · Senses</text>
+      <text class="t-platform" x="248" y="281" text-anchor="end">Configuration</text>
+
+      <!-- Session (upper right) -->
+      <text class="t-metaphor" x="752" y="257" text-anchor="start">Situational Awareness</text>
+      <text class="t-platform" x="752" y="281" text-anchor="start">Session</text>
+
+      <!-- Components (lower left) -->
+      <text class="t-metaphor" x="340" y="548" text-anchor="end">Acquired Instruments</text>
+      <text class="t-platform" x="340" y="572" text-anchor="end">Components</text>
+
+      <!-- Intelligence (lower right) -->
+      <text class="t-metaphor" x="660" y="548" text-anchor="start">Knowledge &amp; Expertise</text>
+      <text class="t-platform" x="660" y="572" text-anchor="start">Intelligence</text>
+    </svg>
+  </div>
+
+  <div class="key">
+    <span><span class="swatch" style="background:var(--sage)"></span><b>green</b> — the metaphor <em class="term" style="color:var(--dim)">(how to think)</em></span>
+    <span><span class="swatch" style="background:var(--text)"></span><b>mono</b> — the framework concept <em class="term" style="color:var(--dim)">(what it is)</em></span>
+    <span><span class="swatch" style="background:var(--accent)"></span><b>orange</b> — the anchor idea</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <p class="sec-label">The one idea to keep</p>
+    <h2>Brain and senses are constitutional. Instruments are acquired.</h2>
+    <p class="lead">The revision turns on a single distinction that your original sketch already had right: the MCP data source is not a tool the agent picks up — it is a sense the agent is born with.</p>
+    <div class="callout">
+      <span class="tag">Anchor idea</span>
+      <p>In Uderia the user's MCP server is configured in <em class="term">Configuration → MCP Servers</em>, a permanently separate namespace from Platform Connectors. So it already belongs to the <strong>DNA</strong>, not to <strong>Components</strong>. That placement isn't an accident of the UI — it's the truth of the architecture.</p>
+      <p>And it's the truth of the <em>capability</em>. Because the <strong>OPTIM / <em class="term">tool_enabled</em></strong> class runs the entire Fusion Optimizer over MCP tools — strategic and tactical planning, twelve rewrite passes, orchestrators, plan hydration, RAG champion cases, self-correction — the MCP server is not a generic, swappable connector. The agent's reasoning apparatus is <strong>co-designed with it</strong>. A generic tool you bolt on. A sense, you're born with. That is exactly the line between DNA and Components — and the anatomy draws it on purpose.</p>
+    </div>
+    <div class="vs">
+      <div class="card sense">
+        <h4>Brain &amp; Senses &mdash; in the DNA</h4>
+        <p>What the agent is born with: the brain that reasons and the senses it natively perceives its data world through. Constitutional; the reasoning engine is built around them.</p>
+        <span class="home">→ MCP data source · LLM (the brain) · IFOC class</span>
+      </div>
+      <div class="div">vs.</div>
+      <div class="card tool">
+        <h4>Instruments &mdash; in Components</h4>
+        <p>Capabilities layered on top and shared across agents. Chart, canvas, dashboard, flow — and the Platform Connectors (browser, files, web, Google/M365).</p>
+        <span class="home">→ Components · Platform Connectors</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">The five faculties</p>
+    <h2>Five points, one identity</h2>
+    <p>The star stays — it's the right hero for an agent-centric framework. Each point is a distinct faculty: what the agent <em>is</em>, what it <em>perceives</em>, what it <em>remembers</em>, what it <em>knows</em>, and what it can <em>do</em>. Together they make one identity — and the brain that reasons over them is born into the DNA, not bolted on. And no agent is truly alone: the faint constellation around the membrane is <strong>Coordination</strong>, one agent composing many.</p>
+    <div class="grid">
+      <div class="fac dna">
+        <p class="meta">DNA · Brain · Basic Senses</p>
+        <p class="plat">Configuration</p>
+        <p class="desc">What the agent is <em>born with</em>: its <strong>brain</strong> (the LLM &amp; provider), its profile class, and — critically — the MCP data source, its primary sense. Inherited, defining, differentiating.</p>
+      </div>
+      <div class="fac">
+        <p class="meta">Situational Awareness</p>
+        <p class="plat">Session</p>
+        <p class="desc">What the agent perceives right now. The current context, isolated per session — the percept, distinct from the sensory organ that produces it.</p>
+      </div>
+      <div class="fac">
+        <p class="meta">Local / Global Remembrance</p>
+        <p class="plat">Memory</p>
+        <p class="desc">What the agent remembers across sessions. Per-agent (local) facts and shared (global) facts about the user — recalled, governed, inspectable.</p>
+      </div>
+      <div class="fac">
+        <p class="meta">Knowledge &amp; Expertise</p>
+        <p class="plat">Intelligence</p>
+        <p class="desc">What the agent knows — its semantic layer, split by origin: <strong>acquired</strong> knowledge (Knowledge repositories, the ontology/KGs, domains) and <strong>learned</strong> expertise (Planner repositories — proven strategies from successful runs).</p>
+      </div>
+      <div class="fac">
+        <p class="meta">Acquired Instruments</p>
+        <p class="plat">Components</p>
+        <p class="desc">What the agent can do. Chart, canvas, dashboard, flow, scheduler — plus Platform Connectors. Shared, pluggable instruments, not part of the body.</p>
+      </div>
+      <div class="fac">
+        <p class="meta">The Constellation</p>
+        <p class="plat">Genie · Coordination</p>
+        <p class="desc">An agent can compose other agents. The star draws one identity; a coordinator is a <strong>star made of stars</strong> — now the faint constellation framing the membrane. Genie mode, made visible.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">The two foundations</p>
+    <h2>What the star stands on</h2>
+    <p>Grounding and Guardrails are the load-bearing floor — the agent's principles, not its parts. One keeps it honest about what it <em>knows</em>; the other keeps it safe in what it <em>does</em>.</p>
+    <div class="found">
+      <div class="col">
+        <h3>Grounding</h3>
+        <p class="role">truth &middot; faithfulness</p>
+        <p>The agent may only claim what its trusted scope supports. Answers stay faithful to the KG-declared, deployed knowledge — no confident drift into databases it was never grounded in.</p>
+        <span class="impl">Tier 1.1 · grounding gate · pass / annotate / block</span>
+      </div>
+      <div class="col">
+        <h3>Guardrails</h3>
+        <p class="role">rules &middot; safety</p>
+        <p>The rules the agent must never break: no PII leaking outbound, no toxic output, no prompt-injection reaching the model. Policy, enforced at the request path.</p>
+        <span class="impl">Tier 1.3 · outbound redaction · inbound block</span>
+      </div>
+    </div>
+    <p style="margin-top:22px">Grounding's role is <strong>Truth / Faithfulness</strong>, not <em>Values</em> — "values" reads as ethics, which is what Guardrails carry. Grounding is about factual fidelity: the sharpest, most defensible claim Uderia makes. And both foundations are <strong>graduated</strong>, not binary — each runs on the same ladder: <em class="term">off</em> → <em class="term">observe</em> (measure, never alter — the default) → <em class="term">annotate</em> → <em class="term">review</em> (withhold, but keep the original for a human) → <em class="term">enforce</em>. You climb it deliberately, per agent.</p>
+  </section>
+
+  <section>
+    <p class="sec-label">The boundary</p>
+    <h2>Trust is compositional, not just a container</h2>
+    <p>Your dashed membrane is the right perimeter — but its most novel property isn't that it <em>encloses</em> the agent. It's that a trusted agent is <strong>made of trusted ingredients</strong>: the identity is 🟢 only when its ontology, its skills, its configuration each verify. A consumer reads one badge; the composition is what earns it.</p>
+    <p>So the membrane isn't just a box drawn around the star. Each point carries its own trust state, and the agent's trust is their sum — signable, cryptographically verifiable, and portable across instances. That is the claim the diagram should make out loud, because it is the one a reader can check.</p>
+  </section>
+
+  <section>
+    <p class="sec-label">The membrane breathes</p>
+    <h2>Trust is a closed loop, not a stamp</h2>
+    <p class="lead">A signature proves an agent is <em>unchanged</em>. It cannot prove it is <em>behaving</em>. The end-to-end approach closes that gap: measured conduct changes trust, trust can change enforcement, and every step is visible and verifiable. The membrane is not stamped once — it breathes.</p>
+    <p>Trust in Uderia is a composite of four axes. The star is the first; the membrane, the second; and two more make the picture end-to-end:</p>
+    <div class="found">
+      <div class="col">
+        <h3>Identity</h3>
+        <p class="role">who the agent is</p>
+        <p>The Profile itself — the star. Its IFOC class, its brain, its senses, memory, and components. The <em class="term">@TAG</em> profile <strong>is</strong> the agent.</p>
+        <span class="impl">the five faculties</span>
+      </div>
+      <div class="col">
+        <h3>Assurance</h3>
+        <p class="role">is it what was signed?</p>
+        <p>The Trust Membrane — compositional, tamper-evident, offline-verifiable. Static integrity: 🟢 only when every ingredient is. And <strong>dynamic</strong>: a Behavioral Trust Score fuses that signature with measured conduct, so the badge <em>earns</em> trust and honestly <em>withdraws</em> it as behaviour declines.</p>
+        <span class="impl">Trust Membrane · Behavioral Trust Score · circuit breaker</span>
+      </div>
+      <div class="col">
+        <h3>Access</h3>
+        <p class="role">what may it do, on whose behalf</p>
+        <p>Agent Authority. When an agent acts on its own — a scheduled task, a coordinator's expert, a flow step — it runs as a <strong>strict subset of its owner</strong>, checked fail-closed at every tool, every action attributed to the agent. Trust ≠ access: a checked thing is not an authorised one.</p>
+        <span class="impl">Agent Authority · autonomous principal</span>
+      </div>
+      <div class="col">
+        <h3>Audit</h3>
+        <p class="role">can it be proven, later</p>
+        <p>The provenance chain. Every turn is sealed into an Ed25519-signed, tamper-evident record — and every answer carries a verifiable <strong>receipt</strong> the consumer can export and check offline. Even the quality verdicts are signed and bound to the trajectory they grade.</p>
+        <span class="impl">Execution Provenance Chain · answer receipts</span>
+      </div>
+    </div>
+    <p style="margin-top:22px">These four turn on one turn of the loop. A user request is screened (<strong>inbound guardrail</strong>), the acting principal is set (<strong>authority</strong>), the trusted scope is stamped (<strong>grounding</strong>), every tool call is enforced, the answer is guarded and grounded on the way out, the turn is scored, and the whole thing is sealed. What that loop measures then feeds back: an agent that drifts is caught by <strong>evaluation</strong>; sustained bad conduct trips a <strong>circuit breaker</strong> that can freeze its unattended use; a risky answer can be <strong>held for a human</strong> instead of discarded; and no path is silent — a poisoned memory, document, or tool result is defused at the door, and every incident becomes a worked item in an <strong>Assurance Inbox</strong>. Before you tighten any of it, you can <strong>backtest</strong> the policy over real history or <strong>red-team</strong> the agent — deciding on evidence, not faith.</p>
+    <div class="callout">
+      <span class="tag">The idea</span>
+      <p>Trust is neither only <em>filtering</em> (guardrails that block) nor only <em>reporting</em> (dashboards that observe). Uderia builds it as <strong>closed-loop, verifiable trust</strong>: measured behaviour changes the trust state, the trust state can change enforcement, and every step of that loop — down to the individual answer — is cryptographically provable. That is the whole membrane, breathing.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">Changelog</p>
+    <h2>What changed from the first sketch</h2>
+    <div class="ledger-scroll">
+      <table class="ledger">
+        <thead><tr><th>Point</th><th>Before</th><th>After &amp; why</th></tr></thead>
+        <tbody>
+          <tr><td>DNA</td><td>DNA (Basic Senses)</td><td>Kept &amp; promoted — now the anchor idea. <em>MCP-as-sense is stated on the diagram, in orange.</em></td></tr>
+          <tr><td>Brain</td><td>unnamed</td><td>named inside the DNA. <em>You're born with a unique DNA, brain and basic senses — the LLM is the brain, part of Configuration, not a separate center.</em></td></tr>
+          <tr><td>Intelligence</td><td>Intelligence = Intelligence</td><td>Knowledge &amp; Expertise → Intelligence. <em>Covers the whole semantic layer — acquired knowledge (repos/KGs) + learned expertise (planner repos), not just the learned half.</em></td></tr>
+          <tr><td>Memory</td><td>Lcoal / Globa</td><td>Local / Global Remembrance. <em>Typo fix; reworded — memory named as remembrance.</em></td></tr>
+          <tr><td>Grounding</td><td>Values</td><td>Truth · Faithfulness. <em>Values reads as ethics — that's Guardrails' job.</em></td></tr>
+          <tr><td>Kinds</td><td>five equal spokes</td><td>each point tagged constitution / state / knowledge / capability. <em>They aren't the same kind of thing.</em></td></tr>
+          <tr><td>Membrane</td><td>a container</td><td>compositional trust. <em>Trusted agent = trusted ingredients.</em></td></tr>
+          <tr><td>Coordination</td><td>absent</td><td>drawn as the outer constellation. <em>Genie mode — a star made of stars framing the membrane.</em></td></tr>
+          <tr><td>Foundations</td><td>binary floor</td><td>graduated ladder. <em>off → observe → annotate → review → enforce, per agent — including the new HITL "review" that withholds but keeps the original for a human.</em></td></tr>
+          <tr><td>Membrane</td><td>a signed stamp</td><td>a breathing loop. <em>Static integrity + dynamic Behavioral Trust Score: the badge earns and withdraws trust as conduct is measured; a circuit breaker responds.</em></td></tr>
+          <tr><td>Axes</td><td>identity + assurance</td><td>four axes. <em>Identity · Assurance · Access (Agent Authority) · Audit (provenance + verifiable answer receipts) — the end-to-end picture.</em></td></tr>
+          <tr><td>Grounding</td><td>SQL scope only</td><td>two lanes, one gate. <em>The same gate now grounds answers built from <strong>retrieved knowledge</strong> — a corpus-support trigger with second-chance retrieval, escalating to the groundedness judge, with unsupported claims marked in the answer itself; plus a sufficiency-honesty check so weak retrieval never becomes a confident specific answer.</em></td></tr>
+          <tr><td>Intelligence</td><td>trusted ingredient, unscreened</td><td>the knowledge lane made trustworthy. <em>An ingest firewall screens documents at the source; a corpus's signature is now <strong>earned</strong> (fully screened, critical findings resolved); every answer shows its source's integrity, staleness and sensitivity; a poisoned document is one click from reversible quarantine — plus retrieval-anomaly monitoring, sensitivity ceilings, and a source-consistency judge.</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Uderia · a framework for trusted data agents · companion to <a href="the-life-of-a-uderia-agent.html" style="color:var(--muted)">The Life of a Uderia Agent</a> · <a href="benchmarks.html" style="color:var(--muted)">The Numbers</a> · <a href="AGENT_AUTHORITY_ARCHITECTURE.html" style="color:var(--muted)">Agent Authority</a> · <a href="TRUST_MEMBRANE_ARCHITECTURE.html" style="color:var(--muted)">Trust Membrane</a> · <a href="AGENT_OPS_EVAL_ARCHITECTURE.html" style="color:var(--muted)">Agent Ops &amp; Evaluation</a> · <a href="AGENT_TRUST_AND_ASSURANCE.html" style="color:var(--muted)">Operations Guide</a></footer>
+</div>
+</html>

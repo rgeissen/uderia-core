@@ -1,0 +1,263 @@
+{
+  "name": "platform-playbooks",
+  "version": "1.0.0",
+  "description": "Playbooks for answering questions about Uderia itself with TDA_Platform — inspecting an agent, explaining its trust state, a trust overview of all agents, and the user's usage this period — read one at a time.",
+  "author": "Uderia",
+  "tags": [
+    "platform",
+    "agents",
+    "trust",
+    "usage",
+    "playbooks"
+  ],
+  "keywords": [
+    "platform",
+    "agents",
+    "trust",
+    "signed",
+    "usage",
+    "cost",
+    "TDA_Platform"
+  ],
+  "use_cases": [
+    "Explaining what an agent is and what it uses",
+    "Explaining why an agent reads trusted, changed or unsigned",
+    "Summarising the trust state of all the user's agents",
+    "Summarising the user's usage and limits this period"
+  ],
+  "main_file": "platform-playbooks.md",
+  "last_updated": "2026-10-31",
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "book",
+    "progressive": {
+      "enabled": true,
+      "index": [
+        {
+          "anchor": "admin/costs",
+          "title": "What the deployment costs",
+          "summary": "Where the deployment's spend goes, and where it cannot be counted: cost by model and provider, the trend, and the models running without a price.",
+          "file": "library/admin/costs.md",
+          "sha256": "bca4300717c0750974d421bd95f9df9dbe12891f82859a1131ee1c07e23d8111"
+        },
+        {
+          "anchor": "admin/health",
+          "title": "How is the deployment doing",
+          "summary": "The whole deployment at a glance — consumption across users, the database and backups, maintenance jobs, providers — in totals, never anyone's conversations.",
+          "file": "library/admin/health.md",
+          "sha256": "0bf72ab3c6999c35e74f2f43ac492342d66648853719e1fc8f24597f775bf1de"
+        },
+        {
+          "anchor": "agents/inspect",
+          "title": "Inspect an agent",
+          "summary": "What one agent is and what it can use: its class, model, data source, components, skills and trust state, in a short answer.",
+          "file": "library/agents/inspect.md",
+          "sha256": "d557ccc1376704771427058266e3c2460344f3426c9fceae51b659cf079029c2"
+        },
+        {
+          "anchor": "automation/create-flow",
+          "title": "Create a flow from a template",
+          "summary": "Build a multi-step automation from one of the platform's topology templates — a pipeline, a fork–join, a debate — with the user's agents in its slots, and submit it for their approval.",
+          "file": "library/automation/create-flow.md",
+          "sha256": "5456904599eb8cd562870c6b21c421ff162f3c9aee9d77bdb6aff666608a0418"
+        },
+        {
+          "anchor": "automation/run-flow",
+          "title": "Run a flow",
+          "summary": "Run one of the user's flows now, follow the run, and report what it produced — or stop it.",
+          "file": "library/automation/run-flow.md",
+          "sha256": "1259ecec203293d74096d6eb53e5ba3d9e4b8f0e918e9c9bb1cc88ee903ccf78"
+        },
+        {
+          "anchor": "automation/schedule",
+          "title": "Schedule a question for an agent",
+          "summary": "Have one of the user's agents answer a question on a timer — every weekday morning, every hour — and pause, resume, change or remove such a schedule. Every schedule is approved by the user.",
+          "file": "library/automation/schedule.md",
+          "sha256": "e1ff57b46551b1a82c99e9e600b8369a0a156d4f5384e04db7a9c11642fa212e"
+        },
+        {
+          "anchor": "automation/status",
+          "title": "What runs on its own",
+          "summary": "What the user has automated — flows and scheduled questions — and how their recent runs went.",
+          "file": "library/automation/status.md",
+          "sha256": "f2bdca37ba23a5aea71495a6d204f9bc1a08710561c68256f5c93740304b4e04"
+        },
+        {
+          "anchor": "building/bind-graph",
+          "title": "Give an agent a knowledge graph",
+          "summary": "Choose which knowledge graph an agent reads: assign a graph to it, make it the agent's active graph, or take it away — each submitted for the user's approval.",
+          "file": "library/building/bind-graph.md",
+          "sha256": "24cff3b9a53884d53873da070e8ba8aa173d68837d162723b05c18863f615d8d"
+        },
+        {
+          "anchor": "building/configure-agent",
+          "title": "Change what an agent is made of",
+          "summary": "Change an existing agent's composition — its model, its knowledge repositories, its experts, its skills, its capabilities, its context window — and submit the change for the user's approval.",
+          "file": "library/building/configure-agent.md",
+          "sha256": "6500da050951dc4e482124d6d481e4b3b1fab435dcb036d9fbcd9fa0211104f6"
+        },
+        {
+          "anchor": "building/create-agent",
+          "title": "Create an agent",
+          "summary": "Compose a new agent of any class from what the user already has — its model, its data source, its knowledge, its experts, its skills and capabilities — and submit it for the user's approval.",
+          "file": "library/building/create-agent.md",
+          "sha256": "cad4d46a0161149a0b808eed1d8e0989195205020635f9b7507a254b3e1f4359"
+        },
+        {
+          "anchor": "insight/canvases",
+          "title": "Keep canvases tidy",
+          "summary": "Find, rename, roll back or remove the user's canvases — the documents and code kept from conversations — each change submitted for the user's approval.",
+          "file": "library/insight/canvases.md",
+          "sha256": "a305ab11824c4312d82946e35afc4c80ffbadc89553387a26db012d71b963ccf"
+        },
+        {
+          "anchor": "insight/dashboards",
+          "title": "Keep dashboards in order",
+          "summary": "Create, rename, arrange or remove the user's dashboards and their tiles, and refresh a tile through its own agent — each change submitted for the user's approval.",
+          "file": "library/insight/dashboards.md",
+          "sha256": "35e2ff32f2b3d521bde52f4502e43a1b24594e58355da9726ab083a3113505b7"
+        },
+        {
+          "anchor": "insight/data-products",
+          "title": "What the data products can answer",
+          "summary": "Explain which data products a knowledge graph offers, what each measures and how far it is trusted, and show the SQL a request would run — without running it.",
+          "file": "library/insight/data-products.md",
+          "sha256": "bc5e7f5282e1e3aefd7dd27d45dddf46b76b3f3be038e8f086b385dfd6c95315"
+        },
+        {
+          "anchor": "knowledge/add-documents",
+          "title": "Add documents to a knowledge repository",
+          "summary": "Put documents the user has in their Files into one of their knowledge repositories — creating the repository first when they want a new one — and submit it for their approval.",
+          "file": "library/knowledge/add-documents.md",
+          "sha256": "f81f7dd0bc4e933c08720f6207dc060ac1016713526beb55c6b39a958ee8b633"
+        },
+        {
+          "anchor": "knowledge/clean-up",
+          "title": "Clean up a knowledge repository",
+          "summary": "Keep a repository's content right — quarantine or remove a wrong document, sync, screen, change settings — each submitted for the user's approval.",
+          "file": "library/knowledge/clean-up.md",
+          "sha256": "ad30803abe11a6fc7bd52271369d003d5e2064a3189b3345e181ebbc7e47683b"
+        },
+        {
+          "anchor": "knowledge/graph-governance",
+          "title": "A graph's versions, lifecycle and conformance",
+          "summary": "Where a knowledge graph stands — its saved versions, its lifecycle, whether it conforms, the tuning proposed for it — and saving a version before it changes.",
+          "file": "library/knowledge/graph-governance.md",
+          "sha256": "19fb696d6913e406074b12a3489a05363cc1e9bd94d96cf9d0fa03534afa2492"
+        },
+        {
+          "anchor": "knowledge/graphs",
+          "title": "Explore a knowledge graph",
+          "summary": "What one of the user's knowledge graphs holds: its entity types and how they connect, the entities a question is about, and what sits next to one of them.",
+          "file": "library/knowledge/graphs.md",
+          "sha256": "e92cd51daf439cca586403e1ea342360505ed72e3912022f4d552ca3ee33b9c8"
+        },
+        {
+          "anchor": "knowledge/health",
+          "title": "Check a knowledge repository's health",
+          "summary": "How sound a knowledge repository is: what it holds, whether its documents are screened, what the screening found, what is quarantined, and which documents the user rated badly.",
+          "file": "library/knowledge/health.md",
+          "sha256": "51094c3cf3910b9e27006e90a86006ee1834138ab374d2197d7ab24b1f8e3f67"
+        },
+        {
+          "anchor": "knowledge/search",
+          "title": "Try a question against a knowledge repository",
+          "summary": "See what an agent would retrieve from a knowledge repository for a question — which documents answer it and how well — without asking the agent.",
+          "file": "library/knowledge/search.md",
+          "sha256": "efc6bf601d68d9468e8fe76208d15b2d76f0daea6237ade9f4b8f9677cea7c80"
+        },
+        {
+          "anchor": "publishing/bundle",
+          "title": "Bundle agents into a pack",
+          "summary": "Put some of the user's agents into a new draft pack — ready to be proposed and published by the user — or keep a pack's name, description and version right.",
+          "file": "library/publishing/bundle.md",
+          "sha256": "069a56e30ce8a7df15cc606ebcb91c2360ae9c79170e0ff5e2f0d02f6da85aa4"
+        },
+        {
+          "anchor": "publishing/marketplace",
+          "title": "What is in the marketplace",
+          "summary": "Find packs others have published, read what one offers, and see what it would need from the user's data sources — without installing anything.",
+          "file": "library/publishing/marketplace.md",
+          "sha256": "8d5dc8f711c25c8b8314e82243911dd491b1612efc050a11e7f6ca97b3dfff85"
+        },
+        {
+          "anchor": "publishing/readiness",
+          "title": "Is the pack ready to publish",
+          "summary": "Whether one of the user's packs can be published now, and if not, what stands in the way and who acts next.",
+          "file": "library/publishing/readiness.md",
+          "sha256": "9dbec91eb5fce821dc524099964b29ef3b8dfb9b7310b7074e899ff26e837b65"
+        },
+        {
+          "anchor": "quality/inbox",
+          "title": "What needs me",
+          "summary": "What waits for the user: incidents in the Assurance Inbox and items in the review queue — withheld answers, fired gates, changes agents submitted.",
+          "file": "library/quality/inbox.md",
+          "sha256": "cb88a7069eabc40a035e95a4d306d05630a30b502ac617c4575bf6ecc088d19f"
+        },
+        {
+          "anchor": "quality/regression",
+          "title": "When did it get worse, and what changed",
+          "summary": "Find when an agent's quality, cost or latency moved, and line it up with what changed around then — its model, its configuration, its signature, its knowledge.",
+          "file": "library/quality/regression.md",
+          "sha256": "45f6a1cb09800802b0bd24da04d3c2ae059f07348f323be4823577637d6089e4"
+        },
+        {
+          "anchor": "quality/rescore",
+          "title": "Score a turn again, or try a policy",
+          "summary": "Check one turn again against what a right answer says (optionally with model judges), or see what a stricter trust policy would have done to past turns — before anyone switches it on.",
+          "file": "library/quality/rescore.md",
+          "sha256": "fb8b596e8468b1a0988aca0d5ee1570486a2308c367694f1fc8af766fe97cd18"
+        },
+        {
+          "anchor": "quality/whats-failing",
+          "title": "What is failing, and why",
+          "summary": "Which quality checks fail, for which agents, and what the failing turns have in common — read from the scores the platform records on every turn.",
+          "file": "library/quality/whats-failing.md",
+          "sha256": "c5dbe1bb00d0edce9dd8bbfe6680052c1d22fcaf44b1cff43859b5f94da37df0"
+        },
+        {
+          "anchor": "solving/gaps",
+          "title": "What is missing to answer a question",
+          "summary": "When no one can answer a question, find out what is missing — an expert or the data itself — and what would close the gap.",
+          "file": "library/solving/gaps.md",
+          "sha256": "d9ee43cd1790c9dfc5c440839f4e892b71f0fc96c1a6b6dc573fe640efcbde26"
+        },
+        {
+          "anchor": "solving/route",
+          "title": "Answer a question that spans several fields",
+          "summary": "Get a question answered that no single expert answers alone: ask the ones that fit each part and combine their answers, naming who answered what and what remains unanswered.",
+          "file": "library/solving/route.md",
+          "sha256": "23faf309df8194eaa3772be1ebf70215414f86665d6225c9cae35d1952078d10"
+        },
+        {
+          "anchor": "solving/second-opinion",
+          "title": "Get a second opinion",
+          "summary": "Check an answer by putting the same question to another expert, and report where the two answers agree and where they differ.",
+          "file": "library/solving/second-opinion.md",
+          "sha256": "e12b60c42c16c404f48d541f56f763315c8117e6f7458a27215e2128197de8d3"
+        },
+        {
+          "anchor": "trust/explain-agent",
+          "title": "Explain an agent's trust state",
+          "summary": "Why one agent reads trusted, changed, unsigned or not attested here — named down to the ingredient that decides it.",
+          "file": "library/trust/explain-agent.md",
+          "sha256": "7a361a5f41ca28567690df7611e0d50f3e40f8b1af1e31778505adfef5952ab0"
+        },
+        {
+          "anchor": "trust/my-agents",
+          "title": "Trust across my agents",
+          "summary": "Which of the user's agents are trusted, changed, unsigned or not attested here — one overview.",
+          "file": "library/trust/my-agents.md",
+          "sha256": "36cdcc501330d1ed2ae339fb04d66911f82aa78abe42453d97db0bf683037512"
+        },
+        {
+          "anchor": "usage/this-period",
+          "title": "My usage this period",
+          "summary": "What the user has spent this period — tokens, cost, turns, limits — and where it went.",
+          "file": "library/usage/this-period.md",
+          "sha256": "ae5fdd1d1bd705d07725720b46957e376398ffb4050d0929f2e4c944de52c98d"
+        }
+      ]
+    }
+  }
+}

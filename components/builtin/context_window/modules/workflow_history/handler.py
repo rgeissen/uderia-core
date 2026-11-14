@@ -1,0 +1,279 @@
+"""
+Workflow History context module.
+
+Wraps the turn summary assembly from planner.py:_create_summary_from_history().
+Provides the strategic planner with structured execution traces from
+previous turns for multi-turn awareness and plan optimization.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from typing import Any, Dict, List, TYPE_CHECKING
+
+from ..base import AssemblyContext, Contribution, ContextModule
+from ..token_estimator import estimate_tokens, tokens_to_chars
+
+if TYPE_CHECKING:
+    from trusted_data_agent.vectorstore.types import VectorDocument
+
+logger = logging.getLogger("quart.app")
+
+
+class WorkflowHistoryModule(ContextModule):
+    """
+    Contributes workflow history to the context window.
+
+    Provides the strategic planner with structured execution traces
+    from previous turns. This enables multi-turn awareness — the planner
+    can see what tools were called, what results were obtained, and
+    plan accordingly to avoid redundant operations.
+
+    Condensation strategy: fewer turns (keep most recent N).
+    RAG condensation: floor% recent turns + remainder from semantic retrieval
+    (default floor=30: keep recent execution context + relevant older traces).
+    Purgeable: clears accumulated workflow history.
+    """
+
+    supports_rag_condensation: bool = True
+    APPROX_TOKENS_PER_CHUNK: int = 150
+
+    @property
+    def module_id(self) -> str:
+        return "workflow_history"
+
+    def applies_to(self, profile_type: str) -> bool:
+        return profile_type == "tool_enabled"
+
+    async def contribute(
+        self,
+        budget: int,
+        ctx: AssemblyContext,
+    ) -> Contribution:
+        """
+        Assemble workflow history within the token budget.
+
+        Reads workflow_history from session data and formats valid
+        turns as structured summaries for the planner.
+        """
+        if ctx.is_first_turn:
+            return Contribution(
+                content="",
+                tokens_used=0,
+                metadata={"turn_count": 0, "reason": "first_turn"},
+                condensable=False,
+            )
+
+        session_data = ctx.session_data
+        workflow_history = session_data.get("last_turn_data", {}).get("workflow_history", [])
+
+        if not workflow_history:
+            return Contribution(
+                content="",
+                tokens_used=0,
+                metadata={"turn_count": 0, "reason": "no_history"},
+                condensable=False,
+            )
+
+        # Filter to valid turns
+        valid_turns = [
+            turn for turn in workflow_history
+            if turn.get("isValid") is not False
+        ]
+
+        if not valid_turns:
+            return Contribution(
+                content="",
+                tokens_used=0,
+                metadata={"turn_count": 0, "invalid_filtered": len(workflow_history)},
+                condensable=False,
+            )
+
+        # Format within budget
+        char_budget = tokens_to_chars(budget)
+        content = self._format_workflow_history(valid_turns, char_budget)
+        tokens = estimate_tokens(content)
+
+        return Contribution(
+            content=content,
+            tokens_used=tokens,
+            metadata={
+                "turn_count": len(valid_turns),
+                "total_turns_available": len(workflow_history),
+                "invalid_filtered": len(workflow_history) - len(valid_turns),
+            },
+            condensable=True,
+        )
+
+    async def condense(
+        self,
+        content: str,
+        target_tokens: int,
+        ctx: AssemblyContext,
+    ) -> Contribution:
+        """Condense by keeping fewer turns."""
+        session_data = ctx.session_data
+        workflow_history = session_data.get("last_turn_data", {}).get("workflow_history", [])
+
+        valid_turns = [
+            turn for turn in workflow_history
+            if turn.get("isValid") is not False
+        ]
+
+        if not valid_turns:
+            return Contribution(
+                content="",
+                tokens_used=0,
+                metadata={"condensed": True, "turn_count": 0},
+            )
+
+        # Keep only the most recent turns that fit
+        char_budget = tokens_to_chars(target_tokens)
+        content = self._format_workflow_history(
+            valid_turns, char_budget, newest_first=True
+        )
+        tokens = estimate_tokens(content)
+
+        return Contribution(
+            content=content,
+            tokens_used=tokens,
+            metadata={
+                "condensed": True,
+                "strategy": "fewer_turns",
+                "turn_count": content.count("Turn #"),
+            },
+        )
+
+    async def condense_rag(
+        self,
+        content: str,
+        target_tokens: int,
+        query: str,
+        ctx: AssemblyContext,
+        session_store: Any,
+        floor_pct: int,
+    ) -> Contribution:
+        """
+        RAG condensation: keep floor_pct% of recent execution history via fewer-turns
+        condensation, fill remainder with semantically retrieved earlier turns.
+        """
+        floor_tokens = int(target_tokens * floor_pct / 100)
+        rag_tokens = target_tokens - floor_tokens
+
+        floor_contribution = None
+        if floor_pct > 0 and floor_tokens > 0:
+            floor_contribution = await self.condense(content, floor_tokens, ctx)
+
+        n_chunks = max(1, rag_tokens // self.APPROX_TOKENS_PER_CHUNK)
+        results = await session_store.retrieve(self.module_id, query, n_results=n_chunks)
+        rag_content = self._format_rag_chunks(results)
+
+        parts = []
+        if floor_contribution and floor_contribution.content:
+            parts.append(f"--- Recent Execution History ---\n{floor_contribution.content}")
+        if rag_content:
+            parts.append(f"--- Relevant Earlier Context ---\n{rag_content}")
+
+        if not parts:
+            return await self.condense(content, target_tokens, ctx)
+
+        combined = "\n\n".join(parts)
+        return Contribution(
+            content=combined,
+            tokens_used=estimate_tokens(combined),
+            metadata={
+                "strategy": "rag_offload",
+                "floor_pct": floor_pct,
+                "chunks_retrieved": len(results),
+                "condensed": True,
+            },
+            condensable=True,
+        )
+
+    def _format_rag_chunks(self, results: "List[VectorDocument]") -> str:
+        """Format retrieved workflow turn summaries."""
+        parts = []
+        for doc in results:
+            turn_num = doc.metadata.get("turn_number", "?")
+            parts.append(f"Turn #{turn_num}:\n{doc.content}")
+        return "\n\n".join(parts)
+
+    async def purge(
+        self,
+        session_id: str,
+        user_uuid: str,
+    ) -> Dict[str, Any]:
+        """Purge workflow history for a session."""
+        try:
+            from trusted_data_agent.core.session_manager import SessionManager
+
+            sm = SessionManager()
+            if session_id:
+                session_data = await sm.load_session(session_id, user_uuid)
+                if session_data:
+                    turn_count = len(session_data.get("last_turn_data", {}).get("workflow_history", []))
+                    session_data["workflow_history"] = []
+                    await sm.save_session(session_id, user_uuid, session_data)
+                    return {
+                        "purged": True,
+                        "details": f"Cleared {turn_count} workflow turns from session {session_id}",
+                    }
+            return {"purged": False, "reason": "Session not found"}
+        except Exception as e:
+            logger.error(f"WorkflowHistoryModule purge failed: {e}")
+            return {"purged": False, "reason": str(e)}
+
+    def _format_workflow_history(
+        self,
+        turns: List[Dict],
+        char_budget: int,
+        newest_first: bool = False,
+    ) -> str:
+        """Format workflow turns for planner context."""
+        lines = ["--- WORKFLOW HISTORY ---"]
+        lines.append(
+            "Previous execution turns for multi-turn awareness:\n"
+        )
+        total_chars = sum(len(line) for line in lines)
+
+        # Order turns
+        ordered_turns = list(reversed(turns)) if newest_first else turns
+
+        for turn in ordered_turns:
+            turn_text = self._format_single_turn(turn)
+            if total_chars + len(turn_text) > char_budget and total_chars > 100:
+                break
+            lines.append(turn_text)
+            total_chars += len(turn_text)
+
+        return "\n".join(lines)
+
+    def _format_single_turn(self, turn: dict) -> str:
+        """Format a single workflow turn."""
+        parts = []
+        turn_number = turn.get("turn_number", "?")
+        parts.append(f"Turn #{turn_number}:")
+
+        from trusted_data_agent.core.trace_shape import phase_action, phase_output, phase_rows
+        execution_trace = turn.get("execution_trace", [])
+        for phase in execution_trace:
+            # the real entry shape is {action, result} — ONE reader (core/trace_shape); the
+            # phantom "tool_output_summary" key read here until Nov 2026 made every phase
+            # "unknown (0 rows)"
+            action = phase_action(phase)
+            tool_name = action.get("tool_name", "unknown")
+            output = phase_output(phase)
+            status = output.get("status", "unknown")
+
+            results = phase_rows(phase)
+            if isinstance(results, list):
+                row_count = len(results)
+                result_summary = f"{row_count} rows"
+            else:
+                result_summary = "data returned"
+
+            parts.append(f"  - {tool_name}: {status} ({result_summary})")
+
+        parts.append("")
+        return "\n".join(parts)

@@ -1,0 +1,312 @@
+[
+ {
+  "name": "TDA_Charting",
+  "category": "Component Tools",
+  "description": "Generates a data visualization based on provided data. You must specify the chart type and map the data fields to the appropriate visual roles."
+ },
+ {
+  "name": "TDA_Canvas",
+  "category": "Component Tools",
+  "description": "Presents code, documents, or structured content in an interactive canvas workspace with syntax highlighting, live preview for HTML/SVG/Markdown, direct editing, and durable version history. Canvases are persisted and addressable, so one created in an earlier session can be re-opened from any session. Use this for substantial content that benefits from a dedicated workspace rather than inline display."
+ },
+ {
+  "name": "TDA_KnowledgeGraph",
+  "category": "Component Tools",
+  "description": "Queries, visualizes, and versions the knowledge graph. Use 'query' to find related entities, 'visualize' to render a subgraph, 'open' to open the full graph panel (works from any session), 'add_entity'/'add_relationship' to enrich it, 'snapshot' to save a version, 'versions' to list version history, 'restore' to roll back to a prior version, 'compile_metric' to get ready-to-run SQL for a metric slice, 'probe_bridge' to compile evidence for a declared cross-product link."
+ },
+ {
+  "name": "TDA_Flow",
+  "category": "Component Tools",
+  "description": "Manages task flows. Call when user wants to create, design, edit, execute, or inspect a workflow of connected tasks. Flows can include LLM tasks, function tasks, decision branches, judges, canvas artefacts, and loops over task segments."
+ },
+ {
+  "name": "TDA_Dashboard",
+  "category": "Component Tools",
+  "description": "Manages live dashboards and inline visualizations. Call 'visualize' to show an auto-chart in chat. Call 'add_tile' / 'create' / 'open' / etc. for dashboard management."
+ },
+ {
+  "name": "TDA_DatabaseNavigator",
+  "category": "Component Tools",
+  "description": "Explores database objects (databases, tables, views, columns, keys, relationships, statistics). Call 'describe' before writing SQL against a table you have not seen this session; 'search' to find an object or column by name; 'preview' for sample rows; 'suggest_joins' for the declared and inferred join paths of a table; 'open' to open the navigator panel for the user."
+ },
+ {
+  "name": "TDA_Memory",
+  "category": "Component Tools",
+  "description": "Stores or recalls DURABLE memory about the user across sessions. Call 'remember' ONLY when the user asks you to remember something or states a lasting preference/fact about themselves (e.g. 'I prefer metric tons', 'I'm a finance analyst', 'always answer concisely'). Call 'forget' to delete a memory. Call 'list_memories' to show what is remembered. Do NOT store this turn's specific question or the answer's data."
+ },
+ {
+  "name": "TDA_Scheduler",
+  "category": "Component Tools",
+  "description": "Manages scheduled tasks. Call when user wants to schedule, automate, list, cancel, pause, resume, trigger, or inspect task history."
+ },
+ {
+  "name": "qlty_columnSummary",
+  "category": "Data Quality",
+  "description": "Get the column summary statistics for a table."
+ },
+ {
+  "name": "qlty_distinctCategories",
+  "category": "Data Quality",
+  "description": "Get the destinct categories from column in a table."
+ },
+ {
+  "name": "qlty_missingValues",
+  "category": "Data Quality",
+  "description": "Get the column names that having missing values in a table."
+ },
+ {
+  "name": "qlty_negativeValues",
+  "category": "Data Quality",
+  "description": "Get the column names that having negative values in a table."
+ },
+ {
+  "name": "qlty_rowsWithMissingValues",
+  "category": "Data Quality",
+  "description": "Get the rows with missing values in a table."
+ },
+ {
+  "name": "qlty_standardDeviation",
+  "category": "Data Quality",
+  "description": "Get the standard deviation from column in a table."
+ },
+ {
+  "name": "qlty_univariateStatistics",
+  "category": "Data Quality",
+  "description": "Get the univariate statistics for a table."
+ },
+ {
+  "name": "dba_databaseSpace",
+  "category": "Database Administration",
+  "description": "Get database space if database name is provided, otherwise get all databases space allocations."
+ },
+ {
+  "name": "dba_tableSpace",
+  "category": "Database Administration",
+  "description": "Get table space used for a table if table name is provided or get table space for all tables in a database if a database name is provided.\""
+ },
+ {
+  "name": "dba_databaseVersion",
+  "category": "Database Administration",
+  "description": " Get Teradata database version information."
+ },
+ {
+  "name": "dba_sessionInfo",
+  "category": "Database Administration",
+  "description": "Get the Teradata session information for user.\nArguments:"
+ },
+ {
+  "name": "dba_systemSpace",
+  "category": "Database Administration",
+  "description": "Get the Teradata total system database space usage."
+ },
+ {
+  "name": "base_columnDescription",
+  "category": "Database Information",
+  "description": "Shows detailed column information about a database table via SQLAlchemy, bind parameters if provided (prepared SQL), and return the fully rendered SQL (with literals) in metadata."
+ },
+ {
+  "name": "base_databaseList",
+  "category": "Database Information",
+  "description": "Lists databases in the Teradata System."
+ },
+ {
+  "name": "base_tableAffinity",
+  "category": "Database Information",
+  "description": "Get tables commonly used together by database users, this is helpful to infer relationships between tables via SQLAlchemy, bind parameters if provided (prepared SQL), and return the fully rendered SQL (with literals) in metadata."
+ },
+ {
+  "name": "base_tableDDL",
+  "category": "Database Information",
+  "description": "Displays the DDL definition of a table via SQLAlchemy, bind parameters if provided (prepared SQL), and return the fully rendered SQL (with literals) in metadata."
+ },
+ {
+  "name": "base_tableList",
+  "category": "Database Information",
+  "description": "Lists all tables in a database."
+ },
+ {
+  "name": "base_tablePreview",
+  "category": "Database Information",
+  "description": "This function returns data sample and inferred structure from a database table or view via SQLAlchemy, bind parameters if provided (prepared SQL), and return the fully rendered SQL (with literals) in metadata."
+ },
+ {
+  "name": "base_tableUsage",
+  "category": "Database Information",
+  "description": "Measure the usage of a table and views by users in a given schema, this is helpful to infer what database objects are most actively used or drive most value via SQLAlchemy, bind parameters if provided (prepared SQL), and return the fully rendered SQL (with literals) in metadata."
+ },
+ {
+  "name": "rag_Execute_Workflow",
+  "category": "Knowledge Retrieval",
+  "description": "\nExecute complete RAG workflow to answer user questions based on document context.\nThis tool handles the entire RAG pipeline in a single step when a user query is tagged with /rag.\n\nWORKFLOW STEPS (executed automatically):\n1. Configuration setup using configurable values from rag_config.yml\n2. Store user query with '/rag ' prefix stripping\n3. Generate query embeddings using either BYOM (ONNXEmbeddings) or IVSM functions based on config\n4. Perform semantic search against precomputed chunk embeddings\n5. Return context chunks for answer generation\n\nCONFIGURATION VALUES (from rag_config.yml):\n- version: 'ivsm' or 'byom' to select embedding approach\n- All database names, table names, and model settings are configurable\n- Vector store metadata fields are dynamically detected\n- Embedding parameters are configurable\n- Default chunk retrieval count is configurable\n- Default values are provided as fallback\n\nTECHNICAL DETAILS:\n- Strips the '/rag ' prefix if present from user questions\n- Creates query table if it does not exist (columns: id, txt, created_ts)\n- BYOM approach: Uses mldb.ONNXEmbeddings UDF for tokenization and embedding\n- IVSM approach: Uses ivsm.tokenizer_encode and ivsm.IVSM_score functions\n- Both approaches store embeddings in configured output table\n- Uses cosine similarity via TD_VECTORDISTANCE for semantic search\n- Returns the top-k matching chunks from the configured vector store\n- Each result includes chunk text, similarity score, and metadata fields\n\nCRITICAL ANSWERING RULES:\n- Answer ONLY using retrieved chunks - no external knowledge, speculation, or inference\n- Quote source content directly without paraphrasing, summarizing, or rewriting\n- If no relevant context found: \"Not enough information found in the provided context\"\n- If partial context: \"The available context does not fully answer the question\"\n- Include document/page references when available (e.g., \"On page 2 of 'demo_policy.pdf'...\")\n- Execute entire workflow silently without showing function calls to user - only show final answer\n\nLANGUAGE RESTRICTIONS:\n- Do not say \"According to the context\" or \"The context says\" - just quote directly\n- Do not say \"It can be inferred that...\" - no inference allowed\n- Use exact or near-verbatim quotes only\n- No paraphrasing, summarizing, or adding transitions between quotes\n- Copy content precisely - no expansion or interpretation\n\nBEHAVIORAL REQUIREMENTS:\n- Execute all RAG workflow steps silently without showing tool calls to users\n- Only display final answers based strictly on retrieved context chunks\n- Do not use external knowledge or speculation - only quote retrieved content directly\n- RAG mode only triggers with explicit /rag prefix - do not enter RAG mode implicitly\n- Hide all tool execution steps from user\n- Provide clean, direct response with only the answer based on retrieved chunks\n- This is a complete end-to-end RAG workflow - no additional tools needed\n\nEXECUTION: Run completely silently - user only sees their question and the final context-grounded answer.\n"
+ },
+ {
+  "name": "sql_Analyze_Cluster_Stats",
+  "category": "Performance Analysis",
+  "description": "\n**ANALYZE SQL QUERY CLUSTER PERFORMANCE STATISTICS**\n\nThis tool analyzes pre-computed cluster statistics to identify optimization opportunities without re-running the clustering pipeline. Perfect for iterative analysis and decision-making on which query clusters to focus optimization efforts.\n\n**ANALYSIS CAPABILITIES:**\n- **Performance Ranking**: Sort clusters by any performance metric to identify top resource consumers\n- **Resource Impact Assessment**: Compare clusters by CPU usage, I/O volume, and execution complexity\n- **Skew Problem Detection**: Identify clusters with CPU or I/O distribution issues\n- **Workload Characterization**: Understand query patterns by user, application, and workload type\n- **Optimization Prioritization**: Focus on clusters with highest impact potential\n\n**AVAILABLE SORTING METRICS:**\n- **avg_cpu**: Average CPU seconds per cluster (primary optimization target)\n- **avg_io**: Average logical I/O operations (scan intensity indicator)\n- **avg_cpuskw**: Average CPU skew (distribution problem indicator)\n- **avg_ioskw**: Average I/O skew (hot spot indicator)\n- **avg_pji**: Average Physical-to-Logical I/O ratio (compute intensity)\n- **avg_uii**: Average Unit I/O Intensity (I/O efficiency)\n- **avg_numsteps**: Average query plan complexity\n- **queries**: Number of queries in cluster (frequency indicator)\n- **cluster_silhouette_score**: Clustering quality measure\n\n**PERFORMANCE CATEGORIZATION:**\nAutomatically categorizes clusters using configurable thresholds (from sql_opt_config.yml):\n- **HIGH_CPU_USAGE**: Average CPU > config.performance_thresholds.cpu.high\n- **HIGH_IO_USAGE**: Average I/O > config.performance_thresholds.io.high\n- **HIGH_CPU_SKEW**: CPU skew > config.performance_thresholds.skew.high\n- **HIGH_IO_SKEW**: I/O skew > config.performance_thresholds.skew.high\n- **NORMAL**: Clusters within configured normal performance ranges\n\n**TYPICAL ANALYSIS WORKFLOW:**\n1. Sort by 'avg_cpu' or 'avg_io' to find highest resource consumers\n2. Sort by 'avg_cpuskw' or 'avg_ioskw' to find distribution problems\n4. Use limit_results to focus on top problematic clusters\n\n**OPTIMIZATION DECISION FRAMEWORK:**\n- **High CPU + High Query Count**: Maximum impact optimization candidates\n- **High Skew + Moderate CPU**: Distribution/statistics problems\n- **High I/O + Low PJI**: Potential indexing opportunities\n- **High NumSteps**: Complex query rewriting candidates\n\n**OUTPUT FORMAT:**\nReturns detailed cluster statistics with performance rankings, categories, and metadata for LLM analysis and optimization recommendations.\n"
+ },
+ {
+  "name": "sql_Execute_Full_Pipeline",
+  "category": "Performance Analysis",
+  "description": "\n**COMPLETE SQL QUERY CLUSTERING PIPELINE FOR HIGH-USAGE QUERY OPTIMIZATION**\n\nThis tool executes the entire SQL query clustering workflow to identify and analyze high CPU usage queries for optimization opportunities. It's designed for database performance analysts and DBAs who need to systematically identify query optimization candidates.\n\n**FULL PIPELINE WORKFLOW:**\n1. **Query Log Extraction**: Extracts SQL queries from DBC.DBQLSqlTbl with comprehensive performance metrics\n2. **Performance Metrics Calculation**: Computes CPU skew, I/O skew, PJI (Physical to Logical I/O ratio), UII (Unit I/O Intensity)\n3. **Query Tokenization**: Tokenizes SQL text using {sql_clustering_config.get('model', {}).get('model_id', 'bge-small-en-v1.5')} tokenizer via ivsm.tokenizer_encode\n4. **Embedding Generation**: Creates semantic embeddings using ivsm.IVSM_score with ONNX models\n5. **Vector Store Creation**: Converts embeddings to vector columns via ivsm.vector_to_columns\n6. **K-Means Clustering**: Groups similar queries using TD_KMeans with optimal K from configuration\n7. **Silhouette Analysis**: Calculates clustering quality scores using TD_Silhouette\n8. **Statistics Generation**: Creates comprehensive cluster statistics with performance aggregations\n\n**PERFORMANCE METRICS EXPLAINED:**\n- **AMPCPUTIME**: Total CPU seconds across all AMPs (primary optimization target)\n- **CPUSKW/IOSKW**: CPU/I/O skew ratios (>2.0 indicates distribution problems)\n- **PJI**: Physical-to-Logical I/O ratio (higher = more CPU-intensive)\n- **UII**: Unit I/O Intensity (higher = more I/O-intensive relative to CPU)\n- **LogicalIO**: Total logical I/O operations (indicates scan intensity)\n- **NumSteps**: Query plan complexity (higher = more complex plans)\n\n**CONFIGURATION (from sql_opt_config.yml):**\n- Uses top {default_max_queries} queries by CPU time (configurable)\n- Creates {default_optimal_k} clusters by default (configurable via optimal_k parameter)\n- Embedding model: {sql_clustering_config.get('model', {}).get('model_id', 'bge-small-en-v1.5')}\n- Vector dimensions: {sql_clustering_config.get('embedding', {}).get('vector_length', 384)}\n- All database and table names are configurable\n\n**OPTIMIZATION WORKFLOW:**\nAfter running this tool, use:\n1. sql_Analyze_Cluster_Stats to identify problematic clusters\n2. sql_Retrieve_Cluster_Queries to get actual SQL from target clusters\n3. LLM analysis to identify patterns and propose specific optimizations\n\n**USE CASES:**\n- Identify query families consuming the most system resources\n- Find queries with similar patterns but different performance\n- Discover optimization opportunities through clustering analysis\n- Prioritize DBA effort on highest-impact query improvements\n- Understand workload composition and resource distribution\n\n**PREREQUISITES:**\n- DBC.DBQLSqlTbl and DBC.DBQLOgTbl must be accessible\n- Embedding models and tokenizers must be installed in feature_ext_db\n- Sufficient space in feature_ext_db for intermediate and final tables\n"
+ },
+ {
+  "name": "sql_Retrieve_Cluster_Queries",
+  "category": "Performance Analysis",
+  "description": "\n**RETRIEVE ACTUAL SQL QUERIES FROM SPECIFIC CLUSTERS FOR PATTERN ANALYSIS**\n\nThis tool extracts the actual SQL query text and performance metrics from selected clusters, enabling detailed pattern analysis and specific optimization recommendations. Essential for moving from cluster-level analysis to actual query optimization.\n\n**DETAILED ANALYSIS CAPABILITIES:**\n- **SQL Pattern Recognition**: Analyze actual query structures, joins, predicates, and functions\n- **Performance Correlation**: Connect query patterns to specific performance characteristics\n- **Optimization Identification**: Identify common anti-patterns, missing indexes, inefficient joins\n- **Code Quality Assessment**: Evaluate query construction, complexity, and best practices\n- **Workload Understanding**: See actual business logic and data access patterns\n\n**QUERY SELECTION STRATEGIES:**\n- **By CPU Impact**: Sort by 'ampcputime' to focus on highest CPU consumers\n- **By I/O Volume**: Sort by 'logicalio' to find scan-intensive queries\n- **By Skew Problems**: Sort by 'cpuskw' or 'ioskw' for distribution issues\n- **By Complexity**: Sort by 'numsteps' for complex execution plans\n- **By Response Time**: Sort by 'response_secs' for user experience impact\n\n**AVAILABLE METRICS FOR SORTING:**\n- **ampcputime**: Total CPU seconds (primary optimization target)\n- **logicalio**: Total logical I/O operations (scan indicator)\n- **cpuskw**: CPU skew ratio (distribution problems)\n- **ioskw**: I/O skew ratio (hot spot indicators)\n- **pji**: Physical-to-Logical I/O ratio (compute intensity)\n- **uii**: Unit I/O Intensity (I/O efficiency)\n- **numsteps**: Query execution plan steps (complexity)\n- **response_secs**: Wall-clock execution time (user impact)\n- **delaytime**: Time spent in queue (concurrency issues)\n\n**AUTOMATIC PERFORMANCE CATEGORIZATION:**\nEach query is categorized using configurable thresholds (from sql_opt_config.yml):\n- **CPU Categories**: VERY_HIGH_CPU (>config.very_high), HIGH_CPU (>config.high), MEDIUM_CPU (>10s), LOW_CPU\n- **CPU Skew**: SEVERE_CPU_SKEW (>config.severe), HIGH_CPU_SKEW (>config.high), MODERATE_CPU_SKEW (>config.moderate), NORMAL\n- **I/O Skew**: SEVERE_IO_SKEW (>config.severe), HIGH_IO_SKEW (>config.high), MODERATE_IO_SKEW (>config.moderate), NORMAL\n\nUse thresholds set in config file for, CPU - high, very_high, Skew moderate, high, severe\n\n**TYPICAL OPTIMIZATION WORKFLOW:**\n1. Start with clusters identified from sql_Analyze_Cluster_Stats\n2. Retrieve top queries by impact metric (usually 'ampcputime')\n3. Analyze SQL patterns for common issues:\n   - Missing WHERE clauses or inefficient predicates\n   - Cartesian products or missing JOIN conditions\n   - Inefficient GROUP BY or ORDER BY operations\n   - Suboptimal table access patterns\n   - Missing or outdated statistics\n4. Develop specific optimization recommendations\n\n**QUERY LIMIT STRATEGY:**\n- Use the query limit set in config file for  pattern recognition and analysis, unless user specifies a different limit\n\n**OUTPUT INCLUDES:**\n- Complete SQL query text for each query\n- All performance metrics, user, application, and workload context, cluster membership and rankings\n- Performance categories for quick filtering\n"
+ },
+ {
+  "name": "dba_resusageSummary",
+  "category": "Performance Analysis",
+  "description": "Get the Teradata system usage summary metrics by weekday and hour for each workload type and query complexity bucket."
+ },
+ {
+  "name": "dba_tableSqlList",
+  "category": "Performance Analysis",
+  "description": "Get a list of SQL run against a table in the last number of days."
+ },
+ {
+  "name": "dba_tableUsageImpact",
+  "category": "Performance Analysis",
+  "description": "Measure the usage of a table and views by users, this is helpful to understand what user and tables are driving most resource usage at any point in time."
+ },
+ {
+  "name": "dba_userSqlList",
+  "category": "Performance Analysis",
+  "description": "Get a list of SQL run by a user in the last number of days if a user name is provided, otherwise get list of all SQL in the last number of days."
+ },
+ {
+  "name": "dba_flowControl",
+  "category": "Performance Analysis",
+  "description": "Get the Teradata flow control metrics for a specified date range.\nArguments:"
+ },
+ {
+  "name": "dba_featureUsage",
+  "category": "Performance Analysis",
+  "description": "Get the user feature usage metrics for a specified date range.\nArguments:"
+ },
+ {
+  "name": "dba_userDelay",
+  "category": "Performance Analysis",
+  "description": "Get the Teradata user delay metrics for a specified date range.\nArguments:"
+ },
+ {
+  "name": "sec_rolePermissions",
+  "category": "Security",
+  "description": "Get permissions for a role."
+ },
+ {
+  "name": "sec_userDbPermissions",
+  "category": "Security",
+  "description": "Get permissions for a user."
+ },
+ {
+  "name": "sec_userRoles",
+  "category": "Security",
+  "description": "Get roles assigned to a user."
+ },
+ {
+  "name": "TDA_CurrentDate",
+  "category": "System Tools",
+  "description": "Returns the current system date in YYYY-MM-DD format. Use this as the first step for any user query involving relative dates like 'today', 'yesterday', or 'this week'."
+ },
+ {
+  "name": "TDA_DateRange",
+  "category": "System Tools",
+  "description": "Calculates a list of dates based on a start date and a natural language phrase (e.g., 'past 3 days', 'last week'). This is a necessary second step for multi-day queries."
+ },
+ {
+  "name": "TDA_LLMFilter",
+  "category": "System Tools",
+  "description": "A specialized internal tool that filters a list of items based on a natural language goal and extracts a single, clean value. This is used as an intermediate step to pass a specific, machine-readable value from one tool to another."
+ },
+ {
+  "name": "TDA_LLMTask",
+  "category": "System Tools",
+  "description": "Performs internal, LLM-driven tasks that are not direct calls to the Teradata database. This tool is used for text synthesis, summarization, and formatting based on a specific 'task_description' provided by the LLM itself."
+ },
+ {
+  "name": "TDA_ContextReport",
+  "category": "System Tools",
+  "description": "The History First Shortcut. This tool MUST be used for a single-phase plan if, and only if, the user's question can be answered entirely from the existing Workflow History. It bypasses all data gathering. Do NOT use this tool if you need to gather new data."
+ },
+ {
+  "name": "TDA_FinalReport",
+  "category": "System Tools",
+  "description": "The Data Summarization Tool. This tool MUST be the final phase of a multi-step plan to synthesize the results from all previous data-gathering phases into a final report. Do NOT use this tool in a single-phase plan or as a first step."
+ },
+ {
+  "name": "TDA_ComplexPromptReport",
+  "category": "System Tools",
+  "description": "A special internal tool used to format and deliver the final, structured report for a pre-defined UI prompt. This tool MUST be called when all data gathering phases for the prompt are complete."
+ },
+ {
+  "name": "base_readQuery",
+  "category": "Utilities",
+  "description": "Execute a SQL query via SQLAlchemy, bind parameters if provided (prepared SQL), and return the fully rendered SQL (with literals) in metadata."
+ },
+ {
+  "name": "plot_line_chart",
+  "category": "Visualization",
+  "description": "\nFunction to generate a line plot for labels and columns.\nColumns mentioned in labels are used for x-axis and columns are used for y-axis.\n\nPARAMETERS:\n    table_name:\n        Required Argument.\n        Specifies the name of the table to generate the donut plot.\n        Types: str\n\n    labels:\n        Required Argument.\n        Specifies the labels to be used for the line plot.\n        Types: str\n\n    columns:\n        Required Argument.\n        Specifies the column to be used for generating the line plot.\n        Types: List[str]\n\nRETURNS:\n    dict\n"
+ },
+ {
+  "name": "plot_pie_chart",
+  "category": "Visualization",
+  "description": "\nFunction to generate a pie chart plot for labels and columns.\nColumns mentioned in labels are used as labels and column is used to plot.\n\nPARAMETERS:\n    table_name:\n        Required Argument.\n        Specifies the name of the table to generate the donut plot.\n        Types: str\n\n    labels:\n        Required Argument.\n        Specifies the labels to be used for the line plot.\n        Types: str\n\n    column:\n        Required Argument.\n        Specifies the column to be used for generating the line plot.\n        Types: str\n\nRETURNS:\n    dict\n"
+ },
+ {
+  "name": "plot_polar_chart",
+  "category": "Visualization",
+  "description": "\nFunction to generate a polar area plot for labels and columns.\nColumns mentioned in labels are used as labels and column is used to plot.\n\nPARAMETERS:\n    table_name:\n        Required Argument.\n        Specifies the name of the table to generate the donut plot.\n        Types: str\n\n    labels:\n        Required Argument.\n        Specifies the labels to be used for the line plot.\n        Types: str\n\n    column:\n        Required Argument.\n        Specifies the column to be used for generating the line plot.\n        Types: str\n\nRETURNS:\n    dict\n"
+ },
+ {
+  "name": "plot_radar_chart",
+  "category": "Visualization",
+  "description": "\nFunction to generate a radar plot for labels and columns.\nColumns mentioned in labels are used as labels and column is used to plot.\n\nPARAMETERS:\n    table_name:\n        Required Argument.\n        Specifies the name of the table to generate the donut plot.\n        Types: str\n\n    labels:\n        Required Argument.\n        Specifies the labels to be used for the line plot.\n        Types: str\n\n    columns:\n        Required Argument.\n        Specifies the column to be used for generating the line plot.\n        Types: str\n\nRETURNS:\n    dict\n"
+ },
+ {
+  "name": "base_columnMetadata",
+  "category": "All Tools",
+  "description": "Retrieve detailed technical column metadata for Teradata tables and views, including exact Teradata type codes, character sets (LATIN/UNICODE), decimal precision, scale, nullability, and index classification. Use when the user needs precise Teradata-specific column information, not just basic column names and types. For a simple list of columns and types for a single object, use base_columnDescription instead. Supports bulk retrieval across many objects with payload and time budgets.\n\nResolution paths:\n    Tables (T, O, Q) \u2014 DBC.ColumnsVX + DBC.IndicesVX. No HELP COLUMN.\n    Views (V)        \u2014 HELP COLUMN with derived-table wrapper, the only\n                       reliable mechanism for resolving view column types.\n\nUses the native TeradataConnection cursor pattern, consistent with all\nother tools in this module.\n\nTechnical capabilities:\n- Exact Teradata type codes and their SQL type string equivalents\n- Character set information (LATIN, UNICODE, etc.)\n- Decimal precision and scale\n- Detection of broken/invalid views\n- Column-level metadata for all objects in a database at once\n\nLARGE-SCALE USAGE GUIDANCE:\n---------------------------\nWhen retrieving metadata for many objects (e.g. all views in DBC),\nboth the response payload and the execution time can exceed limits.\nUse these strategies to control both:\n\n1. FILTER FIELDS: Pass only the columns you need via the ``fields``\n   parameter. View rows via HELP COLUMN return ~49 fields by default;\n   table rows via DBC.ColumnsVX return fewer. Trimming to 6-8 fields\n   can reduce payload by 80%+.\n   Three computed fields (ColumnTypeString, IndexTypeString,\n   CharSetString) are always included automatically.\n   Example: fields='ColumnName,ColumnType,ColumnLength,CharType,\n                    UpperCase,Nullable,Indexed?,Primary?,Unique?'\n\n2. EXCLUDE OBJECTS: Use ``exclude_objects`` to skip objects you do\n   not need. Accepts SQL LIKE patterns (% wildcard) as a CSV.\n   Applied before any metadata queries, so excluded objects\n   consume zero time and zero payload.\n   Example: exclude_objects='ResUsage%,%ResUsage%,Res%View'\n\n3. INCREASE PARALLELISM: Set ``max_workers`` to 12-16 for large\n   databases. Each worker gets its own Teradata session via\n   conn.cursor(). Default is 8.\n\n4. FILTER BY KIND: Use ``table_kind`` to limit to just the object\n   types you need (e.g. 'V' for views only, 'T' for tables only).\n\n5. PAYLOAD BUDGET: Use ``max_payload_kb`` (default 900) to set the\n   maximum response payload size in kilobytes. When the accumulated\n   result data approaches this limit, the tool stops collecting and\n   returns what it has, plus a ``remaining_objects`` CSV in metadata\n   listing the unprocessed objects. Pass that CSV straight into\n   ``object_name`` on the next call for automatic continuation.\n   This self-adapts to object sizes: small-column views fit more\n   per call, large-column views page earlier.\n\n6. TIME BUDGET: Use ``max_execution_seconds`` (default 180) to set\n   the maximum wall-clock execution time. The tool monitors elapsed\n   time as each object completes, and self-interrupts BEFORE the\n   MCP transport timeout (typically 240s) kills the session without\n   returning any data. When the time budget is reached, the tool\n   returns all data collected so far plus ``remaining_objects`` for\n   continuation \u2014 exactly the same pattern as payload budget.\n   This is the key difference from an MCP timeout: a timeout\n   returns NOTHING; a time budget returns EVERYTHING collected so\n   far, plus a continuation token.\n\nCONTINUATION PATTERN (automatic pagination):\n    # Call 1 \u2014 starts processing, time or payload budget fills up\n    result1 = base_columnMetadata(database_name='DBC', table_kind='V', ...)\n    # metadata contains: remaining_objects='ViewX,ViewY,...'\n\n    # Call 2 \u2014 pass remaining_objects as object_name\n    result2 = base_columnMetadata(\n        database_name='DBC',\n        object_name='ViewX,ViewY,...',  # from result1 metadata\n        ...\n    )\n    # Repeat until metadata has no remaining_objects key.\n\nTypical call for a large database:\n    base_columnMetadata(\n        database_name='DBC',\n        table_kind='V',\n        exclude_objects='ResUsage%,%ResUsage%',\n        fields='ColumnName,ColumnType,ColumnLength,CharType,\n                UpperCase,Nullable,Indexed?,Primary?,Unique?',\n        max_workers=16,\n        max_payload_kb=900,\n        max_execution_seconds=180\n    )"
+ },
+ {
+  "name": "base_saveDDL",
+  "category": "All Tools",
+  "description": "Extract the DDL for a Teradata table, view, or stored procedure and SAVE it as a .sql file on disk. Use this tool ONLY when the user explicitly wants to export, write, download, or persist DDL to a file. Do NOT use simply to display or view DDL in the conversation \u2014 use base_tableDDL to display DDL without saving."
+ },
+ {
+  "name": "graph_analyseDatabase",
+  "category": "All Tools",
+  "description": "Composite graph analysis \u2014 runs findRootObjects, connectedComponents,\ndetectCycles, and bfsLevels in a single MCP call with ONE shared\nedge fetch.\n\nThis tool eliminates the scalability bottleneck of serial MCP round-\ntrips by combining four graph analyses that would otherwise require\nfour separate tool calls, each independently fetching the same edge\nset from Teradata.\n\nPerformance vs individual tools:\n  - 1 SQL round-trip instead of 4 (shared edge fetch)\n  - 1 MCP response instead of 4 (eliminates stdio serialisation overhead)\n  - Same algorithmic complexity (O(V+E) BFS, O(\u03b1\u00b7N) Union-Find, O(V+E) DFS)\n  - In-memory edge sharing: all analyses operate on the same Python list\n\nUse this for:\n  - Full database migration readiness assessment\n  - Pre-migration cycle + root + wave analysis in one call\n  - Dashboard data population (all four analyses needed simultaneously)\n  - Any workflow that would otherwise call 3+ individual graph tools"
+ },
+ {
+  "name": "graph_bfsLevels",
+  "category": "All Tools",
+  "description": "Compute BFS shortest-path hop distances from one or more root nodes.\n\nPure-Python implementation \u2014 no stored procedure required.\n\nWHEN TO USE THIS TOOL vs graph_traceLineage:\n-------------------------------------------------------\nUse graph_bfsLevels when asked to:\n  - Sequence objects for deployment or migration (ORDER BY downstream_level\n    gives correct topological deployment order for root objects)\n  - Group objects into migration waves (nearest_root identifies which of\n    the input root tables each object belongs to)\n  - Find which migration root table each object is closest to across a\n    multi-root migration scope\n  - Identify cycle members by depth (direction='BOTH' nodes with unequal\n    absolute upstream/downstream levels are cycle candidates)\n  - Count objects within N hops of a change (blast-radius sizing)\n  - Answer \"how far is object X from the migration root tables?\"\n\nDo NOT use graph_bfsLevels for general lineage tracing, impact path\nanalysis, or questions about which specific objects depend on which.\nUse graph_traceLineage for those \u2014 it returns the full edge\nset with relationship detail. graph_bfsLevels returns distances and\nwave groupings, not dependency paths or edge detail.\n\nKEY DISTINCTION \u2014 root_node_list accepts EXACT FQ names only (no\nwildcards). Use graph_findRootObjects first to identify the seed\nobjects, then pass their exact FQ names here."
+ },
+ {
+  "name": "graph_connectedComponents",
+  "category": "All Tools",
+  "description": "Identify all Weakly Connected Components (WCC) in the dependency graph.\n\nPure-Python implementation \u2014 no stored procedure required.  Issues a single\nSQL SELECT to fetch the scoped edge set, then performs Union-Find WCC\npartitioning entirely in the MCP server process.\n\nA connected component is a maximal set of nodes where every node can reach\nevery other node when edge direction is ignored.  This partitions the graph\ninto isolated sub-graphs.\n\nUse this tool for:\n  - Understanding graph structure and partitioning\n  - Identifying isolated sub-graphs\n  - Scoping downstream impact analysis to a single component\n  - Pre-filtering before cycle detection (cycles exist only within a component)\n  - Identifying \"islands\" of related objects for migration or refactoring\n  - Estimating blast radius"
+ },
+ {
+  "name": "graph_detectCycles",
+  "category": "All Tools",
+  "description": "Detect circular dependencies (cycles) in the dependency graph.\n\nPure-Python implementation \u2014 no stored procedure required.  Issues a single\nSQL SELECT to fetch the scoped edge set, then performs WCC partitioning\nfollowed by iterative DFS cycle detection entirely in the MCP server process.\n\nUse this tool for:\n  - Validating graph integrity (DAG property)\n  - Finding objects that form circular references\n  - Identifying stub-then-replace code patterns\n  - Debugging topological sort hangs\n  - Pre-deployment cycle checks"
+ },
+ {
+  "name": "graph_edgeContractDDL",
+  "category": "All Tools",
+  "description": "Generate DDL for a Graph Edge Contract-conforming table or view.\n\nThis tool does NOT require a database connection \u2014 it generates DDL\ntext from templates. No SQL is executed. The conn parameter is\naccepted for ModuleLoader calling convention compatibility but is\nnot used.\n\nRequired columns in the generated schema (6):\n  Src_Container_Name, Src_Object_Name, Src_Kind,\n  Tgt_Container_Name, Tgt_Object_Name, Tgt_Kind\n\nOptional enrichment columns (2):\n  Edge_Relationship   \u2014 nature of the edge (ETL_INPUT, ETL_OUTPUT, DIRECT\u2026)\n  Transformation_Type \u2014 process category (ETL, FEATURE_ENG, AGGREGATION\u2026)\n  These are ignored by graph analysis tools but useful for visualisation.\n\nAI-Native Data Product shortcut:\n  If you are working within an AI-Native Data Product, the view\n  {ProductName}_Semantic.lineage_graph (Observability Module v1.5)\n  already conforms to this contract. You do not need to generate DDL\n  \u2014 pass that view's fully-qualified name directly as edge_repository\n  on any graph_* tool. Example:\n    edge_repository='StGeoMortgage_Semantic.lineage_graph'"
+ },
+ {
+  "name": "graph_findRootObjects",
+  "category": "All Tools",
+  "description": "Find root objects (objects with no upstream dependencies) in specified containers.\n\nRoot objects are ideal starting points for downstream impact analysis as they\nrepresent the foundational data sources that nothing else depends upon.\n\nUse this for:\n- Finding starting points for downstream impact analysis\n- Identifying source tables and base objects in data pipelines\n- Discovering independent objects that can be safely analysed in isolation\n- Understanding data flow origins in a schema or database\n- Planning migration or refactoring by identifying foundation objects"
+ },
+ {
+  "name": "graph_traceLineage",
+  "category": "All Tools",
+  "description": "Analyse object dependencies in Teradata. Supports wildcards (%) and CSV patterns.\n\nHybrid implementation \u2014 no stored procedure required.  Python constructs\nTeradata recursive CTEs that execute entirely server-side.  Only the\nreachable subgraph crosses the network \u2014 not the full edge table.\n\nExamples: 'DB.Table' (single), '%WBC%.%' (wildcard), 'DB.T1,DB.T2' (CSV)\n\nFinds upstream dependencies (what the object depends on) and downstream\ndependents (what depends on the object).  Returns nodes and edges\nrepresenting the dependency subgraph.\n\nWhen multiple patterns are provided via CSV, one upstream CTE and one\ndownstream CTE is executed per pattern.  Results are merged and\ndeduplicated by Python before assembly.\n\nUse this for:\n  - Impact analysis: \"What breaks if I change or drop this object?\"\n  - Lineage tracing: \"Where does this data come from?\"\n  - Dependency discovery: \"What does this object use?\"\n  - Pre-deployment validation: checking impacts before making changes"
+ }
+]

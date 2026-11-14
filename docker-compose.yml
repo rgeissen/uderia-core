@@ -1,0 +1,166 @@
+services:
+  uderia:
+    # This 'build' section tells Compose to use your Dockerfile
+    build:
+      context: . # Assumes Dockerfile is in this directory
+      dockerfile: Dockerfile
+      args:
+        # Stamp the deployed version into the image (read by get_app_version() →
+        # shown in the info modal). Defaults to the release tag; override with the
+        # exact git description for point-in-time builds, e.g.:
+        #   UDERIA_VERSION="$(git describe --tags)" docker compose build
+        UDERIA_VERSION: ${UDERIA_VERSION:-v1.28}
+    # This will be the name of the image after it's built
+    image: uderia-v1-28:latest
+
+    # This is the container name from your JSON config
+    container_name: uderia-v1-28
+
+    # Memory limit to prevent OOM killing the host.  6g: a 200k-row industry-model
+    # (re)deploy peaks ~0.75 GB above the ~1.5 GB idle footprint (embedding model +
+    # graph caches), and a long-lived process that redeploys model after model was
+    # OOM-killed at 4g on the eleventh.
+    mem_limit: "6g"
+    memswap_limit: "6g"
+
+    # This 'command' overrides the default CMD in the Dockerfile
+    # It's taken directly from the "cmd" field in your JSON
+    command: python -m trusted_data_agent.main --host 0.0.0.0 --port 5050 --nogitcall
+    
+    # Port mapping is now configured to expose port 5050 on the host
+    ports:
+      - "5050:5050"
+      
+      
+    environment:
+      # Response compression (gzip) kill switch — see core/compression.py.
+      # Compression is ON by default. To disable it without a code change or a rebuild,
+      # put UDERIA_COMPRESSION=off in the (untracked) .env beside this file and restart
+      # the container. Declared here because Docker does NOT forward host environment
+      # variables into a container unless they are listed in this block.
+      - UDERIA_COMPRESSION=${UDERIA_COMPRESSION:-on}
+      # Preflight JOIN-key check (see core/config.py PREFLIGHT_JOIN_MODE): observe | enforce | off.
+      # A JOIN between two tables whose key the bound ontology declares, on columns that are
+      # not that key, is refused before the database sees it under 'enforce'. Set in .env.
+      - TDA_PREFLIGHT_JOIN_MODE=${TDA_PREFLIGHT_JOIN_MODE:-observe}
+      # Preflight text-date check (see core/config.py PREFLIGHT_TEXT_DATE_MODE): observe | enforce | off.
+      # A DATE the ontology knows is deployed as text, used lexically (string comparison,
+      # bare ORDER BY / MIN / MAX, SUBSTR bucket), is refused before the database sees it
+      # under 'enforce', naming the CAST … FORMAT rewrite. Set in .env.
+      - TDA_PREFLIGHT_TEXT_DATE_MODE=${TDA_PREFLIGHT_TEXT_DATE_MODE:-observe}
+      # Preflight value-existence check (see core/config.py PREFLIGHT_VALUE_MODE): observe | enforce | off.
+      - TDA_PREFLIGHT_VALUE_MODE=${TDA_PREFLIGHT_VALUE_MODE:-observe}
+      # Preflight column-existence check (see core/config.py PREFLIGHT_COLUMN_MODE): observe | enforce | off.
+      - TDA_PREFLIGHT_COLUMN_MODE=${TDA_PREFLIGHT_COLUMN_MODE:-observe}
+      # Preflight decimal-division warning (see core/config.py PREFLIGHT_DECIMAL_MODE): observe | enforce | off.
+      - TDA_PREFLIGHT_DECIMAL_MODE=${TDA_PREFLIGHT_DECIMAL_MODE:-observe}
+      # Schema ledger: back up tda_auth.db before a start that changes its schema; required refuses
+      # the start when the backup fails, best_effort proceeds with a warning, off skips it.
+      - TDA_SCHEMA_BACKUP=${TDA_SCHEMA_BACKUP:-required}
+      # Semantic seeding for knowledge-graph retrieval (core/config.py KG_SEMANTIC_SEEDING).
+      # ON by default: the query's nearest entities by meaning join the lexical candidate
+      # pool, so a question phrased in business vocabulary still reaches the right node.
+      # Set to false to run lexical-only. The per-graph embedding matrices persist under
+      # KG_SEMANTIC_INDEX_DIR so a restart re-loads instead of re-embedding.
+      - TDA_KG_SEMANTIC_SEEDING=${TDA_KG_SEMANTIC_SEEDING:-true}
+      - TDA_KG_SEMANTIC_INDEX_DIR=${TDA_KG_SEMANTIC_INDEX_DIR:-.cache/kg_semantic}
+      # --- Beyond-the-Claude-agent increments S1–S10 (docs/roadmap/BEYOND_CLAUDE_CONVERSATION_AGENT.md).
+      # Each is a deployment master (core/config.py); 0 ⇒ the pre-increment behaviour byte for byte.
+      # Defaults below are the recommended posture; override any one in the (untracked) .env.
+      # S1 the answer streams and a Stop keeps the partial; the outbound guardrail governs the stream.
+      - TDA_ANSWER_STREAMING=${TDA_ANSWER_STREAMING:-1}
+      # S2 prompt caching (cost only — never changes what the model reads); a miss on an
+      # unchanged prefix of a signed agent is a SIGNED finding, not a block.
+      - TDA_PROMPT_CACHING=${TDA_PROMPT_CACHING:-1}
+      # S3 TDA_Compute + figure lineage: the one increment that adds a tool + companion skill
+      # to every data turn — verify with a real turn per class after the first flip.
+      - TDA_COMPUTE_LINEAGE=${TDA_COMPUTE_LINEAGE:-1}
+      # PROP-006 the combine step (TDA_Compute op "sql", joins across data sources); effective
+      # only with TDA_COMPUTE_LINEAGE on. OFF until verified live.
+      - TDA_COMPUTE_SQL=${TDA_COMPUTE_SQL:-0}
+      # S4 classified retries, backoff, honest refusals, sealed recovery steps; a FALLBACK
+      # model is a per-profile binding (llmFallbackConfigurationId), not this switch.
+      - TDA_RESILIENCE_ENVELOPE=${TDA_RESILIENCE_ENVELOPE:-1}
+      # S4 review: the per-ATTEMPT SDK timeout (seconds) applied to the Anthropic/Google clients
+      # while the envelope is on — a hung provider fails INSIDE the attempt loop (retry / fallback
+      # / breaker) instead of being cancelled from outside by the whole-call timeout
+      - TDA_LLM_ATTEMPT_TIMEOUT_SECONDS=${TDA_LLM_ATTEMPT_TIMEOUT_SECONDS:-45}
+      # S5/S7 arm the mechanism; each is INERT until a profile opts in
+      # (turnBudget · outcomeConfig.enabled + a gate at annotate/enforce). The tool surface (S6)
+      # has no switch: the agent's own "Tools in context" setting is the control.
+      - TDA_TURN_BUDGET=${TDA_TURN_BUDGET:-1}
+      - TDA_OUTCOME_LOOP=${TDA_OUTCOME_LOOP:-1}
+      # S8 Regenerate ▾ / Edit → branch on every answer (costs nothing until used).
+      - TDA_TURN_LINEAGE=${TDA_TURN_LINEAGE:-1}
+      # S9 the platform reads attachments itself — OFF until the image carries the OCR extras
+      # (`pip install rapidocr-onnxruntime pdfplumber`); without them every image reads "not readable".
+      - TDA_ATTACHMENT_SOURCES=${TDA_ATTACHMENT_SOURCES:-0}
+      # S10 steer mid-turn + reattach a running turn after a drop (per-process event log —
+      # this deployment is one process; a multi-worker deployment needs a shared store).
+      - TDA_STEER_REATTACH=${TDA_STEER_REATTACH:-1}
+      # PROP-008 ACT (model + instance act). OFF: byte-identical baseline until the
+      # increments are live-verified on this deployment.
+      # PROP-009 evidence bundles: an artefact's signed bytes travel up to this size
+      # (larger content is exported as its hash only, unless asked for explicitly).
+      - TDA_EVIDENCE_CONTENT_LIMIT_BYTES=${TDA_EVIDENCE_CONTENT_LIMIT_BYTES:-262144}
+      # PROP-009 key custody (opt-in): local = the key file (default); command = an external
+      # signer (HSM/KMS/Vault) the server can ask but cannot read. Anchoring (opt-in): publish
+      # signed ledger checkpoints to file | webhook | rfc3161 at TDA_EVIDENCE_ANCHOR_TARGET.
+      - TDA_EVIDENCE_SIGNER=${TDA_EVIDENCE_SIGNER:-local}
+      - TDA_EVIDENCE_SIGNER_COMMAND=${TDA_EVIDENCE_SIGNER_COMMAND:-}
+      - TDA_EVIDENCE_SIGNER_PUBLIC_KEY=${TDA_EVIDENCE_SIGNER_PUBLIC_KEY:-}
+      - TDA_EVIDENCE_ANCHOR=${TDA_EVIDENCE_ANCHOR:-}
+      - TDA_EVIDENCE_ANCHOR_TARGET=${TDA_EVIDENCE_ANCHOR_TARGET:-}
+      - TDA_EVIDENCE_ANCHOR_TOKEN=${TDA_EVIDENCE_ANCHOR_TOKEN:-}
+      - TDA_EVIDENCE_ANCHOR_INTERVAL_SECONDS=${TDA_EVIDENCE_ANCHOR_INTERVAL_SECONDS:-3600}
+      # Federal hardening (docs/Architecture/SECURITY_ARCHITECTURE.md §13). Every value
+      # below is EMPTY unless set in the untracked .env, and empty means "unset" to the
+      # code, so an instance that sets nothing behaves exactly as before.
+      # TDA_ENCRYPTION_KEY derives the keys for every stored secret. Never set it by hand
+      # on an instance that already holds secrets: run maintenance/rotate_encryption_key.py
+      # (server stopped) — it re-encrypts all of them and writes the key to .env.
+      - TDA_ENCRYPTION_KEY=${TDA_ENCRYPTION_KEY:-}
+      # Encrypts the Ed25519 evidence-signing key at rest (a plain key file is migrated in
+      # place on first start, same public key). Keep it: losing it loses the signing key.
+      - TDA_PROVENANCE_KEY_PASSPHRASE=${TDA_PROVENANCE_KEY_PASSPHRASE:-}
+      # hardened: refuse to start with an insecure key, require a server record for every
+      # session token, idle timeout 30 min by default.
+      - TDA_SECURITY_PROFILE=${TDA_SECURITY_PROFILE:-}
+      - TDA_SESSION_IDLE_MINUTES=${TDA_SESSION_IDLE_MINUTES:-}
+      # Audit: append-only window (days, minimum 365) and optional SIEM export
+      # (syslog udp://host:514 | tcp://host:6514, and/or a JSON-lines file path).
+      - TDA_AUDIT_RETENTION_DAYS=${TDA_AUDIT_RETENTION_DAYS:-}
+      - TDA_AUDIT_SYSLOG=${TDA_AUDIT_SYSLOG:-}
+      - TDA_AUDIT_JSONL=${TDA_AUDIT_JSONL:-}
+      # SAML IdP-initiated login is off unless this is 1.
+      - TDA_SAML_ALLOW_IDP_INITIATED=${TDA_SAML_ALLOW_IDP_INITIATED:-}
+      # Application-specific variables
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5050}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:5050}
+      # Secret key for session security and cryptographic signing. Change this to a strong random string in production or use .env file.
+      - SECRET_KEY=${SECRET_KEY}
+      # --- Text-to-Speech (TTS) Bootstrap ---
+      # Set TDA_TTS_CREDENTIALS to auto-enable global TTS on first startup.
+      # Provide the full Google service account JSON inline:
+      #   TDA_TTS_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
+      # Alternatively, mount a service account file and set GOOGLE_APPLICATION_CREDENTIALS:
+      #   GOOGLE_APPLICATION_CREDENTIALS=/app/tts-credentials.json
+      # On startup, if tts_mode is 'disabled' and no credentials exist in the DB yet,
+      # the credentials are encrypted, stored in the database, and tts_mode is set to 'global'.
+      # After bootstrap, the env var is no longer needed (credentials persist in the DB).
+      # - TDA_TTS_CREDENTIALS=${TDA_TTS_CREDENTIALS}
+      
+    networks:
+      - tda_network
+      
+    
+    # Restart after a crash, a failed start or a Docker daemon restart. "always", not
+    # "unless-stopped": on 2026-09-29 a daemon restart left every unless-stopped container down,
+    # while the "always" ones came back.
+    restart: always
+
+# Define the bridge network
+networks:
+  tda_network:
+    driver: bridge
+    name: TDA_Network

@@ -1,0 +1,30 @@
+{
+  "module_id": "user_memory",
+  "display_name": "Agent Memory",
+  "version": "1.0.0",
+  "description": "Recalls durable cross-session facts/preferences about the user (Tier 2.2 A7). Delivered through the context window for every profile type.",
+  "category": "knowledge",
+
+  "capabilities": {
+    "condensable": true,
+    "purgeable": false,
+    "has_cache": false
+  },
+
+  "applicability": {
+    "profile_types": ["tool_enabled", "llm_only", "rag_focused", "genie"],
+    "required": false
+  },
+
+  "defaults": {
+    "priority": 65,
+    "target_pct": 4,
+    "min_pct": 0,
+    "max_pct": 12
+  },
+
+  "handler": {
+    "file": "handler.py",
+    "class": "UserMemoryModule"
+  }
+}

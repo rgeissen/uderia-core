@@ -1,0 +1,1202 @@
+{
+ "_source": "prod session ce559107 turn 2 (2026-10-05), @PXPROD, Policing Core Model \u2014 enrichment trimmed (value domains, full column lists, class bridges, text-date facts dropped); tool events kept; attribute facts kept for Incident and Offence only",
+ "user_query": "Show me robberies per month \u2014 is robbery a rising or falling crime?",
+ "kg_enrichment_event": {
+  "enrichments": [
+   {
+    "kg_owner_profile_id": "profile-027fc02a-00d7-4ff1-865a-71f2081bb23f",
+    "kg_id": "141a8f48-a84e-4ff4-80f4-da307e8a95e1",
+    "kg_name": "Policing Core Model (NIBRS + CASE)",
+    "entity_count": 129,
+    "relationship_count": 141,
+    "entity_types": [
+     "attribute",
+     "domain",
+     "product_bridge",
+     "entity"
+    ],
+    "entity_names": [
+     "Policing Core.crime",
+     "Policing Core.evidence",
+     "Policing Core.Agency",
+     "Policing Core.Arrestee",
+     "Policing Core.Bias",
+     "Policing Core.CaseObject",
+     "Policing Core.ChainOfCustody",
+     "Policing Core.EmailMessage",
+     "Policing Core.File",
+     "Policing Core.Incident",
+     "Policing Core.Offence",
+     "Policing Core.Offence_SuspectedOfUsing",
+     "Policing Core.Offender",
+     "Policing Core.Property",
+     "Policing Core.Url",
+     "Policing Core.Victim",
+     "Policing Core.Weapon",
+     "Policing Core.bridge.Offence__CaseObject"
+    ],
+    "grounding": {
+     "mode": "live"
+    },
+    "semantic_seeding": {
+     "state": "ready",
+     "hits": 1,
+     "bridged": [],
+     "bridged_dropped": 0
+    },
+    "scope_databases": [
+     "Policing_Core"
+    ],
+    "scope_entities": [
+     "Policing Core.Agency",
+     "Policing Core.Arrestee",
+     "Policing Core.Bias",
+     "Policing Core.CaseObject",
+     "Policing Core.ChainOfCustody",
+     "Policing Core.EmailMessage",
+     "Policing Core.File",
+     "Policing Core.Incident",
+     "Policing Core.Offence",
+     "Policing Core.Offence_SuspectedOfUsing",
+     "Policing Core.Offender",
+     "Policing Core.Property",
+     "Policing Core.Url",
+     "Policing Core.Victim",
+     "Policing Core.Weapon",
+     "Policing Core.bridge.Offence__CaseObject"
+    ],
+    "table_columns": {
+     "Policing_Core.v_Incident": [
+      "cargo_theft_code",
+      "exceptional_clearance_date_text",
+      "cargo_theft",
+      "ori",
+      "incident_date_text",
+      "incident_number",
+      "exceptional_clearance",
+      "state_code",
+      "exceptional_clearance_code"
+     ],
+     "Policing_Core.v_Offence": [
+      "location_type_code",
+      "attempt_complete",
+      "method_of_entry_code",
+      "offence_seq",
+      "location_type",
+      "method_of_entry",
+      "premises_entered",
+      "offence_code",
+      "offence_type",
+      "attempt_complete_code"
+     ]
+    },
+    "metrics": [],
+    "fanout_keys": [],
+    "join_keys": [
+     {
+      "tables": [
+       "v_agency",
+       "v_incident"
+      ],
+      "key": [
+       "ori"
+      ]
+     },
+     {
+      "tables": [
+       "v_arrestee",
+       "v_incident"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_bias",
+       "v_incident"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_incident",
+       "v_offence"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_incident",
+       "v_offender"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_incident",
+       "v_property"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_incident",
+       "v_victim"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_incident",
+       "v_weapon"
+      ],
+      "key": [
+       "ori",
+       "incident_number"
+      ]
+     },
+     {
+      "tables": [
+       "v_offence",
+       "v_offence_suspectedofusing"
+      ],
+      "key": [
+       "ori",
+       "incident_number",
+       "offence_seq"
+      ]
+     }
+    ],
+    "subject_areas": {
+     "v_agency": "crime",
+     "v_arrestee": "crime",
+     "v_bias": "crime",
+     "v_caseobject": "evidence",
+     "v_chainofcustody": "evidence",
+     "v_emailmessage": "evidence",
+     "v_file": "evidence",
+     "v_incident": "crime",
+     "v_offence": "crime",
+     "v_offence_suspectedofusing": "crime",
+     "v_offender": "crime",
+     "v_property": "crime",
+     "v_url": "evidence",
+     "v_victim": "crime",
+     "v_weapon": "crime"
+    },
+    "question_terms": [
+     "robberies",
+     "per",
+     "month",
+     "robbery",
+     "rising",
+     "falling",
+     "crime"
+    ],
+    "seeds": [
+     {
+      "name": "Policing Core.crime",
+      "type": "domain",
+      "score": 100,
+      "reasons": [
+       "exact identifier"
+      ],
+      "terms": [
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Offence.offence_code",
+      "type": "attribute",
+      "score": 50,
+      "reasons": [
+       "decoded value"
+      ],
+      "terms": [
+       "per",
+       "robbery"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Arrestee.arrest_offence_code",
+      "type": "attribute",
+      "score": 50,
+      "reasons": [
+       "decoded value"
+      ],
+      "terms": [
+       "per",
+       "robbery"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Property.loss_type_code",
+      "type": "attribute",
+      "score": 35,
+      "reasons": [
+       "description mentions",
+       "decoded value"
+      ],
+      "terms": [
+       "per",
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Offence.location_type_code",
+      "type": "attribute",
+      "score": 30,
+      "reasons": [
+       "decoded value",
+       "description mentions"
+      ],
+      "terms": [
+       "per",
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Property.description_code",
+      "type": "attribute",
+      "score": 30,
+      "reasons": [
+       "description mentions",
+       "decoded value"
+      ],
+      "terms": [
+       "per"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Weapon.weapon_force_code",
+      "type": "attribute",
+      "score": 25,
+      "reasons": [
+       "decoded value"
+      ],
+      "terms": [
+       "per"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Incident.incident_date_text",
+      "type": "attribute",
+      "score": 10,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "per",
+       "month"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Victim.victim_type_code",
+      "type": "attribute",
+      "score": 10,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "robbery",
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Victim.resident_status_code",
+      "type": "attribute",
+      "score": 10,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "per",
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Property.ori",
+      "type": "attribute",
+      "score": 5,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Bias.ori",
+      "type": "attribute",
+      "score": 5,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Incident.ori",
+      "type": "attribute",
+      "score": 5,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.Offender.ori",
+      "type": "attribute",
+      "score": 5,
+      "reasons": [
+       "description mentions"
+      ],
+      "terms": [
+       "crime"
+      ],
+      "channel": "lexical"
+     },
+     {
+      "name": "Policing Core.bridge.Offence__CaseObject",
+      "type": "product_bridge",
+      "score": 0,
+      "reasons": [],
+      "terms": [],
+      "channel": "lexical"
+     }
+    ],
+    "provenance": {
+     "Policing Core.crime": "seed",
+     "Policing Core.Agency": "seed",
+     "Policing Core.Arrestee": "seed",
+     "Policing Core.Bias": "seed",
+     "Policing Core.Incident": "seed",
+     "Policing Core.Offence": "seed",
+     "Policing Core.Offence_SuspectedOfUsing": "seed",
+     "Policing Core.Offender": "seed",
+     "Policing Core.Property": "seed",
+     "Policing Core.Victim": "seed",
+     "Policing Core.Weapon": "seed",
+     "Policing Core.Offence.offence_code": "seed",
+     "Policing Core.Arrestee.arrest_offence_code": "seed",
+     "Policing Core.Property.loss_type_code": "seed",
+     "Policing Core.Offence.location_type_code": "seed",
+     "Policing Core.Property.description_code": "seed",
+     "Policing Core.Weapon.weapon_force_code": "seed",
+     "Policing Core.Incident.incident_date_text": "seed",
+     "Policing Core.Victim.victim_type_code": "seed",
+     "Policing Core.Victim.resident_status_code": "seed",
+     "Policing Core.Property.ori": "seed",
+     "Policing Core.Bias.ori": "seed",
+     "Policing Core.Incident.ori": "seed",
+     "Policing Core.Offender.ori": "seed",
+     "Policing Core.bridge.Offence__CaseObject": "seed",
+     "Policing Core.CaseObject": "seed",
+     "Policing Core.ChainOfCustody": "fk_chain",
+     "Policing Core.EmailMessage": "fk_chain",
+     "Policing Core.File": "fk_chain",
+     "Policing Core.Url": "fk_chain",
+     "Policing Core.Offence.attempt_complete_code": "column",
+     "Policing Core.Offence.method_of_entry_code": "column",
+     "Policing Core.Offence.attempt_complete": "column",
+     "Policing Core.Offence.location_type": "column",
+     "Policing Core.Offence.method_of_entry": "column",
+     "Policing Core.Offence.offence_seq": "column",
+     "Policing Core.Offence.offence_type": "column",
+     "Policing Core.Offence.premises_entered": "column",
+     "Policing Core.Arrestee.ori": "column",
+     "Policing Core.Arrestee.armed_with_code": "column",
+     "Policing Core.Arrestee.arrest_type_code": "column",
+     "Policing Core.Arrestee.ethnicity_code": "column",
+     "Policing Core.Arrestee.race_code": "column",
+     "Policing Core.Arrestee.sex_code": "column",
+     "Policing Core.Arrestee.age": "column",
+     "Policing Core.Arrestee.armed_with": "column",
+     "Policing Core.Arrestee.arrest_date_text": "column",
+     "Policing Core.Arrestee.arrest_offence": "column",
+     "Policing Core.Arrestee.arrest_type": "column",
+     "Policing Core.Arrestee.arrestee_seq": "column",
+     "Policing Core.Property.date_recovered_text": "column",
+     "Policing Core.Property.description": "column",
+     "Policing Core.Property.incident_number": "column",
+     "Policing Core.Property.loss_type": "column",
+     "Policing Core.Property.property_seq": "column",
+     "Policing Core.Property.value_amount": "column",
+     "Policing Core.Weapon.ori": "column",
+     "Policing Core.Weapon.incident_number": "column",
+     "Policing Core.Weapon.weapon_force": "column",
+     "Policing Core.Weapon.weapon_seq": "column",
+     "Policing Core.Incident.cargo_theft_code": "column",
+     "Policing Core.Incident.exceptional_clearance_code": "column",
+     "Policing Core.Incident.state_code": "column",
+     "Policing Core.Incident.cargo_theft": "column",
+     "Policing Core.Incident.exceptional_clearance": "column",
+     "Policing Core.Incident.exceptional_clearance_date_text": "column",
+     "Policing Core.Incident.incident_number": "column",
+     "Policing Core.Victim.ori": "column",
+     "Policing Core.Victim.ethnicity_code": "column",
+     "Policing Core.Victim.race_code": "column",
+     "Policing Core.Victim.relationship_to_offender_code": "column",
+     "Policing Core.Victim.sex_code": "column",
+     "Policing Core.Victim.age": "column",
+     "Policing Core.Victim.ethnicity": "column",
+     "Policing Core.Victim.incident_number": "column",
+     "Policing Core.Victim.race": "column",
+     "Policing Core.Victim.relationship_to_offender": "column",
+     "Policing Core.Victim.resident_status": "column",
+     "Policing Core.Victim.sex": "column",
+     "Policing Core.Bias.bias_motivation_code": "column",
+     "Policing Core.Bias.bias_motivation": "column",
+     "Policing Core.Bias.bias_seq": "column",
+     "Policing Core.Bias.incident_number": "column",
+     "Policing Core.Offender.ethnicity_code": "column",
+     "Policing Core.Offender.race_code": "column",
+     "Policing Core.Offender.sex_code": "column",
+     "Policing Core.Offender.age": "column",
+     "Policing Core.Offender.ethnicity": "column",
+     "Policing Core.Offender.incident_number": "column",
+     "Policing Core.Offender.offender_seq": "column",
+     "Policing Core.Offender.race": "column",
+     "Policing Core.Offender.sex": "column",
+     "Policing Core.Agency.city": "column",
+     "Policing Core.Agency.core_city": "column",
+     "Policing Core.Agency.country_region": "column",
+     "Policing Core.Agency.state_abbr": "column",
+     "Policing Core.Agency.agency_type_code": "column",
+     "Policing Core.Agency.core_city_code": "column",
+     "Policing Core.Agency.country_division_code": "column",
+     "Policing Core.Agency.country_region_code": "column",
+     "Policing Core.Agency.nibrs_active_code": "column",
+     "Policing Core.Agency.population_group_code": "column",
+     "Policing Core.Agency.agency_type": "column",
+     "Policing Core.Agency.country_division": "column",
+     "Policing Core.CaseObject.object_id": "column",
+     "Policing Core.CaseObject.source_bundle_id": "column",
+     "Policing Core.CaseObject.created_at": "column",
+     "Policing Core.CaseObject.primary_type": "column",
+     "Policing Core.Offence_SuspectedOfUsing.suspected_of_using_code": "column",
+     "Policing Core.Offence_SuspectedOfUsing.suspected_of_using": "column",
+     "Policing Core.ChainOfCustody.action_name": "column",
+     "Policing Core.ChainOfCustody.evidence_object_id": "column",
+     "Policing Core.ChainOfCustody.tool_id": "column",
+     "Policing Core.ChainOfCustody.exhibit_description": "column",
+     "Policing Core.ChainOfCustody.exhibit_number": "column",
+     "Policing Core.ChainOfCustody.seizure_or_acquisition_time": "column",
+     "Policing Core.EmailMessage.object_id": "column",
+     "Policing Core.EmailMessage.body": "column",
+     "Policing Core.EmailMessage.from_address": "column",
+     "Policing Core.EmailMessage.sent_time": "column",
+     "Policing Core.EmailMessage.subject": "column",
+     "Policing Core.EmailMessage.to_address": "column",
+     "Policing Core.File.file_name": "column",
+     "Policing Core.File.object_id": "column",
+     "Policing Core.File.file_extension": "column",
+     "Policing Core.Url.domain_name": "column",
+     "Policing Core.Url.object_id": "column",
+     "Policing Core.Url.url_address": "column",
+     "Policing Core.evidence": "semantic"
+    },
+    "entity_relationships": [
+     {
+      "source": "Policing Core.Agency",
+      "target": "Policing Core.Incident",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Agency__Incident",
+      "from_columns": [
+       "ori"
+      ],
+      "to_columns": [
+       "ori"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.CaseObject",
+      "target": "Policing Core.ChainOfCustody",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "CaseObject__ChainOfCustody",
+      "from_columns": [
+       "object_id"
+      ],
+      "to_columns": [
+       "evidence_object_id"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.EmailMessage",
+      "target": "Policing Core.CaseObject",
+      "type": "is_a",
+      "cardinality": null,
+      "name": "EmailMessage__CaseObject",
+      "from_columns": [
+       "object_id"
+      ],
+      "to_columns": [
+       "object_id"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.File",
+      "target": "Policing Core.CaseObject",
+      "type": "is_a",
+      "cardinality": null,
+      "name": "File__CaseObject",
+      "from_columns": [
+       "object_id"
+      ],
+      "to_columns": [
+       "object_id"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Offence",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Offence",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Offender",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Offender",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Property",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Property",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Weapon",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Weapon",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Bias",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Bias",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Arrestee",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Arrestee",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Incident",
+      "target": "Policing Core.Victim",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Incident__Victim",
+      "from_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Offence",
+      "target": "Policing Core.Offence_SuspectedOfUsing",
+      "type": "foreign_key",
+      "cardinality": "1:N",
+      "name": "Offence__Offence_SuspectedOfUsing",
+      "from_columns": [
+       "ori",
+       "incident_number",
+       "offence_seq"
+      ],
+      "to_columns": [
+       "ori",
+       "incident_number",
+       "offence_seq"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.Url",
+      "target": "Policing Core.CaseObject",
+      "type": "is_a",
+      "cardinality": null,
+      "name": "Url__CaseObject",
+      "from_columns": [
+       "object_id"
+      ],
+      "to_columns": [
+       "object_id"
+      ],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.bridge.Offence__CaseObject",
+      "target": "Policing Core.Offence",
+      "type": "relates_to",
+      "cardinality": null,
+      "name": null,
+      "from_columns": [],
+      "to_columns": [],
+      "mechanism": null
+     },
+     {
+      "source": "Policing Core.bridge.Offence__CaseObject",
+      "target": "Policing Core.CaseObject",
+      "type": "relates_to",
+      "cardinality": null,
+      "name": null,
+      "from_columns": [],
+      "to_columns": [],
+      "mechanism": null
+     }
+    ],
+    "attribute_facts": {
+     "Policing Core.Incident": {
+      "cargo_theft": {
+       "type": "VARCHAR(512)",
+       "semantic": "category",
+       "decoded_from": "cargo_theft_code",
+       "label": "cargo_theft"
+      },
+      "cargo_theft_code": {
+       "type": "CHAR(1)",
+       "semantic": "code",
+       "decoded_as": "cargo_theft",
+       "label": "cargo_theft_code",
+       "coded": true
+      },
+      "exceptional_clearance": {
+       "type": "VARCHAR(512)",
+       "semantic": "category",
+       "decoded_from": "exceptional_clearance_code",
+       "label": "exceptional_clearance"
+      },
+      "exceptional_clearance_code": {
+       "type": "VARCHAR(1)",
+       "semantic": "code",
+       "decoded_as": "exceptional_clearance",
+       "label": "exceptional_clearance_code",
+       "coded": true
+      },
+      "exceptional_clearance_date_text": {
+       "type": "VARCHAR(11)",
+       "semantic": "date",
+       "shape": "DD-MMM-YYYY",
+       "span": [
+        "2023-01-01",
+        "2024-03-31"
+       ],
+       "label": "exceptional_clearance_date_text"
+      },
+      "incident_date_text": {
+       "type": "CHAR(11)",
+       "semantic": "date",
+       "shape": "DD-MMM-YYYY",
+       "span": [
+        "2023-01-01",
+        "2023-12-31"
+       ],
+       "label": "incident_date_text"
+      },
+      "incident_number": {
+       "type": "VARCHAR(12)",
+       "semantic": "identifier",
+       "label": "incident_number",
+       "pii": true
+      },
+      "ori": {
+       "type": "CHAR(9)",
+       "semantic": "identifier",
+       "label": "ori",
+       "pii": true
+      },
+      "state_code": {
+       "type": "VARCHAR(2)",
+       "semantic": "code",
+       "label": "state_code",
+       "pii": true
+      }
+     },
+     "Policing Core.Offence": {
+      "attempt_complete": {
+       "type": "VARCHAR(512)",
+       "semantic": "category",
+       "decoded_from": "attempt_complete_code",
+       "label": "attempt_complete"
+      },
+      "attempt_complete_code": {
+       "type": "CHAR(1)",
+       "semantic": "code",
+       "decoded_as": "attempt_complete",
+       "label": "attempt_complete_code",
+       "coded": true
+      },
+      "location_type": {
+       "type": "VARCHAR(512)",
+       "semantic": "category",
+       "decoded_from": "location_type_code",
+       "label": "location_type"
+      },
+      "location_type_code": {
+       "type": "VARCHAR(2)",
+       "semantic": "code",
+       "decoded_as": "location_type",
+       "label": "location_type_code",
+       "coded": true
+      },
+      "method_of_entry": {
+       "type": "VARCHAR(512)",
+       "semantic": "category",
+       "decoded_from": "method_of_entry_code",
+       "label": "method_of_entry"
+      },
+      "method_of_entry_code": {
+       "type": "VARCHAR(1)",
+       "semantic": "code",
+       "decoded_as": "method_of_entry",
+       "label": "method_of_entry_code",
+       "coded": true
+      },
+      "offence_code": {
+       "type": "VARCHAR(3)",
+       "semantic": "code",
+       "decoded_as": "offence_type",
+       "label": "offence_code",
+       "pii": true,
+       "coded": true
+      },
+      "offence_seq": {
+       "type": "BYTEINT",
+       "semantic": "identifier",
+       "label": "offence_seq"
+      },
+      "offence_type": {
+       "type": "VARCHAR(512)",
+       "semantic": "category",
+       "decoded_from": "offence_code",
+       "label": "offence_type",
+       "pii": true
+      },
+      "premises_entered": {
+       "type": "VARCHAR(2)",
+       "semantic": "measure",
+       "label": "premises_entered",
+       "pii": true
+      }
+     }
+    },
+    "entity_keys": {
+     "Policing Core.Agency": [
+      "ori"
+     ],
+     "Policing Core.CaseObject": [
+      "object_id",
+      "source_bundle_id"
+     ],
+     "Policing Core.Incident": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Offence": [
+      "ori",
+      "incident_number",
+      "offence_seq"
+     ],
+     "Policing Core.Arrestee": [
+      "arrestee_seq",
+      "ori"
+     ],
+     "Policing Core.Bias": [
+      "bias_seq",
+      "incident_number",
+      "ori"
+     ],
+     "Policing Core.ChainOfCustody": [
+      "evidence_object_id",
+      "exhibit_number",
+      "tool_id"
+     ],
+     "Policing Core.EmailMessage": [
+      "object_id"
+     ],
+     "Policing Core.File": [
+      "object_id"
+     ],
+     "Policing Core.Offender": [
+      "incident_number",
+      "offender_seq",
+      "ori"
+     ],
+     "Policing Core.Property": [
+      "incident_number",
+      "ori",
+      "property_seq"
+     ],
+     "Policing Core.Url": [
+      "object_id"
+     ],
+     "Policing Core.Victim": [
+      "incident_number",
+      "ori"
+     ],
+     "Policing Core.Weapon": [
+      "incident_number",
+      "ori",
+      "weapon_seq"
+     ]
+    },
+    "entity_foreign_keys": {
+     "Policing Core.Incident": [
+      "ori"
+     ],
+     "Policing Core.ChainOfCustody": [
+      "evidence_object_id"
+     ],
+     "Policing Core.Offence": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Offender": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Property": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Weapon": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Bias": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Arrestee": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Victim": [
+      "ori",
+      "incident_number"
+     ],
+     "Policing Core.Offence_SuspectedOfUsing": [
+      "ori",
+      "incident_number",
+      "offence_seq"
+     ]
+    },
+    "entity_facts": {
+     "Policing Core.Agency": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Agency",
+      "area": "crime",
+      "description": "A law-enforcement agency that reports incidents to NIBRS, identified by its Originating Agency Identifier (ORI).",
+      "rows": 21908,
+      "key_unique": true
+     },
+     "Policing Core.Arrestee": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Arrestee",
+      "area": "crime",
+      "description": "A person arrested in connection with an incident. Sourced one row per arrestee from the Arrestee segment.",
+      "rows": 6124701,
+      "key_unique": true
+     },
+     "Policing Core.Bias": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Bias",
+      "area": "crime",
+      "description": "A bias motivation behind an incident (the offender's bias against a victim group). NIBRS records up to five per offence; the extract carries the first offence's bias slots, surfaced here at incident grain.",
+      "rows": 13969284,
+      "key_unique": true
+     },
+     "Policing Core.CaseObject": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_CaseObject",
+      "area": "evidence",
+      "description": "A digital-evidence object in a CASE/UCO investigation graph -- the umbrella node that every typed artefact (email, file, URL) specialises. Source: the CASE_Source 'Object Node' entity.",
+      "rows": 44,
+      "key_unique": true
+     },
+     "Policing Core.ChainOfCustody": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_ChainOfCustody",
+      "area": "evidence",
+      "description": "The chain-of-custody record for a piece of evidence -- exhibit number, acquisition time and the forensic action that acquired it (CASE ProvenanceRecord + InvestigativeAction).",
+      "rows": 2,
+      "key_unique": true
+     },
+     "Policing Core.EmailMessage": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_EmailMessage",
+      "area": "evidence",
+      "description": "An email message recovered as digital evidence (UCO EmailMessageFacet); a specialisation of CaseObject.",
+      "rows": 1,
+      "key_unique": true
+     },
+     "Policing Core.File": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_File",
+      "area": "evidence",
+      "description": "A file recovered as digital evidence (UCO FileFacet); a specialisation of CaseObject.",
+      "rows": 9,
+      "key_unique": true
+     },
+     "Policing Core.Incident": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Incident",
+      "area": "crime",
+      "description": "A single reported criminal incident, the anchor of the crime area. One incident may carry up to three offences and any number of victims, offenders and arrestees.",
+      "rows": 12351550,
+      "key_unique": true
+     },
+     "Policing Core.Offence": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Offence",
+      "area": "crime",
+      "description": "An offence recorded within an incident. NIBRS holds up to three offences per incident in parallel numbered columns; each is one row here.",
+      "rows": 13969284,
+      "key_unique": true
+     },
+     "Policing Core.Offence_SuspectedOfUsing": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Offence_SuspectedOfUsing",
+      "area": "crime",
+      "description": "Whether an offender was suspected of using alcohol, drugs or computer equipment on an offence. Computer equipment is the digital-involvement signal.",
+      "rows": 1507507,
+      "key_unique": true
+     },
+     "Policing Core.Offender": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Offender",
+      "area": "crime",
+      "description": "An offender recorded in an incident. May be anonymous (demographics unknown). Sourced one row per offender from the Offender segment.",
+      "rows": 13820065,
+      "key_unique": true
+     },
+     "Policing Core.Property": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Property",
+      "area": "crime",
+      "description": "Property lost, stolen, recovered or otherwise involved in an incident. NIBRS records up to ten items per incident; the extract carries three item slots, each with its loss type, description, value and recovery date.",
+      "rows": 12700335,
+      "key_unique": true
+     },
+     "Policing Core.Url": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Url",
+      "area": "evidence",
+      "description": "A URL or domain name recovered as digital evidence (UCO URLFacet / DomainNameFacet); a specialisation of CaseObject.",
+      "rows": 1,
+      "key_unique": true
+     },
+     "Policing Core.Victim": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Victim",
+      "area": "crime",
+      "description": "A victim recorded in an incident - a person, business, financial institution, government, society or other. Sourced one row per victim from the Victim segment.",
+      "rows": 13916424,
+      "key_unique": true
+     },
+     "Policing Core.Weapon": {
+      "type": "entity",
+      "deployed": "Policing_Core.v_Weapon",
+      "area": "crime",
+      "description": "A weapon or force used in an incident. NIBRS records up to three per offence; the extract carries the first offence's weapon slots, surfaced here at incident grain.",
+      "rows": 3351179,
+      "key_unique": true
+     },
+     "Policing Core.bridge.Offence__CaseObject": {
+      "type": "product_bridge",
+      "basis": "Robbery (120) and Burglary (220) offences -- the Incident Profile characterising the Crossover Heist -- correspond to the CLASSES of digital evidence collected in the case investigation (emails, files, URLs, disk images, registry keys, exhibits). This is a CLASS-level correspondence between the deployed Offence (NIBRS) and CaseObject (CASE) entities: those offence KINDS correspond to those evidence KINDS -- state it directly. It is not a per-record join: the products share no per-record key, so it never pairs a specific offence with a specific exhibit and no single figure spans both.",
+      "mechanism": "type_correspondence"
+     }
+    },
+    "omitted_columns": {
+     "Policing Core.Arrestee": 4,
+     "Policing Core.Victim": 2,
+     "Policing Core.Agency": 3
+    },
+    "data_products": [],
+    "component_id": "knowledge_graph"
+   }
+  ]
+ },
+ "conversation_agent_events": [
+  {
+   "type": "conversation_tool_invoked",
+   "payload": {
+    "tool_name": "base_readQuery",
+    "arguments": {
+     "sql": "SELECT\n  SUBSTR(incident_date_text, 4, 3) AS month_text,\n  COUNT(*) AS robbery_count\nFROM Policing_Core.v_Incident I\nJOIN Policing_Core.v_Offence O\n  ON I.ori = O.ori AND I.incident_number = O.incident_number\nWHERE O.offence_code = '120'\n  AND SUBSTR(incident_date_text, 8, 4) = '2023'\nGROUP BY month_text\nORDER BY\n  CASE\n    WHEN month_text = 'JAN' THEN 1\n    WHEN month_text = 'FEB' THEN 2\n    WHEN month_text = 'MAR' THEN 3\n    WHEN month_text = 'APR' THEN 4\n    WHEN month_text = 'MAY' THEN 5\n    WHEN month_text = 'JUN' THEN 6\n    WHEN month_text = 'JUL' THEN 7\n    WHEN month_text = 'AUG' THEN 8\n    WHEN month_text = 'SEP' THEN 9\n    WHEN month_text = 'OCT' THEN 10\n    WHEN month_text = 'NOV' THEN 11\n    WHEN month_text = 'DEC' THEN 12\n  END;"
+    },
+    "session_id": "ce559107-a755-4068-b0d5-ec51d6a2f62e"
+   },
+   "timestamp": 1791188557.640803
+  },
+  {
+   "type": "conversation_tool_completed",
+   "payload": {
+    "tool_name": "base_readQuery",
+    "result_preview": "content=[{'type': 'text', 'text': '{\\n  \"status\": \"success\",\\n  \"results\": [\\n    {\\n      \"month_text\": \"JAN\",\\n      \"robbery_count\": \"14573\"\\n    },\\n    {\\n      \"month_text\": \"FEB\",\\n      \"robbe",
+    "duration_ms": 17027,
+    "success": true,
+    "session_id": "ce559107-a755-4068-b0d5-ec51d6a2f62e",
+    "result_rows": 12
+   },
+   "timestamp": 1791188574.668834
+  },
+  {
+   "type": "conversation_tool_invoked",
+   "payload": {
+    "tool_name": "TDA_Dashboard",
+    "arguments": {
+     "content": "| Month | Robberies |\n|---|---|\n| JAN | 14,573 |\n| FEB | 12,512 |\n| MAR | 13,615 |\n| APR | 13,854 |\n| MAY | 15,490 |\n| JUN | 15,246 |\n| JUL | 16,569 |\n| AUG | 16,068 |\n| SEP | 15,598 |\n| OCT | 15,982 |\n| NOV | 14,643 |\n| DEC | 15,043 |",
+     "tile_title": "Robberies by Month (2023)",
+     "action": "visualize",
+     "chart_type": "line"
+    },
+    "session_id": "ce559107-a755-4068-b0d5-ec51d6a2f62e"
+   },
+   "timestamp": 1791188576.2511854
+  },
+  {
+   "type": "conversation_tool_completed",
+   "payload": {
+    "tool_name": "TDA_Dashboard",
+    "result_preview": "content='{\"status\": \"success\", \"component_id\": \"dashboard\", \"title\": \"Robberies by Month (2023) \\\\u00b7 not yet on a dashboard\", \"metadata\": {}, \"render_target\": \"inline\", \"spec\": {\"view\": \"visualizat",
+    "duration_ms": 0,
+    "success": true,
+    "session_id": "ce559107-a755-4068-b0d5-ec51d6a2f62e"
+   },
+   "timestamp": 1791188576.2519913
+  }
+ ],
+ "grounding": {
+  "decision": "pass",
+  "reason": "in scope",
+  "out_of_scope_dbs": [],
+  "scope_databases": [
+   "policing_core"
+  ],
+  "ungrounded_numbers": [],
+  "numeric_fidelity": 1.0,
+  "annotation_md": null,
+  "needs_judge": false,
+  "judged": false,
+  "judge_passed": null,
+  "answer_oos_refs": [],
+  "numeric_concern": false,
+  "ground": "scope",
+  "judge_family": "scope_faithfulness",
+  "judge_score": null,
+  "judge_votes": null,
+  "unsupported_claims": [],
+  "second_chance_cleared": [],
+  "claims_checked": 0,
+  "ran": true,
+  "acted": false
+ }
+}

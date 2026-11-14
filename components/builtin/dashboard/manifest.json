@@ -1,0 +1,140 @@
+{
+  "component_id": "dashboard",
+  "display_name": "Dashboard",
+  "icon_accent": "#ec4899",
+  "answer_surface": {
+    "open": true
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>",
+  "description": "Persistent live dashboards — pin visuals from conversation into an interactive split-screen canvas with auto-refresh, edit mode, drag-and-drop layout, and multi-dashboard management",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "user",
+  "signals": {
+    "emits": [],
+    "listens": [
+      "uderia:component-changed"
+    ],
+    "announces": [
+      "created",
+      "updated",
+      "deleted",
+      "refreshed"
+    ],
+    "consumes_refs": {
+      "implicit": "latest_data"
+    },
+    "conflicts_with": [
+      "chart"
+    ]
+  },
+  "category": "Visualization",
+  "tool_definition": {
+    "name": "TDA_Dashboard",
+    "description": "Manages live dashboards and inline visualizations. Call 'visualize' to show an auto-chart in chat. Call 'add_tile' / 'create' / 'open' / etc. for dashboard management.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "'visualize' | 'create' | 'open' | 'close' | 'list' | 'add_tile' | 'refresh' | 'delete'",
+        "required": true
+      },
+      "content": {
+        "type": "string",
+        "description": "Your current data answer (HTML table or text). Required for 'visualize' and 'add_tile'.",
+        "required": false
+      },
+      "chart_type": {
+        "type": "string",
+        "description": "Desired chart type for 'visualize': 'bar', 'column', 'line', 'pie', 'scatter'. Set when user specifies a chart type (e.g. user says 'pie chart' → 'pie'). Omit to auto-select.",
+        "required": false
+      },
+      "dashboard_id": {
+        "type": "string",
+        "description": "Dashboard ID. Required for 'open', 'add_tile', 'refresh' (all tiles), 'delete'. Omit for 'create' and 'list'.",
+        "required": false
+      },
+      "name": {
+        "type": "string",
+        "description": "Dashboard name. Required for 'create'. Should be concise and descriptive.",
+        "required": false
+      },
+      "description": {
+        "type": "string",
+        "description": "Short dashboard description. Optional for 'create'.",
+        "required": false
+      },
+      "query": {
+        "type": "string",
+        "description": "Data query prompt for 'add_tile'. The system will execute this query and render the result as a live dashboard tile.",
+        "required": false
+      },
+      "tile_title": {
+        "type": "string",
+        "description": "Concise title for the new tile (e.g. 'Revenue by Region Q2'). Required for 'add_tile' and 'visualize'.",
+        "required": false
+      },
+      "tile_width": {
+        "type": "integer",
+        "description": "Tile width in grid columns (1–12). Default 6.",
+        "required": false
+      },
+      "tile_height": {
+        "type": "integer",
+        "description": "Tile height in grid rows (each row ≈ 80px). Default 4.",
+        "required": false
+      },
+      "tile_id": {
+        "type": "string",
+        "description": "Tile ID. Required for 'refresh' when refreshing a single specific tile.",
+        "required": false
+      }
+    }
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_levels": [
+      "none",
+      "medium",
+      "heavy"
+    ]
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "DashboardComponentHandler",
+    "fast_path": false
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderDashboard",
+    "cdn_dependencies": []
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline",
+      "sub_window"
+    ],
+    "inline": {
+      "description": "Renders a compact dashboard card in chat (create, list, tile confirmations)"
+    },
+    "sub_window": {
+      "description": "Opens the dashboard split-panel canvas directly (open / close actions)",
+      "title_template": "Dashboard: {name}",
+      "resizable": true,
+      "interactive": true
+    }
+  },
+  "supports_instance_io": true,
+  "profile_defaults": {
+    "on_for_new_agents": false,
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ],
+    "default_intensity": "medium"
+  }
+}
+

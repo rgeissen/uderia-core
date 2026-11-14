@@ -1,0 +1,116 @@
+{
+  "component_id": "canvas",
+  "display_name": "Canvas Workspace",
+  "icon_accent": "#06b6d4",
+  "answer_surface": {
+    "open": true
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4\"/></svg>",
+  "description": "Interactive code and document workspace with syntax highlighting, live preview, and direct editing via CodeMirror 6",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "user",
+  "signals": {
+    "emits": [
+      "uderia:canvas-split-mode-changed"
+    ],
+    "listens": [
+      "uderia:component-changed"
+    ],
+    "announces": [
+      "created",
+      "updated",
+      "deleted",
+      "restored"
+    ],
+    "consumes_refs": true
+  },
+  "category": "Code",
+  "supports_instance_io": true,
+  "tool_definition": {
+    "name": "TDA_Canvas",
+    "description": "Presents code, documents, or structured content in an interactive canvas workspace with syntax highlighting, live preview for HTML/SVG/Markdown, direct editing, and durable version history. Canvases are persisted and addressable, so one created in an earlier session can be re-opened from any session. Use this for substantial content that benefits from a dedicated workspace rather than inline display.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "Optional. Omit (or 'create') to create/update a canvas from 'content'. 'open' to open an existing canvas (by canvas_id or title) — works from any session. 'list' to list the user's canvases. 'update' to change an existing canvas (by canvas_id). 'delete' (canvas_id). 'restore' (canvas_id + version_id).",
+        "required": false
+      },
+      "content": {
+        "type": "string",
+        "description": "The complete source code or document content. Required for create/update; omit for open/list/delete/restore.",
+        "required": false
+      },
+      "language": {
+        "type": "string",
+        "description": "The content language: html, css, javascript, python, sql, markdown, json, svg, or mermaid.",
+        "required": false
+      },
+      "title": {
+        "type": "string",
+        "description": "A descriptive title for the canvas workspace. Reusing an existing title updates that canvas (recording a new version). Can also be passed to 'open' to open a canvas by name.",
+        "required": false
+      },
+      "canvas_id": {
+        "type": "string",
+        "description": "Stable canvas identifier. Use with 'open', 'update', 'delete', and 'restore' to target an existing canvas precisely (from any session).",
+        "required": false
+      },
+      "version_id": {
+        "type": "string",
+        "description": "Version identifier — required for 'restore' (together with canvas_id).",
+        "required": false
+      },
+      "sources": {
+        "type": "string",
+        "description": "Comma-separated list of knowledge source documents that informed this content. Include when generating content based on retrieved knowledge documents. Format: 'Document Title (collection)', 'Another Doc (collection)'",
+        "required": false
+      }
+    }
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_levels": [
+      "none",
+      "medium",
+      "heavy"
+    ]
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "CanvasComponentHandler",
+    "fast_path": true
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderCanvas",
+    "cdn_dependencies": []
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline",
+      "sub_window"
+    ],
+    "sub_window": {
+      "title_template": "Canvas: {title}",
+      "default_size": {
+        "width": 700,
+        "height": 500
+      },
+      "resizable": true,
+      "interactive": true
+    }
+  },
+  "profile_defaults": {
+    "on_for_new_agents": false,
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ],
+    "default_intensity": "medium"
+  }
+}

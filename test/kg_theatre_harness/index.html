@@ -1,0 +1,84 @@
+<!doctype html><!-- KG execution theatre harness: served by test/test_kg_theatre_dom.mjs, which maps ./kgTheatre.js to the shipped module.
+     Query: upto=N (events to dispatch) gap=ms end=1 (call end()) depth=watch|inspect mode=ok|cross (a cross-area join the preflight refuses). --><html data-theme="modern"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>:root{--bg-primary:#141619;--bg-secondary:#1f2126;--bg-overlay:rgba(38,40,46,.98);--text-primary:#f8fafc;--text-secondary:#e2e8f0;--text-muted:#94a3b8;--border-primary:rgba(255,255,255,.1);--border-secondary:rgba(255,255,255,.06);--card-bg:rgba(24,26,30,.92);--hover-bg-strong:rgba(255,255,255,.08);--teradata-orange:#F15F22;--trust-pass:#34d399;--trust-warn:#fbbf24;--trust-danger:#f87171;--font-primary:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace}
+body{margin:0;background:#141619} #host{width:100vw;height:100vh;display:flex;flex-direction:column}</style></head>
+<body><pre id="err" style="position:fixed;top:0;left:0;z-index:99;color:#f87171;font:11px monospace;background:#000c;margin:0;padding:4px;max-width:900px;white-space:pre-wrap"></pre><div id="host"></div>
+<script>window.onerror=(m,src,l,c,e)=>{document.getElementById("err").textContent+=m+" @"+(src||"").split("/").pop()+":"+l+"\n"+((e&&e.stack)||"").split("\n").slice(0,3).join("\n")+"\n"};window.addEventListener("unhandledrejection",ev=>{document.getElementById("err").textContent+="rejection: "+(ev.reason&&ev.reason.stack||ev.reason)+"\n"});</script>
+<script type="module">
+import { mountTheatre } from './kgTheatre.js';
+const q = new URLSearchParams(location.search);
+const ENR0 = {
+    enrichments: [{
+        kg_id: 'kg-core', kg_name: 'Policing Core Model', entity_count: 8, relationship_count: 5,
+        entity_names: ['Policing Core.Incident', 'Policing Core.Offence', 'Policing Core.Victim', 'Policing Core.Agency', 'Policing Core.CaseObject', 'Policing Core.ChainOfCustody',
+            'Policing Core.Offence.offence_code', 'Policing Core.Incident.incident_date_text', 'Policing Core.Incident.ori', 'Policing Core.Incident.incident_number'],
+        question_terms: ['robberies', 'robbery', 'month', 'reported'],
+        seeds: [
+            { name: 'Policing Core.Offence.offence_code', type: 'attribute', score: 125, reasons: ['decoded value', 'owning entity'], terms: ['robbery'], channel: 'lexical' },
+            { name: 'Policing Core.Incident.incident_date_text', type: 'attribute', score: 70, reasons: ['identifier word'], terms: ['month'], channel: 'semantic' },
+            { name: 'Policing Core.Incident', type: 'entity', score: 40, reasons: ['identifier prefix'], terms: ['reported'], channel: 'lexical' },
+        ],
+        provenance: { 'Policing Core.Offence': 'seed', 'Policing Core.Incident': 'seed', 'Policing Core.Victim': 'fk_chain', 'Policing Core.Agency': 'fk_chain', 'Policing Core.CaseObject': 'joinable', 'Policing Core.ChainOfCustody': 'joinable' },
+        entity_facts: {
+            'Policing Core.Incident': { type: 'entity', deployed: 'Policing_Core.v_Incident', area: 'crime', key_unique: true, rows: 6124701 },
+            'Policing Core.Offence': { type: 'entity', deployed: 'Policing_Core.v_Offence', area: 'crime', key_unique: true },
+            'Policing Core.Victim': { type: 'entity', deployed: 'Policing_Core.v_Victim', area: 'crime' },
+            'Policing Core.Agency': { type: 'entity', deployed: 'Policing_Core.v_Agency', area: 'crime' },
+            'Policing Core.CaseObject': { type: 'entity', deployed: 'Policing_Core.v_CaseObject', area: 'evidence' },
+            'Policing Core.ChainOfCustody': { type: 'entity', deployed: 'Policing_Core.v_ChainOfCustody', area: 'evidence' },
+        },
+        attribute_facts: {
+            'Policing Core.Offence': { ori: { type: 'CHAR(9)', semantic: 'identifier' }, incident_number: { type: 'VARCHAR(12)', semantic: 'identifier' }, offence_seq: { type: 'BYTEINT', semantic: 'identifier' }, offence_code: { type: 'VARCHAR(3)', semantic: 'code', coded: true }, offence_type: { type: 'VARCHAR(512)', decoded_from: 'offence_code' } },
+            'Policing Core.Incident': { ori: { type: 'CHAR(9)', semantic: 'identifier' }, incident_number: { type: 'VARCHAR(12)', semantic: 'identifier' }, incident_date_text: { type: 'CHAR(11)', semantic: 'date', shape: 'DD-MMM-YYYY' } },
+            'Policing Core.ChainOfCustody': { object_id: { type: 'VARCHAR(64)', semantic: 'identifier' } },
+        },
+        entity_keys: { 'Policing Core.Incident': ['ori', 'incident_number'], 'Policing Core.Offence': ['ori', 'incident_number', 'offence_seq'], 'Policing Core.Agency': ['ori'], 'Policing Core.ChainOfCustody': ['object_id'] },
+        entity_foreign_keys: { 'Policing Core.Offence': ['ori', 'incident_number'], 'Policing Core.Victim': ['ori', 'incident_number'], 'Policing Core.Incident': ['ori'] },
+        entity_relationships: [
+            { source: 'Policing Core.Incident', target: 'Policing Core.Offence', type: 'foreign_key', cardinality: '1:N', name: 'Incident__Offence', from_columns: ['ori', 'incident_number'], to_columns: ['ori', 'incident_number'] },
+            { source: 'Policing Core.Incident', target: 'Policing Core.Victim', type: 'foreign_key', cardinality: '1:N', name: 'Incident__Victim', from_columns: ['ori', 'incident_number'], to_columns: ['ori', 'incident_number'] },
+            { source: 'Policing Core.Agency', target: 'Policing Core.Incident', type: 'foreign_key', cardinality: '1:N', name: 'Agency__Incident', from_columns: ['ori'], to_columns: ['ori'] },
+            { source: 'Policing Core.CaseObject', target: 'Policing Core.ChainOfCustody', type: 'foreign_key', cardinality: '1:N', from_columns: ['object_id'], to_columns: ['object_id'] },
+            { source: 'Policing Core.Offence', target: 'Policing Core.CaseObject', type: 'relates_to', mechanism: 'type_correspondence' },
+        ],
+        subject_areas: { v_incident: 'crime', v_offence: 'crime', v_caseobject: 'evidence', v_chainofcustody: 'evidence' },
+        table_columns: { 'Policing_Core.v_Incident': ['ori', 'incident_number', 'incident_date_text', 'state_code'] },
+        omitted_columns: { 'Policing Core.Incident': 14, 'Policing Core.Offence': 11 },
+        scope_databases: ['Policing_Core'], data_products: [], semantic_seeding: { state: 'ready', hits: 3, bridged: [{ name: 'Policing Core.Incident.incident_date_text', score: 0.61 }] },
+    }],
+    total_entities: 10, total_relationships: 5, session_id: 's1',
+};
+ENR0.enrichments[0].value_domains = [{ table: 'Policing_Core.v_Offence', columns: [{ name: 'offence_code', kind: 'code', values: { '120': 'Robbery', '220': 'Burglary' } }] }];
+if (q.get('wide') === '1') { for (const n of ['Arrestee', 'Bias', 'Offender', 'Property', 'Weapon']) { const e = ENR0.enrichments[0]; e.entity_names.push('Policing Core.' + n); e.entity_facts['Policing Core.' + n] = { type: 'entity', deployed: 'Policing_Core.v_' + n, area: 'crime' }; e.entity_relationships.push({ source: 'Policing Core.Incident', target: 'Policing Core.' + n, type: 'foreign_key', cardinality: '1:N', from_columns: ['ori', 'incident_number'], to_columns: ['ori', 'incident_number'] }); e.provenance['Policing Core.' + n] = 'fk_chain'; } }
+const ENR = ENR0; const T0 = Date.now()/1000;
+const SQL_OK = "SELECT SUBSTR(i.incident_date_text, 4, 3) AS month, COUNT(*) FROM Policing_Core.v_Offence o JOIN Policing_Core.v_Incident i ON o.ori = i.ori AND o.incident_number = i.incident_number WHERE o.offence_code = '120' GROUP BY SUBSTR(i.incident_date_text, 4, 3)";
+const SQL_CROSS = "SELECT COUNT(*) FROM Policing_Core.v_Incident i JOIN Policing_Core.v_ChainOfCustody c ON i.incident_number = c.object_id WHERE 1=1";
+// a synthetic whole graph: 28 entities on a ring with a few links, positioned like a force graph
+const names = ['Incident','Offence','Victim','Arrestee','Agency','Offender','Property','Weapon','Bias','Offence_SuspectedOfUsing','CaseObject','EmailMessage','File','Url','ChainOfCustody','Address','Person','Vehicle','Charge','Court','Sentence','Evidence','Officer','Unit','District','Report','Witness','Statement'];
+const nodes = names.map((n,i)=>{ const a=i/names.length*Math.PI*2; const r=200+((i*37)%90); return { id:i, name:'Policing Core.'+n, type:'entity', x: 590+Math.cos(a)*r*1.6, y: 360+Math.sin(a)*r*0.8 }; });
+const links = [[0,1],[0,2],[0,3],[4,0],[0,5],[0,6],[0,7],[0,8],[1,9],[10,14],[11,10],[12,10],[13,10],[16,15],[18,19],[19,20],[22,23],[23,24],[25,26],[26,27]].map(([s,t])=>({source:s,target:t,type:'foreign_key'}));
+const t = mountTheatre(document.getElementById('host'), { depth: q.get('depth')||'watch', wholeGraph: { nodes, links, transform: {k:1,x:0,y:0} } });
+const mode = q.get('mode')||'ok';
+const events = [
+  ['user_query', { query: 'How many robberies were reported per month in 2023?' }],
+  ['kg_stage', { stage:'understand', terms: ENR.enrichments[0].question_terms, ts: 1 }],
+  ['kg_stage', { stage:'seed', count:3, seeds: ENR.enrichments[0].seeds, ts: 2 }],
+  ['kg_stage', { stage:'expand', entities:10, relationships:5, provenance_counts:{seed:2, fk_chain:2, joinable:2}, ts: 3 }],
+  ['kg_stage', { stage:'inject', entities:10, relationships:5, omitted_columns:{a:14,b:11}, ts: 4 }],
+  ['kg_enrichment', ENR],
+];
+if (mode==='ok') events.push(['tool_intent', { tool_name:'base_readQuery', arguments:{ sql: SQL_OK } }], ['tool_result', { tool_name:'base_readQuery', details:{ status:'success', result_rows:12 } }], ['grounding_gate', { details:{ decision:'pass', out_of_scope_dbs:[], scope_databases:['Policing_Core'], ran:true } }]);
+else events.push(['tool_intent', { tool_name:'base_readQuery', arguments:{ sql: SQL_CROSS } }], ['tool_result', { tool_name:'base_readQuery', details:{ status:'error', preflight:true, preflight_cross_domain:true, error:'x', violations:[{tables:['v_incident','v_chainofcustody'], areas:['crime','evidence']}] } }]);
+if (q.get('multi') === '1' && mode === 'ok') { const gg = events.pop(); const SQL2 = "SELECT COUNT(*) AS victims FROM Policing_Core.v_Victim v JOIN Policing_Core.v_Incident i ON v.ori = i.ori AND v.incident_number = i.incident_number WHERE v.victim_seq = 1"; events.push(['tool_intent', { tool_name: 'base_readQuery', arguments: { sql: SQL2 } }], ['tool_result', { tool_name: 'base_readQuery', details: { status: 'success', result_rows: 1 } }], gg); }
+// nostage=1: a RELOADED turn — no live stage notices; the reducer synthesizes the four stages from the enrichment
+if (q.get('nostage') === '1') { for (let k = events.length - 1; k >= 0; k--) if (events[k][0] === 'kg_stage') events.splice(k, 1); }
+const upto = Math.min(Number(q.get('upto')||events.length), events.length);   // clamped: a filtered event list is shorter than the query's upto
+const gap = Number(q.get('gap')||900);
+let i=0; const step=()=>{ if(i>=upto) { if (q.get('end')==='1') t.end({durationMs:12800}); return; } const [ty,p]=events[i++]; t.dispatch(ty,p); setTimeout(step, gap); };
+if (q.get('reset') === '1') t.reset();   // the app calls reset() at every turn start
+// arm=1: the app's RELOAD path — the last turn is offered behind Replay, the stage stays idle
+if (q.get('arm') === '1') { t.arm(events.slice(0, upto)); } else setTimeout(step, 400);
+window.__t = t;
+</script></body></html>

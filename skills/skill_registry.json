@@ -1,0 +1,154 @@
+{
+  "registry_version": "1.0.0",
+  "last_updated": "2026-08-12",
+  "description": "Built-in skills for the Uderia platform. Each skill is a Claude Code-compatible markdown knowledge document that gets injected into the LLM context when activated. Skills with a `component_id` are companion skills for that builtin component (auto-assignable when the component is enabled for a profile).",
+  "skills": [
+    {
+      "skill_id": "dashboard-expert",
+      "plugin_directory": "dashboard-expert",
+      "status": "active",
+      "category": "Visualization",
+      "component_id": "dashboard"
+    },
+    {
+      "skill_id": "memory-expert",
+      "plugin_directory": "memory-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "memory"
+    },
+    {
+      "skill_id": "files-expert",
+      "plugin_directory": "files-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "files"
+    },
+    {
+      "skill_id": "platform-expert",
+      "plugin_directory": "platform-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "platform"
+    },
+    {
+      "skill_id": "platform-playbooks",
+      "plugin_directory": "platform-playbooks",
+      "status": "active",
+      "category": "Knowledge"
+    },
+    {
+      "skill_id": "flow-designer",
+      "plugin_directory": "flow-designer",
+      "status": "active",
+      "category": "Workflow",
+      "component_id": "flow"
+    },
+    {
+      "skill_id": "chart-expert",
+      "plugin_directory": "chart-expert",
+      "status": "active",
+      "category": "Visualization",
+      "component_id": "chart"
+    },
+    {
+      "skill_id": "canvas-expert",
+      "plugin_directory": "canvas-expert",
+      "status": "active",
+      "category": "Development",
+      "component_id": "canvas"
+    },
+    {
+      "skill_id": "knowledge-graph-expert",
+      "plugin_directory": "knowledge-graph-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "knowledge_graph"
+    },
+    {
+      "skill_id": "database-navigator-expert",
+      "plugin_directory": "database-navigator-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "database_navigator"
+    },
+    {
+      "skill_id": "scheduler-expert",
+      "plugin_directory": "scheduler-expert",
+      "status": "active",
+      "category": "Automation",
+      "component_id": "scheduler"
+    },
+    {
+      "skill_id": "teradata-sql-expert",
+      "plugin_directory": "teradata-sql-expert",
+      "status": "active",
+      "category": "Database"
+    },
+    {
+      "skill_id": "teradata-patterns",
+      "plugin_directory": "teradata-patterns",
+      "status": "active",
+      "category": "Database"
+    },
+    {
+      "skill_id": "table-format",
+      "plugin_directory": "table-format",
+      "status": "active",
+      "category": "Formatting"
+    },
+    {
+      "skill_id": "concise",
+      "plugin_directory": "concise",
+      "status": "active",
+      "category": "Style"
+    },
+    {
+      "skill_id": "detailed",
+      "plugin_directory": "detailed",
+      "status": "active",
+      "category": "Style"
+    },
+    {
+      "skill_id": "step-by-step",
+      "plugin_directory": "step-by-step",
+      "status": "active",
+      "category": "Reasoning"
+    },
+    {
+      "skill_id": "compute-expert",
+      "plugin_directory": "compute-expert",
+      "status": "active",
+      "category": "General",
+      "component_id": "compute"
+    },
+    {
+      "skill_id": "explain-plan-expert",
+      "plugin_directory": "explain-plan-expert",
+      "status": "active",
+      "category": "General",
+      "component_id": "explain_plan"
+    },
+    {
+      "skill_id": "obda-act-expert",
+      "plugin_directory": "obda-act-expert",
+      "status": "active",
+      "category": "General",
+      "component_id": "action"
+    },
+    {
+      "skill_id": "obda-read-expert",
+      "plugin_directory": "obda-read-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "obda_read"
+    },
+    {
+      "skill_id": "obda-model-expert",
+      "plugin_directory": "obda-model-expert",
+      "status": "active",
+      "category": "Knowledge",
+      "component_id": "obda_model"
+    }
+  ]
+}

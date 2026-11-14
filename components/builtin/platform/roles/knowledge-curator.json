@@ -1,0 +1,174 @@
+{
+  "id": "knowledge-curator",
+  "title": "Knowledge Curator",
+  "status": "active",
+  "effects": [
+    "read",
+    "write"
+  ],
+  "description": "Keeps the knowledge agents stand on right: creates knowledge repositories, adds documents from the user's Files, removes or quarantines what is wrong, syncs and screens them, and reads their health and ratings; reads the user's knowledge graphs — their shape, entities, versions, lifecycle, conformance and tuning proposals — and saves and names their versions. Releasing a quarantine, acknowledging a finding, choosing a sync source, signing, and every act that changes what a graph means or where it is published stay the owner's. Data products next.",
+  "operations": [
+    "knowledge.*",
+    "rag.collection*",
+    "knowledge_graph.*",
+    "!knowledge_graph.assignments_set",
+    "!knowledge_graph.activate",
+    "ontologies.list",
+    "marketplace.knowledge_graph*",
+    "files.list",
+    "files.knowledge_targets",
+    "files.to_knowledge",
+    "profiles.list",
+    "profiles.overview",
+    "trust.artifact",
+    "trust.artifacts",
+    "trust.history",
+    "trust.knowledge_sign_off",
+    "trust.ontology_sign_off"
+  ],
+  "playbooks": [
+    "platform-playbooks:knowledge/*"
+  ],
+  "needs": [
+    "data-products"
+  ],
+  "rank": 3,
+  "examples": [
+    {
+      "ask": "Add curator-probe.md from my Files to the Curator probe repository.",
+      "outcome": "It finds the file and the repository by name and submits adding one to the other; once you approve, the repository's own upload screens, chunks and embeds it."
+    },
+    {
+      "ask": "Quarantine the vendor FAQ.",
+      "outcome": "It lists the repository's documents, confirms which one with you, and submits the quarantine. The document leaves retrieval but stays listed — only you can release it."
+    },
+    {
+      "ask": "Is my Policies repository healthy?",
+      "outcome": "It reads the repository's health and your ratings: what is screened, what the screening found, personal data by label and count (never values), the lowest-rated documents — and offers to screen or quarantine."
+    },
+    {
+      "ask": "What is in my Policing graph, and is it ready to publish?",
+      "outcome": "It finds the graph by name and reads its shape — entity types and how many of each, the relationships between them — then its conformance and its lifecycle. It names any issue the check found and says publishing is yours to do."
+    },
+    {
+      "ask": "Save the Policing graph as a version before I change it.",
+      "outcome": "It saves the graph as it is now under a label, or tells you nothing was saved because it has not changed since the last version."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Releasing a quarantined document, or acknowledging a security finding",
+      "why": "Both are recorded human judgements that let flagged content back into what agents read.",
+      "ops": [
+        "knowledge.document_release",
+        "knowledge.document_acknowledge_finding"
+      ]
+    },
+    {
+      "what": "Choosing where a document or a repository syncs from",
+      "why": "A source is an address the server reads; an agent could point it at anything the server can reach.",
+      "ops": [
+        "knowledge.document_source"
+      ],
+      "args": [
+        "knowledge.repository_settings:source_root"
+      ]
+    },
+    {
+      "what": "The repository's standing policy after a sync",
+      "why": "Acknowledging findings or renewing signatures automatically is your trust policy.",
+      "args": [
+        "knowledge.repository_settings:sync_auto_ack_findings",
+        "knowledge.repository_settings:sync_auto_resign"
+      ]
+    },
+    {
+      "what": "Another vector store, or its configuration",
+      "why": "Configuration can carry credentials — the owner chooses it.",
+      "args": [
+        "rag.collection_create:backend_type",
+        "rag.collection_create:backend_config",
+        "rag.collection_create:vector_store_config_id"
+      ]
+    },
+    {
+      "what": "Unlocking a planner repository's trust seal",
+      "why": "Unlocking weakens a trust seal; it stays yours.",
+      "args": [
+        "rag.collection_update:trust_locked"
+      ]
+    },
+    {
+      "what": "Signing a repository",
+      "why": "A signature is your statement that you checked its content.",
+      "ops": [
+        "trust.knowledge_sign_off"
+      ]
+    },
+    {
+      "what": "Uploading a file",
+      "why": "Documents come from your Files: you put them there, and the Curator adds what you already hold."
+    },
+    {
+      "what": "Moving an ontology along its lifecycle — proposing, approving, publishing, deprecating",
+      "why": "Each is a governance decision a person signs their name to; publishing makes the ontology what other agents and BI tools trust.",
+      "ops": [
+        "knowledge_graph.lifecycle_transition",
+        "trust.ontology_sign_off"
+      ]
+    },
+    {
+      "what": "Deleting a graph, restoring or deleting a saved version, rebuilding a graph from its source",
+      "why": "Each replaces or removes what agents read, all at once.",
+      "ops": [
+        "knowledge_graph.clear",
+        "knowledge_graph.version_restore",
+        "knowledge_graph.version_delete",
+        "knowledge_graph.apply_update"
+      ]
+    },
+    {
+      "what": "Changing a database from a graph — deploying drafted tables, re-creating tables, views or demo data, landing a tuning proposal",
+      "why": "These run statements against your database; the owner decides when, and on which target.",
+      "ops": [
+        "knowledge_graph.authored_deploy",
+        "knowledge_graph.redeploy_physical",
+        "knowledge_graph.redeploy_metric_views",
+        "knowledge_graph.reload_demo_data",
+        "knowledge_graph.tuning_decide",
+        "knowledge_graph.tuning_proposal_delete"
+      ]
+    },
+    {
+      "what": "Publishing or withdrawing what people drafted on a graph",
+      "why": "An extension changes what the graph means to every agent that reads it.",
+      "ops": [
+        "knowledge_graph.authored_publish",
+        "knowledge_graph.authored_withdraw"
+      ]
+    },
+    {
+      "what": "Publishing a graph to the marketplace, choosing its audience, or installing, forking, subscribing to and rating someone else's",
+      "why": "These reach other people, or bring their work into yours.",
+      "ops": [
+        "knowledge_graph.marketplace_publish",
+        "marketplace.knowledge_graph_unpublish",
+        "marketplace.knowledge_graph_audience_set",
+        "marketplace.knowledge_graph_install",
+        "marketplace.knowledge_graph_fork",
+        "marketplace.knowledge_graph_subscribe",
+        "marketplace.knowledge_graph_unsubscribe",
+        "marketplace.knowledge_graph_sync",
+        "marketplace.knowledge_graph_rate"
+      ]
+    },
+    {
+      "what": "Editing a graph's entities and relationships, or building a graph",
+      "why": "A graph's content is changed by the agent that holds it, through its knowledge-graph component under your OBDA policy; building one runs discovery against your data sources from the Graph constructor."
+    },
+    {
+      "what": "Which agents read a graph",
+      "why": "Assigning a graph is part of an agent's composition — the Agent Builder submits it for your approval."
+    }
+  ]
+}

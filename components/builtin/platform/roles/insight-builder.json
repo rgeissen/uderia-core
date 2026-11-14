@@ -1,0 +1,87 @@
+{
+  "id": "insight-builder",
+  "title": "Insight Builder",
+  "status": "active",
+  "effects": [
+    "read",
+    "write"
+  ],
+  "description": "Keeps the views people read in order: creates and arranges dashboards, refreshes their tiles through each tile's own agent, keeps canvases tidy, and explains what the data products on a knowledge graph can answer — down to the SQL a request would run. What a tile shows and asks, a canvas's content, and running data stay with their own components.",
+  "operations": [
+    "dashboards.*",
+    "canvases.*",
+    "data_products.*",
+    "knowledge_graph.list",
+    "sessions.list",
+    "profiles.list",
+    "profiles.overview"
+  ],
+  "playbooks": [
+    "platform-playbooks:insight/*"
+  ],
+  "needs": [],
+  "rank": 6,
+  "examples": [
+    {
+      "ask": "Make a dashboard called Weekly Sales.",
+      "outcome": "It submits an empty dashboard for your approval; its tiles come from conversations, pinned with the dashboard component."
+    },
+    {
+      "ask": "Refresh the revenue tile on Weekly Sales.",
+      "outcome": "It finds the tile and submits a refresh: the tile's own agent answers its question again, under its own authority, and the tile shows the new answer."
+    },
+    {
+      "ask": "Which data products can I ask about on the Sales graph?",
+      "outcome": "It reads the graph's catalog: each product with what it measures, its trust state and whether a validation backs it."
+    },
+    {
+      "ask": "What SQL would revenue by region for last quarter run on the Sales product?",
+      "outcome": "It compiles the request and shows the SQL — nothing runs. A request the product cannot answer comes back with the closest valid names."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Adding a tile, or changing what a tile shows or which question it asks",
+      "why": "A tile's content renders in your dashboard, so it is written only by pinning a conversation's own visual; a tile's question decides what another agent is asked on every refresh — both are yours.",
+      "args": [
+        "dashboards.tile_update:html",
+        "dashboards.tile_update:spec",
+        "dashboards.tile_update:source_prompt",
+        "dashboards.tile_update:profile_id"
+      ]
+    },
+    {
+      "what": "Choosing which agent answers when a tile refreshes",
+      "why": "A tile is always refreshed by its own agent, under that agent's authority.",
+      "args": [
+        "dashboards.tile_refresh:profile_id"
+      ]
+    },
+    {
+      "what": "How often a dashboard refreshes on its own",
+      "why": "It re-runs every tile's agent on a timer — standing work and spend, like a schedule, so it is yours.",
+      "args": [
+        "dashboards.update:auto_refresh_s"
+      ]
+    },
+    {
+      "what": "Writing a canvas's content",
+      "why": "Content is written with the canvas component (TDA_Canvas), under the agent's own enablement — one way in.",
+      "args": [
+        "canvases.update:content"
+      ]
+    },
+    {
+      "what": "Running a data product query, or running SQL from a canvas",
+      "why": "Reading data is the agent's own access (TDA_DataProduct and its tools), held to its data surface and the deployment's policy; through the platform it would run as you and skip both."
+    },
+    {
+      "what": "Creating, validating, deleting or signing a data product",
+      "why": "Defining what a product may answer is modelling, and signing it is yours."
+    },
+    {
+      "what": "Canvas database connections",
+      "why": "They carry credentials — yours to enter."
+    }
+  ]
+}

@@ -1,0 +1,418 @@
+[
+  {
+    "file": "static/js/handlers/actionDesigner.js",
+    "counts": {
+      "handler": 5,
+      "route": 1,
+      "tip-trust": 3,
+      "aria": 23,
+      "fact-text": 7,
+      "fact-html": 10,
+      "delegate": 18
+    },
+    "detail": {
+      "handler": {
+        "change": 1,
+        "click": 2,
+        "input": 1,
+        "keydown": 1
+      },
+      "delegate": {
+        ".ad-close": 1,
+        ".ad-copy-grants": 1,
+        ".ad-def-cancel": 1,
+        ".ad-def-submit": 1,
+        ".ad-define": 2,
+        ".ad-define-open": 1,
+        ".ad-edit": 1,
+        ".ad-gpill": 1,
+        ".ad-grant-toggle": 1,
+        ".ad-next": 1,
+        ".ad-row": 5,
+        ".ad-toggle": 1,
+        ".ad-try-run": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/trustJourney.js",
+    "counts": {
+      "handler": 2,
+      "route": 2,
+      "fact-attr": 1,
+      "tip-trust": 2,
+      "aria": 2,
+      "fact-text": 1,
+      "fact-html": 1,
+      "delegate": 1
+    },
+    "detail": {
+      "handler": {
+        "click": 2
+      },
+      "delegate": {
+        ".tj-stage[data-scroll]": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/answerCapsule.js",
+    "counts": {
+      "handler": 5,
+      "route": 4,
+      "tip-trust": 10,
+      "aria": 2,
+      "fact-text": 2,
+      "fact-html": 8,
+      "delegate": 1
+    },
+    "detail": {
+      "handler": {
+        "click": 4,
+        "keydown": 1
+      },
+      "delegate": {
+        "[data-session-id]": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/trustCircle.js",
+    "counts": {
+      "handler": 23,
+      "route": 8,
+      "state-key": 5,
+      "tip-trust": 2,
+      "aria": 17,
+      "fact-text": 8,
+      "fact-html": 13
+    },
+    "detail": {
+      "handler": {
+        "blur": 1,
+        "click": 17,
+        "focus": 1,
+        "keydown": 2,
+        "mouseenter": 1,
+        "mouseleave": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/agentPerformanceHandler.js",
+    "counts": {
+      "handler": 8,
+      "route": 51,
+      "state-key": 11,
+      "fact-attr": 1,
+      "tip-trust": 52,
+      "aria": 4,
+      "fact-text": 13,
+      "fact-html": 42,
+      "delegate": 20
+    },
+    "detail": {
+      "handler": {
+        "click": 5,
+        "input": 1,
+        "keydown": 2
+      },
+      "delegate": {
+        ".agent-card": 1,
+        ".agent-run-row": 1,
+        ".agent-section-tab": 1,
+        ".ap-run": 2,
+        ".ap-run-hd": 1,
+        ".overflow-y-auto": 2,
+        ".rounded-xl, section": 1,
+        "[data-agent-action]": 1,
+        "[data-ap-cmpmetric]": 1,
+        "[data-ap-open-session]": 1,
+        "[data-ap-runfilter]": 1,
+        "[data-ap-runleg]": 1,
+        "[data-ap-stripkey]": 1,
+        "[data-circle-key]": 1,
+        "[data-dim]": 1,
+        "[data-goto-section]": 1,
+        "[data-roster-filter]": 1,
+        "#agent-roster-search": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/agentAnatomy.js",
+    "counts": {
+      "handler": 23,
+      "route": 12,
+      "state-key": 3,
+      "tip-platform": 3,
+      "aria": 8,
+      "fact-html": 7,
+      "delegate": 4
+    },
+    "detail": {
+      "handler": {
+        "blur": 2,
+        "click": 8,
+        "focus": 2,
+        "input": 1,
+        "keydown": 5,
+        "mousedown": 1,
+        "mouseenter": 2,
+        "mouseleave": 2
+      },
+      "delegate": {
+        ".an-pick-row": 1,
+        "[data-an-action]": 2,
+        "[data-an-link]": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/trustBadge.js",
+    "counts": {
+      "handler": 14,
+      "route": 2,
+      "state-key": 2,
+      "tip-trust": 4,
+      "aria": 8,
+      "fact-text": 20,
+      "fact-html": 23
+    },
+    "detail": {
+      "handler": {
+        "click": 12,
+        "keydown": 2
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/qualityDimensions.js",
+    "counts": {
+      "handler": 20,
+      "route": 13,
+      "state-key": 5,
+      "fact-attr": 3,
+      "tip-trust": 16,
+      "aria": 15,
+      "fact-text": 1,
+      "fact-html": 8,
+      "delegate": 16
+    },
+    "detail": {
+      "handler": {
+        "click": 7,
+        "focusin": 2,
+        "focusout": 2,
+        "input": 1,
+        "keydown": 2,
+        "mousedown": 1,
+        "mouseout": 2,
+        "mouseover": 2,
+        "scroll": 1
+      },
+      "delegate": {
+        ".qd-rel-same, .qd-mod .qd-mark": 1,
+        ".qd-row": 1,
+        ".u-tip": 1,
+        "[data-dim-context]": 1,
+        "[data-dim-guide]": 1,
+        "[data-dim]": 4,
+        "[data-dim][tabindex]": 1,
+        "[data-mod]": 2,
+        "[data-qd-copy]": 1,
+        "details": 2,
+        "details:not([open])": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/agentKpiCharts.js",
+    "counts": {
+      "route": 1,
+      "tip-trust": 3,
+      "tip-platform": 1,
+      "fact-html": 2
+    },
+    "detail": {}
+  },
+  {
+    "file": "static/js/handlers/assuranceDial.js",
+    "counts": {
+      "handler": 9,
+      "route": 5,
+      "fact-attr": 7,
+      "state-key": 11,
+      "tip-trust": 5,
+      "aria": 15,
+      "fact-text": 3,
+      "fact-html": 3,
+      "delegate": 3
+    },
+    "detail": {
+      "handler": {
+        "blur": 1,
+        "click": 3,
+        "dblclick": 1,
+        "focus": 1,
+        "keydown": 1,
+        "mouseenter": 1,
+        "mouseleave": 1
+      },
+      "delegate": {
+        "[data-ad-gate]": 1,
+        "[data-ad-pin]": 2
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/assuranceBindings.js",
+    "counts": {
+      "handler": 23,
+      "tip-trust": 10,
+      "aria": 9,
+      "fact-text": 4,
+      "fact-html": 5
+    },
+    "detail": {
+      "handler": {
+        "beforeunload": 1,
+        "change": 2,
+        "click": 16,
+        "keydown": 3,
+        "mousedown": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/figureLineage.js",
+    "counts": {
+      "handler": 5,
+      "aria": 2,
+      "fact-html": 6,
+      "delegate": 5
+    },
+    "detail": {
+      "handler": {
+        "click": 3,
+        "keydown": 2
+      },
+      "delegate": {
+        ".ans-ev, .compute-card": 1,
+        ".compute-open-btn[data-act=\"rows\"]": 1,
+        ".message-bubble": 1,
+        ".message-bubble, .assistant-message, [data-session-id]": 1,
+        ".message-content": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/turnLineage.js",
+    "counts": {
+      "handler": 11,
+      "route": 9,
+      "fact-attr": 1,
+      "tip-trust": 4,
+      "aria": 18,
+      "fact-text": 2,
+      "fact-html": 10,
+      "delegate": 5
+    },
+    "detail": {
+      "handler": {
+        "click": 5,
+        "keydown": 4,
+        "submit": 1,
+        "toggle": 1
+      },
+      "delegate": {
+        ".message-bubble": 1,
+        ".tl-adopt": 1,
+        ".tl-menu-item": 1,
+        ".tl-show": 1,
+        ".tl-switch": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/attachmentSources.js",
+    "counts": {
+      "fact-attr": 2,
+      "route": 4,
+      "tip-trust": 2,
+      "aria": 1,
+      "delegate": 1
+    },
+    "detail": {
+      "delegate": {
+        ".message-bubble, .chat-message, [data-role]": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/livingAnswer.js",
+    "counts": {
+      "handler": 7,
+      "route": 1,
+      "aria": 7,
+      "fact-text": 15,
+      "fact-html": 7,
+      "delegate": 1
+    },
+    "detail": {
+      "handler": {
+        "click": 4,
+        "keydown": 2,
+        "scroll": 1
+      },
+      "delegate": {
+        ".message-bubble": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/kgTheatre.js",
+    "counts": {
+      "handler": 5,
+      "tip-trust": 8,
+      "aria": 3,
+      "fact-text": 5,
+      "fact-html": 10,
+      "delegate": 7
+    },
+    "detail": {
+      "handler": {
+        "click": 2,
+        "keydown": 1,
+        "mouseout": 1,
+        "mouseover": 1
+      },
+      "delegate": {
+        ".kgt-tr": 2,
+        ".kgt-tr-st": 2,
+        ".kgt-tr-st, .kgt-tr": 1,
+        ".st": 1,
+        "g.row": 1
+      }
+    }
+  },
+  {
+    "file": "static/js/handlers/evidenceView.js",
+    "counts": {
+      "handler": 10,
+      "route": 1,
+      "tip-trust": 2,
+      "aria": 6,
+      "fact-text": 8,
+      "fact-html": 12
+    },
+    "detail": {
+      "handler": {
+        "change": 1,
+        "click": 7,
+        "input": 1,
+        "toggle": 1
+      }
+    }
+  }
+]

@@ -1,0 +1,34 @@
+
+--- ERROR RECOVERY ---
+The last tool call, `{failed_tool_name}`, resulted in an error with the following message:
+{error_message}
+
+--- CONTEXT ---
+- Original Question: {user_question}
+- All Data Collected So Far:
+{all_collected_data}
+- Workflow Goal & Plan:
+{workflow_goal_and_plan}
+
+--- INSTRUCTIONS ---
+Your goal is to recover from this error by generating a new, complete, multi-phase plan to achieve the original user's question.
+Analyze the original question, the error, and the data collected so far to create a new strategic plan.
+Do NOT re-call the failed tool `{failed_tool_name}` in the first step of your new plan.
+
+Your response MUST be a single JSON list of phase objects, following the exact format of the strategic planner.
+Example of expected format:
+```json
+[
+  {{
+    "phase": 1,
+    "goal": "New goal for the first step of the recovery plan.",
+    "relevant_tools": ["some_other_tool"]
+  }},
+  {{
+    "phase": 2,
+    "goal": "Goal for the second step.",
+    "relevant_tools": ["another_tool"]
+  }}
+]
+```
+

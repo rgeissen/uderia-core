@@ -1,0 +1,136 @@
+{
+  "id": "guide",
+  "title": "Guide",
+  "status": "active",
+  "effects": [
+    "read"
+  ],
+  "description": "Explains the user's own estate — their agents, what each is built from, its trust state, and the user's usage — in words, from what the platform returns.",
+  "operations": [
+    "profiles.*",
+    "!profiles.metric*",
+    "trust.*",
+    "consumption.*",
+    "rag.collections",
+    "rag.collection",
+    "knowledge.documents",
+    "knowledge_graph.list",
+    "knowledge_graph.stats",
+    "knowledge_graph.schema_overview",
+    "knowledge_graph.entities",
+    "knowledge_graph.relationships",
+    "knowledge_graph.node_neighborhood",
+    "knowledge_graph.subgraph",
+    "knowledge_graph.versions",
+    "knowledge_graph.assignments",
+    "knowledge_graph.lifecycle",
+    "knowledge_graph.conformance",
+    "knowledge_graph.subscriptions",
+    "ontologies.list",
+    "skills.list",
+    "components.list",
+    "components.get",
+    "context_window_types.*",
+    "knowledge.health",
+    "knowledge.feedback",
+    "knowledge.search",
+    "flows.list",
+    "flows.get",
+    "flows.runs",
+    "flows.run_status",
+    "flows.platform",
+    "flows.templates",
+    "scheduled_tasks.list",
+    "scheduled_tasks.get",
+    "scheduled_tasks.runs",
+    "scheduler.status",
+    "sessions.list",
+    "sessions.analytics",
+    "assurance.inbox",
+    "assurance.inbox_count",
+    "assurance.reviews",
+    "assurance.trust_history",
+    "assurance.agent_story",
+    "evals.kpi_dashboard",
+    "evals.agent_timeline",
+    "dashboards.list",
+    "dashboards.get",
+    "dashboards.tiles",
+    "canvases.list",
+    "data_products.catalog",
+    "data_products.get"
+  ],
+  "playbooks": [
+    "platform-playbooks:agents/*",
+    "platform-playbooks:trust/*",
+    "platform-playbooks:usage/*",
+    "platform-playbooks:knowledge/health",
+    "platform-playbooks:knowledge/search",
+    "platform-playbooks:automation/status",
+    "platform-playbooks:quality/inbox",
+    "platform-playbooks:knowledge/graphs"
+  ],
+  "needs": [
+    "sessions"
+  ],
+  "rank": 1,
+  "examples": [
+    {
+      "ask": "Is @TCOPT trusted? Explain why.",
+      "outcome": "It reads the agent's trust state and what decides it, then explains in words which ingredient changed and what you would sign. It never signs."
+    },
+    {
+      "ask": "What is @SALES and what does it use?",
+      "outcome": "One call to the agent's overview: its class, model, data source, repositories, experts, components, skills and trust state, summarised."
+    },
+    {
+      "ask": "What needs my attention?",
+      "outcome": "It counts what is unacknowledged in your Assurance Inbox and what waits in your review queue, and tells you where to act. It acknowledges nothing."
+    },
+    {
+      "ask": "How much have I used this period?",
+      "outcome": "It reads your usage and warnings and says where you stand against your limits."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Any change — to an agent, a repository, a flow or a schedule",
+      "why": "The Guide only explains. Changes belong to the Agent Builder, the Knowledge Curator and the Automation Builder — or to you.",
+      "ops": [
+        "profiles.activate",
+        "profiles.connector_settings_update",
+        "profiles.create",
+        "profiles.delete",
+        "profiles.learning_repository_own",
+        "profiles.reclassify",
+        "profiles.update"
+      ]
+    },
+    {
+      "what": "Signing anything, attesting a deployment, or withdrawing a signature",
+      "why": "A signature is your statement that you checked it. An agent signing — or unsigning — its own work proves nothing.",
+      "ops": [
+        "trust.*_sign_off",
+        "trust.agent_attest_deployment",
+        "trust.revoke_signature"
+      ]
+    },
+    {
+      "what": "Opening an agent to the REST API, or making one your default",
+      "why": "They decide what every other client and conversation runs on.",
+      "ops": [
+        "profiles.set_active_for_consumption",
+        "profiles.set_default"
+      ]
+    },
+    {
+      "what": "Other users' usage, conversations or unattributed signatures",
+      "why": "An agent works on your items only — even when your tier lets you see more. Giving a signature to another account is an administrator's act.",
+      "ops": [
+        "consumption.users",
+        "trust.unassigned",
+        "trust.unassigned_assign"
+      ]
+    }
+  ]
+}

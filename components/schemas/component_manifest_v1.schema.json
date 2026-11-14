@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Component Manifest v1",
+  "description": "Schema for Generative UI Component manifest.json files",
+  "type": "object",
+  "required": [
+    "component_id",
+    "display_name",
+    "version",
+    "component_type",
+    "instances",
+    "signals"
+  ],
+  "properties": {
+    "component_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Unique identifier (lowercase, underscores allowed)"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Human-readable name for UI display"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what the component does"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version string"
+    },
+    "component_type": {
+      "type": "string",
+      "enum": [
+        "action",
+        "structural",
+        "system"
+      ],
+      "description": "action = LLM-invoked via tool call, structural = data-driven, system = platform infrastructure"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Automation",
+        "Code",
+        "General",
+        "Governance",
+        "Knowledge",
+        "System",
+        "Visualization"
+      ],
+      "description": "UI category for filtering. Must match the categories used by components and component_registry.json; 'General' is the canonical fallback for an uncategorised component (the loader default in manager.py)."
+    },
+    "agent_pack_id": {
+      "type": "string",
+      "description": "If installed via agent pack, the pack ID"
+    },
+    "instances": {
+      "type": "string",
+      "enum": [
+        "user",
+        "agent",
+        "page",
+        "none"
+      ],
+      "description": "Whose the things this component keeps are \u2014 every component declares it: 'user' \u2014 the user's own (listed whichever agent is in use), 'agent' \u2014 the active agent's own (its graph, memory, sources, actions, products, concepts), 'page' \u2014 held in the open page only, not kept, 'none' \u2014 it keeps nothing (stateless). The component card's pill and the Workspace's scoping both read this one field."
+    },
+    "acts_every_turn": {
+      "type": "boolean",
+      "default": false,
+      "description": "Acts on EVERY turn without being called (the Context Window Manager assembles every prompt, Memory recalls into every prompt, the Needs Input raisers watch every turn). The resource vocabulary's 'active' \u2014 a declaration of the component's nature, never a switch: active is always a subset of enabled."
+    },
+    "tool_definition": {
+      "type": "object",
+      "description": "Tool definition for action components (injected into LLM context)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^TDA_",
+          "description": "Tool name (must start with TDA_)"
+        },
+        "description": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "description"
+            ]
+          }
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "args"
+      ]
+    },
+    "instructions": {
+      "type": "object",
+      "description": "LLM prompt instructions configuration",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Filename of the instructions file (relative to component dir)"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "plain",
+            "intensity_keyed"
+          ],
+          "description": "plain = raw text, intensity_keyed = JSON keyed by intensity level"
+        },
+        "placeholder_substitutions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of {PLACEHOLDER} \u2192 filename for text substitution"
+        }
+      },
+      "required": [
+        "file",
+        "format"
+      ]
+    },
+    "backend": {
+      "type": "object",
+      "description": "Backend handler configuration",
+      "properties": {
+        "handler_file": {
+          "type": "string",
+          "description": "Python handler filename (relative to component dir)"
+        },
+        "handler_class": {
+          "type": "string",
+          "description": "Handler class name (auto-detected if omitted)"
+        },
+        "fast_path": {
+          "type": "boolean",
+          "description": "If true, executor can skip tactical LLM for this component"
+        }
+      },
+      "required": [
+        "handler_file"
+      ]
+    },
+    "frontend": {
+      "type": "object",
+      "description": "Frontend renderer configuration",
+      "properties": {
+        "renderer_file": {
+          "type": "string",
+          "description": "JS renderer filename (relative to component dir)"
+        },
+        "renderer_export": {
+          "type": "string",
+          "description": "Exported function name from renderer.js"
+        },
+        "cdn_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "global": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "url",
+              "global"
+            ]
+          },
+          "description": "CDN libraries to load before rendering"
+        }
+      },
+      "required": [
+        "renderer_file",
+        "renderer_export"
+      ]
+    },
+    "render_targets": {
+      "type": "object",
+      "description": "Where this component can render",
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "sub_window",
+            "status_panel"
+          ]
+        },
+        "supports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "inline",
+              "sub_window",
+              "status_panel"
+            ]
+          }
+        },
+        "sub_window": {
+          "type": "object",
+          "properties": {
+            "title_template": {
+              "type": "string"
+            },
+            "default_size": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer"
+                },
+                "height": {
+                  "type": "integer"
+                }
+              }
+            },
+            "resizable": {
+              "type": "boolean"
+            },
+            "interactive": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "required": [
+        "default",
+        "supports"
+      ]
+    },
+    "profile_defaults": {
+      "type": "object",
+      "description": "Default profile settings for this component",
+      "properties": {
+        "enabled_for": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Profile types where this component is enabled by default"
+        },
+        "default_intensity": {
+          "type": "string",
+          "description": "Default intensity level for this component"
+        },
+        "on_for_new_agents": {
+          "type": "boolean",
+          "description": "CREATION default only: whether a NEW agent's editor starts with this component switched on. Absent = on when enabled_for lists any type. Never a resolution step: an existing agent resolves through enabled_for exactly as before (components/enablement.py)."
+        }
+      }
+    },
+    "signals": {
+      "type": "object",
+      "description": "How this component talks to others \u2014 ONE declaration read by the page bus gate, the component card and the Workspace. `emits`/`listens`: page events (uderia:* names registered in static/js/uderiaBus.js) its renderer raises / reacts to. `announces`: the write actions its store announces on the per-user channel as `component_changed` (core/ui_notify.announce_component_change) \u2014 created \u00b7 updated \u00b7 deleted \u00b7 restored \u00b7 refreshed \u00b7 \u2026; empty for a component that keeps nothing. `consumes_refs`: it takes `source_ref` (an earlier result's ref from the session ledger) \u2014 true, or {implicit: 'latest_data'} to read the latest data result when no ref and no content is given. `conflicts_with`: components the profile editor will not enable together with this one. Contract: src/trusted_data_agent/components/signals.py.",
+      "additionalProperties": false,
+      "properties": {
+        "emits": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^uderia:[a-z0-9-]+$"
+          }
+        },
+        "listens": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^uderia:[a-z0-9-]+$"
+          }
+        },
+        "announces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          }
+        },
+        "consumes_refs": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "implicit": {
+                  "type": "string",
+                  "enum": [
+                    "latest_data",
+                    "latest"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "conflicts_with": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "emits",
+        "listens",
+        "announces",
+        "consumes_refs"
+      ]
+    },
+    "roles": {
+      "type": "object",
+      "description": "A component whose agent-facing tool is scoped by ROLES (today only Platform): what an agent holding the component is FOR. 'grant' \u2014 where an agent's chosen roles are stored (componentConfig.<component_id>.roles; a capability, so signed); 'default' \u2014 the roles an agent that names none holds; 'definitions' \u2014 the folder of role files, relative to the component (one JSON file per role); 'playbooks' \u2014 the progressive skill whose playbooks the roles slice. Roles only ever narrow what the component offers; they carry no user tier.",
+      "required": [
+        "grant",
+        "default",
+        "definitions",
+        "playbooks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "grant": {
+          "type": "string",
+          "pattern": "^componentConfig\\.[a-z_]+\\.roles$"
+        },
+        "default": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "minItems": 1
+        },
+        "definitions": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_/-]*/$"
+        },
+        "playbooks": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        }
+      }
+    }
+  }
+}

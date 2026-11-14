@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Anatomy of a Question — Trust &amp; Assurance</title>
+<meta name="description" content="When a Uderia agent cannot go on without a person it stops and asks instead of guessing: how the question is found, recorded, held, answered, bound, carried through chains and unattended runs, governed per agent, and measured.">
+<style>
+  :root {
+    --ground: #0e1621;
+    --panel: #172230;
+    --panel-2: #1e2c3b;
+    --hair: #2c3c4e;
+    --hair-soft: #223140;
+    --text: #e9eff5;
+    --muted: #93a4b6;
+    --dim: #6b7d90;
+    --faint: #52657a;
+
+    --sage: #6cbf92;      /* held · governed · trusted */
+    --amber: #f2b04a;     /* changed · structural · review */
+    --red: #e5687a;       /* refused · contradicted */
+    --blue: #6aa9e0;      /* crypto · prove */
+    --gold: #38bdf8;      /* the question colour — waiting for you */
+    --steel-1: #9db8cf;
+    --accent: #F15F22;    /* Uderia orange */
+    --accent-soft: rgba(241,95,34,0.12);
+    --accent-line: rgba(241,95,34,0.45);
+    --gold-soft: rgba(56,189,248,0.10);
+    --gold-line: rgba(56,189,248,0.45);
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 780px at 50% -12%, #14212f 0%, var(--ground) 58%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.62;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  a { color: var(--steel-1); text-decoration: none; border-bottom: 1px solid rgba(157,184,207,0.28); }
+  a:hover { color: var(--text); }
+  p { max-width: 74ch; }
+
+  header.masthead { padding: 78px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold); margin: 0 0 18px;
+  }
+  h1 {
+    font-weight: 800; letter-spacing: -0.02em;
+    font-size: clamp(34px, 6vw, 60px); line-height: 1.02; margin: 0; text-wrap: balance;
+  }
+  h1 .thin { font-weight: 300; color: var(--muted); }
+  .epigraph {
+    font-family: var(--serif); font-style: italic; font-size: clamp(18px, 2.3vw, 22px);
+    color: #c6d3df; max-width: 62ch; margin: 26px 0 0;
+    padding-left: 20px; border-left: 2px solid var(--gold-line);
+  }
+  .crumbs { font-family: var(--mono); font-size: 12.5px; color: var(--dim); margin: 26px 0 0; }
+  .crumbs a { color: var(--muted); }
+
+  .thesis {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    margin: 40px 0 8px; font-family: var(--mono); font-size: 13.5px;
+  }
+  .thesis .t {
+    background: var(--panel); border: 1px solid var(--hair); padding: 10px 16px;
+    border-radius: 10px; color: #d6e1ec; white-space: nowrap;
+  }
+  .thesis .arr { color: var(--gold); padding: 0 12px; font-size: 15px; }
+  .thesis .t.seal { border-color: var(--gold-line); color: var(--gold); }
+
+  section { padding: 54px 0 46px; border-top: 1px solid var(--hair); margin-top: 46px; }
+  .act-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .act-num {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid var(--gold-line); border-radius: 999px; padding: 4px 13px;
+  }
+  h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.015em; line-height: 1.12; }
+  .lead { font-size: 18px; color: #cdd9e4; margin-top: 16px; }
+  .lead strong { color: var(--text); }
+
+  .stage-svg {
+    margin: 30px auto 8px; max-width: 860px;
+    background: radial-gradient(600px 380px at 50% 40%, rgba(255,255,255,0.02), transparent 70%);
+    border-radius: 16px; padding: 6px;
+  }
+  .stage-svg svg { display: block; width: 100%; height: auto; }
+  .caption { text-align: center; font-size: 13.5px; color: var(--muted); margin: 8px auto 0; max-width: 70ch; }
+
+  .cardgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 26px; }
+  @media (max-width: 760px) { .cardgrid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 16px; padding: 22px 24px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 17px; font-weight: 750; }
+  .card p { font-size: 14.5px; color: var(--muted); margin: 0 0 8px; max-width: none; }
+  .card p:last-child { margin-bottom: 0; }
+  .card p strong { color: #dbe5ef; }
+  .card code { font-family: var(--mono); font-size: 12.5px; color: var(--sage); }
+  .card .k {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--dim); display: block; margin-bottom: 10px;
+  }
+  .card[data-tone="gold"]  { border-color: var(--gold-line); }
+  .card[data-tone="gold"]  .k { color: var(--gold); }
+  .card[data-tone="sage"]  { border-color: rgba(108,191,146,0.4); }
+  .card[data-tone="sage"]  .k { color: var(--sage); }
+  .card[data-tone="red"]   { border-color: rgba(229,104,122,0.4); }
+  .card[data-tone="red"]   .k { color: var(--red); }
+  .card[data-tone="blue"]  { border-color: rgba(106,169,224,0.4); }
+  .card[data-tone="blue"]  .k { color: var(--blue); }
+
+  .callout {
+    background: var(--gold-soft); border: 1px solid var(--gold-line); border-radius: 14px;
+    padding: 24px 26px; margin: 28px 0 0;
+  }
+  .callout .tag {
+    display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold-line);
+    border-radius: 999px; padding: 3px 11px; margin-bottom: 14px;
+  }
+  .callout.red   { background: rgba(229,104,122,0.08); border-color: rgba(229,104,122,0.4); }
+  .callout.red   .tag { color: var(--red); border-color: rgba(229,104,122,0.4); }
+  .callout.blue  { background: rgba(106,169,224,0.10); border-color: rgba(106,169,224,0.4); }
+  .callout.blue  .tag { color: var(--blue); border-color: rgba(106,169,224,0.4); }
+  .callout.sage  { background: rgba(108,191,146,0.10); border-color: rgba(108,191,146,0.4); }
+  .callout.sage  .tag { color: var(--sage); border-color: rgba(108,191,146,0.4); }
+  .callout p { margin: 0 0 12px; font-size: 15.5px; color: #cdd9e4; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p strong { color: var(--text); }
+  .callout code { font-family: var(--mono); font-size: 13px; color: var(--sage); }
+
+  .states { display: flex; gap: 14px; flex-wrap: wrap; margin: 22px 0 4px; }
+  .state {
+    flex: 1 1 210px; background: rgba(0,0,0,0.22); border: 1px solid var(--hair);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .state .dot { width: 13px; height: 13px; border-radius: 50%; display: inline-block; vertical-align: -1px; margin-right: 8px; }
+  .state.held      { border-color: rgba(108,191,146,0.5); }  .state.held .dot      { background: var(--sage); }
+  .state.refused   { border-color: rgba(229,104,122,0.5); }  .state.refused .dot   { background: var(--red); }
+  .state.honest    { border-color: rgba(242,176,74,0.5); }   .state.honest .dot    { background: var(--amber); }
+  .state.sealed    { border-color: rgba(106,169,224,0.5); }  .state.sealed .dot    { background: var(--blue); }
+  .state.waiting   { border-color: var(--gold-line); }        .state.waiting .dot   { background: var(--gold); }
+  .state h4 { margin: 0 0 4px; font-size: 15px; }
+  .state p { font-size: 13.5px; margin: 0; color: var(--muted); max-width: none; }
+
+  .tbl-scroll { overflow-x: auto; margin: 24px 0 0; }
+  table.detail { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 560px; }
+  table.detail th, table.detail td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--hair-soft); vertical-align: top; }
+  table.detail th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+  table.detail td:first-child { font-family: var(--mono); color: var(--steel-1); white-space: nowrap; }
+  table.detail code { font-family: var(--mono); font-size: 12.5px; color: var(--sage); }
+
+  .proof { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 28px; }
+  .proof .p {
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 18px 16px 16px; text-align: center;
+  }
+  .proof .n { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+  .proof .n.sage { color: var(--sage); } .proof .n.red { color: var(--red); }
+  .proof .n.gold { color: var(--gold); } .proof .n.blue { color: var(--blue); }
+  .proof .l { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+
+  .mono-note { font-family: var(--mono); font-size: 12.5px; color: var(--dim); }
+  pre.sqlbox {
+    background: rgba(0,0,0,0.3); border: 1px solid var(--hair); border-radius: 12px;
+    padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.6; color: #cfe3d6; margin: 22px 0 0;
+  }
+  pre.sqlbox .kw { color: var(--blue); } pre.sqlbox .cm { color: var(--dim); }
+
+  footer { padding: 56px 0 78px; border-top: 1px solid var(--hair); margin-top: 60px; }
+  footer .lab { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 0 0 14px; }
+  footer a { margin-right: 20px; line-height: 2.2; color: var(--muted); }
+  footer a:hover { color: var(--text); }
+  footer .fine { color: var(--dim); font-size: 13px; font-family: var(--mono); margin-top: 22px; }
+
+  .sv-lab { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; }
+  .sv-tit { font-family: var(--sans); font-weight: 750; font-size: 14px; }
+  .sv-sm  { font-family: var(--mono); font-size: 10.5px; }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Agent Trust &amp; Assurance · Needs Input · PROP-011</p>
+    <h1>The Anatomy of<br>a Question<br><span class="thin">a turn that stops to ask</span></h1>
+    <p class="epigraph">The most dangerous answer an agent can give is a confident one to a question it did not understand. Two of your things share a name; a value was never recorded; a step cannot be undone. A trustworthy agent does not pick one and carry on. It stops, and asks you.</p>
+    <p class="crumbs"><a href="index.html">Trust &amp; Assurance</a> · visual story · companion architecture: <a href="NEEDS_INPUT_ARCHITECTURE.html">Needs Input</a> · the operator's view: <a href="AGENT_TRUST_AND_ASSURANCE.html">Operations Guide</a></p>
+
+    <div class="thesis" role="img" aria-label="The pipeline: stuck, then asked, then recorded, then held, then answered, then bound, then continued, then measured.">
+      <span class="t">stuck</span><span class="arr">→</span>
+      <span class="t seal">asked</span><span class="arr">→</span>
+      <span class="t">recorded</span><span class="arr">→</span>
+      <span class="t">held</span><span class="arr">→</span>
+      <span class="t">answered</span><span class="arr">→</span>
+      <span class="t">bound</span><span class="arr">→</span>
+      <span class="t">continued</span><span class="arr">→</span>
+      <span class="t">measured</span>
+    </div>
+
+    <div class="callout blue" style="margin-top:34px">
+      <span class="tag">The principle</span>
+      <p><strong>Asking is a guarantee of the framework, not a virtue of the model.</strong> A language model can be taught to ask, and Uderia teaches it — but a guarantee cannot rest on a model's judgement, least of all a weak model's. So Uderia finds the ambiguity itself, in code, raises the question itself, refuses every tool past it, and keeps the question as a record with its own credential. The model's own asking is welcome on top; it is never the floor.</p>
+      <p>Everything below was driven live on 2 November 2026: every face through a fire drill on the test server, the card and the editor in a real browser, and the weakest model in use as the stress test.</p>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ ACT I · STUCK ═══════════════════ -->
+  <section id="act-stuck">
+    <div class="act-head"><span class="act-num">Act I</span><h2 style="margin:0">Stuck — Uderia finds the ambiguity before the model guesses</h2></div>
+    <p class="lead">An agent is asked to open <em>the Sales graph</em>. The user owns two knowledge graphs named Sales. Before PROP-011 the resolver reported the second as if it did not exist, and the model answered for one of them. Now the resolver raises a <strong>choose</strong> question in code — before any model has a chance to pick.</p>
+
+    <div class="stage-svg">
+      <svg viewBox="0 0 860 300" role="img" aria-label="A request to open the Sales graph reaches Uderia's resolver, which finds two graphs named Sales. Instead of picking one, it raises a question with both as options, and the turn stops.">
+        <defs>
+          <marker id="qA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#52657a"/>
+          </marker>
+        </defs>
+        <rect x="24" y="40" width="230" height="70" rx="12" fill="#172230" stroke="#2c3c4e"/>
+        <text x="139" y="68" text-anchor="middle" class="sv-sm" fill="#6b7d90">the person asks</text>
+        <text x="139" y="90" text-anchor="middle" class="sv-lab" fill="#e9eff5">open the Sales graph</text>
+        <path d="M254 75 L300 75" stroke="#52657a" stroke-width="1.4" marker-end="url(#qA)" fill="none"/>
+
+        <rect x="306" y="30" width="240" height="90" rx="12" fill="#172230" stroke="#2c3c4e"/>
+        <text x="426" y="58" text-anchor="middle" class="sv-tit" fill="#e9eff5">the resolver</text>
+        <text x="426" y="80" text-anchor="middle" class="sv-sm" fill="#93a4b6">graphs.get · by name, as the user</text>
+        <text x="426" y="100" text-anchor="middle" class="sv-sm" fill="#f2b04a">2 of your graphs are named Sales</text>
+
+        <path d="M546 75 L596 75" stroke="#52657a" stroke-width="1.4" marker-end="url(#qA)" fill="none"/>
+
+        <rect x="602" y="20" width="234" height="110" rx="12" fill="rgba(56,189,248,0.06)" stroke="rgba(56,189,248,0.45)"/>
+        <text x="719" y="46" text-anchor="middle" class="sv-lab" fill="#38bdf8">raised in code · choose</text>
+        <text x="719" y="70" text-anchor="middle" class="sv-sm" fill="#cdd9e4">Which knowledge graph do you</text>
+        <text x="719" y="86" text-anchor="middle" class="sv-sm" fill="#cdd9e4">mean by 'Sales'?</text>
+        <text x="719" y="112" text-anchor="middle" class="sv-sm" fill="#93a4b6">Sales · 48 entities  |  Sales · 12 entities</text>
+
+        <!-- the guess, crossed out -->
+        <rect x="306" y="176" width="240" height="76" rx="12" fill="rgba(229,104,122,0.06)" stroke="rgba(229,104,122,0.4)" stroke-dasharray="4 5"/>
+        <text x="426" y="204" text-anchor="middle" class="sv-lab" fill="#e5687a">before: the first one, silently</text>
+        <text x="426" y="226" text-anchor="middle" class="sv-sm" fill="#93a4b6">the second reported as absent</text>
+        <text x="426" y="242" text-anchor="middle" class="sv-sm" fill="#93a4b6">a guess presented as the answer</text>
+        <path d="M426 120 L426 170" stroke="rgba(229,104,122,0.5)" stroke-width="1.2" stroke-dasharray="3 4" fill="none"/>
+
+        <text x="139" y="200" text-anchor="middle" class="sv-sm" fill="#6b7d90">the model is never asked</text>
+        <text x="139" y="218" text-anchor="middle" class="sv-sm" fill="#6b7d90">to decide between namesakes</text>
+      </svg>
+    </div>
+    <p class="caption">The raisers are Uderia's own resolvers — every place a name becomes an id: a graph, a repository, an agent, a data product. A name that matches more than one of the user's things is a question, not the first match.</p>
+
+    <div class="cardgrid">
+      <div class="card" data-tone="gold">
+        <span class="k">Who may raise</span>
+        <h3>Four voices, one record</h3>
+        <p><strong>Uderia</strong> (an ambiguity found in code), <strong>the agent</strong> (the model's own act), <strong>a data source</strong> (an MCP server that elicits mid-turn), or <strong>a relay</strong> (an expert's question carried up by its coordinator). The card says which — <em>platform</em>, <em>agent</em>, <em>data source</em>, <em>relayed</em> — so you always know whose question it is.</p>
+      </div>
+      <div class="card" data-tone="blue">
+        <span class="k">The model may ask too</span>
+        <h3>One tool, three carriers</h3>
+        <p>Ideate and Optimize agents hold <code>TDA_AskUser</code>; the planner can answer with <code>plan_type: input_required</code> instead of a plan; a self-correction can begin <code>ASK_USER:</code>; Focus and Ideate without tools can write a marked block. Every carrier lands in the same validator and the same ledger — and the text that teaches each exists in the prompt only while the component is in use for that agent.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ACT II · ASKED & RECORDED ═══════════════════ -->
+  <section id="act-asked">
+    <div class="act-head"><span class="act-num">Act II</span><h2 style="margin:0">Asked and recorded — the question is a record, not a sentence</h2></div>
+    <p class="lead">A question is a row: who it is for, which turn, who raised it and from which step, its kind, one to four items with their options, why it blocks, when it expires — and a <strong>digest</strong> of the canonical question that the answer's credential will carry. It reaches you <strong>verbatim</strong>: the card renders the record, never a paraphrase.</p>
+
+    <pre class="sqlbox"><span class="cm">-- ir-402d2092… · from the browser pass, 2 November 2026</span>
+<span class="kw">raised_by</span>   code                               <span class="cm">-- the platform, not the model</span>
+<span class="kw">source</span>      graphs.get.kg_id                   <span class="cm">-- the step that asked</span>
+<span class="kw">kind</span>        choose
+<span class="kw">items</span>       Knowledge graph · "Which knowledge graph do you mean by 'Sales'?"
+            options: kg-sales-1 (Sales · 48 entities) · kg-sales-2 (Sales · 12 entities)
+<span class="kw">why</span>         'Sales' names 2 of your knowledge graphs
+<span class="kw">status</span>      pending → accepted                 <span class="cm">-- declined · cancelled · expired · superseded</span>
+<span class="kw">expires</span>     7 days (a conversation) · 3 days (unattended)
+<span class="kw">digest</span>      sha256(canonical question)         <span class="cm">-- the resume binding is signed over it</span></pre>
+
+    <div class="states">
+      <div class="state waiting"><h4><span class="dot"></span>the card</h4><p>Under the answer that stopped: the options as buttons, Send held until one is picked, <em>Decline</em> and <em>Not now</em>, and <em>remember for this session · always for this agent</em>.</p></div>
+      <div class="state held"><h4><span class="dot"></span>the composer rule</h4><p>While a question is pending, what you type in the composer is your answer to it — a <code style="font-family:var(--mono);font-size:12px">provide</code> question needs no card at all. A new message that is not an answer supersedes the question, and the record says so.</p></div>
+      <div class="state sealed"><h4><span class="dot"></span>the strip</h4><p>The status strip reads <em>Waiting for you</em> — a quiet reading in the posture colour, never an alarm. The Needs Input panel lists what is waiting and what was asked, for this agent or all of them; the Assurance Inbox lists it across agents.</p></div>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Interrupted, not terminal</span>
+      <p>The turn's record reads <strong><code>input_required</code></strong> — a state beside <em>complete</em> and <em>failed</em>, not a flavour of either. It is <strong>interrupted</strong>: the session stays open on it, the question is served again on reload in its live state, and every poller in the runtime asks one rule, <code>turn_states.is_settled</code>, never its own list of strings. A REST client that declares it accepts the state sees it; one that does not sees <em>complete</em> with the question attached — nothing that polls today breaks.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ACT III · HELD ═══════════════════ -->
+  <section id="act-held">
+    <div class="act-head"><span class="act-num">Act III</span><h2 style="margin:0">Held — three guarantees, enforced where the model cannot reach</h2></div>
+    <p class="lead">A question changes what the rest of the turn may do. The ledger that holds it is armed before any engine runs and read at the <strong>tool chokepoints</strong>, the plan loop and the gate seams — the same places Agent Authority holds — so the guarantees do not depend on the model agreeing with them.</p>
+
+    <div class="stage-svg">
+      <svg viewBox="0 0 860 230" role="img" aria-label="Once a question is pending: every further tool call is refused at the chokepoints, the plan loop stops, the answer gates abstain, and the turn's record reads input_required with the question appended verbatim.">
+        <defs>
+          <marker id="qC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#52657a"/>
+          </marker>
+        </defs>
+        <rect x="14" y="30" width="832" height="104" rx="16" fill="none" stroke="rgba(56,189,248,0.35)" stroke-dasharray="4 6"/>
+        <text x="30" y="22" class="sv-sm" fill="#38bdf8">one turn · the ledger armed</text>
+        <g>
+          <rect x="30" y="56" width="128" height="52" rx="10" fill="rgba(56,189,248,0.10)" stroke="#38bdf8"/>
+          <text x="94" y="86" text-anchor="middle" class="sv-lab" fill="#38bdf8">question raised</text>
+          <rect x="178" y="56" width="150" height="52" rx="10" fill="rgba(229,104,122,0.07)" stroke="rgba(229,104,122,0.45)"/>
+          <text x="253" y="80" text-anchor="middle" class="sv-lab" fill="#e5687a">every tool refused</text>
+          <text x="253" y="98" text-anchor="middle" class="sv-sm" fill="#93a4b6">MCP · component · platform</text>
+          <rect x="348" y="56" width="138" height="52" rx="10" fill="#172230" stroke="#2c3c4e"/>
+          <text x="417" y="80" text-anchor="middle" class="sv-lab" fill="#e9eff5">plan loop stops</text>
+          <text x="417" y="98" text-anchor="middle" class="sv-sm" fill="#93a4b6">no phase after it</text>
+          <rect x="506" y="56" width="150" height="52" rx="10" fill="#172230" stroke="#2c3c4e"/>
+          <text x="581" y="80" text-anchor="middle" class="sv-lab" fill="#e9eff5">the gates abstain</text>
+          <text x="581" y="98" text-anchor="middle" class="sv-sm" fill="#93a4b6">grounding · honesty · RAG</text>
+          <rect x="676" y="56" width="154" height="52" rx="10" fill="rgba(108,191,146,0.10)" stroke="rgba(108,191,146,0.5)"/>
+          <text x="753" y="80" text-anchor="middle" class="sv-lab" fill="#6cbf92">input_required</text>
+          <text x="753" y="98" text-anchor="middle" class="sv-sm" fill="#93a4b6">question appended verbatim</text>
+        </g>
+        <path d="M158 82 L174 82" stroke="#52657a" stroke-width="1.3" marker-end="url(#qC)"/>
+        <path d="M328 82 L344 82" stroke="#52657a" stroke-width="1.3" marker-end="url(#qC)"/>
+        <path d="M486 82 L502 82" stroke="#52657a" stroke-width="1.3" marker-end="url(#qC)"/>
+        <path d="M656 82 L672 82" stroke="#52657a" stroke-width="1.3" marker-end="url(#qC)"/>
+        <text x="430" y="176" text-anchor="middle" class="sv-sm" fill="#93a4b6">the refusal tells the model what to do: end the answer with the question, as written, and call nothing further</text>
+        <text x="430" y="200" text-anchor="middle" class="sv-sm" fill="#6b7d90">a model that answers anyway is not a hole — its answer is delivered with the question beneath it, and the record still reads input_required</text>
+      </svg>
+    </div>
+
+    <div class="cardgrid">
+      <div class="card" data-tone="red">
+        <span class="k">Guarantee 1</span>
+        <h3>No tool runs past a question</h3>
+        <p>The MCP adapter, the component manager and the platform tool all ask the ledger first. A pending question makes every call a refusal that names the question — the same chokepoints where a denied tool is refused, so there is no door the model can take instead.</p>
+      </div>
+      <div class="card" data-tone="sage">
+        <span class="k">Guarantee 2</span>
+        <h3>The question reaches you as written</h3>
+        <p>The finish seam appends the question's text to the delivered answer and stamps the record. What the model wrote around it stays; what it cannot do is rephrase, soften or drop the question — the card is rendered from the record, not from the prose.</p>
+      </div>
+      <div class="card" data-tone="blue">
+        <span class="k">Guarantee 3</span>
+        <h3>The gates abstain, honestly</h3>
+        <p>There is no answer to grade, so grounding, honesty and the retrieval check abstain and say why. A turn that asked is neither a pass nor a failure on the Trust Circle — it is a turn waiting on a person, and the <em>Reviewed</em> station reads it as exactly that.</p>
+      </div>
+      <div class="card">
+        <span class="k">One question at a time</span>
+        <h3>Bounded per turn</h3>
+        <p>An agent asks at most <em>n</em> questions per turn (its owner's setting, 1–8, default 1). A second question on the same turn joins the first as another item or is refused — a turn never becomes an interrogation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ACT IV · ANSWERED & BOUND ═══════════════════ -->
+  <section id="act-answered">
+    <div class="act-head"><span class="act-num">Act IV</span><h2 style="margin:0">Answered and bound — the answer is a credential, and it is used once</h2></div>
+    <p class="lead">When the question was raised, the owner was issued a <strong>resume binding</strong>: a signed token over the record's digest, for this person, for this question. The answer carries it. Uderia verifies it, <strong>consumes</strong> it in one guarded write, and starts the next turn of the same session with the chosen value <strong>bound in code</strong> — the step that asked finds the answer on the ledger and continues; no model re-derives what you chose.</p>
+
+    <div class="stage-svg">
+      <svg viewBox="0 0 860 250" role="img" aria-label="The person picks kg-sales-1 and sends. The resume binding is verified and consumed once. The re-entry turn starts with the answer bound; the step that asked reads it from the ledger and continues; the record reads accepted.">
+        <defs>
+          <marker id="qD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#52657a"/>
+          </marker>
+        </defs>
+        <rect x="24" y="34" width="200" height="80" rx="12" fill="#172230" stroke="#2c3c4e"/>
+        <text x="124" y="62" text-anchor="middle" class="sv-tit" fill="#e9eff5">you</text>
+        <text x="124" y="84" text-anchor="middle" class="sv-sm" fill="#93a4b6">Sales · 48 entities → Send</text>
+        <text x="124" y="102" text-anchor="middle" class="sv-sm" fill="#6b7d90">remember: just this once</text>
+        <path d="M224 74 L270 74" stroke="#52657a" stroke-width="1.4" marker-end="url(#qD)" fill="none"/>
+
+        <rect x="276" y="24" width="250" height="100" rx="12" fill="rgba(106,169,224,0.08)" stroke="rgba(106,169,224,0.45)"/>
+        <text x="401" y="50" text-anchor="middle" class="sv-lab" fill="#6aa9e0">the binding, verified</text>
+        <text x="401" y="72" text-anchor="middle" class="sv-sm" fill="#cdd9e4">signed over { request id, digest, owner }</text>
+        <text x="401" y="90" text-anchor="middle" class="sv-sm" fill="#cdd9e4">consumed in one guarded UPDATE</text>
+        <text x="401" y="110" text-anchor="middle" class="sv-sm" fill="#e5687a">a second use → already accepted</text>
+        <path d="M526 74 L572 74" stroke="#52657a" stroke-width="1.4" marker-end="url(#qD)" fill="none"/>
+
+        <rect x="578" y="24" width="258" height="100" rx="12" fill="rgba(108,191,146,0.07)" stroke="rgba(108,191,146,0.45)"/>
+        <text x="707" y="50" text-anchor="middle" class="sv-lab" fill="#6cbf92">the re-entry turn</text>
+        <text x="707" y="72" text-anchor="middle" class="sv-sm" fill="#cdd9e4">same session · same request</text>
+        <text x="707" y="90" text-anchor="middle" class="sv-sm" fill="#cdd9e4">graphs.get finds kg-sales-1 on the ledger</text>
+        <text x="707" y="110" text-anchor="middle" class="sv-sm" fill="#93a4b6">the record reads accepted · by you · via chat</text>
+
+        <rect x="276" y="160" width="560" height="62" rx="12" fill="#172230" stroke="#2c3c4e"/>
+        <text x="556" y="184" text-anchor="middle" class="sv-lab" fill="#e9eff5">or: Decline → the turn ends unanswered and says so · Not now → the question waits</text>
+        <text x="556" y="206" text-anchor="middle" class="sv-sm" fill="#93a4b6">an answer is never an agent's act: answered_by is a person, a relay quoting a person, or a policy — never a model</text>
+      </svg>
+    </div>
+
+    <div class="cardgrid">
+      <div class="card" data-tone="gold">
+        <span class="k">Remembered answers</span>
+        <h3>Say it once, for the session or for the agent</h3>
+        <p><em>Use this for the rest of the session</em> keys the answer to the ambiguity (<code>ambiguous:knowledge graph:sales</code>); <em>always for this agent</em> writes it into the agent's standing answers, which its owner can read and edit. The next time the same ambiguity arises the resolver takes the remembered value — and <strong>records that it did</strong>, on the turn, as any default is recorded.</p>
+      </div>
+      <div class="card" data-tone="blue">
+        <span class="k">Why a credential</span>
+        <h3>Nobody answers for you</h3>
+        <p>The binding is issued only to the question's owner and only when the question is served to them. A REST client, an MCP caller or a relay must present it; an agent never holds one. A reloaded card is answerable because the session load re-issues it to the owner — and to no one else.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ACT V · EVERYWHERE ═══════════════════ -->
+  <section id="act-everywhere">
+    <div class="act-head"><span class="act-num">Act V</span><h2 style="margin:0">Continued — wherever the turn was running</h2></div>
+    <p class="lead">A conversation is the easy case: you are there. Uderia agents also run as experts under a coordinator, on a schedule, as a node in a flow, behind an MCP tool, and through connectors to systems you must sign into. A question must survive each of these — and <strong>the answer must go back to the run it came from</strong>.</p>
+
+    <div class="tbl-scroll">
+      <table class="detail">
+        <thead><tr><th>Where</th><th>What happens when a question is raised</th><th>How the answer comes back</th></tr></thead>
+        <tbody>
+          <tr><td>a chain</td><td>an expert's question is <strong>relayed</strong> by its coordinator as its own, with the chain on the record (<code>parent_id</code>, the expert's session named); the coordinator's turn ends asking</td><td>the expert whose question was answered is <strong>continued</strong>, never asked afresh — its own re-entry turn, in-process, with the answer bound; the coordinator then completes</td></tr>
+          <tr><td>a scheduled run</td><td>the run records <code>input_required</code> and the task's channel carries the question — an email, a webhook with the binding</td><td><code>resume_task_run</code> starts a resumption run in the task's session; a question nobody answers expires <code>unanswered</code> — and the expiry closes only a run that is still waiting</td></tr>
+          <tr><td>a flow</td><td>the node that asked pauses the run; nothing downstream executes</td><td>the flow resumes <strong>at that node</strong>, earlier outputs carried forward, the paused run linked</td></tr>
+          <tr><td>a connector</td><td>a user connector you have not connected is not an error: the turn ends <code>auth_required</code> with one option, <em>Connect</em></td><td>the OAuth popup; the next turn re-enters with the connection in place</td></tr>
+          <tr><td>MCP, both ways</td><td>a data source that elicits mid-turn is held for a bounded time, then becomes a <em>data source</em> question for you</td><td><code>ask_profile(answer_to=…, answer=…)</code> re-enters the same session; the elicitation is answered on the way back</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout sage">
+      <span class="tag">Seen live</span>
+      <p>In the live run a coordinator forwarded a question to its Focus expert; the expert did not need Uderia to find it — it called <code>TDA_AskUser</code> itself: <em>"Which region are you referring to? North America · Europe · Asia Pacific · Latin America · Africa"</em>. The question was relayed up as the coordinator's own, answered from its own options, and the expert was continued with the answer. <strong>Two relays, one chain, one record each.</strong></p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ACT VI · GOVERNED ═══════════════════ -->
+  <section id="act-governed">
+    <div class="act-head"><span class="act-num">Act VI</span><h2 style="margin:0">Governed — how an agent asks is its owner's authority</h2></div>
+    <p class="lead">Asking has a posture, like every other authority an agent holds. It lives in the agent's Authority card, unsigned, and <strong>weakening it is a recorded downgrade</strong> — an agent that stops asking is an agent whose behaviour changed, and the Trust Circle says so.</p>
+
+    <div class="tbl-scroll">
+      <table class="detail">
+        <thead><tr><th>Setting</th><th>Choices</th><th>What it governs</th></tr></thead>
+        <tbody>
+          <tr><td>in a conversation</td><td><code>ask</code> · <code>never</code></td><td>whether a conversation turn may stop with a question; <em>never</em> goes on with the standing answers and says so</td></tr>
+          <tr><td>unattended</td><td><code>park</code> · <code>fail</code></td><td>a scheduled run, a flow node, an expert: wait for the person, or fail rather than wait</td></tr>
+          <tr><td>the platform's own questions</td><td><code>enforce</code> · <code>observe</code></td><td>whether an ambiguity found in code stops the turn, or is recorded while the step picks — an administrator can hold every agent at <em>observe</em> during a rollout</td></tr>
+          <tr><td>questions per turn</td><td>1–8</td><td>the bound of Act III</td></tr>
+          <tr><td>standing answers</td><td>key = value</td><td>the agent's remembered answers — written here, or by answering once with <em>always for this agent</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cardgrid">
+      <div class="card" data-tone="gold">
+        <span class="k">One toggle, three effects</span>
+        <h3>The component in use — or absent</h3>
+        <p>Needs Input is a system component. Switch it off for an agent and <strong>nothing of the act remains</strong>: the prompt text that teaches the model to ask is not there (it is a variable, empty when the component is off), <code>TDA_AskUser</code> is not offered, and Uderia's own questions are recorded, never raised. The agent carries no token of a capability it does not have.</p>
+      </div>
+      <div class="card" data-tone="sage">
+        <span class="k">A person's acts stay a person's</span>
+        <h3>Answering is <em>human_only</em></h3>
+        <p>In Uderia's own catalog of operations, answering or withdrawing a question is marked <code>human_only</code> — listed, described, and never callable by an agent, not even one with the Platform role that lets it drive everything else. An agent that could answer its own questions would have no questions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ACT VII · MEASURED ═══════════════════ -->
+  <section id="act-measured">
+    <div class="act-head"><span class="act-num">Act VII</span><h2 style="margin:0">Measured — the question that was not asked</h2></div>
+    <p class="lead">Asking is on the ring. The <strong>Reviewed</strong> station carries a <code>needs_input</code> point: a turn that stopped to ask reads as waiting on a person; a turn that used a standing answer reads as a pass with the answer named; a turn with nothing to ask reads not-applicable. And the measure that matters most is the one about the turns that did <em>not</em> ask.</p>
+
+    <div class="cardgrid">
+      <div class="card" data-tone="red">
+        <span class="k">The measure</span>
+        <h3><code>guessed_past_ambiguity</code></h3>
+        <p>After the turn, a scorer reads the raisers' record: an ambiguity was found, the posture was <em>observe</em>, no question was raised, and the step picked one. That is a guess presented as an answer — scored, visible on the Quality card, counted in the agent's trend. Uderia never pretends the guess did not happen.</p>
+      </div>
+      <div class="card" data-tone="blue">
+        <span class="k">The numbers behind the panel</span>
+        <h3>Asked · answered · declined · expired · median</h3>
+        <p>The Needs Input panel and <code>GET /v1/input-requests/stats</code> read the same ledger: how often an agent asks, how often it is answered, how long you take. These are the numbers that will decide the next step — whether an agent should continue on its own after the first question instead of asking again.</p>
+      </div>
+    </div>
+
+    <div class="proof">
+      <div class="p"><div class="n gold">31 / 31</div><div class="l">faces driven live with the fire drill — answer, decline, remembered, auth, elicitation, chain, schedule, flow</div></div>
+      <div class="p"><div class="n gold">17 / 17</div><div class="l">checks in a real browser — the card, the composer rule, the re-entry, the panel, the editor</div></div>
+      <div class="p"><div class="n">$0.18</div><div class="l">the whole live run, on the weakest model in use</div></div>
+      <div class="p"><div class="n red">0 / 4</div><div class="l">engines on which that weak model asked on its own, standalone — Uderia held every time</div></div>
+      <div class="p"><div class="n sage">1</div><div class="l">expert that asked on its own under a coordinator — relayed up, continued down</div></div>
+      <div class="p"><div class="n blue">223</div><div class="l">assertions in the gate that pins every guarantee without a model call</div></div>
+      <div class="p"><div class="n">2</div><div class="l">defects the browser pass found that no gate had — both fixed and pinned the same day</div></div>
+      <div class="p"><div class="n sage">1</div><div class="l">rule every poller follows: <span style="font-family:var(--mono)">is_settled</span> — never a private list of states</div></div>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Honest limits</span>
+      <p><strong>The model's own asking is a hypothesis on weak models.</strong> Standalone on Nova 2 Lite, no engine used a carrier; under a coordinator one expert did. The guarantee is Uderia's raising, not the prompt. <strong>A second expert may ask the same question again</strong> after the first was answered — the remembered-answer option covers it; a continuation that carries one answer to the whole chain is not built. <strong>Uderia raises only what it can see</strong> — a namesake among the user's own things, a missing input a step declares, a source that elicits — not every ambiguity a sentence can hold. <strong>The numbers that would justify going further</strong> (how often people answer, how fast, whether a second question follows a first) need real use; they are collected, not yet read.</p>
+    </div>
+
+    <div class="callout sage" style="margin-top:22px">
+      <span class="tag">Why this matters</span>
+      <p><strong>An agent that guesses well is still guessing.</strong> The question is the one output a model cannot fake: it is raised in code where the facts are ambiguous, recorded with its own credential, held at the same chokepoints that hold every other authority, answered only by a person, and measured when it was not asked. That is what makes <em>"I need to ask you something"</em> a guarantee rather than a mood.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p class="lab">Companion pages</p>
+    <a href="NEEDS_INPUT_ARCHITECTURE.html">Needs Input — the architecture</a>
+    <a href="the-life-of-a-uderia-agent.html">The Life of a Uderia Agent</a>
+    <a href="agent-anatomy-of-trust.html">An Anatomy of Trust</a>
+    <a href="the-anatomy-of-a-signed-action.html">The Anatomy of a Signed Action</a>
+    <a href="the-anatomy-of-an-answers-evidence.html">The Anatomy of an Answer's Evidence</a>
+    <a href="AGENT_TRUST_AND_ASSURANCE.html">Operations Guide</a>
+    <a href="index.html">Trust &amp; Assurance home</a>
+    <p class="fine">Uderia · served at /static/trust/ · every claim on this page is backed by a gate in test/trust_battery.sh or the recorded live runs of 2 November 2026 (test/needs_input_live_probe.py · test/needs_input_browser_pass.py).</p>
+    <p class="fine">Uderia is a framework for trusted data agents.</p>
+  </footer>
+
+</div>
+</html>

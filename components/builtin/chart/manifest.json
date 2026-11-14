@@ -1,0 +1,282 @@
+{
+  "component_id": "chart",
+  "display_name": "Data Visualization",
+  "icon_accent": "#f43f5e",
+  "answer_surface": {
+    "open": true,
+    "kind": "chart",
+    "word": "Chart", "pin": true},
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z\"/></svg>",
+  "description": "Interactive data visualizations using G2Plot (bar, line, pie, scatter, area, histogram, and more)",
+  "version": "1.1.0",
+  "component_type": "action",
+  "instances": "none",
+  "signals": {
+    "emits": [],
+    "listens": [],
+    "announces": [],
+    "consumes_refs": true,
+    "conflicts_with": [
+      "dashboard"
+    ]
+  },
+  "category": "Visualization",
+  "tactical_prompt_rule": "4.  **CRITICAL RULE (Chart Mapping)**: If you are calling the `TDA_Charting` tool, the `mapping` argument is the most critical part. You **MUST** adhere to the following key names based on the `chart_type`:\n    - For `pie` charts: `mapping` keys **MUST** be `\"angle\"` for the numeric value and `\"color\"` for the category label.\n    - For `bar`, `column`, `line`, or `area` charts: `mapping` keys **MUST** be `\"x_axis\"` and `\"y_axis\"`.\n    - For `scatter` charts: `mapping` keys **MUST** be `\"x_axis\"` and `\"y_axis\"`.\n    - **Example (Pie Chart)**: `\"mapping\": {\"angle\": \"Count\", \"color\": \"StateName\"}`\n    - You **MUST NOT** invent other mapping keys like \"slice_labels\" or \"slice_values\".",
+  "tool_definition": {
+    "name": "TDA_Charting",
+    "description": "Generates a data visualization based on provided data. You must specify the chart type and map the data fields to the appropriate visual roles.",
+    "args": {
+      "chart_type": {
+        "type": "string",
+        "description": "The type of chart to generate (e.g., 'bar', 'pie', 'line', 'scatter'). This MUST be one of the types listed in the 'Charting Guidelines'.",
+        "required": true
+      },
+      "data": {
+        "type": "list[dict]",
+        "description": "The data to be visualized, passed directly from the output of another tool.",
+        "required": true
+      },
+      "title": {
+        "type": "string",
+        "description": "A descriptive title for the chart.",
+        "required": true
+      },
+      "mapping": {
+        "type": "dict",
+        "description": "A dictionary that maps data keys to chart axes or roles (e.g., {'x_axis': 'product_name', 'y_axis': 'sales_total'}). The required keys for this mapping depend on the selected chart_type.",
+        "required": true
+      },
+      "sort_by": {
+        "type": "string",
+        "description": "Column name to sort data by before charting. Use with row_limit for 'top N' queries.",
+        "required": false
+      },
+      "sort_direction": {
+        "type": "string",
+        "description": "Sort direction: 'asc' (ascending, smallest first) or 'desc' (descending, largest first). Defaults to 'desc'.",
+        "required": false
+      },
+      "row_limit": {
+        "type": "integer",
+        "description": "Maximum number of data rows to chart. Applied AFTER sorting. Use for 'top N' or 'bottom N' queries.",
+        "required": false
+      }
+    }
+  },
+  "chart_types": {
+    "bar": {
+      "g2plot_type": "Column",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "column": {
+      "g2plot_type": "Column",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "line": {
+      "g2plot_type": "Line",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "area": {
+      "g2plot_type": "Area",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "pie": {
+      "g2plot_type": "Pie",
+      "mapping_roles": [
+        "angle",
+        "color"
+      ],
+      "optional_roles": []
+    },
+    "scatter": {
+      "g2plot_type": "Scatter",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color",
+        "size"
+      ]
+    },
+    "histogram": {
+      "g2plot_type": "Histogram",
+      "mapping_roles": [
+        "x_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "heatmap": {
+      "g2plot_type": "Heatmap",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis",
+        "color"
+      ],
+      "optional_roles": []
+    },
+    "boxplot": {
+      "g2plot_type": "Box",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "wordcloud": {
+      "g2plot_type": "WordCloud",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": []
+    },
+    "waterfall": {
+      "g2plot_type": "Waterfall",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": []
+    },
+    "radar": {
+      "g2plot_type": "Radar",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "rose": {
+      "g2plot_type": "Rose",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    },
+    "funnel": {
+      "g2plot_type": "Funnel",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": []
+    },
+    "gauge": {
+      "g2plot_type": "Gauge",
+      "mapping_roles": [
+        "value"
+      ],
+      "optional_roles": []
+    },
+    "dualaxes": {
+      "g2plot_type": "DualAxes",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": []
+    },
+    "treemap": {
+      "g2plot_type": "Treemap",
+      "mapping_roles": [
+        "x_axis",
+        "y_axis"
+      ],
+      "optional_roles": [
+        "color"
+      ]
+    }
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_levels": [
+      "none",
+      "medium",
+      "heavy"
+    ],
+    "intensity_tooltips": {
+      "medium": "Chart when explicitly requested or clearly appropriate",
+      "heavy": "Proactively visualize every suitable data result"
+    },
+    "placeholder_substitutions": {
+      "{G2PLOT_GUIDELINES}": "guidelines.txt"
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "ChartComponentHandler",
+    "fast_path": true
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderChart",
+    "cdn_dependencies": [
+      {
+        "name": "G2Plot",
+        "url": "https://unpkg.com/@antv/g2plot@2.4.31/dist/g2plot.min.js",
+        "global": "G2Plot"
+      }
+    ]
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline",
+      "sub_window"
+    ],
+    "sub_window": {
+      "title_template": "{chart_type} Chart: {title}",
+      "default_size": {
+        "width": 600,
+        "height": 400
+      },
+      "resizable": true,
+      "interactive": false
+    }
+  },
+  "profile_defaults": {
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ],
+    "default_intensity": "medium"
+  }
+}
+

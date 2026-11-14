@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trust Membrane — Uderia</title>
+<style>
+:root{
+  --ground:#0e1621;--panel:#172230;--panel-2:#1e2c3b;--hair:#2c3c4e;--hair-soft:#223140;
+  --text:#e9eff5;--muted:#93a4b6;--dim:#6b7d90;--faint:#52657a;
+  --sage:#6cbf92;--amber:#f2b04a;--red:#e5687a;--blue:#6aa9e0;--steel-1:#9db8cf;
+  --accent:#F15F22;--accent-soft:rgba(241,95,34,0.12);--accent-line:rgba(241,95,34,0.45);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{
+  margin:0;background:radial-gradient(1200px 780px at 50% -12%,#14212f 0%,var(--ground) 58%),var(--ground);
+  color:var(--text);font-family:var(--sans);line-height:1.66;font-size:16.5px;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--steel-1);text-decoration:none;border-bottom:1px solid rgba(157,184,207,0.28);}
+a:hover{color:var(--text);}
+
+/* sticky masthead */
+.topbar{
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+  background:rgba(14,22,33,0.82);border-bottom:1px solid var(--hair);
+}
+.topbar-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar .brand{font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);}
+.topbar .sep{color:var(--faint);}
+.topbar .doc{font-weight:650;color:var(--text);}
+.topbar .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;}
+.topbar .back:hover{border-color:var(--accent-line);color:var(--text);}
+
+/* layout: content + floating TOC */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:44px;}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);}.toc{display:none;}}
+
+header.hero{padding:56px 0 8px;grid-column:1 / -1;}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
+header.hero h1{font-family:var(--sans);font-weight:800;letter-spacing:-0.02em;font-size:clamp(30px,5vw,50px);line-height:1.04;margin:0;text-wrap:balance;}
+
+/* TOC */
+.toc{grid-column:2;grid-row:2;align-self:start;position:sticky;top:72px;padding:18px 0;max-height:calc(100vh - 96px);overflow:auto;}
+.toc .toc-h{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}
+.toc a{display:block;border:none;color:var(--muted);font-size:13px;padding:3px 0 3px 12px;border-left:1px solid var(--hair);}
+.toc a:hover{color:var(--text);border-left-color:var(--accent-line);}
+.toc a.lvl-3{padding-left:24px;font-size:12.5px;color:var(--dim);}
+
+/* article */
+article.doc{min-width:0;padding:8px 0 80px;grid-column:1;grid-row:2;}
+article.doc h1,article.doc h2,article.doc h3,article.doc h4{scroll-margin-top:76px;line-height:1.2;text-wrap:balance;}
+article.doc h1{font-size:clamp(26px,3.6vw,34px);font-weight:800;letter-spacing:-0.015em;margin:40px 0 16px;}
+article.doc h2{font-size:clamp(22px,3vw,28px);font-weight:750;margin:44px 0 14px;padding-top:22px;border-top:1px solid var(--hair);}
+article.doc h3{font-size:19px;font-weight:700;color:#dbe6f0;margin:30px 0 10px;}
+article.doc h4{font-size:15.5px;font-weight:700;color:var(--muted);text-transform:none;margin:22px 0 8px;}
+article.doc p{max-width:74ch;color:#cdd8e2;margin:0 0 15px;}
+article.doc strong{color:var(--text);font-weight:650;}
+article.doc em{color:#d6e1ec;}
+article.doc ul,article.doc ol{max-width:74ch;color:#cdd8e2;padding-left:24px;}
+article.doc li{margin:6px 0;}
+article.doc li::marker{color:var(--dim);}
+article.doc hr{border:none;border-top:1px solid var(--hair);margin:36px 0;}
+article.doc blockquote{
+  margin:18px 0;padding:14px 20px;border-left:3px solid var(--accent-line);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:#d6e1ec;
+}
+article.doc blockquote p{margin:0 0 8px;}article.doc blockquote p:last-child{margin:0;}
+
+/* inline code + fenced */
+article.doc code{font-family:var(--mono);font-size:0.9em;color:var(--sage);background:rgba(108,191,146,0.08);
+  border:1px solid rgba(108,191,146,0.16);border-radius:5px;padding:1px 5px;}
+article.doc pre{
+  background:#0c141d;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 18px;
+}
+article.doc pre code{color:#c9d6e2;background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--hair);border-radius:12px;}
+article.doc table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+article.doc th,article.doc td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top;}
+article.doc thead th{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:rgba(0,0,0,0.22);}
+article.doc tbody tr:last-child td{border-bottom:none;}
+article.doc tbody tr:hover{background:rgba(255,255,255,0.015);}
+article.doc td code{white-space:nowrap;}
+/* a long identifier in running text wraps rather than widening the page at phone width */
+:where(code){overflow-wrap:anywhere;}
+/* the article is a grid/flex child: let it shrink so a wide table scrolls in its own wrapper */
+article.doc{min-width:0;}
+.table-wrap{max-width:100%;}
+
+footer.docfoot{grid-column:1 / -1;padding:28px 0 70px;border-top:1px solid var(--hair);color:var(--dim);font-size:13px;font-family:var(--mono);}
+footer.docfoot a{color:var(--muted);}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <span class="brand">Agent Trust &amp; Assurance</span>
+  <span class="sep">/</span>
+  <span class="doc">Trust Membrane</span>
+  <a class="back" href="the-life-of-a-uderia-agent.html">← The Life of a Uderia Agent</a>
+</div></div>
+
+<div class="shell">
+  <header class="hero">
+    <p class="eyebrow">Architecture · Tier 5.2</p>
+    <h1>Trust Membrane</h1>
+  </header>
+  <nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><a href="#1-the-idea-in-one-paragraph" class="lvl-2">1. The idea in one paragraph</a><a href="#2-module-map-srctrusted_data_agentcoretrust" class="lvl-2">2. Module map (src/trusted_data_agent/core/trust/)</a><a href="#3-the-validator-model-all-14-categories" class="lvl-2">3. The validator model (all 14 categories)</a><a href="#3a-what-counts-as-an-ingredient" class="lvl-3">3a. What counts as an ingredient</a><a href="#3a1-what-a-repository-signature-covers-learning-stays-outside-the-seal" class="lvl-3">3a.1 What a repository signature covers — learning stays outside the seal</a><a href="#3a2-planner-health-the-gate-names-the-case-it-refused-nov-2026" class="lvl-3">3a.2 Planner Health — the gate names the case it refused (Nov 2026)</a><a href="#3b-two-signable-halves-portable-and-deployment" class="lvl-3">3b. Two signable halves — portable and deployment</a><a href="#3c-an-agent-with-several-mcp-servers-prop-006-phase-2-sep-2026" class="lvl-3">3c. An agent with several MCP servers (PROP-006 phase 2, Sep 2026)</a><a href="#4-the-bottom-up-sign-gate" class="lvl-2">4. The bottom-up sign gate</a><a href="#5-badges-sign-off-ux" class="lvl-2">5. Badges + sign-off UX</a><a href="#6-marketplace-portability" class="lvl-2">6. Marketplace portability</a><a href="#7-packaging-isolation-the-ontology-suite" class="lvl-2">7. Packaging + isolation (the Ontology Suite)</a><a href="#7a-what-an-agents-signature-covers-jul-2026" class="lvl-2">7a. What an agent&#x27;s signature covers (Jul 2026)</a><a href="#7b-assessment-hardening-aug-2026-the-seal-must-not-lie" class="lvl-2">7b. Assessment hardening (Aug 2026) — the seal must not lie</a><a href="#7c-history-owner-scoped-agents-signing-keys-prop-009-41-oct-2026" class="lvl-2">7c. History, owner-scoped agents, signing keys (PROP-009 §4.1, Oct 2026)</a><a href="#8-guarantees-scope" class="lvl-2">8. Guarantees &amp;amp; scope</a></nav>
+  <article class="doc">
+<p><strong>Status:</strong> implemented and <strong>merged to <code>main</code></strong> (2026-07-03); last verified against code 2026-10-30. This is the
+<em>architecture</em> reference — how the shipped system works. The <em>design</em> rationale is
+<code>docs/roadmap/TIER_5.2_TRUST_MEMBRANE.md</code>; the
+per-artefact validator model is <code>TIER_5.2_VALIDATORS.md</code>;
+marketplace portability is <code>TIER_5.2_PORTABILITY.md</code>.</p>
+<hr>
+<h2 id="1-the-idea-in-one-paragraph">1. The idea in one paragraph</h2>
+<p>Trust is a <strong>visible, cryptographically-verifiable badge on an artefact</strong>, and the agent is
+the primary unit: <strong>a signed agent is trusted exactly when its whole composition is</strong> — its
+active ontology, its active skills, and the knowledge/planner <strong>repositories it consumes</strong>
+must each be signed 🟢. Trust is <em>computed, never re-derived</em>;
+sharing stays fully open (badge, not gate). Four states: ⚪ <strong>unsigned</strong>, 🟢 <strong>trusted</strong>
+(signed &amp; intact), 🟠 <strong>changed</strong> (signed, but content drifted since), and ◒
+<strong>deployment_unattested</strong> (publisher-signed and intact, but <em>this</em> instance's model, tool
+catalog and connector opt-ins have not been attested here — see §3b). Default (no
+attestations) = a byte-identical baseline — every artefact is ⚪.</p>
+<h2 id="2-module-map-srctrusted_data_agentcoretrust">2. Module map (<code>src/trusted_data_agent/core/trust/</code>)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attestation.py</code></td>
+<td>Pure core: <code>TrustState</code>, <code>content_hash</code>, <strong>id- &amp; order-independent</strong> <code>composition_hash</code>, <code>resolve_state</code>, <code>resolve_agent_trust</code>, <code>agent_signable</code> (bottom-up rule), the validator registry, <code>ValidationVerdict</code> + <code>SignBand</code> (clean/partial/blocked). Zero I/O.</td>
+</tr>
+<tr>
+<td><code>scanners.py</code></td>
+<td>Deterministic 0-token safety scanners: <code>content_safety_scan</code> (injection), <code>code_safety_scan</code> (AST), <code>sql_safety_scan</code>, <code>markup_safety_scan</code> (XSS), <code>aggregate_verdict</code>. <code>ScanResult</code> splits findings into blocking vs caveats.</td>
+</tr>
+<tr>
+<td><code>validators.py</code></td>
+<td>The <strong>13 per-kind</strong> validators (ontology · skill · <strong>agent</strong> [posture, Jul 2026] · extension · knowledge · planner · flow · dashboard · canvas · <strong>assurance_module</strong> [PROP-003] · <strong>data_product</strong> [OBDA-READ, the earned signature] · <strong>ontology_extension</strong> [PROP-008 A5] · <strong>action_type</strong> [PROP-008 B1]), each returning a <code>ValidationVerdict</code>, registered by <code>kind</code>. <code>agent_pack</code> remains the <strong>aggregate/composition</strong> path with no per-kind <code>register_validator</code>. 13 per-kind + 1 aggregate = the 14 signable categories in §3.</td>
+</tr>
+<tr>
+<td><code>content.py</code></td>
+<td><strong>Canonical</strong> per-kind content + <code>version_hash</code> resolver (skill/ontology/extension/knowledge/planner/flow/dashboard/canvas). One definition, shared by sign-off, badge state, and portability.</td>
+</tr>
+<tr>
+<td><code>composition.py</code></td>
+<td>A real profile → its ingredients (active KG + active skills + the knowledge/planner repositories it consumes) → live <code>AgentTrust</code>. Owns <strong><code>agent_version_hash</code></strong>, the single definition of an agent's <strong>portable</strong> signable content (ingredients + posture + capability), and folds in the deployment half via <code>compose_agent_state</code>.</td>
+</tr>
+<tr>
+<td><code>deployment.py</code></td>
+<td>The <strong>deployment</strong> half (§3b) — resolved LLM identity, reachable MCP tool/prompt catalog, per-profile connector opt-in. Never travels with a pack; <code>describe_drift</code> names what changed so re-attesting is informed.</td>
+</tr>
+<tr>
+<td><code>extensions.py</code></td>
+<td>Tier 1 — the <strong>ontology extension</strong> (PROP-008 A5): one extender's published authored layer, its content hash, the lineage-bound signable content, <code>base_mutations</code>, the composition conformance, the person-only <code>publish_decision</code>, <code>sign_extension</code>, and the claim capture/reinstate that travels with a graph.</td>
+</tr>
+<tr>
+<td><code>actions.py</code></td>
+<td>OBDA-ACT (PROP-008 B1) — the <strong>action type</strong>: a signed write contract on the ontology. Signable content binds the manifest AND the A1–A6 report; <code>sign_action</code> is the one gate + sign seam; <code>live_hash</code> recomputes from the node so an edited manifest or a replaced report reads 🟠 CHANGED.</td>
+</tr>
+<tr>
+<td><code>pack.py</code></td>
+<td>Agent-pack composition resolver — a pack is "an agent whose ingredients are its members".</td>
+</tr>
+<tr>
+<td><code>store.py</code></td>
+<td>The <code>trust_attestations</code> table (one CURRENT attestation per artefact — and per <strong>owner</strong> for agents), the append-only <code>trust_attestation_history</code>, the <code>trust_signing_keys</code> registry (all self-applying, §7c), Ed25519 sign/verify reusing the deployment's provenance key, <strong>content-bound signatures</strong> + the <strong>signer public key</strong> carried for cross-instance verification.</td>
+</tr>
+<tr>
+<td><code>evidence.py</code></td>
+<td>PROP-009 — a turn's <strong>bill of materials</strong> (every signed part it ran with), its contextvar, and the ONE content function the <code>trust.bom</code> chain step is sealed and verified through. See <a href="EVIDENCE_ARCHITECTURE.html">EVIDENCE_ARCHITECTURE.md</a>.</td>
+</tr>
+<tr>
+<td><code>portability.py</code></td>
+<td>Marketplace <code>capture</code> / <code>reinstate</code> / <code>claim_state</code> + the honesty gate.</td>
+</tr>
+<tr>
+<td><code>renewal.py</code></td>
+<td>Signature renewal after a sync that changed content — the owner's per-repository standing policy (carry-forward of acknowledgements, auto-acknowledge on changed documents, renewal of the repository's and its agents' signatures as the <code>renew</code> event; never a first signature). Shared with the sign-off route: <code>sign_knowledge_repository</code> is the ONE knowledge sign act.</td>
+</tr>
+<tr>
+<td><code>validators</code> registry</td>
+<td><code>register_validator(kind, fn)</code> — new kind = one function, no forks.</td>
+</tr>
+</tbody>
+</table></div>
+<p>REST seam: <code>api/trust_routes.py</code> (<code>GET /v1/trust/agents</code>, <code>GET /v1/trust/agent/&lt;id&gt;</code>, <code>GET/POST /v1/trust/artifact(s)</code>,
+<code>POST /v1/trust/&lt;kind&gt;/&lt;id&gt;/sign-off</code> (one route per kind — data products, actions and ontology extensions are addressed
+<code>&lt;kg_id&gt;/&lt;name&gt;</code>), <code>DELETE /v1/trust/&lt;kind&gt;/&lt;id&gt;/signature</code>, <code>POST /v1/trust/agent/&lt;id&gt;/attest-deployment</code>, <code>POST /v1/trust/verify</code>,
+<code>GET /v1/trust/history/&lt;kind&gt;/&lt;id&gt;</code>, <code>GET /v1/trust/unassigned</code> + <code>POST …/assign</code>, <code>GET /v1/trust/keys</code>). UI: <code>static/js/handlers/trustBadge.js</code>.</p>
+<h2 id="3-the-validator-model-all-14-categories">3. The validator model (all 14 categories)</h2>
+<p>Every signable kind maps onto one <strong>closed archetype set</strong> — the two shipped poles
+(conformance, content-safety) plus code-safety, query-safety, provenance-integrity, and
+aggregate. Each validator is pure, deterministic, 0-token, and maps its result onto the
+harmonised band <strong>clean · partial · blocked</strong>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Artefact</th>
+<th><code>kind</code></th>
+<th>Signable content</th>
+<th>Archetype</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ontology (KG)</td>
+<td><code>ontology</code></td>
+<td>entities + relationships</td>
+<td>conformance (Tier 4.3 gate)</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td><code>skill</code></td>
+<td>instruction text</td>
+<td>content-safety</td>
+</tr>
+<tr>
+<td>Agent (profile)</td>
+<td><code>agent</code></td>
+<td>composition over ingredients <strong>+ safety posture</strong></td>
+<td>aggregate + posture</td>
+</tr>
+<tr>
+<td>Extension</td>
+<td><code>extension</code></td>
+<td>handler source + manifest</td>
+<td>code + content-safety</td>
+</tr>
+<tr>
+<td>Knowledge repo</td>
+<td><code>knowledge</code></td>
+<td><code>sorted(per-doc hash)</code> + embedding</td>
+<td>integrity + content-safety</td>
+</tr>
+<tr>
+<td>Planner repo</td>
+<td><code>planner</code></td>
+<td>the <strong>pack-owned</strong> cases over an instance-invariant view (baseline); <strong>every</strong> case when the owner has <strong>locked</strong> it; the raw per-case hash only for a legacy repo no pack ever stamped — §3a.1</td>
+<td>integrity + query-safety</td>
+</tr>
+<tr>
+<td>Agent pack</td>
+<td><code>agent_pack</code></td>
+<td>composition over members</td>
+<td>aggregate</td>
+</tr>
+<tr>
+<td>Flow</td>
+<td><code>flow</code></td>
+<td>node/edge logic (positions excluded)</td>
+<td>code + query + content</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>dashboard</code></td>
+<td>tile structure + data source</td>
+<td>query-safety</td>
+</tr>
+<tr>
+<td>Canvas</td>
+<td><code>canvas</code></td>
+<td>markup</td>
+<td>markup/XSS + content</td>
+</tr>
+<tr>
+<td>Assurance module</td>
+<td><code>assurance_module</code></td>
+<td>pack manifest + module content + <strong>capability honesty</strong> (a claimed tier must be provable)</td>
+<td>code-safety + tier proof (<code>ASSURANCE_MODULE_PLANE_ARCHITECTURE.md</code>)</td>
+</tr>
+<tr>
+<td>Data product</td>
+<td><code>data_product</code></td>
+<td><code>{manifest_hash, validation_report_hash}</code> (+ <code>member_hashes</code> lineage for composed) — <strong>the proof is inside the signature</strong></td>
+<td>the <strong>earned signature</strong>: five machine-readable refusals, the V1–V7 gate incl. live probes (<a href="OBDA_ARCHITECTURE.html">OBDA_ARCHITECTURE.md</a>)</td>
+</tr>
+<tr>
+<td>Ontology extension</td>
+<td><code>ontology_extension</code></td>
+<td><code>{extension_hash, base_attested_hash}</code> — the extender's <strong>published</strong> authored nodes + their edges, and the base's attested hash (the lineage)</td>
+<td>five refusals: <code>not_found</code> · <code>nothing_published</code> · <code>base_mutation</code> · <code>nonconformant</code> · <code>unsigned_ingredient</code> (PROP-008 A5)</td>
+</tr>
+<tr>
+<td>Action type</td>
+<td><code>action_type</code></td>
+<td><code>{manifest_hash, validation_report_hash}</code> — the parsed write contract and the A1–A6 proof it passed; the node, its <code>acts_on</code> edge and its ledger <code>ddl_artifact</code> are excluded from the ontology hash</td>
+<td>five refusals: <code>invalid_manifest</code> · <code>unvalidated</code> · <code>stale_report</code> · <code>gate_blocked</code> · <code>unsigned_ingredient</code>; structural evidence signs partial (<code>verified_declared</code>), live evidence clean (<code>verified_write</code>) (PROP-008 B1)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The authored-layer exclusion (PROP-008 A5, load-bearing):</strong> <code>kg_content_hash</code> also
+excludes every <code>layer: authored</code> node and every edge touching one. An extension is tier 1
+on a signed graph — one extender's layer, keyed <code>extension_id = ext-&lt;user uuid&gt;</code> — signed
+on its own with the base's <strong>attested</strong> hash inside its content. So an extension write
+never moves the base's seal, a base re-sign flips each extension <code>changed · base moved</code>
+(the mover is named from the lineage the signature recorded), two extenders flip
+independently, and an agent grounded on base + extensions carries each published
+extension as an ingredient (bottom-up rule, worst-of, the drift line naming the mover;
+gated on the OBDA-MODEL component — <code>obda_planes.plane_enabled("model", …)</code>, the plane is a
+component, there is no master switch — so an agent without it gains no signature field). Only a
+<strong>published</strong> node is content; a draft is never signed, never an ingredient, never in the
+released view and never travels. A payload carrying extension X replaces X on resync /
+install and keeps every other layer; an edge the resync drops is stamped on the authored
+node (<code>dangling_edges</code>) and named by the extension's conformance. The base's own publish
+gate judges the base only. Publishing is a <strong>person's</strong> act (§13).</p>
+<p><strong>The ontology-hash product exclusion (load-bearing):</strong> <code>kg_content_hash</code> excludes
+<code>data_product</code> nodes and <code>member</code> edges — the ontology's signable content is the
+<em>knowledge model</em>; a product is a contract <strong>stacked on</strong> it, protected by its own
+attestation. Without this rule, authoring a product flipped its own ontology CHANGED
+and forced a rubber-stamp re-sign loop (found live, fixed at the root — OBDA-READ Phase A).</p>
+<p>Full detail: <code>TIER_5.2_VALIDATORS.md §6</code>. Config artefacts
+(MCP servers, LLM configs, vector/graph backends) are <strong>not-attestable by design</strong> — their
+content is credentials, and <em>trust ≠ access</em>.</p>
+<h3 id="3a-what-counts-as-an-ingredient">3a. What counts as an ingredient</h3>
+<p>An agent's ingredients are its <strong>active ontology</strong>, its <strong>active skills</strong>, and the
+<strong>knowledge/planner repositories it consumes</strong>.</p>
+<p>Repositories earn their place because the compositional promise — <em>a signed agent contains
+only signed ingredients</em> — is otherwise false for two whole agent classes. A Focus agent
+<strong>is</strong> its corpus and an Optimize agent is steered by its champion cases; while repositories
+sat outside the composition, an agent with a bound corpus and no KG resolved with
+<code>ingredients: []</code>, so the bottom-up gate had nothing to gate on and signed instantly over an
+unscreened corpus, a corpus edit could not flip the badge, and re-pointing the agent at a
+different corpus disturbed nothing.</p>
+<p>Applicability <strong>mirrors the runtime rather than adding a rule</strong> — attesting an artefact the
+agent never consults would make the badge claim more than it verifies:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Ingredient</th>
+<th>Counts when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ontology</code></td>
+<td>it is the profile's active KG (<code>kg_profile_assignments</code>); for an agent whose <code>componentConfig.knowledge_graph.groundOn</code> is <code>released</code> (Tier 4.3 Model B) the CONTENT hashed is the graph's <strong>released view</strong> (<code>&lt;kg_id&gt;::released</code>) — the seal describes what the agent reads, so a draft edit does not move a released-mode agent's badge and a new publish does; the ingredient keeps the live <code>kg_id</code> (the attestation key) and names the view in <code>released_view</code></td>
+</tr>
+<tr>
+<td><code>skill</code></td>
+<td>the <code>skillsConfig</code> entry is active</td>
+</tr>
+<tr>
+<td><code>knowledge</code></td>
+<td>the collection is bound, the owner can read it, <strong>and</strong> the runtime would retrieve it — <strong>per class</strong>: <code>rag_focused</code> always (Focus retrieval is unconditional; <code>enabled</code> is ignored by the engine), every other class only when <code>knowledgeConfig.enabled</code> is truthy (runtime default <strong>false</strong>, mirroring <code>get("enabled", False)</code> in the engines)</td>
+</tr>
+<tr>
+<td><code>planner</code></td>
+<td>the collection is bound, the owner can read it, <strong>and</strong> the profile is a planning class (<code>tool_enabled</code>/<code>genie</code>), matching <code>planner.py</code>, <code>agent_pack_manager</code> and the ontology projection</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>A binding the owner cannot read is not an ingredient (Oct 2026).</strong> <code>_repo_ingredients</code> applies
+the retrieval gate's own rule (<code>CollectionDatabase.can_user_read</code>): a bound collection the owner
+cannot read is runtime-inert, so it is logged once and skipped like a dangling binding. Counting
+it produced a sign-gate block the owner could never clear — the bootstrap template had shipped
+the admin's planner id (<code>ragCollections: [1]</code>) into every account; that binding is also healed to
+the user's own default at login (TC-37; <code>test_planner_binding_heal.py</code>).</p>
+<p>Kind is decided by each collection's own <code>repository_type</code>, never by which field named it —
+<code>knowledgeConfig.collections</code> and <code>ragCollections</code> overlap.</p>
+<p><strong>Empty and unreadable are deliberately different outcomes.</strong> A repository with no content
+has nothing to attest and is omitted, so an empty default planner repo cannot make every
+agent unsignable. A repository that demonstrably holds content whose hash could not be
+computed is emitted <strong><code>unresolved</code></strong> and blocks: silently omitting it would reopen exactly
+the gap repositories close, this time under a transient read error. This holds for <strong>both</strong>
+repo kinds: <code>planner_cases</code> returns a <code>None</code> hash when any case file is unparseable (a
+corrupt case must not silently shrink the signed set) and <code>planner_has_files</code> is the
+independent existence probe, so a populated-but-unreadable planner repo blocks rather than
+vanishing. A <strong>per-collection</strong> failure emits that one repo as <code>unresolved</code> and continues —
+it can neither silently drop the repo nor abort the loop and drop every repo after it.
+<code>IngredientRef</code> carries the flag explicitly and one shared <code>ingredient_state()</code> resolves it
+for <strong>both</strong> the badge and the sign gate, so what you see and what blocks can never
+disagree. A binding to a deleted collection is warned and skipped — a configuration fault,
+not an ingredient.</p>
+<h3 id="3a1-what-a-repository-signature-covers-learning-stays-outside-the-seal">3a.1 What a repository signature covers — learning stays outside the seal</h3>
+<p>A planner repository is a <strong>learning</strong> artefact: the seeding loop writes a champion case
+after every successful turn. A signature over <em>every</em> case would therefore break through
+correct operation — a signed agent answering well would flip its own seal 🟠 — and a
+tier-gated owner could never repair it. So <code>content.planner_cases</code> selects one of two
+formulas by <strong>evidence, never by a flag</strong>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Formula</th>
+<th>Selected when</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>baseline</strong></td>
+<td>any case carries the <code>uderia_pack_ref</code> ownership stamp (every case a pack writes is stamped at all five pack write sites)</td>
+<td>ONLY the stamped cases, over an instance-invariant view (<code>case_content_id</code>: instance-local ids and the three operational fields normal use writes back — vote, champion election, replay counter — are stripped)</td>
+</tr>
+<tr>
+<td><strong>locked</strong></td>
+<td>the owner set <code>trust_locked</code> on the collection (<code>PUT /v1/rag/collections/&lt;id&gt; {trust_locked}</code>, owner-only, planner only)</td>
+<td><strong>every</strong> case over the same canonical view — and the seeding loop <strong>never writes into a locked repository</strong>, whoever owns it: the lesson lands in the agent's own learning repository when it has one, else the user's own default planner for that server, so "frozen" never means "fragile"</td>
+</tr>
+<tr>
+<td><strong>legacy</strong></td>
+<td>no case is stamped</td>
+<td>the original raw per-case hash, so no attestation made before the stamp existed moves</td>
+</tr>
+</tbody>
+</table></div>
+<p>Consequences the reader needs, on both sides of a share:</p>
+<ul>
+<li><strong>A case added by use does not move the seal</strong> (baseline). A case added by hand, a vote,
+  a re-elected champion: none of them are in the hash. The signature says the one thing a
+  consumer needs — <em>the shipped cases are intact</em> — and what the agent learned locally is
+  deliberately out of scope.</li>
+<li><strong>Changing a shipped case moves it</strong>, for the publisher and for everyone holding the
+  collection: a pack rebuild, an edit or a removal of a stamped case changes the baseline;
+  the publisher's planner and every agent composed on it read <code>changed</code> until the
+  publisher re-signs; a republish in place carries the new signature to subscribers through
+  the pack sync fan-out. The consumer of a REFERENCE cannot repair it — the content is the
+  publisher's.</li>
+<li><strong>A subscribed repository is a VIEW of the publisher's collection, not a copy</strong>
+  (<code>MARKETPLACE_ARCHITECTURE.md §1</code>) — the subscriber's card
+  shows the publisher's collection id and store. Its trust state is therefore the
+  publisher's, at the same moment, and the <strong>Locked</strong> pill on the subscriber's card reports
+  the <em>publisher's</em> opt-in, never the subscriber's (who cannot write to it under any
+  setting). A forked repository is a copy: it hashes on its own, and the fork's
+  attestation is reinstated only while its content is byte-identical to what was signed.</li>
+<li><strong>What the subscriber's agent learns is read back.</strong> The subscribed agent is bound to the
+  view, and its lessons cannot land there, so they land in the subscriber's own default
+  planner for the session's MCP server — and retrieval consults that repository too
+  (<code>rag_retriever.read_back_own_learning</code>, the mirror of the seeding fallback: it widens the
+  agent's planner allowlist exactly when a bound planner is a view or locked, never creates a
+  collection, and leaves the allowlist unchanged otherwise). The subscriber's agent therefore
+  learns privately on top of the publisher's shipped set; the publisher never sees it.</li>
+<li><strong>Locked answers a different question than Subscribed.</strong> <em>Subscribed</em> = you cannot write
+  here. <em>Locked</em> = the owner's own everyday use cannot grow it either, and the seal covers
+  all of it. Unlocked (the default), the owner's learning quietly adds cases that every
+  subscriber inherits on their next query, without touching anyone's seal.</li>
+</ul>
+<p><strong>Where an Optimize agent learns, and what it reads (Oct 2026).</strong> Three rules from the Optimize
+campaign change the runtime around the seal without changing the seal:</p>
+<ul>
+<li><strong>Its own learning repository</strong> (<code>core/agent_learning.py</code>). A planner collection carrying the
+  agent's id in <code>collections.learning_profile_id</code> is that agent's notebook: new Optimize agents
+  get one at creation, existing agents opt in (<code>POST /v1/profiles/&lt;id&gt;/learning-repository</code>).
+  Lessons go only there (a locked one is frozen), it is read beside the bindings, and it is NOT
+  bound in <code>ragCollections</code> — so it is never an ingredient and learning never unsigns the agent.
+  Agents without one keep the shared default notebook (and <code>read_back_own_learning</code> above).</li>
+<li><strong>Only what it binds</strong> (<code>planner.planner_binding_scope</code>). Nothing bound means no champions —
+  it had read every repository its owner could, beyond its signed composition. The explicit
+  wildcard <code>"*"</code> still means every accessible repository.</li>
+<li><strong>A signed seed replays like a locked one</strong> (<code>planner.planner_replayable</code>). A seed asked word
+  for word is replayed verbatim (0 planner tokens) when the repository is locked <strong>or</strong> its
+  signature still matches its content (<code>resolve_state == TRUSTED</code>); a case learned after signing
+  moves the hash, so a learned case is never replayed under a signature that does not cover it.</li>
+</ul>
+<p>Gates: <code>test_agent_learning.py</code>, <code>test_planner_binding_scope.py</code>, <code>test_signed_seed_replay.py</code>.
+Rule: <code>RAG.md</code> → "Where an agent learns".</p>
+<p>The worked walkthrough, publisher and subscriber side by side, is
+<a href="AGENT_TRUST_AND_ASSURANCE.html">AGENT_TRUST_AND_ASSURANCE.md §3.5a</a>.</p>
+<h3 id="3a2-planner-health-the-gate-names-the-case-it-refused-nov-2026">3a.2 Planner Health — the gate names the case it refused (Nov 2026)</h3>
+<p>A champion case is replayed verbatim on a retrieval hit, so the planner validator is where a
+poisoned or wrong case is stopped. It scans every case and reports per case, not per
+repository: <code>validators.planner_case_findings</code> is the ONE per-case reading (case id, question,
+labels, the argument and an excerpt of the text that tripped the scanner, acknowledged or not),
+and <code>planner_validator</code> is built on it. Blocking labels are destructive, mutating or stacked SQL
+and prompt injection; a SQL comment is a caveat.</p>
+<ul>
+<li><strong>The verdict names the cases.</strong> A refused signature lists each flagged case by its question,
+  and the Trust Circle's SIGNED evidence carries the finding on the blocker
+  (<code>IngredientRef.finding</code>).</li>
+<li><strong>The owed acts are in the inspect view (Planner Health).</strong> <em>Remove</em> deletes the case; one
+  resolver (<code>RAGRetriever._stored_case_id</code>) handles both stored-id conventions (a learned case is
+  <code>case_&lt;id&gt;</code>, a template-populated seed its bare <code>&lt;id&gt;</code>). <em>Acknowledge</em> records a reason as
+  <code>trust_ack</code> on the case itself, so it travels into both stores and every hash formula and
+  freezes into the earned signature as a document's acknowledgement does. An acknowledgement
+  covers the labels present when it was recorded; a label that appears later reopens the finding.</li>
+<li><strong>Routes:</strong> <code>GET /v1/rag/collections/&lt;id&gt;/scan-manifest</code> (the per-case reading) and
+  <code>POST /v1/rag/collections/&lt;id&gt;/rows/&lt;case_id&gt;/acknowledge-finding</code>.</li>
+</ul>
+<p>Gates: <code>test_planner_health.py</code>, <code>test_planner_health.mjs</code>.</p>
+<h3 id="3b-two-signable-halves-portable-and-deployment">3b. Two signable halves — portable and deployment</h3>
+<p>An agent is signed in <strong>two</strong> halves, because two different questions are being asked and
+one hash cannot answer both:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Half</th>
+<th>Question</th>
+<th>Contents</th>
+<th>Travels?</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>portable</strong></td>
+<td><em>"is this agent the artefact that was validated?"</em></td>
+<td>composition (ingredients) + <strong>posture</strong> (what it will say) + <strong>capability</strong> (what it can do)</td>
+<td>✅ reinstates on install</td>
+<td><strong>approver tier</strong> (<code>_authorize_signer</code>)</td>
+</tr>
+<tr>
+<td><strong>deployment</strong></td>
+<td><em>"is its resolved capability surface still what was attested </em><em>here</em><em>?"</em></td>
+<td>resolved LLM identity · <strong>resolved fallback LLM identity</strong> (S4 — <code>llmFallbackConfigurationId</code>, absent from the hash when none is bound so older attestations do not move) · reachable MCP tool/prompt catalog · per-profile connector opt-in · the agent's <strong>file store</strong> (PROP-010 — <code>fileStoreConfigId</code>, absent when the agent follows the admin default, so older attestations do not move; a change reads as <code>file store changed: …</code> drift)</td>
+<td>❌ never travels</td>
+<td><strong>ownership</strong> (<code>_authorize_deployment_attester</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The split is forced by the marketplace honesty gate (§8): <code>reinstate</code> only re-applies a
+signature when the copy's live hash equals what was signed, so anything in the portable hash
+must reproduce byte-identically after an id remap. A subscriber uses <em>their</em> LLM, <em>their</em> MCP
+server and has opted into <em>nothing</em> — yet a model swap, a server quietly gaining a write
+tool, and a connector opt-in are exactly the changes most worth catching. One hash cannot
+both survive installation and cover them; two hashes answer both honestly.</p>
+<p><strong>Two halves, two authorities</strong> (the provenance-vs-policy split every trust system makes —
+a build system signs the artefact, the deploying org attests its own admission policy). The
+portable half can be vouched for by a third party, so it keeps the approver-tier gate. The
+deployment half is a statement of <em>intent</em> about a surface only its owner controls, so its
+authority is <strong>ownership</strong> — the profile is resolved under the caller's own uuid, and a
+non-owner gets 404 (never 403, which would confirm another user's profile id exists).</p>
+<p><strong>A signed key registered after the attestation baseline is omitted at its defaults</strong>
+(<code>profile_config_contract.signature_for</code>, Sep 2026). The keys in the frozen
+<code>_ATTESTED_BASELINE_KEYS</code> keep the projection every existing attestation was taken with
+(a bare profile still projects each of them at its documented default); any key outside the
+baseline is projected twice — over the profile and over <code>{}</code> — and enters the signature only
+when the two differ. So <strong>registering a new signed key flips no existing attestation</strong>: only
+agents that actually configured it move. Learned on production: S5 (<code>turnBudget</code>) and S7
+(<code>outcomeConfig</code>) each added a signed key, and the next deploy read every hardened agent as
+🟠 <code>changed</code> with nothing about them changed (19 of 19 on one account). The obvious repair —
+omit <em>every</em> key at its defaults — was tried first and moved every production signature the
+same way, because the attestations already contain the baseline keys' default projections;
+hence the split, and hence the baseline is frozen (a key is never added to it). Gates:
+<code>t_new_signed_key_flips_nothing</code> (era literal + a fresh registered key) and
+<code>t_attested_baseline_is_frozen</code> (membership pinned by name).</p>
+<p>Routing attestation through the approver-tier gate was wrong for three reasons, all pinned by
+<code>test_deployment_attest_authority.py</code> so it is not reinstated: (1) it could never enable a
+reviewer, because that same user-scoped lookup means an approver reaches only their OWN
+profiles — the gate could only lock the owner out; (2) it disabled the drift detector it
+appeared to protect, since with no one able to take the baseline a model swap or a grown tool
+catalog never flips the badge — a control that cannot be exercised is not a control; (3) under
+<code>require_approval</code> the separation-of-duties rule refuses ALL self-signing, and attesting is
+always self, so deployment attestation became impossible deployment-wide for every tier
+including admin. Ownership is the authority model for a per-user artifact — the same
+conclusion TC-30 reached for leaf sign-offs. The record still carries <code>signer_uuid</code> +
+<code>signer_fingerprint</code>, so a surface can distinguish an owner-attestation from an admin one
+rather than flattening both to 🟢.</p>
+<p><strong>Enablement is content.</strong> A disabled→enabled flip changes what the agent can do while
+changing no artefact, so opt-in state is hashed alongside the catalog itself. Conversely
+<em>absent must equal inert</em>: a disabled session primer, an opted-out connector and a
+component's intensity dial hash as though they were not there, because a badge that flips on
+tuning is a badge people learn to ignore.</p>
+<p><strong>Portability normalisation.</strong> Coordinator routing stores raw profile ids that an install
+remaps, so <code>genieConfig</code> is hashed in <strong>tag space</strong> via an injected resolver; hashing ids
+would make every coordinator pack permanently 🟠. Instance-local pointers
+(<code>llmConfigurationId</code>, <code>mcpServerId</code>) never enter the portable hash at all — what matters is
+the <em>resolved identity</em>, which lives in the deployment half.</p>
+<p><strong>The catalog is read from the persisted classification snapshot</strong>, not a live MCP
+connection, so badge resolution works offline. <em>Honest limit:</em> an upstream server change is
+caught when the profile next re-classifies, not instantaneously. The timestamp is excluded,
+so re-classifying an unchanged server does not flip the badge.</p>
+<p><strong>The runtime-injected categories are not the surface.</strong> On every activation the runtime
+injects two categories into APP_STATE — <code>System Tools</code> (the <code>TDA_*</code> framework tools) and
+<code>Component Tools</code> (the action components) — and they leaked into the persisted record three
+times (the loader aliasing the cache, the adapter persisting APP_STATE as-is, and the
+resource-panel endpoint enriching a live reference — the last one <em>replacing</em> the category
+with only the tools it found missing, so a record went from the 8 pre-S3 components to
+<code>[TDA_Compute]</code>). Hashing them made a Uderia release read as an agent's deployment drift
+("TDA_Compute appeared, 8 tools removed", 10 of 57 production attestations, 2026-09-22).
+The reader now ignores exactly the categories <code>config_manager.RUNTIME_INJECTED_CATEGORIES</code>
+declares — the same constant the persistence chokepoint strips — never a name heuristic, so
+an MCP tool that happens to be named <code>TDA_something</code> stays in the surface. Structurally,
+<code>get_profile_classification</code> hands out a <strong>copy</strong>, so no reader can mutate the record again.
+An attestation taken over a polluted record is rewritten once by
+<code>maintenance/normalize_deployment_attestations.py</code> (only when runtime-injected names are the sole
+difference; signer and time preserved; any other change stays genuine drift).</p>
+<p>Drift is <strong>described, not merely detected</strong> (<code>deployment.describe_drift</code>) — "tools appeared:
+base_writeQuery(sql)", "connectors enabled: uderia-shell". An unexplained amber trains
+operators to click through it.</p>
+<p><code>skillsConfig</code> is deliberately <strong>not</strong> signed: active skills are already ingredients, so
+signing the block would double-count and flip on inert edits.</p>
+<h3 id="3c-an-agent-with-several-mcp-servers-prop-006-phase-2-sep-2026">3c. An agent with several MCP servers (PROP-006 phase 2, Sep 2026)</h3>
+<p>An agent may read additional MCP servers (<code>additionalMcpServers</code>). WHICH servers (their aliases)
+and the tool/prompt selection of each are <strong>portable capability</strong> — signed, carried by an agent
+pack by server name and reinstated on install; the server ids are not. Their catalogs
+belong to the <strong>deployment</strong> half — they are this instance's servers, exactly like the primary's
+catalog — through one new field, <code>additional_mcp</code>:</p>
+<ul>
+<li>one entry per additional server, <code>{server_id, alias, catalog}</code>, sorted by (alias, server id); the
+  catalog lists the tools and prompts in the <strong>server's own names</strong> (<code>_catalog_names</code> is the one
+  naming rule for the primary's catalog and every additional one), the alias beside it;</li>
+<li>a server never classified on this instance reads <code>catalog: UNRESOLVED</code> — a fact, not "no tools";</li>
+<li><strong>absent for a single-server agent</strong>, so no attestation taken before phase 2 moves.</li>
+</ul>
+<p><code>unresolved_surfaces</code> names such a server <code>additional_mcp:&lt;alias&gt;</code>, and <code>attest_refusal</code> refuses to
+attest over it with its remedy (<em>"the tool catalog of the additional MCP server 'crm' is not
+classified on this instance — activate the agent once, then attest"</em>). <code>describe_drift</code> names the
+server: added, removed, renamed alias, its catalog becoming unreadable, tools or prompts that
+appeared or were removed. The portable half does not change — which servers an agent reads is a
+deployment decision, and a pack does not carry them. Architecture:
+<code>MULTI_SOURCE_ARCHITECTURE.md §9</code>. Gate: <code>test_trust_deployment</code>,
+<code>test_multi_mcp_runtime</code>.</p>
+<h2 id="4-the-bottom-up-sign-gate">4. The bottom-up sign gate</h2>
+<p><code>agent_signable(ingredients)</code> refuses to sign an agent unless every ingredient is already
+🟢; the blocking list drives the guided "sign these first" flow. The same rule composes for
+<strong>agent packs</strong> (<code>pack.member_refs</code> → <code>agent_signable</code>). Verdicts are Ed25519-signed and
+bound to the exact content version (<code>store.sign</code>).</p>
+<p>For a Focus agent the chain therefore runs two levels deep: the agent is blocked by its
+corpus, and the corpus is blocked by its own earned-signature rule (unscreened documents, or
+injection findings neither quarantined nor acknowledged). That is the intended shape — the
+badge cannot outrun the screening that justifies it.</p>
+<h2 id="5-badges-sign-off-ux">5. Badges + sign-off UX</h2>
+<p><code>trustBadge.js</code> provides the reusable primitives:
+- <strong><code>mountArtifactBadges(root)</code></strong> — fills <code>[data-trust-artifact-*]</code> slots with a signer-aware
+  seal (green intact · amber changed · faint "sign off" for signers on unsigned; nothing for
+  non-signers). Wired across Skills, Extensions, KGs, Repos, Agent Packs, and Workspace
+  instances (flow/dashboard/canvas).
+- <strong><code>mountAgentBadges(root)</code></strong> — the compositional agent shield on the profiles list.
+- <strong><code>openArtifactTrust(kind, id)</code></strong> — the trust popover: state · offline Verify · signer-only
+  Sign off / Re-sign (surfaces an agent-pack's blocking members).
+- <strong><code>mountMarketplaceTrust(root)</code></strong> — read-only "publisher signed" seal on marketplace cards.</p>
+<h2 id="6-marketplace-portability">6. Marketplace portability</h2>
+<p>Trust travels with <strong>content, not ids</strong>: signatures are content-bound (<code>kind|version_hash</code>),
+so an attestation survives an id remap. Every marketplace surface uses the same two calls —
+<code>capture(kind, id)</code> at publish, <code>reinstate(kind, new_id, claim)</code> at materialize — and the
+<strong>honesty gate</strong> re-establishes a signature only if the copy's live hash equals what was
+signed. The claim carries the signer's public key, so a cross-instance consumer verifies with
+the publisher's key. Wired into KG · agent-pack (+ per-member) · skill · extension ·
+component-instance; collections inherit trust free via the reference model. Full detail:
+<code>TIER_5.2_PORTABILITY.md</code>.</p>
+<h2 id="7-packaging-isolation-the-ontology-suite">7. Packaging + isolation (the Ontology Suite)</h2>
+<p>The Trust Membrane ships bundled with the Platform Ontology UX as <strong>one physically-isolatable
+enterprise feature — the <em>Ontology Suite</em></strong> — governed by a single switch
+(<code>core/enterprise.py</code>, ON for all tiers today; a one-line flip makes it Enterprise-only).
+Removal manifest + absence-tolerance contract: <code>src/trusted_data_agent/core/trust/README.md</code>.
+Canonical suite description: <code>PLATFORM_ONTOLOGY_ARCHITECTURE.md §11</code>.</p>
+<h2 id="7a-what-an-agents-signature-covers-jul-2026">7a. What an agent's signature covers (Jul 2026)</h2>
+<p>An agent's signable content is its <strong>composition + its safety posture</strong> — the grounding,
+guardrail and honesty modes that decide what it will and will not say. Before this, two
+agents with identical ontology and skills but opposite enforcement hashed identically and
+both resolved 🟢: the seal attested to something other than the thing protecting the user.</p>
+<p><code>authorityConfig</code> is deliberately <strong>excluded</strong>. It governs what an agent may <em>do</em> on whose
+behalf, is a strict subset of the deploying owner's permissions, and legitimately differs per
+deployment — hashing it would make 🟠 fire as often for a correct adaptation as for
+tampering. <em>Trust ≠ access</em> (§8) is the boundary. Authority is still portable,
+downgrade-guarded, and enforced fail-closed at every tool chokepoint.</p>
+<p>An agent whose posture sits entirely at the runtime defaults hashes <strong>exactly as before</strong>, so
+existing attestations stay 🟢 and nothing re-signs; the posture dimension engages only once
+there is real posture to protect. The <code>agent</code> kind also gained its first validator: signing
+bands <code>clean</code> (at least one gate acts) or <code>partial</code> (every gate observe-only, with a caveat
+naming them) — it never blocks. Full detail: <code>TIER_5.2_POSTURE.md</code>.</p>
+<h2 id="7b-assessment-hardening-aug-2026-the-seal-must-not-lie">7b. Assessment hardening (Aug 2026) — the seal must not lie</h2>
+<p>A four-lens adversarial audit (<code>TRUST_CIRCLE_DEEP_ASSESSMENT_2026-08.md</code>)
+closed a family of <em>fail-open</em> defects. The standing invariants it established:</p>
+<ul>
+<li><strong>One hash space, everywhere.</strong> The agent hash is computed in <strong>tag space</strong> at ALL four
+  surfaces — <code>sign_agent</code>, live resolve, <code>pack.agent_live_hash</code>, the REST artifact badge.
+  Signing previously hashed a coordinator's <code>slaveProfiles</code> in raw-id space while the badge
+  resolved in tag space, so every signed coordinator read 🟠 instantly and no coordinator
+  pack member could ever reinstate.</li>
+<li><strong>A row is not an attestation.</strong> <code>store.attested_hash</code> surfaces a recorded hash only for
+  a genuinely-signed row (<code>signed=1</code>). A row written while the provenance key was absent is
+  a row in a writable table, not a cryptographic attestation — it turns nothing green
+  (mirroring <code>portability.capture</code>, which already refused to travel one).</li>
+<li><strong>Badge resolution fails closed.</strong> A live-hash resolver that RAN and could not confirm
+  the content yields 🟠 <code>changed</code>, never 🟢 (<code>_NO_LIVE_HASH</code> distinguishes "this kind has
+  no resolver" — the only case that legitimately falls back to signed/unsigned).</li>
+<li><strong>Sign-offs are ownership-gated.</strong> Every owned kind resolves its owner per kind and
+  <strong>fails closed</strong> on a lookup error or NULL owner (<code>trust_routes._assert_owner</code>);
+  <code>skill</code>/<code>extension</code> are deployment-level and stay tier-gated. Every successful sign/attest
+  broadcasts a live <code>trust_event_notice</code>.</li>
+<li><strong>An unreadable surface is UNRESOLVED, never absent.</strong> LLM identity, MCP catalog AND
+  connector opt-in all hash a failure as <code>UNRESOLVED</code> — a persistent read failure can no
+  longer sign a signature that silently omits an enabled shell/browser connector.</li>
+<li><strong>The downgrade guard covers absence.</strong> A mode/flag <em>dropped</em> from a present incoming
+  block (the shallow-merge wholesale replace) is compared against the runtime default —
+  holding <code>enforce</code> steady while quietly dropping <code>pii</code> is a caught downgrade.</li>
+<li><strong><code>verify()</code> names its key.</strong> <code>key_source ∈ carried|local</code> — verification proves internal
+  consistency with that key, not publisher identity (trusted-publisher pinning remains a
+  deliberately deferred policy).</li>
+</ul>
+<p>Deliberate, documented limits kept as-is: <code>content_hash</code>'s type-domain collision and the
+catalog entry encoding (any change invalidates every existing attestation — a fix belongs
+to an explicit hash-format version bump); the sign-time TOCTOU (fail-safe direction); the
+license gate's fail-open (search key <code>TRUST_LICENSE_FAIL_OPEN</code> — must flip with the
+Enterprise gate).</p>
+<h2 id="7c-history-owner-scoped-agents-signing-keys-prop-009-41-oct-2026">7c. History, owner-scoped agents, signing keys (PROP-009 §4.1, Oct 2026)</h2>
+<p>Three facts the evidence work (<code>PROP-009</code>)
+needs, and that the original single-row design could not hold:</p>
+<ul>
+<li><strong>A re-sign must not erase what was signed before.</strong> <code>trust_attestations</code> keeps one
+  CURRENT row per artefact (the badge reads it, unchanged), and every write — <code>sign</code>,
+  <code>reinstate</code>, <code>revoke</code>, <code>retire</code>, the one-time <code>migrated</code> seed, an admin <code>assigned</code> — is
+  appended to <code>trust_attestation_history</code>. The current row carries <code>history_id</code>, the history
+  row that produced it, which is what a turn's bill of materials references. A superseded
+  signature stays findable by its hash (<code>signed_history_for_hash</code>) and still verifies
+  (<code>verify_record</code>).</li>
+<li><strong>Agents are keyed by owner.</strong> Bootstrap copies the same profile ids into every account,
+  so <code>agent</code> and <code>agent_deployment</code> attestations are keyed <code>(kind, artifact_id, owner_uuid)</code>.
+  Keyed by id alone, one account's signature was another account's badge, and one account's
+  re-sign, revocation or deletion erased another's. Every other kind keeps <code>owner_uuid = ''</code>:
+  their ids are deployment-unique (graphs, collections, flows, packs) or the artefact is
+  deployment-wide by design (skills, extensions). A scoped read that names no owner sees only
+  the unassigned bucket — <em>unsigned</em>, never another account's signature — and a structural
+  gate requires every production caller of a scoped kind to pass the owner.
+  The migration rebuilds the table once (SQLite cannot alter a table-level UNIQUE), copies
+  every row unchanged, and attributes scoped rows with one rule (<code>attribute_owner</code>): the sole
+  account holding the agent; else the signer if the signer holds it (since July 2026 only the
+  owner can sign or attest); else unassigned, listed by <code>GET /v1/trust/unassigned</code> with the
+  reason in words — never assigned by guess. Profile deletion now retires the deployment
+  attestation too, for that owner only.</li>
+<li><strong>A rotated key must not orphan its signatures.</strong> <code>trust_signing_keys</code> records every key
+  that signed here: <code>active</code>, <code>retired</code> (an earlier local key — a new local fingerprint
+  retires it) or <code>carried</code> (another signer's, seen on a reinstated attestation). <code>verify</code>
+  reports <code>key_status</code> beside <code>key_source</code>.</li>
+</ul>
+<p><em>Measured on the reference instance at migration:</em> 174 rows copied byte-identical, 115
+agent rows, 25 unassigned — every one an attestation of a profile no account holds any more.
+Re-resolving all 127 agents across every account: 95 identical, 32 changed, and every change
+is an agent whose id several accounts hold (it had been reading another account's
+attestation). Gate: <code>test/test_trust_attestation_history.py</code>.</p>
+<p><strong>The bill of materials (PROP-009 §4.2).</strong> <code>composition.turn_evidence()</code> is the one resolution
+behind SIGNED's per-turn stamp <em>and</em> the turn's bill of materials — the hashes the badge
+computes are now kept instead of discarded, each part paired with the attestation-history row it
+matched. Sealed as a <code>trust.bom</code> chain step and stamped as <code>turn['bom']</code>; see
+<a href="EVIDENCE_ARCHITECTURE.html">EVIDENCE_ARCHITECTURE.md</a> §4. Gate: <code>test/test_evidence_bom.py</code>.</p>
+<p><strong>Renewal (Oct 2026).</strong> A synced knowledge repository may be re-signed on the owner's behalf
+after a sync that changed its content, under the owner's per-repository standing policy
+(<code>collections.sync_auto_resign</code>; <code>core/trust/renewal.py</code>). The history grammar gained ONE
+event for it — <code>renew</code>, an establishing event like <code>sign</code> — and <code>store.sign</code> refuses any
+other value. A renewal is never a first signature, carries the owner's authority exactly as a
+hand sign-off would (approver tier; refused under separation of duties), keeps the validator's
+and the bottom-up gate's refusals, and records why under <code>verdict.renewal</code> (the run, the
+repository, the files, the policy), so an evidence view that names a signer can say <em>renewed by
+the scheduled sync</em>. Detail:
+<code>KNOWLEDGE_RETRIEVAL_ARCHITECTURE.md</code> §<em>Signature renewal
+after a sync</em>. Gate: <code>test/test_signature_renewal.py</code>.</p>
+<p>The renewal reaches a pack's subscribers: after the owner's agents, the seal of every installed
+pack that ships the repository (or a renewed agent) is renewed — renewal only, the aggregate
+gate — and the publisher's own fan-out (<code>fan_out_pack_sync</code>) re-syncs each subscriber, whose
+copy is reinstated by content hash (<code>renewal.packs_carrying</code>; event
+<code>signature_renewal_carried</code>). Before this a subscriber's agent read unsigned after every daily
+sync (§H of the gate).</p>
+<h2 id="8-guarantees-scope">8. Guarantees &amp; scope</h2>
+<ul>
+<li><strong>Byte-identical baseline</strong> — with no attestations, every artefact is ⚪; nothing changes.</li>
+<li><strong>Tamper-evident</strong> — any content edit flips 🟢 → 🟠 (hash mismatch); for an agent this now
+  includes weakening its enforcement posture.</li>
+<li><strong>Offline-verifiable</strong> — Ed25519 signatures verify with only the signer's public key.</li>
+<li><strong>Honest portability</strong> — a shared copy is 🟢 only if byte-identical to the signed original.</li>
+<li><strong>Trust ≠ access</strong> — a signed artefact is <em>validated</em>, not <em>authorized</em>; secrets never travel.</li>
+</ul>
+<p><strong>Downstream consumers (Jul 2026):</strong> the membrane's integrity state now feeds two live
+surfaces beyond the badge — <strong>(1) Behavioral Trust Score</strong>
+(<a href="AGENT_OPS_EVAL_ARCHITECTURE.html">AGENT_OPS_EVAL_ARCHITECTURE.md §6c</a>): the composite
+per-agent trust state = live conduct <strong>capped</strong> by this integrity reading (unsigned and
+<code>deployment_unattested</code> both cap at "proven", changed caps at "watch" — a signature never
+promotes bad conduct, and a deployment never attested here can never out-score a
+portable-signed one), rendered as a
+seal+ring glyph on the Agents roster; <strong>(2) trust-aware routing</strong>
+(<code>coordinate_engine.py</code>: <code>genieConfig.requireTrustedExperts</code>) — a coordinator can require its
+experts to resolve 🟢 at routing time, making compositional trust operative, not just visible.
+Both resolve via <code>composition.resolve_profile_trust</code> defensively (suite absent → unknown /
+loud fail-open warning), preserving the removability contract.</p>
+<p><strong>Remaining (minor):</strong> a cross-instance <em>trusted-publisher policy</em> (verification works; the
+allow-list is a config choice); the <em>Enforced</em> grounding level (a turn may only execute 🟢
+ingredients — TIER_5.2 §6). Note the Tier 4.3 <strong>Model B</strong> (an agent grounds on the ontology's
+RELEASED version only, opt-in per agent) IS built (Sep 2026, <code>KNOWLEDGE_GRAPH_ARCHITECTURE.md</code>).</p>
+<p><strong>Tests:</strong> <code>test/test_trust_membrane.py</code> (244 assertions — three-state truth, hashing,
+compositional truth table, the per-kind validators, scanners, bands, portability incl. cross-instance
+pubkey round-trip, the owner-readable ingredient rule), plus <code>test_trust_deployment.py</code>,
+<code>test_deployment_attest_authority.py</code>, <code>test_trust_attestation_history.py</code>,
+<code>test_signature_renewal.py</code>.</p>
+  </article>
+  <footer class="docfoot">
+    Uderia is a framework for trusted data agents. ·
+    Rendered from <code>docs/Architecture/TRUST_MEMBRANE_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    part of the Agent Trust &amp; Assurance stack ·
+    <a href="index.html">trust home</a> ·
+    <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
+    <a href="benchmarks.html">the numbers</a>.
+  </footer>
+</div>
+</html>

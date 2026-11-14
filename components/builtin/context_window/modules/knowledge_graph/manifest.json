@@ -1,0 +1,30 @@
+{
+  "module_id": "knowledge_graph_context",
+  "display_name": "Knowledge Graph",
+  "version": "1.0.0",
+  "description": "Query-relevant subgraph (entities, relationships, deployed schema) injected from the profile's bound Knowledge Graph. Budget-managed: the node count scales to the module's token allocation.",
+  "category": "knowledge",
+
+  "capabilities": {
+    "condensable": true,
+    "purgeable": false,
+    "has_cache": false
+  },
+
+  "applicability": {
+    "profile_types": ["tool_enabled", "llm_only", "rag_focused"],
+    "required": false
+  },
+
+  "defaults": {
+    "priority": 72,
+    "target_pct": 8,
+    "min_pct": 0,
+    "max_pct": 20
+  },
+
+  "handler": {
+    "file": "handler.py",
+    "class": "KnowledgeGraphContextModule"
+  }
+}

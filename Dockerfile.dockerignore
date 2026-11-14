@@ -1,0 +1,64 @@
+# Build-context exclusions for this Dockerfile (BuildKit reads <Dockerfile>.dockerignore in
+# preference to .dockerignore, so this file is used whatever .dockerignore a host keeps locally).
+#
+# The Dockerfile copies the whole context (`COPY . .`). Without these rules, a build from a
+# working checkout bakes the deployment's secrets and data into the image layers.
+# Gate: test/test_dockerignore.py (every secret below is excluded; nothing the image needs is).
+
+# ── Secrets ──────────────────────────────────────────────────────────────────────────────
+.env
+*.env
+!.env.example
+tda_keys/jwt_secret.key
+tda_keys/provenance_key.pem
+tda_keys/provenance_key.pub
+tda_keys/license.local.key
+tda_keys/license.local.key.previous
+tda_keys/test_*.pem
+deploy/mcp/*/.env
+maintenance/licensing/
+
+# ── Per-deployment data ──────────────────────────────────────────────────────────────────
+tda_auth.db
+tda_auth.db-*
+tda_auth.db.bak-*
+tda_eval.db
+tda_eval.db-*
+tda_eval/
+tda_sessions/
+tda_files/
+tda_skills/
+rag/
+backups/
+marketplace_data/
+prompt_overrides/
+.chromadb_rag_cache/
+chroma_db/
+tda_chroma_db/
+logs/
+*.log
+agent_packs/*/corpus/
+agent_packs/*/import_output/
+agent_packs/*/pipeline_config.json
+
+# ── Not part of the server ───────────────────────────────────────────────────────────────
+# Benchmark harnesses run beside a deployment, never inside it. docs/ stays: the knowledge
+# sync reads file:// sources relative to the project root (core/knowledge_sync.py).
+benchmarks/
+
+# ── Build and editor noise ───────────────────────────────────────────────────────────────
+.git
+**/__pycache__
+**/*.py[cod]
+venv/
+env/
+.venv/
+node_modules/
+.pytest_cache/
+htmlcov/
+.coverage
+.claude/settings.local.json
+.gemini/
+*.tmp
+*.bak
+.DS_Store

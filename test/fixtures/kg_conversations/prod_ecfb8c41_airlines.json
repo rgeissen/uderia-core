@@ -1,0 +1,95 @@
+{
+ "id": "prod_ecfb8c41_redeemed_miles_fanout",
+ "graph": {
+  "name": "airlines_core"
+ },
+ "source": "prod session ecfb8c41 (2026-09-19), @IDAIRL, gemini-3.1-flash-lite — the fan-out run: turn 1 joined mileage_redemption to member_benefit on ffp_member_id (both FOREIGN keys to ffp_member) and reported 2,638,492 miles redeemed for member 2 (true: 17,708); turn 2 repeated the shape with miles_balance",
+ "notes": "agent_calls are the RECORDED (wrong) SQL. `fanout_pairs` = [holder, holder, column] the enrichment must NAME as a fan-out (handed to the preflight guard as metadata.fanout_keys), never as a join hint",
+ "turns": [
+  {
+   "query": "Which 5 members have redeemed the most miles, and what are their tier statuses?",
+   "agent_calls": [
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5 R.ffp_member_id, SUM(R.miles_redeemed) AS total_redeemed, B.tier_status_id FROM airlines_core.mileage_redemption R JOIN airlines_core.member_benefit B ON R.ffp_member_id = B.ffp_member_id GROUP BY R.ffp_member_id, B.tier_status_id ORDER BY total_redeemed DESC"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT R.ffp_member_id, SUM(R.miles_redeemed) AS total_redeemed, MAX(B.tier_status_id) AS tier_status_id FROM airlines_core.mileage_redemption R LEFT JOIN airlines_core.member_benefit B ON R.ffp_member_id = B.ffp_member_id WHERE R.ffp_member_id IN (2, 17, 21, 29, 28) GROUP BY R.ffp_member_id ORDER BY total_redeemed DESC"
+     }
+    }
+   ],
+   "expect": {
+    "tables": [
+     "mileage_redemption",
+     "ffp_member"
+    ],
+    "join_pairs": [
+     [
+      "mileage_redemption",
+      "ffp_member"
+     ]
+    ],
+    "fanout_pairs": [
+     [
+      "mileage_redemption",
+      "member_benefit",
+      "ffp_member_id"
+     ]
+    ],
+    "columns": [
+     "mileage_redemption.miles_redeemed",
+     "mileage_redemption.ffp_member_id"
+    ]
+   },
+   "recorded": {
+    "llm_steps": 6,
+    "sql_calls": 3,
+    "input_tokens": 85654
+   }
+  },
+  {
+   "query": "And how many miles does each of them still have in their balance?",
+   "agent_calls": [
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT TOP 5 R.ffp_member_id, SUM(R.miles_redeemed) AS total_miles_redeemed, B.total_miles_balance FROM airlines_core.mileage_redemption R JOIN airlines_core.miles_balance B ON R.ffp_member_id = B.ffp_member_id GROUP BY R.ffp_member_id, B.total_miles_balance ORDER BY total_miles_redeemed DESC"
+     }
+    },
+    {
+     "tool_name": "base_readQuery",
+     "arguments": {
+      "sql": "SELECT ffp_member_id, total_miles_balance FROM airlines_core.miles_balance WHERE ffp_member_id IN (2, 17, 21, 29, 28)"
+     }
+    }
+   ],
+   "expect": {
+    "tables": [
+     "miles_balance",
+     "mileage_redemption"
+    ],
+    "fanout_pairs": [
+     [
+      "mileage_redemption",
+      "miles_balance",
+      "ffp_member_id"
+     ]
+    ],
+    "columns": [
+     "miles_balance.total_miles_balance",
+     "miles_balance.ffp_member_id"
+    ],
+    "carry_over": true
+   },
+   "recorded": {
+    "llm_steps": 6,
+    "sql_calls": 5,
+    "input_tokens": 174671
+   }
+  }
+ ]
+}

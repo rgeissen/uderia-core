@@ -1,0 +1,2109 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Ops &amp; Evaluation — Uderia</title>
+<style>
+:root{
+  --ground:#0e1621;--panel:#172230;--panel-2:#1e2c3b;--hair:#2c3c4e;--hair-soft:#223140;
+  --text:#e9eff5;--muted:#93a4b6;--dim:#6b7d90;--faint:#52657a;
+  --sage:#6cbf92;--amber:#f2b04a;--red:#e5687a;--blue:#6aa9e0;--steel-1:#9db8cf;
+  --accent:#F15F22;--accent-soft:rgba(241,95,34,0.12);--accent-line:rgba(241,95,34,0.45);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{
+  margin:0;background:radial-gradient(1200px 780px at 50% -12%,#14212f 0%,var(--ground) 58%),var(--ground);
+  color:var(--text);font-family:var(--sans);line-height:1.66;font-size:16.5px;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--steel-1);text-decoration:none;border-bottom:1px solid rgba(157,184,207,0.28);}
+a:hover{color:var(--text);}
+
+/* sticky masthead */
+.topbar{
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+  background:rgba(14,22,33,0.82);border-bottom:1px solid var(--hair);
+}
+.topbar-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar .brand{font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);}
+.topbar .sep{color:var(--faint);}
+.topbar .doc{font-weight:650;color:var(--text);}
+.topbar .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;}
+.topbar .back:hover{border-color:var(--accent-line);color:var(--text);}
+
+/* layout: content + floating TOC */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:44px;}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);}.toc{display:none;}}
+
+header.hero{padding:56px 0 8px;grid-column:1 / -1;}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
+header.hero h1{font-family:var(--sans);font-weight:800;letter-spacing:-0.02em;font-size:clamp(30px,5vw,50px);line-height:1.04;margin:0;text-wrap:balance;}
+
+/* TOC */
+.toc{grid-column:2;grid-row:2;align-self:start;position:sticky;top:72px;padding:18px 0;max-height:calc(100vh - 96px);overflow:auto;}
+.toc .toc-h{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}
+.toc a{display:block;border:none;color:var(--muted);font-size:13px;padding:3px 0 3px 12px;border-left:1px solid var(--hair);}
+.toc a:hover{color:var(--text);border-left-color:var(--accent-line);}
+.toc a.lvl-3{padding-left:24px;font-size:12.5px;color:var(--dim);}
+
+/* article */
+article.doc{min-width:0;padding:8px 0 80px;grid-column:1;grid-row:2;}
+article.doc h1,article.doc h2,article.doc h3,article.doc h4{scroll-margin-top:76px;line-height:1.2;text-wrap:balance;}
+article.doc h1{font-size:clamp(26px,3.6vw,34px);font-weight:800;letter-spacing:-0.015em;margin:40px 0 16px;}
+article.doc h2{font-size:clamp(22px,3vw,28px);font-weight:750;margin:44px 0 14px;padding-top:22px;border-top:1px solid var(--hair);}
+article.doc h3{font-size:19px;font-weight:700;color:#dbe6f0;margin:30px 0 10px;}
+article.doc h4{font-size:15.5px;font-weight:700;color:var(--muted);text-transform:none;margin:22px 0 8px;}
+article.doc p{max-width:74ch;color:#cdd8e2;margin:0 0 15px;}
+article.doc strong{color:var(--text);font-weight:650;}
+article.doc em{color:#d6e1ec;}
+article.doc ul,article.doc ol{max-width:74ch;color:#cdd8e2;padding-left:24px;}
+article.doc li{margin:6px 0;}
+article.doc li::marker{color:var(--dim);}
+article.doc hr{border:none;border-top:1px solid var(--hair);margin:36px 0;}
+article.doc blockquote{
+  margin:18px 0;padding:14px 20px;border-left:3px solid var(--accent-line);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:#d6e1ec;
+}
+article.doc blockquote p{margin:0 0 8px;}article.doc blockquote p:last-child{margin:0;}
+
+/* inline code + fenced */
+article.doc code{font-family:var(--mono);font-size:0.9em;color:var(--sage);background:rgba(108,191,146,0.08);
+  border:1px solid rgba(108,191,146,0.16);border-radius:5px;padding:1px 5px;}
+article.doc pre{
+  background:#0c141d;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 18px;
+}
+article.doc pre code{color:#c9d6e2;background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--hair);border-radius:12px;}
+article.doc table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+article.doc th,article.doc td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top;}
+article.doc thead th{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:rgba(0,0,0,0.22);}
+article.doc tbody tr:last-child td{border-bottom:none;}
+article.doc tbody tr:hover{background:rgba(255,255,255,0.015);}
+article.doc td code{white-space:nowrap;}
+/* a long identifier in running text wraps rather than widening the page at phone width */
+:where(code){overflow-wrap:anywhere;}
+/* the article is a grid/flex child: let it shrink so a wide table scrolls in its own wrapper */
+article.doc{min-width:0;}
+.table-wrap{max-width:100%;}
+
+footer.docfoot{grid-column:1 / -1;padding:28px 0 70px;border-top:1px solid var(--hair);color:var(--dim);font-size:13px;font-family:var(--mono);}
+footer.docfoot a{color:var(--muted);}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <span class="brand">Agent Trust &amp; Assurance</span>
+  <span class="sep">/</span>
+  <span class="doc">Agent Ops &amp; Evaluation</span>
+  <a class="back" href="the-life-of-a-uderia-agent.html">← The Life of a Uderia Agent</a>
+</div></div>
+
+<div class="shell">
+  <header class="hero">
+    <p class="eyebrow">Architecture · observe → enforce → prove</p>
+    <h1>Agent Ops &amp; Evaluation</h1>
+  </header>
+  <nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><a href="#0-the-spine-observe-enforce-prove" class="lvl-2">0. The spine: observe → enforce → prove</a><a href="#1-why-this-exists-and-the-design-choices-behind-it" class="lvl-2">1. Why this exists, and the design choices behind it</a><a href="#2-information-architecture-two-lenses-config" class="lvl-2">2. Information architecture — two lenses + config</a><a href="#3-the-substrate-it-builds-on-do-not-rebuild" class="lvl-2">3. The substrate it builds on (do NOT rebuild)</a><a href="#4-core-data-model" class="lvl-2">4. Core data model</a><a href="#5-scoring-layer" class="lvl-2">5. Scoring layer</a><a href="#51-scorer-abstraction-registry" class="lvl-3">5.1 Scorer abstraction + registry</a><a href="#52-deterministic-scorers-the-deterministic-core" class="lvl-3">5.2 Deterministic scorers — the deterministic core</a><a href="#53-llm-judge-layer" class="lvl-3">5.3 LLM-judge layer</a><a href="#6-evaluation-methods" class="lvl-2">6. Evaluation methods</a><a href="#61-offline-runs-passk-reliability" class="lvl-3">6.1 Offline runs — pass^k reliability</a><a href="#62-regression-gate" class="lvl-3">6.2 Regression gate</a><a href="#63-trace-mining" class="lvl-3">6.3 Trace mining</a><a href="#64-online-evaluation-tail-sampling" class="lvl-3">6.4 Online evaluation (tail sampling)</a><a href="#64b-what-makes-a-turn-failed-and-what-it-deliberately-does-not-measure" class="lvl-3">6.4b What makes a turn &quot;failed&quot; — and what it deliberately does not measure</a><a href="#64c-the-human-label-a-users-vote-as-calibration-evidence" class="lvl-3">6.4c The human label — a user&#x27;s vote as calibration evidence</a><a href="#64d-the-epcs-obda-read-receipt-the-strategic_plan-verification-fix-aug-2026" class="lvl-3">6.4d The EPC&#x27;s OBDA-READ receipt + the strategic_plan verification fix (Aug 2026)</a><a href="#64a-judge-cost-allocation-one-canonical-sink-all-engines-design-imperative" class="lvl-3">6.4a Judge-cost allocation — one canonical sink, all engines (design imperative)</a><a href="#6a-grounding-gate-synchronous-on-path-enforcement-tier-11" class="lvl-2">6a. Grounding gate — synchronous on-path enforcement (Tier 1.1)</a><a href="#6a1-module-boundary-pure-core-thin-io-adapter" class="lvl-3">6a.1 Module boundary (pure core + thin I/O adapter)</a><a href="#6a2-modes-the-trusted-scope-substrate" class="lvl-3">6a.2 Modes + the trusted-scope substrate</a><a href="#6a3-judge-backed-enforce-the-post-benchmark-architecture" class="lvl-3">6a.3 Judge-backed enforce (the post-benchmark architecture)</a><a href="#6a3a-recall-first-answer-trigger-allowlist-not-blocklist" class="lvl-3">6a.3a Recall-first answer trigger (allowlist, not blocklist)</a><a href="#6a4-all-engine-wiring-observability-audit" class="lvl-3">6a.4 All-engine wiring, observability, audit</a><a href="#6a5-governance-admin" class="lvl-3">6a.5 Governance (admin)</a><a href="#6b-anti-hallucination-benchmark-the-published-proof-tier-14" class="lvl-2">6b. Anti-hallucination benchmark — the published proof (Tier 1.4)</a><a href="#6c-the-closed-trust-loop-behavioral-trust-circuit-breaker-policy-backtest-jul-2026" class="lvl-2">6c. The closed trust loop — behavioral trust, circuit breaker, policy backtest (Jul 2026)</a><a href="#6c1-behavioral-trust-score-evaltrust_behaviorpy" class="lvl-3">6c.1 Behavioral Trust Score — eval/trust_behavior.py</a><a href="#6c2-trust-budget-circuit-breaker-evalonlinepy_run_trust_breaker" class="lvl-3">6c.2 Trust-budget circuit breaker — eval/online.py:_run_trust_breaker</a><a href="#6c3-policy-backtesting-evalbacktestpy" class="lvl-3">6c.3 Policy backtesting — eval/backtest.py</a><a href="#6c4-assurance-inbox-hitl-review-live-red-team" class="lvl-3">6c.4 Assurance Inbox + HITL review + live red-team</a><a href="#6c5-trust-visualisation-r1r7" class="lvl-3">6c.5 Trust visualisation (R1–R7)</a><a href="#7-analysis-layer" class="lvl-2">7. Analysis layer</a><a href="#8-persistence" class="lvl-2">8. Persistence</a><a href="#9-rest-api-surface" class="lvl-2">9. REST API surface</a><a href="#10-cli" class="lvl-2">10. CLI</a><a href="#11-frontend-ux" class="lvl-2">11. Frontend / UX</a><a href="#111-agent-performance-view" class="lvl-3">11.1 Agent Performance view</a><a href="#112-my-vs-system-scoping" class="lvl-3">11.2 My vs System scoping</a><a href="#113-the-awareness-panel-the-trajectory-verdict-overlay-the-bridge" class="lvl-3">11.3 The Awareness panel + the trajectory verdict overlay (the bridge)</a><a href="#12-profile-class-coverage-matrix" class="lvl-2">12. Profile-class coverage matrix</a><a href="#12a-flow-agents-the-second-agent-type" class="lvl-2">12a. Flow-agents (the second agent type)</a><a href="#12b-genie-coordinatorexpert-masterslave-scoring" class="lvl-2">12b. Genie coordinator/expert (master/slave) scoring</a><a href="#13-security-governance" class="lvl-2">13. Security &amp;amp; governance</a><a href="#14-extending-the-system" class="lvl-2">14. Extending the system</a><a href="#15-deployment-configuration" class="lvl-2">15. Deployment &amp;amp; configuration</a><a href="#16-testing" class="lvl-2">16. Testing</a><a href="#17-file-reference-summary" class="lvl-2">17. File reference summary</a><a href="#18-design-principles-methodology-grounding" class="lvl-2">18. Design principles (methodology grounding)</a></nav>
+  <article class="doc">
+<p><em>Agent observability, evaluation </em><em>and enforcement</em><em> for Uderia (WS3 + the Tier 1 grounding work). Built on Uderia's existing signed-trace substrate rather than re-capturing traces, and built for </em><em>all five profile classes</em><em> — not just the Planner/Executor (Optimize) class.</em></p>
+<blockquote>
+<p><strong>Scope — Pillar 2 of 2: Agent Trust &amp; Assurance.</strong> This document is the <strong>AI-governance</strong> pillar of Uderia's security &amp; trust model (proving the <em>AI's output</em> is truthful, safe, in-scope, and verifiably good — EU AI Act / NIST AI RMF). It pairs with <strong>Pillar 1, Deployment Security</strong> (<code>SECURITY_ARCHITECTURE.md</code>: identity, secrets, data, IP, and action integrity — ISO 27001 / SOC 2). The pillars meet at one cryptographic substrate: the <strong>same Ed25519 key that signs each execution trajectory (the EPC) also signs the evaluation verdict that grades it</strong> (§6.4). Both pillars are summarized in the README <code>Security &amp; Trust</code> capability page.</p>
+<p><strong>Companion plans:</strong> <code>WS3_AGENT_EVAL_OBSERVABILITY_PLAN.md</code> (rationale and phase sequencing) · <code>TIER_1.1_GROUNDING_GATE.md</code> + <code>TIER_1.4_BENCHMARK.md</code> (the grounding gate + anti-hallucination benchmark, §6a/§6b).</p>
+<p><strong>Proof-pack:</strong> <code>A6 — Eval &amp; Observability</code> — the publishable evidence artifact for assessment requirement A6, including a <strong>reproducible Ed25519-signed-attestation sample + standalone offline verifier</strong> that proves eval verdicts are cryptographically bound to the trajectory they grade.</p>
+</blockquote>
+<hr>
+<h2 id="0-the-spine-observe-enforce-prove">0. The spine: observe → enforce → prove</h2>
+<p>The eval layer began as an <strong>observer</strong> — it scored what already happened and surfaced quality, but nothing it computed could change a turn. The Tier 1 grounding work extends the same substrate along one axis: from <em>observing</em> drift to <strong>enforcing</strong> against it on the request path, and then to <strong>proving</strong> the result with a published benchmark. One set of primitives, three jobs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What it does</th>
+<th>When</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Observe</strong></td>
+<td>Score trajectory/cost/safety/quality; roster, regression gate, calibration</td>
+<td>post-hoc, off-path</td>
+<td>§4–§12 (the eval engine)</td>
+</tr>
+<tr>
+<td><strong>Enforce</strong></td>
+<td>A synchronous <strong>grounding gate</strong> that can pass · annotate · withhold an answer for leaving the KG-declared scope — <em>before</em> the user sees it</td>
+<td>on the request path, opt-in</td>
+<td><strong>§6a</strong></td>
+</tr>
+<tr>
+<td><strong>Prove</strong></td>
+<td>A published <strong>anti-hallucination benchmark</strong> that measures the enforcement delta on a real KG</td>
+<td>offline, admin-run</td>
+<td><strong>§6b</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>The enforcement layer is not a parallel system: the live gate's "out of scope" is the <strong>exact same code</strong> as the post-hoc <code>scope_adherence</code> scorer (shared primitives, §6a), and enforcement's hard decisions are made by the <strong>same <code>scope_faithfulness</code> judge</strong> the roster scores with. Observe and enforce are two consumers of one grounding core, so they can never disagree.</p>
+<hr>
+<h2 id="1-why-this-exists-and-the-design-choices-behind-it">1. Why this exists, and the design choices behind it</h2>
+<p>Agent observability/eval is simultaneously 2026 table stakes and the direct antidote to the #1 reason agent projects get cancelled — "inadequate risk controls / unclear value." A regulated buyer will not deploy an agent they cannot prove didn't regress or hallucinate.</p>
+<p>An evaluation layer earns that trust only if its verdicts are reproducible, bound to what they grade, and enforced by the same definitions that measure. Four design choices follow:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Design choice</th>
+<th>What Uderia does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Deterministic-first scoring</strong></td>
+<td>A <strong>profile-class-aware deterministic scorer suite</strong> grades trajectory/cost/safety in code (CI-pure, 0 tokens). Judges are reserved for the open-ended residue.</td>
+</tr>
+<tr>
+<td><strong>Signed, tamper-evident trajectories</strong></td>
+<td>Every turn already produces an <strong>Ed25519-signed Execution Provenance Chain (EPC)</strong>. Eval verdicts are cryptographically bound to the exact trajectory they grade.</td>
+</tr>
+<tr>
+<td><strong>Agent-as-entity, not run firehose</strong></td>
+<td>An <strong>agent health roster</strong> (profiles are first-class, IFOC-classed) leads the UX.</td>
+</tr>
+<tr>
+<td><strong>Observe <em>and</em> enforce on one substrate</strong></td>
+<td>The synchronous <strong>grounding gate</strong> (§6a) shares the eval scorers' primitives and the eval judges' panel, so what the dashboard flags off-path is exactly what the gate withholds on-path.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The four rest on one substrate: deterministic, plan-structure-aware trajectory scoring on a signed chain, and a gate that enforces against the <em>same</em> scoring.</p>
+<hr>
+<h2 id="2-information-architecture-two-lenses-config">2. Information architecture — two lenses + config</h2>
+<p>Agent ops is <strong>operational</strong>, not a config screen, so it does not live in Administration. Uderia separates three jobs by <strong>unit of analysis</strong>:</p>
+<pre><code>Sidebar topic        Unit of analysis     Question answered
+──────────────────────────────────────────────────────────────────────────
+Awareness            session / turn       &quot;What happened in this run?&quot;      (instance lens)
+  └─ the &quot;Awareness&quot; panel (executionDashboard.js; formerly &quot;Session Performance&quot;)
+Trust                profile / flow       &quot;Is this agent good / regressing?&quot; (entity lens)
+  └─ the &quot;Trust&quot; panel (agentPerformanceHandler.js; formerly &quot;Agent Performance&quot;)
+Administration       deployment           configuration &amp; governance only
+            ↕
+   bridged by the trajectory verdict overlay (a session trace is the raw material;
+   agent performance aggregates many traces and grades them — one substrate, two front doors)
+</code></pre>
+<ul>
+<li><strong>Awareness</strong> (rail topic; formerly "Executions" → "Sessions"): instance lens — run history, live + historical trajectory, tokens/cost/latency. Existing <code>executionDashboard.js</code>; panel title "Awareness", tagline "Your agents' session operations".</li>
+<li><strong>Trust</strong> (rail topic; formerly "Agents"): entity lens — quality, regression, calibration per agent. <code>agentPerformanceHandler.js</code>; panel title "Trust", tagline "Your agents' trust, quality &amp; reliability". An <strong>agent is a profile OR a flow</strong> — the lens has two agent types (profile-agents and flow-agents; see §12a).</li>
+<li><strong>Admin</strong>: configuration/governance only — the interim Evaluation tab was removed.</li>
+</ul>
+<p>The two performance topics are <strong>siblings</strong> (parallel nouns: Sessions / Agents), making the unit-of-analysis split legible in the rail. Both share one data layer.</p>
+<p><strong>Consumer-facing dimension presentation</strong> — how the scored dimensions below are <em>shown</em> to the user (logical labels instead of internal scorer keys, the theme-compliant hover tooltip, and the context-scoped <strong>Assurance Guide</strong> with per-turn status, the Admin-thresholds toggle, and the Not applicable / Not set / Abstained distinction) is documented separately in <strong><code>AGENT_QUALITY_DIMENSIONS.md</code></strong>. Single source of truth for labels/descriptions + the guide/tooltip: <code>static/js/handlers/qualityDimensions.js</code> (<code>window.QualityDimensions</code>), consumed identically by the Agent Roster (<code>agentPerformanceHandler.js</code>) and the Live Status Quality card (<code>ui.js</code>). When a scorer is added or its <code>applies_to</code>/threshold changes, update that module too.</p>
+<hr>
+<h2 id="3-the-substrate-it-builds-on-do-not-rebuild">3. The substrate it builds on (do NOT rebuild)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Substrate</th>
+<th>Source</th>
+<th>What it gives eval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Execution Provenance Chain (EPC)</strong></td>
+<td><code>core/provenance.py</code></td>
+<td>Ed25519-signed, SHA-256 hash-chained step trajectory per turn; <code>chain_tip_hash</code> to bind attestations to.</td>
+</tr>
+<tr>
+<td><strong>Per-turn <code>workflow_history[-1]</code></strong></td>
+<td>session files</td>
+<td><code>execution_trace</code> (tool calls/args/results), <code>raw_llm_plan</code>/<code>original_plan</code> (plan structure), tokens/cost, self-corrections, knowledge/genie metadata.</td>
+</tr>
+<tr>
+<td><strong>Single execution seam</strong></td>
+<td><code>agent/execution_service.py::run_agent_execution</code></td>
+<td>One defensive hook point covering all 5 engines + genie coordinator (the Next-Step Recommender already hooks here).</td>
+</tr>
+<tr>
+<td><strong>11 LLM providers</strong></td>
+<td><code>llm/handler.py</code></td>
+<td>A <strong>diverse-family judge panel is free</strong> — judges can come from different model families with no extra integration.</td>
+</tr>
+<tr>
+<td><strong>KG-declared deployed scope</strong></td>
+<td><code>components/builtin/knowledge_graph/</code></td>
+<td>The agent's bound KG knows the <em>trusted, governed</em> databases it should answer from. <code>handler._derive_scope_databases</code> / <code>_derive_full_kg_scope_dbs</code> resolve it to a set of deployed database names; <code>get_trusted_scope(profile_id, user_uuid)</code> caches it per KG. This is the ground truth both <code>scope_adherence</code> (observe) and the grounding gate (enforce) measure against — see §6a.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The eval layer reads this substrate via a normalized view (<code>RunRecord</code>); it never re-instruments execution. The grounding gate reads the <strong>same</strong> <code>RunRecord</code> (via a thin adapter) so its on-path view is byte-identical to the off-path scorer's.</p>
+<hr>
+<h2 id="4-core-data-model">4. Core data model</h2>
+<p><code><code>eval/types.py</code></code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ScoreKind</code></td>
+<td><code>DETERMINISTIC</code> (code grader, always runs, CI-pure) · <code>JUDGE</code> (LLM, open-ended dims only) · <code>METRIC</code> (measured number — cost/steps).</td>
+</tr>
+<tr>
+<td><code>Verdict</code></td>
+<td>One scorer's result for one dimension: <code>passed</code> (<code>True</code>/<code>False</code>/<code>None</code>=unknown/N-A), <code>score</code> (0..1), <code>explanation</code>, <code>evidence[]</code>, <code>threshold</code>. <strong><code>None</code> is first-class</strong> — a scorer abstains rather than fabricating.</td>
+</tr>
+<tr>
+<td><code>EvalCase</code></td>
+<td>A golden case as <strong>data</strong>: <code>query</code>, <code>profile_class</code>, <code>cohort</code>, optional <code>reference_answer</code>, optional <code>flow_id</code> (flow-agent cases — §12a), and declarative <code>assertions{}</code>.</td>
+</tr>
+<tr>
+<td><code>RunRecord</code></td>
+<td>Profile-class-agnostic accessor view over a <code>workflow_history</code> turn dict: <code>final_answer_text</code>, <code>tool_calls</code>/<code>tool_names</code> (excludes framework tools), <code>plan</code>/<code>planned_tools</code>, <code>self_correction_count</code>, <code>retrieved_documents</code>, <code>slaves_invoked</code>, <code>turn_cost_usd</code>, <code>provenance_steps</code>/<code>provenance_meta</code>, <code>step_types</code>. <strong>Accessors are defensive against engine shape variance</strong> — e.g. the Optimize engine stores the plan as a <em>list</em> of phases (not <code>{phases:[…]}</code>), and <code>knowledge_retrieval_event</code>/<code>genie_metadata</code>/<code>provenance_meta</code> may be list-shaped; every accessor that assumes a dict guards with <code>isinstance</code> so an unexpected shape can never crash the online hook (regression: <code>t_real_shapes</code>). <strong><code>duration_ms</code></strong> reads the top-level key (every engine now stamps it from the canonical <code>executor.turn_start_time</code> → <code>_turn_duration_ms()</code>); for turns persisted before that, it falls back to the per-class completion event ("execution complete"), taking the <strong>max whole-turn candidate</strong> (<code>total_duration_ms</code>, or <code>duration_ms</code> on a completion-typed event) so a sub-step's own timing (e.g. a 78 ms retrieval step) is never mistaken for the turn latency — keeping <code>latency</code> populated for all five classes across historical data. <strong>Genie accessors (§12b):</strong> <code>final_answer_text</code> falls back to <code>final_response</code> (the coordinator's answer key); <code>slaves_invoked()</code> reads the top-level per-expert summary first; <code>genie_rollup</code> exposes the inclusive (coordinator + experts) cost/tokens for the <em>delegated-cost annotation</em> — <code>turn_cost_usd</code>/<code>total_tokens</code> stay <strong>self-cost</strong> (coordinator-only), so portfolio sums never double-count.</td>
+</tr>
+<tr>
+<td><code>FlowRunRecord</code></td>
+<td>The flow-agent analogue (<code><code>eval/flow_types.py</code></code>) over a flow run + <code>node_runs</code> — <code>completed</code>, <code>executed_nodes</code>/<code>failed_nodes</code>, <code>executed_identifiers</code>, <code>step_count</code>, <code>cost_usd</code>. Used when <code>profile_class == "flow"</code>. See §12a.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>ALL_PROFILE_CLASSES = (llm_only, rag_focused, tool_enabled, genie, conversation_with_tools)</code> — the five profile classes the evaluation must cover; flows are the sixth eval class (<code>"flow"</code>), a distinct <strong>agent type</strong> (§12a). <code>FRAMEWORK_TOOLS</code> (<code>TDA_FinalReport</code>/<code>TDA_SystemLog</code>/<code>TDA_ContextReport</code>/<code>TDA_CurrentDate</code>) are excluded from trajectory scoring.</p>
+<p><strong>Declarative assertion keys</strong> (on <code>EvalCase.assertions</code>):
+- <em>Profile-agents:</em> <code>require_tools_subset</code> · <code>must_not_call</code> · <code>max_self_corrections</code> · <code>max_cost_usd</code> · <code>optimal_steps</code>/<code>max_steps</code> · <code>expect_retrieval</code> · <code>require_citations</code> · <code>min_grounded</code> · <code>expect_slaves</code> · <code>max_slaves</code> · <code>must_contain</code>/<code>must_not_contain</code>/<code>answer_regex</code>/<code>max_answer_length</code>.
+- <em>Flow-agents:</em> <code>expect_complete</code> · <code>require_nodes</code> · <code>forbid_nodes</code> · <code>max_cost_usd</code> · <code>max_steps</code> (§12a).</p>
+<hr>
+<h2 id="5-scoring-layer">5. Scoring layer</h2>
+<h3 id="51-scorer-abstraction-registry">5.1 Scorer abstraction + registry</h3>
+<p><code><code>eval/scorer.py</code></code>: <code>Scorer</code> ABC declares <code>dimension</code>, <code>kind</code>, <code>applies_to</code> (frozenset of classes; empty = all profile classes), and <code>gating</code> (gate-eligible). <code>register_scorer</code> + <code>scorers_for(profile_class, dimensions, kinds)</code> resolve the right suite per case. <strong>Flows are special-cased</strong>: <code>scorers_for("flow")</code> returns <em>only</em> scorers whose <code>applies_to</code> contains <code>"flow"</code> (never the empty-set "all" scorers, which assume a turn shape) — so flow-agents get only the flow scorers (§12a). <strong>Adding a metric = one class + one <code>register_scorer</code> call.</strong></p>
+<p><strong>3-band metric verdicts.</strong> A <code>Verdict</code> carries an optional <code>band</code> ∈ {<code>healthy</code>, <code>review</code>, <code>danger</code>, <code>None</code>} alongside <code>passed</code> — the same 4-class taxonomy the roster uses (§11.1), but per metric. <code>scorer.banded_metric(scorer, *, value, gate, healthy, higher_is_better, …)</code> is the shared helper every threshold-bearing scorer routes through: it takes up to <strong>two cut points</strong> (the <code>gate</code>/Danger boundary and the <code>healthy</code>/green-amber split), is <code>higher_is_better</code>-aware (so <code>min_*</code> and <code>max_*</code> metrics share one code path), and sets <code>passed = (band != "danger")</code> — <strong>Review (amber) passes the gate but is flagged; only Danger (red) fails</strong> ("warn, don't gate"). One cut point = legacy single pass/fail line (no amber); none = informational (<code>passed=None</code>, no band). Curated cases set the boundaries via assertions (<code>&lt;key&gt;</code> = Danger, <code>&lt;key&gt;__healthy</code> = Healthy); the admin global defaults (§6.4) flatten into the same keys.</p>
+<h3 id="52-deterministic-scorers-the-deterministic-core">5.2 Deterministic scorers — the deterministic core</h3>
+<p><code><code>eval/scorers/deterministic.py</code></code> — 19 scorers, CODE only, no LLM, reproducible, CI-pure. (Three drive the Task Transparency framework — <code>TaskCountScorer</code>/<code>ParallelEfficiencyScorer</code>/<code>StepCountScorer</code> — see §5.2c.)</p>
+<p>Design rules (from methodology research): <strong>grade what matters, not the path</strong> (tool assertions use <em>superset</em>/<em>must-not-call</em> semantics, never exact-sequence); one scorer = one dimension; abstain (<code>passed=None</code>) when the assertion is absent.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Scorer</th>
+<th>Dimension</th>
+<th>Kind</th>
+<th>Applies to</th>
+<th>Gating</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CompletedScorer</code></td>
+<td><code>completed</code></td>
+<td>det</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>AnswerPresentScorer</code></td>
+<td><code>answer_present</code></td>
+<td>det</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>FormatConstraintScorer</code></td>
+<td><code>format</code></td>
+<td>det</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>CostCeilingScorer</code></td>
+<td><code>cost</code></td>
+<td>metric</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>TaskCountScorer</code></td>
+<td><code>tasks</code></td>
+<td>metric</td>
+<td><strong>all 5 + flow</strong></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>StepEfficiencyScorer</code></td>
+<td><code>efficiency</code></td>
+<td>metric</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ParallelEfficiencyScorer</code></td>
+<td><code>parallel_efficiency</code></td>
+<td>metric</td>
+<td>tool_enabled, genie, <strong>flow</strong></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>StepCountScorer</code></td>
+<td><code>steps</code></td>
+<td>metric</td>
+<td><strong>tool_enabled only</strong> (planner)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>SafetyScorer</code></td>
+<td><code>safety</code></td>
+<td>det</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ChainIntegrityScorer</code></td>
+<td><code>provenance_integrity</code></td>
+<td>det</td>
+<td>all</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ToolSubsetScorer</code></td>
+<td><code>tool_subset</code></td>
+<td>det</td>
+<td>tool_enabled, conversation_with_tools</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>MustNotCallScorer</code></td>
+<td><code>must_not_call</code></td>
+<td>det</td>
+<td>tool classes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>SelfCorrectionScorer</code></td>
+<td><code>self_correction</code></td>
+<td>metric</td>
+<td>tool classes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>PlanAdherenceScorer</code></td>
+<td><code>plan_adherence</code></td>
+<td>det</td>
+<td>tool_enabled</td>
+<td>— (soft)</td>
+</tr>
+<tr>
+<td><code>RetrievalPerformedScorer</code></td>
+<td><code>retrieval_performed</code></td>
+<td>det</td>
+<td>rag_focused</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>GroundednessOverlapScorer</code></td>
+<td><code>grounded_overlap</code></td>
+<td>det</td>
+<td>rag_focused</td>
+<td>— (pre-signal)</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>What <code>grounded_overlap</code> is allowed to measure.</strong> The support set is the retrieved
+chunks <strong>and the turn's attachments</strong> (<code>RunRecord.support_chunk_texts</code>; since Oct 2026 —
+a Focus agent answers from an attachment when its repositories hold nothing, and an
+attachment deleted since makes every support reader abstain, see FILES_ARCHITECTURE §3, invariant 6)
+<strong>plus the question</strong> (parity with <code>grounding/corpus.assess</code> — echoing the
+user's own terms is not invention), and the scorer <strong>abstains</strong> whenever the delivered
+text is not a model claim: the grounding gate withheld or annotated it, or the honesty
+gate rewrote it. In those cases the delivered text is Uderia's own notice — which
+quotes the very spans it is reporting, so scoring it fails by construction and counts
+one shortfall twice at the same station. It is deliberately <strong>not</strong> gated on "does the
+answer make a groundable claim": that was tried and reverted, because a fluent
+fabrication carries no number, quote or identifier and would have escaped the one check
+that exists to catch it. Separating a refusal from a fabrication is the judge's job.</p>
+<p><strong>Refinement pairs (contract Rule 3.0c).</strong> <code>groundedness</code> is declared as the judge that
+REFINES this check (<code>assurance_points.REFINEMENT_PAIRS</code>). Where both decided a turn, the
+pair's standing — not worst-of — sets what the coarse check contributes to its station:
+corroborated failure → danger, judge-only failure → danger, <strong>disputed</strong> (coarse flagged,
+judge cleared) → <em>worth a look</em>, both clean → quiet. The dimension's own band is never
+rewritten; only its station contribution (<code>sc</code>) changes, and the disagreement is named.
+Computed server-side in two places from ONE declaration: <code>read_turn</code> (per-turn, for the
+dial) and <code>analysis.online_quality_by_agent</code> → <code>turn_disputed_dims</code> (per-window, for the
+ring, since only the aggregator can tell "the judge passed" from "the judge never ran").</p>
+</blockquote>
+<p>| <code>CitationPresentScorer</code> | <code>citations</code> | det | rag_focused | ✓ |
+| <code>RoutingCorrectnessScorer</code> | <code>routing</code> | det | genie | ✓ |
+| <code>CoordinationEfficiencyScorer</code> | <code>coordination_efficiency</code> | det | genie | ✓ |</p>
+<p><code>cost</code>, <code>efficiency</code>, <code>self_correction</code>, <code>tasks</code>, <code>steps</code> and <code>parallel_efficiency</code> are banded metrics (§5.1) — they read two cut points and grade green/amber/red.</p>
+<h4 id="52a-reliability-quality-scorers">5.2a Reliability &amp; quality scorers</h4>
+<p><code><code>eval/scorers/reliability.py</code></code> — 27 further deterministic signals derived <strong>entirely from the trace already persisted</strong> (no new instrumentation): the provenance chain, <code>execution_trace</code> / <code>conversation_agent_events</code>, <code>knowledge_retrieval_event.similarity_score</code>, <code>kg_enrichment_event.scope_databases</code>, <code>context_window_snapshot</code>, <code>duration_ms</code>, <code>turn_cost</code>, and the gate stamps the runtime recorded. Two families — <em>was the process sound?</em> and <em>was the output sound?</em> (Per-dimension meaning: <code>AGENT_QUALITY_DIMENSIONS.md</code>.)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Scorer</th>
+<th>Dimension</th>
+<th>Kind</th>
+<th>Applies to</th>
+<th>Gating</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LatencyScorer</code></td>
+<td><code>latency</code></td>
+<td>metric (banded)</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>TokenUsageScorer</code></td>
+<td><code>tokens</code></td>
+<td>metric (banded)</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>CacheEfficiencyScorer</code></td>
+<td><code>cache_efficiency</code></td>
+<td>metric (informational)</td>
+<td>all</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>BudgetAdherenceScorer</code></td>
+<td><code>budget_adherence</code></td>
+<td>metric (informational)</td>
+<td>tool classes, genie</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>CleanTerminationScorer</code></td>
+<td><code>clean_termination</code></td>
+<td>det</td>
+<td>all</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ContextHealthScorer</code></td>
+<td><code>context_health</code></td>
+<td>metric</td>
+<td>all</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ToolSuccessRateScorer</code></td>
+<td><code>tool_success_rate</code></td>
+<td>metric (banded)</td>
+<td>tool classes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ToolLoopScorer</code></td>
+<td><code>no_tool_loops</code></td>
+<td>det (banded)</td>
+<td>tool classes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ErrorRecoveryScorer</code></td>
+<td><code>error_recovery</code></td>
+<td>metric</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ScopeAdherenceScorer</code></td>
+<td><code>scope_adherence</code></td>
+<td>metric (banded)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ToolEconomyScorer</code></td>
+<td><code>tool_calls</code></td>
+<td>metric (banded)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>KgSeedUtilizationScorer</code></td>
+<td><code>kg_seed_utilization</code></td>
+<td>metric (informational)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>EnrichmentRecallScorer</code></td>
+<td><code>enrichment_recall</code></td>
+<td>metric (informational)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>OutputSanityScorer</code></td>
+<td><code>output_sanity</code></td>
+<td>det</td>
+<td>all</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>NumericFidelityScorer</code></td>
+<td><code>numeric_fidelity</code></td>
+<td>det (banded)</td>
+<td>tool_enabled, rag_focused</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>PlanExecutionCoverageScorer</code></td>
+<td><code>plan_execution</code></td>
+<td>det</td>
+<td>tool_enabled</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>RetrievalRelevanceScorer</code></td>
+<td><code>retrieval_relevance</code></td>
+<td>metric (banded)</td>
+<td>rag_focused</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ExpertSuccessScorer</code></td>
+<td><code>expert_success</code></td>
+<td>det</td>
+<td>genie</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>GovernedDataRatioScorer</code></td>
+<td><code>governed_data_ratio</code></td>
+<td>metric (banded)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ContextUtilizationScorer</code></td>
+<td><code>context_utilization</code></td>
+<td>metric (advisory)</td>
+<td>all but genie</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>KnowledgeFreshnessScorer</code></td>
+<td><code>knowledge_freshness</code></td>
+<td>metric</td>
+<td>all but genie</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>HonestAbsenceScorer</code></td>
+<td><code>honest_absence</code></td>
+<td>det</td>
+<td>tool classes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>SurfaceViolationScorer</code></td>
+<td><code>surface_violation</code></td>
+<td>metric (informational)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>CitationFidelityScorer</code></td>
+<td><code>citation_fidelity</code></td>
+<td>metric (banded)</td>
+<td>tool classes, rag_focused, genie</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>IdentifierProvenanceScorer</code></td>
+<td><code>identifier_provenance</code></td>
+<td>det</td>
+<td>tool classes, rag_focused, genie</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>LibraryReadFirstScorer</code></td>
+<td><code>library_read_first</code></td>
+<td>metric (informational)</td>
+<td>tool classes, rag_focused</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ActionSafetyScorer</code></td>
+<td><code>action_safety</code></td>
+<td>metric (informational)</td>
+<td>tool classes</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>"Tool classes" = <code>tool_enabled</code> + <code>conversation_with_tools</code>. Several of these grade a <strong>property</strong> through the assurance registry rather than re-deriving it (<code>property = "&lt;name&gt;"</code> on the class — see <code>ASSURANCE_SUBSTRATE_ARCHITECTURE.md</code> § <em>The reverse link</em>), and a bound third-party property gets a generic <code>PropertyScorer</code> from <code><code>eval/scorers/plugin_properties.py</code></code> (<code>ASSURANCE_MODULE_PLANE_ARCHITECTURE.md</code> §5). <strong>Census (Nov 2026): 63 registered dimensions</strong> — 19 deterministic + 28 reliability + 10 judges + 6 flow — plus any bound pack property.</p>
+<p><strong><code>governed_data_ratio</code> (Jul 2026, extended Aug 2026) — the OBDA-READ governed-data incentive signal.</strong> Of a turn's data operations, the fraction that went through the <strong>governed, deterministic lane</strong> (a product/metric compiled to ratio-safe SQL — including a raw-SQL call whose statement matches a governed compile's output from the same turn, <code>execute_governed</code>) vs <strong>free-formed</strong> raw SQL the agent wrote itself. Higher is better; non-gating — it <em>rewards</em> the governed lane rather than blocking, creating an incentive gradient toward signed data products. Abstains when the turn did no data ops, when the OBDA-READ component is off for the agent (<code>obda_planes.plane_enabled</code> — a disabled OBDA-READ must not band the scorecard), and on a <strong>confined</strong> turn (every raw attempt was DENIED by the data surface — nothing executed, and a denial is deliberately <em>neither</em> lane: counting it free-formed would punish the agent for being protected). Its sibling <strong><code>surface_violation</code></strong> (BOUNDED, ACT) counts the surface's own denials — non-gating by design, a steady nonzero being a producer-side <em>product gap made measurable</em>. Both read the <strong>same trace the OBDA-READ Live Status card is built from</strong> — observability and eval are two ends of one signal, sharing the pure classifier <code>agent/obda.py</code>. Every governed consumption additionally seals an offline-verifiable receipt into the turn's EPC (§6.4c). Full architecture: <a href="OBDA_ARCHITECTURE.html">OBDA_ARCHITECTURE.md</a>.</p>
+<p><strong><code>scope_adherence</code> + <code>tool_calls</code> (Jun 2026) — the KG-grounded scope/efficiency pair.</strong> Both are deterministic, 0-token, <strong>non-gating</strong> (they band the Quality card red/amber but never fail a release gate — <em>observe, don't constrain</em>; the prompt stays flexible, the rigor lives in the eval layer). <code>scope_adherence</code> counts data-source calls that reach <strong>outside the KG-declared deployed scope</strong> — the KG enrichment now stamps <code>scope_databases</code> (derived deterministically from the resolved <code>deployed:</code> identifiers) onto its metadata → <code>kg_enrichment_event</code> → <code>RunRecord.kg_scope_databases()</code>; the scorer compares each call's <code>database_name</code>/SQL <code>FROM</code>-qualifier against that set (system catalogs like DBC allowed), and <strong>abstains</strong> when no deployable scope was declared (logical-only / no enrichment). <code>tool_calls</code> is raw call volume — it catches brute-force/retry-storm thrash that <code>no_tool_loops</code> (identical-args repeat) misses because the calls aren't byte-identical. Together they pinpoint the failure mode where an agent ignores a complete KG enrichment and hunts unrelated databases (the canonical <em>"average order delivery time" → maintenance_work_order</em> case: <code>scope_adherence=3 danger</code>, <code>tool_calls=19 danger</code>).</p>
+<blockquote>
+<p><strong>Shared primitives with the grounding gate (§6a).</strong> <code>scope_adherence</code>'s scope math (<code>dbs_touched</code>, <code>scope_diff</code>) was <strong>extracted</strong> into the neutral <code>agent/grounding/primitives.py</code>, which BOTH this scorer and the on-path grounding gate import. So the off-path "this turn drifted" verdict and the on-path "withhold this answer" decision are computed by the <em>same</em> code — they can never diverge on what "out of scope" means. The scorer observes; the gate enforces; one definition.</p>
+</blockquote>
+<p>The banded scorers plus <code>cost</code>/<code>steps</code>/<code>self_correction</code> from §5.2 are the metrics exposed as sliders in <strong>Administration → App Config → Trust → Quality bands</strong>, grouped by moment (§6.4).</p>
+<h4 id="52b-kpi-harmonization-across-profile-classes">5.2b KPI harmonization across profile classes</h4>
+<p>A deep per-class assessment (<em>what can each class's execution signals support?</em>) drives a harmonization layer so the card reads the same for every class:</p>
+<ul>
+<li><strong>Universal core</strong> — <code>cost</code>, <code>latency</code>, <strong><code>tokens</code></strong> (<code>TokenUsageScorer</code>, banded by <code>max_tokens</code>), <code>completed</code>, <code>answer_present</code>, <code>output_sanity</code>, <code>safety</code>, <code>clean_termination</code> — computed for <strong>all five</strong> classes. <code>clean_termination</code> derives "terminal answer produced" from answer+status when there's no signed provenance chain (ReAct / Ideate / Focus), so it's no longer Optimize-only.</li>
+<li><strong>Tasks vs steps (see §5.2c)</strong> — <code>tasks</code> (<code>TaskCountScorer</code>) is the universal execution-work KPI across <strong>all five classes + flows</strong>; <code>steps</code> (<code>StepCountScorer</code>) is the <strong>Optimize-only planner</strong> plan-size signal. <code>efficiency</code> is purely the <code>optimal_tasks/actual</code> convergence ratio and abstains without a target.</li>
+<li><strong>Exposure</strong> — the Scorecard chips <strong>group by the MOMENT a measurement was taken</strong> (<code>Plan · Retrieve · Act · Compose · Deliver · The run · Flow run</code> — declared in <code>eval/stages.py</code>, SERVED on <code>/v1/assurance/vocabulary</code>, rendered by <code>ui.js:_stageGroupsForCard</code>), each moment rendering only if the class produced a check in it. The earlier KPI-tier taxonomy is retired. Per-metric formatting (<code>_fmtMetricScore</code>) renders counts as <code>1</code>, rates as <code>0%</code>, cost <code>$…</code>, latency <code>4.1s</code>, tokens with commas, parallel speedup <code>1.50×</code>.</li>
+</ul>
+<p>Per-class scorer counts (<code>scorers_for(class)</code>, incl. judges, Oct 2026): <code>llm_only</code>=19, <code>conversation_with_tools</code>=41, <code>rag_focused</code>=28, <code>tool_enabled</code>=45, <code>genie</code>=24, <code>flow</code>=8 (flows have no judges).</p>
+<h4 id="52c-task-transparency-classification-framework">5.2c Task Transparency Classification Framework</h4>
+<p><code><code>eval/tasks.py</code></code> — the agent-type-consistent view of <em>what work an agent did</em>. It turns a turn (or flow run) into discrete, typed <strong>Tasks</strong>, deterministically (CI-pure, 0 tokens) from the <strong>signed provenance chain</strong> (profile-agents) or <strong>node runs</strong> (flow-agents). <code>classify_tasks(run)</code> is <strong>polymorphic over <code>RunRecord</code> and <code>FlowRunRecord</code></strong>, so the same KPIs render identically on every agent's Quality card.</p>
+<p><strong>A Task = one discrete unit of executed work</strong>, with a <em>class</em> and a <em>mode</em>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Task class</th>
+<th>Meaning</th>
+<th>Derived from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>planning</code></td>
+<td>strategic planning — the <strong>whole</strong> planning phase collapses to <strong>1 task</strong></td>
+<td><code>strategic_plan</code> + every <code>plan_rewrite</code> (merged)</td>
+</tr>
+<tr>
+<td><code>retrieval</code></td>
+<td>a knowledge / RAG search</td>
+<td><code>rag_search</code>/<code>rag_results</code></td>
+</tr>
+<tr>
+<td><code>tool</code></td>
+<td>a real MCP / component / connector invocation ("doing")</td>
+<td><code>tool_call</code>/<code>agent_tool_call</code> for non-framework tools; flow <code>task_tool</code>/<code>task_function</code></td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td>an LLM generation/synthesis ("thinking")</td>
+<td>the <strong>final-report synthesis</strong> (<code>TDA_FinalReport</code>); <code>rag_synthesis</code>/<code>llm_call</code>/<code>coordinator_synthesis</code>; ReAct <code>conversation_llm_step</code> events; flow <code>task_llm</code>/<code>decision</code>/<code>task_prompt</code>/<code>task_extension</code></td>
+</tr>
+<tr>
+<td><code>coordination</code></td>
+<td>consulting a sub-agent / expert</td>
+<td>genie <code>slaves_invoked</code></td>
+</tr>
+<tr>
+<td><code>correction</code></td>
+<td>re-doing failed work — <strong>rework</strong> (the quality class the Live Status filter omits)</td>
+<td><code>self_correction</code> / <code>error:*</code> steps</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Modes:</strong> <code>sequential</code> · <code>parallel</code> (provably overlapped a sibling, or part of a parallelising orchestrator wave). <code>CONTEXT</code>/<code>SYSTEM</code> Live-Status events are scaffolding (context assembly, session naming) — overhead, <strong>not</strong> tasks.</p>
+<p><strong>What is deliberately NOT a task</strong> (so the count reflects real work, not bookkeeping):
+- <strong><code>tactical_decision</code></strong> — per-phase routing that is usually <strong>FASTPATH</strong> (args pre-known from the strategic plan → <em>no</em> LLM call). Counting it would over-count reasoning on the common path; the phase's real work is its tool call, and the genuine reasoning is the strategic plan + the final synthesis.
+- <strong>Framework scaffolding tools</strong> — <code>TDA_SystemLog</code> / <code>TDA_CurrentDate</code> / <code>TDA_ContextReport</code> / <code>TDA_SystemOrchestration</code> (the orchestrator's wrapped calls are added separately as a parallel wave). <code>TDA_FinalReport</code> is the exception — it IS the answer synthesis, so it's classified as <code>reasoning</code>, not <code>tool</code>.</p>
+<p><strong>steps ≠ tasks (a deliberate two-layer model).</strong> <code>steps</code> is a <strong>planner</strong> concept — the count of planned phases in the Optimize strategic meta-plan — so it applies to <strong><code>tool_enabled</code> only</strong>. Each planned <em>step</em> decomposes into execution <em>tasks</em>. Example: an Optimize turn with a 2-phase plan (one data query + final report) reads <strong><code>steps</code>=2, <code>tasks</code>=3 (1 planning · 1 tool · 1 reasoning)</strong> — the planner call, the data tool, and the synthesis; the two FASTPATH tactical decisions are not tasks.</p>
+<p><strong>The three task KPIs (all banded, all honest):</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Applies to</th>
+<th>Quality lever</th>
+<th>Banded by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tasks</code></td>
+<td><strong>all 5 classes + flow</strong></td>
+<td>work VOLUME (bloat → cost/latency); explanation carries the composition breakdown</td>
+<td><code>max_tasks</code></td>
+</tr>
+<tr>
+<td><code>efficiency</code></td>
+<td>all 5 classes (convergence)</td>
+<td>detours/loops (<code>optimal_tasks/actual</code>)</td>
+<td><code>optimal_tasks</code> (alias <code>optimal_steps</code>)</td>
+</tr>
+<tr>
+<td><code>parallel_efficiency</code></td>
+<td><strong>parallel-capable: <code>tool_enabled</code>, <code>genie</code>, <code>flow</code></strong></td>
+<td>LATENCY — speedup <code>tasks / waves</code> from concurrency</td>
+<td><code>min_parallel_efficiency</code></td>
+</tr>
+<tr>
+<td><code>steps</code></td>
+<td><code>tool_enabled</code> only</td>
+<td>plan SIZE (planner)</td>
+<td><code>max_steps</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Parallelism is honest by construction.</strong> A wave = tasks that ran concurrently, established by (1) an explicit orchestrator group (<code>TDA_SystemOrchestration</code> wrapping N&gt;1 calls via <code>asyncio.gather</code>), else (2) provable wall-clock overlap of provenance/node timestamps. Profile-agent provenance steps are appended <strong>serially</strong>, so timestamp overlap rarely appears — <code>parallel_efficiency</code> therefore <strong>abstains</strong> (<code>passed=None</code>) for most profile turns rather than reporting a fabricated <code>1.0</code>. <strong>Flow-agents are the strongest case</strong>: their node runs carry real <code>started_at</code>/<code>completed_at</code>, so parallel branches yield a genuine speedup (e.g. 2 overlapping SQL nodes + 1 LLM node → <code>1.50×</code>). Chips live in the <strong>Tasks</strong> tier; speedup formats as <code>1.50×</code>. Admin sliders: <code>max_tasks</code>, <code>min_parallel_efficiency</code> (Tasks group), <code>max_steps</code> (Planning group).</p>
+<p><strong>Composition transparency (exposed end-to-end).</strong> The <code>tasks</code> verdict carries the class split as structured <code>evidence</code> (<code>["1 planning", "2 tool", "2 reasoning"]</code> via <code>TaskSet.breakdown()</code>), so the split is visible — not just the bare count — for <strong>every applicable profile class + flows</strong>:
+- <strong>Quality card chip</strong> (<code>ui.js:_renderVerdictChips</code>) renders the split inline after the count: <em><code>tasks ·metric 5 · 1 planning · 2 tool · 2 reasoning</code></em>.
+- <strong>Agent Performance UX</strong> — <code>build_quality_span</code> emits per-class counts (<code>eval.task.&lt;class&gt;</code>), <code>online_quality_by_agent</code>/<code>online_quality_by_flow</code> average them into <code>task_composition</code>, and the agent-detail view renders a <strong>Work Mix</strong> stacked composition bar + legend (<code>agentPerformanceHandler.js:taskMix</code>, IFOC/Live-Status-aligned colors) showing the agent's average tasks-per-turn and work mix.</p>
+<h3 id="53-llm-judge-layer">5.3 LLM-judge layer</h3>
+<p>The deterministic layer covers correctness <em>structure</em>; judges refine the <em>quality</em> code can only approximate.</p>
+<p><strong>Panel-of-LLMs</strong> (<code><code>eval/judge.py</code></code>): a diverse-family panel beats a single judge at lower variance — and Uderia's 11 providers make it free. <code>build_panel()</code> selects up to N configs across <strong>distinct provider families</strong> (mitigates self-preference / correlated error). <code>parse_judge_response()</code> robustly parses <code>{verdict, score, evidence, reasoning}</code> (via <code>robust_json_parse</code>); <code>consensus()</code> takes a <strong>majority vote</strong> ignoring abstentions (ties → fail; all-unknown → <code>None</code>). <code>JudgePanel</code> ABC has a live <code>LLMHandlerPanel</code> and a deterministic <code>FakePanel</code> (CI).</p>
+<p><strong>Per-configuration opt-out (<code>judge_panel_enabled</code>).</strong> A model can be excellent at answering and poor — or simply unusable — as a judge. <strong>Scope, stated plainly:</strong> one panel serves <em>both</em> judge layers, so excluding a model removes it from the in-flight judge a grounding gate escalates to (whose ruling can withhold an answer) as well as from the post-hoc scoring panel. That is deliberate — the two layers ask the same models the same kind of question — but it means this is not a measurement-only setting. And a member that never responds is <em>worse than absent</em>: every judge waits out its per-call timeout, so <strong>one silent model sets the latency of the whole evaluation layer</strong> (observed in production: a single member contributing no vote produced three 20 s timeouts on one turn). Any LLM configuration can therefore be excluded from the panel, from the LLM configuration editor's <strong>Evaluation role</strong> control.</p>
+<p>The rule is stated once in <code>judge.judge_panel_enabled(cfg)</code> and read by <code>build_panel</code>, which is the <strong>single selection path</strong> behind all four judge consumers — the online hook, the manual "Score this turn", the CLI, and the grounding gate's in-path escalation — so one flag governs every one of them, including the judge that can withhold an answer.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stored value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>key absent</td>
+<td><strong>participates</strong> — every configuration that predates the option is unchanged</td>
+</tr>
+<tr>
+<td><code>true</code></td>
+<td>participates</td>
+</tr>
+<tr>
+<td><code>false</code></td>
+<td>excluded from the panel; the model answers exactly as before</td>
+</tr>
+<tr>
+<td>anything else</td>
+<td>participates — the failure direction that matters is silently <em>losing</em> a judge</td>
+</tr>
+</tbody>
+</table></div>
+<p>Exclusion is per <strong>configuration</strong>, not per provider family (a second config of the same family can still be picked), and it is an explicit operator decision rather than an auto-eviction — a model that is merely slow today may be the panel's most valuable member tomorrow. When exclusion empties the panel, <code>build_panel</code> says so by name instead of reporting the credentials problem it isn't; judges then abstain (§6.4).</p>
+<p><strong>The 10 decomposed judges</strong> (<code><code>eval/scorers/judges.py</code></code>) — each scores ONE dimension in isolation, cites evidence, and may answer "unknown":</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Judge</th>
+<th>Dimension</th>
+<th>Applies to</th>
+<th>Abstains unless</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AnswerCorrectnessJudge</code></td>
+<td><code>answer_correctness</code></td>
+<td>all</td>
+<td><code>reference_answer</code> present</td>
+</tr>
+<tr>
+<td><code>GroundednessJudge</code></td>
+<td><code>groundedness</code></td>
+<td>rag_focused</td>
+<td>retrieved docs present</td>
+</tr>
+<tr>
+<td><code>InstructionFollowingJudge</code></td>
+<td><code>instruction_following</code></td>
+<td>llm_only, conversation_with_tools</td>
+<td>answer present</td>
+</tr>
+<tr>
+<td><code>ToolArgOptimalityJudge</code></td>
+<td><code>tool_arg_optimality</code></td>
+<td>tool classes</td>
+<td>tool calls present</td>
+</tr>
+<tr>
+<td><code>AnswerGroundednessJudge</code></td>
+<td><code>answer_groundedness</code></td>
+<td>tool classes</td>
+<td>tool results present</td>
+</tr>
+<tr>
+<td><code>ScopeFaithfulnessJudge</code></td>
+<td><code>scope_faithfulness</code></td>
+<td>tool classes</td>
+<td>KG scope declared</td>
+</tr>
+<tr>
+<td><code>SynthesisQualityJudge</code></td>
+<td><code>synthesis_quality</code></td>
+<td>genie</td>
+<td>slaves invoked</td>
+</tr>
+<tr>
+<td><code>ContentSafetyJudge</code></td>
+<td><code>content_safety</code></td>
+<td>all classes</td>
+<td>answer present</td>
+</tr>
+<tr>
+<td><code>SourceConsistencyJudge</code></td>
+<td><code>source_consistency</code></td>
+<td>rag_focused</td>
+<td>≥2 distinct retrieved documents</td>
+</tr>
+<tr>
+<td><code>GrainFaithfulnessJudge</code></td>
+<td><code>grain_faithfulness</code></td>
+<td>tool classes</td>
+<td>answer present (also the honesty gate's optional in-path escalation, <code>honestyConfig.grainJudge</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>ContentSafetyJudge</code> (Jul 2026) is the <strong>semantic complement to the deterministic outbound guardrail</strong> — it covers the residue only meaning can catch (sarcastic/coded abuse, harm-enabling instructions, indirect personal identification via quasi-identifiers), advisory on the sampled judge layer and never blocking the answer path; professional criticism is explicitly not a failure.</p>
+<p><code>AnswerGroundednessJudge</code> (Jun 2026) is the <strong>tool-class analogue of <code>GroundednessJudge</code></strong> (which is RAG-only): "is every factual claim and number in the ANSWER supported by the TOOL RESULTS the agent actually obtained?" — judging <em>support</em> only, not whether the data answers the question (<code>instruction_following</code> owns that). It's the judge that catches a <strong>fabricated value</strong> a code grader (<code>numeric_fidelity</code>) can only approximate — on the canonical <em>"230-day average"</em> case it returned a unanimous 0✓/3✗ fail ("cites a table and average that do not exist in the tool results").</p>
+<p><code>ScopeFaithfulnessJudge</code> (Jun 2026) is the <strong>outcome companion of the deterministic <code>scope_adherence</code> scorer</strong> and the <strong>decision-maker for the grounding gate's enforce mode</strong> (§6a). It reads only the QUESTION, the ANSWER, and the KG-declared TRUSTED SCOPE description (<code>RunRecord.kg_scope_description()</code>) — <strong>not</strong> the tool-call databases — so it is independent of the deterministic mechanism signal and judges the delivered <em>outcome</em>: is the answer's <strong>subject matter</strong> within the trusted scope, or did it drift to an out-of-scope domain (a governance hallucination)? Critically, its rubric judges <strong>domain only, never value correctness</strong> — an answer about in-scope concepts is <em>faithful</em> even if its specific numbers can't be verified (that's <code>answer_groundedness</code>'s job), and an honest "that data isn't represented in the trusted scope" is <em>faithful</em>, not a failure. That independence is what makes it a valid ground-truth oracle for the anti-hallucination benchmark (§6b) and the right authority to make the gate's withhold/deliver call.</p>
+<p><code>GroundednessJudge</code> (evidence contract, Oct 2026) is the <strong>decision-maker for the grounding gate's corpus family</strong> (RAG_TRUST_HARDENING §1.2 C2: the deterministic trigger does recall, this judge does precision). Three rules, each learned from a withheld-but-grounded answer on production (session 727292c3): <strong>(1) it reads the ONE support text the trigger read</strong> — <code>RunRecord.retrieved_chunk_texts()</code> (chunk content + the citation line the model was shown), never a second rendering of the chunks; a judge handed <code>docs[:8]</code> clipped to 5000 characters ruled two terms "entirely absent" that sat in chunk 9. <strong>(2) Evidence is budgeted by WHOLE chunks in retrieval order</strong> (<code>ONLINE_EVAL_JUDGE_EVIDENCE_CHARS</code>, 24K; the answer under judgment by <code>ONLINE_EVAL_JUDGE_ANSWER_CHARS</code>, 12K — never silently cut), and an unavoidable truncation is <strong>stated</strong> in the prompt ("N of M retrieved documents shown … answer <em>unknown</em> rather than <em>fail</em>"), so a claim the judge cannot find is an abstention, never an absence. <strong>(3) The gate hands the judge the spans its trigger could not find</strong> (<code>grounding_trigger_spans</code>, a FLAGGED SPANS section: "rule on each — a faithful paraphrase of the documents IS supported"), so the adjudication leads with the findings the user will be shown. <code>SourceConsistencyJudge</code> shares the budgeted evidence (<code>_budgeted_evidence</code>). Gate: <code>test_eval_judges.py::t_groundedness_evidence</code>.</p>
+<p><strong>Tool-arg hygiene (Jun 2026):</strong> LangChain injects framework plumbing (<code>ToolRuntime</code>, callback/run managers) into a tool's input dict via <code>InjectedToolArg</code>. <code>conversation_agent._clean_tool_args()</code> strips these at the <code>on_tool_start</code> capture point (by key name + value type-name) so the persisted <code>conversation_agent_events</code> arguments are only what the model chose — the giant <code>"ToolRuntime(state=…)"</code> blobs no longer pollute the trace or mislead <code>tool_arg_optimality</code>.</p>
+<p><strong>Judge cost in the manual overlay — full allocation (Jun → Jul 2026):</strong> <code>POST /v1/evals/score-turn</code> sums the panel's per-model <code>usage</code>, prices it via <code>CostManager</code>, and returns <code>cost_usd</code>/<code>input_tokens</code>/<code>output_tokens</code> so the trajectory overlay shows what the LLM-judge pass cost. But a manual re-score spends <strong>real</strong> judge tokens on the user's credentials, so — design imperative — it must be <strong>allocated exactly like any other spend</strong>, not merely reported. It therefore routes through the canonical cost sink <code>_record_score_usage</code> (§6.4a) after computing the cost: session + turn totals (authoritative for plan reload), the consumption/billing ledger, and a live KPI <code>token_update</code>. It also stamps the judge cost onto the persisted quality span (<code>eval.judged</code>/<code>eval.cost_usd</code>/<code>eval.input_tokens</code>/<code>eval.output_tokens</code>) so a plan reload's Quality card echoes it via the <code>turn-score</code> GET. Deterministic-only scoring spent 0 tokens → clean no-op.</p>
+<p>Judges are <strong>non-gating by default</strong> until calibrated. Sync <code>score()</code> abstains; the runner invokes async <code>score_async(case, run, panel)</code> via <code>make_judge_fn(panel)</code>.</p>
+<p><strong>Calibration</strong> (<code><code>eval/calibration.py</code></code>): <code>calibrate(pairs)</code> computes <strong>Cohen's κ</strong> + raw agreement + precision/recall over (human, judge) label pairs (abstentions excluded). A judge is only promoted to <em>gating</em> once κ ≥ <code>DEFAULT_KAPPA_GATING_FLOOR</code> (0.6, substantial agreement). Human labels come from the SME annotation queue (§7). <strong>The loop is closed end to end (Aug 2026):</strong> an annotation stores <code>dimension</code> + <code>judge_passed</code> — the ruling the human SAW, frozen at annotation time so a later re-score cannot rewrite what was agreed with — and <code>pairs_from_annotations</code>/<code>report_from_annotations</code> derive per-dimension κ from the stored queue (<code>agree</code> → human == judge; <code>disagree</code> → the opposite; rows without a frozen ruling are notes, never evidence). <code>DEFAULT_MIN_PAIRS</code> (10) is a measurability floor: below it κ is reported but can never clear the gate — κ over three pairs is noise wearing a statistic's clothes. Served at <code>GET /v1/evals/judge-calibration</code>; the one-click work queue (<code>GET /v1/evals/judge-queue</code>) lists recent judge rulings from the online spans with Agree/Disagree in the Trust view's Judge Calibration section. <code>status: calibrated</code> means <strong>eligible</strong> for promotion to gating — promotion itself stays a deliberate governance act; nothing flips a scorer automatically.</p>
+<hr>
+<h2 id="6-evaluation-methods">6. Evaluation methods</h2>
+<h3 id="61-offline-runs-passk-reliability">6.1 Offline runs — pass^k reliability</h3>
+<p><code><code>eval/runner.py</code></code> · <code><code>eval/aggregate.py</code></code></p>
+<p><code>run_dataset(store, dataset_id, executor, k, …)</code> executes each case <strong>k times</strong> through a <strong>pluggable executor</strong> (sync/async; tests inject a fake, production injects the REST executor) and scores every rep. A rep <strong>passes</strong> iff all <em>gating</em> verdicts are <code>True</code>. <code>aggregate_run</code> computes:</p>
+<ul>
+<li><strong>pass^k</strong> — fraction of cases that pass on <em>all k</em> reps (τ-bench reliability; surfaces the long tail single-shot accuracy hides).</li>
+<li><strong>Bootstrap 95% CI</strong> (deterministic LCG — reproducible).</li>
+<li><code>per_dimension</code>, <code>per_cohort</code> / <code>per_cohort_pass_k</code>, <code>per_profile_class</code>, <code>case_pass_k</code>.</li>
+</ul>
+<p>The executor decoupling means "execute + score" exercises the <strong>real engines</strong> — no special eval path. <code><code>eval/rest_executor.py</code></code> drives the live REST query API (auth → create session → submit the <strong>bare question</strong> with <code>profile_id</code> in the body — never an <code>@TAG</code> in the prompt, which would pollute retrieval — → poll → read the resulting turn). For flow-agent cases, <code><code>eval/flow_runner.py</code></code>'s <code>FlowEvalExecutor</code> runs the flow via <code>POST /flows/&lt;id&gt;/execute</code> (binds a session at run time) → poll → read the run; <code>CompositeEvalExecutor</code> routes each case to the right executor by agent type, so a dataset may mix both (the CLI <code>run</code> uses it by default). See §12a.</p>
+<h3 id="62-regression-gate">6.2 Regression gate</h3>
+<p><code><code>eval/gate.py</code></code>: <code>gate_run(store, run_id, baseline_run_id, min_pass_k, cohort_thresholds, regression_epsilon)</code> blocks a release on: per-cohort floors, baseline regression (epsilon), an over-fit smell (100% on ≥10 cases), and CI significance. Returns <code>{passed, failures[], warnings[]}</code>. The CLI maps this to a <strong>CI exit code</strong>.</p>
+<h3 id="63-trace-mining">6.3 Trace mining</h3>
+<p><code><code>eval/mining.py</code></code>: <code>mine_cases_from_sessions(...)</code> seeds golden cases from <strong>production traces</strong> (via WS1's session-storage public API), defaulting to <strong>anomalous</strong> turns (errored / invalid / self-correction ≥ 2) and pre-filling assertions (e.g. <code>require_tools_subset</code> from the observed trajectory). Golden sets grow from real failures, not imagination.</p>
+<h3 id="64-online-evaluation-tail-sampling">6.4 Online evaluation (tail sampling)</h3>
+<p><code><code>eval/online.py</code></code> — the same deterministic scorers grade <strong>every live turn</strong> (when enabled), so quality surfaces from real traffic. Deterministic scoring is free + non-blocking, so it's unconditional; the token-costing <strong>judge layer is the only stochastic part</strong>.</p>
+<ul>
+<li><strong>Seam (backgrounded — never blocks a turn):</strong> <code>execution_service._dispatch_online_eval(...)</code> fires <code>evaluate_turn_online(...)</code> as a <strong>tracked background task</strong> right after the recommender — it is NOT awaited in the turn's critical path. The answer is already delivered; scoring is pure observability. (A strong reference is held per task to prevent GC and discarded on completion.) Inside the hook: deterministic scoring runs first (instant, always persists the bands), then — only if judges are enabled — the judge layer runs <strong>bounded by <code>asyncio.wait_for(...)</code></strong>, so a stalled provider can never hold the task open. <strong>A timeout no longer discards the layer</strong>: verdicts land in a sink as each judge completes, so the cut-off keeps every ruling that finished (and was billed), and each judge it silenced is recorded as an abstention <em>naming the cut-off</em> — a reader can tell "never applicable" from "tried and lost". <em>(History: this was <code>verdicts.extend(await wait_for(...))</code>, where the <code>extend</code> never ran on timeout — completed rulings died with the cancelled coroutine while their tokens were still charged. Every judge run this shipped ever paid for kept zero verdicts; see the Aug 2026 changelog entry.)</em> The hook also selects the turn <strong>by <code>turn_id</code></strong> (not <code>wf[-1]</code>) since a fast next turn may have appended. Skipped for genie slave sub-turns. Flows hook in at <code>flow_executor._run_and_record</code>. <em>(History: this was awaited inline with no timeout; a stalled judge LLM call could hang the whole turn — fixed Jun 2026 by backgrounding + the timeouts below.)</em></li>
+<li><strong>Live Quality card (dual-channel emit).</strong> The <code>turn_score_complete</code> event populates the after-execution Quality card. Because the hook is now backgrounded, the per-request <code>/ask_stream</code> (which <code>processStream</code> reads) has already closed by the time scoring finishes — so the hook ALSO broadcasts the event over the <strong>per-user notification channel</strong> (<code>APP_STATE["notification_queues"]</code>, an always-open EventSource). <code>notifications.js</code> renders it session-guarded; the overlay (<code>injectTrajectoryEvalOverlay</code>) is idempotent, so the two channels can't double-render. Without this, the card would only appear on a plan reload.</li>
+<li><strong>Judge sampling (the only stochastic bit):</strong> when <code>ONLINE_EVAL_INCLUDE_JUDGES</code> is on, <code>should_judge()</code> judges every turn that is <em>anomalous</em> (status/error/self-corrections) <strong>or deterministically FLAGGED</strong> — deterministic scoring now runs FIRST, and any failed check or danger-band metric triggers the panel via <code>deterministic_flagged(verdicts)</code> (judges refine what the free layer condemned; previously the decision preceded scoring, so at rate 0 the one turn every deterministic check failed earned no judge) — plus a <code>ONLINE_EVAL_JUDGE_SAMPLE_RATE</code> fraction of the clean rest (admin-controlled; <strong>rate 0 = the honest "judges only when something is wrong" policy</strong>). Deterministic scoring is never sampled. <strong>Both levels of the judge layer are concurrent.</strong> The panel calls every judge <em>model</em> concurrently (<code>asyncio.gather</code>), each bounded by <code>ONLINE_EVAL_JUDGE_CALL_TIMEOUT_SECONDS</code> — a hung/failing model degrades to an empty response (→ <code>unknown</code> in consensus). And <code>run_judges</code> runs every applicable <em>judge</em> concurrently, with per-judge isolation (a judge that raises becomes a named abstention rather than losing the panel). This matters more than it looks: the judges used to run sequentially inside a cap on the whole layer, so N judges serialised to N call windows and <strong>one hung model consumed the entire budget inside the first judge</strong>, starving the rest.</li>
+</ul>
+<p><strong>The layer budget is satisfiable by construction.</strong> The effective cap is <code>max(ONLINE_EVAL_TIMEOUT_SECONDS, ONLINE_EVAL_JUDGE_CALL_TIMEOUT_SECONDS + margin)</code>, so it always leaves room for one full-length judge call. Shipped defaults were a 20 s per-call timeout inside a 25 s layer cap — a combination that, with the sequential loop, guaranteed a total loss whenever a single model hung. The floor makes the relationship a property of the code rather than of whoever last edited the two numbers independently.
+- <strong>Per-profile JUDGED-station config (<code>judgeConfig</code>, PROP-002 follow-up):</strong> the pure <code>online.resolve_judge_prefs(profile, include_default=…, default_rate=…)</code> resolves <code>judgeConfig.judges</code> (<code>inherit</code> default · <code>on</code> · <code>off</code> — a profile can opt its turns INTO judging even when the deployment default is off, never the reverse of the <code>ONLINE_EVAL_ENABLED</code> scoring master), <code>judgeConfig.sampleRate</code> (clamped [0,1] override; malformed values fall back — a typo must not disable judging) and <code>judgeConfig.inboxOnCondemnation</code> (default ON). Registered in <code>profile_config_contract</code> (portable, <strong>unsigned</strong> — measurement config). Edited in the profile editor's <strong>Trust Configuration → Judges</strong> card.
+- <strong>The judge-condemnation incident (PROP-001, surfaced):</strong> a DELIVERED answer whose groundedness-family judge verdict fails records a <strong>danger <code>judge_condemnation</code> incident</strong> in the Assurance Inbox (+ live notice); a turn the gate already withheld records nothing (no double count). Gated per profile by <code>inboxOnCondemnation</code>; runs once per turn from the online hook only.
+- <strong>OTLP-shaped quality spans:</strong> <code>build_quality_span()</code> emits a vendor-neutral span (<code>name="agent.turn.eval"</code>) through a <strong>pluggable exporter</strong> (<code>JsonlExporter</code> default, <code>MemoryExporter</code> for tests). Attributes carry per-dimension verdicts plus agent identity (<code>agent.profile_tag</code>/<code>agent.profile_id</code>) and owning <code>user.uuid</code> (for My-vs-System scoping). Swap the exporter for a real OTLP exporter without touching the hook.
+- <strong>Signed attestation (EPC tie-in):</strong> <code>sign_attestation()</code> binds the verdict digest to the turn's <code>chain_tip_hash</code> and signs it with the <strong>same Ed25519 provenance key</strong> — a tamper-evident quality annotation auditable alongside the trajectory it grades. Degrades gracefully (<code>signed=False</code>) if the key is unavailable.
+  - <strong>Third consumer of the same substrate — the <code>Trust Membrane (Tier 5.2)</code>.</strong> <code>eval/online.py:sign_payload()</code> (the shared signer behind both EPC and eval attestations) is reused <em>verbatim</em> by <code>core/trust/store.py:sign()</code> to sign <strong>trust attestations</strong> (a per-artifact + composed-agent trust badge). So one Ed25519 provenance key now signs three things — the execution trajectory (EPC), the eval verdict that grades it, and the trust badge that says an agent is made of validated ingredients — all offline-verifiable with the same committed <code>Tier 3.1 verifier</code>.
+- <strong>Flows</strong> ride the same machinery on their own seam: <code>evaluate_flow_run_online()</code> is called from <code>flow_executor._run_and_record</code> (flows execute on a separate path from <code>run_agent_execution</code>), scores the run with the flow scorers, and emits an <code>agent.flow.eval</code> span keyed by flow identity (<code>agent.kind='flow'</code>, attestation bound to the run id). See §12a.
+- <strong>Admin global default thresholds (banded):</strong> <code>default_assertions()</code> reads <code>APP_CONFIG.ONLINE_EVAL_DEFAULT_THRESHOLDS</code> and seeds <strong>every</strong> live/manual case's assertions, so the threshold-bearing scorers band/gate live traffic instead of abstaining. Config is the 3-band shape <code>{metric: {healthy, danger}}</code> (a bare scalar = legacy single Danger line); <code>default_assertions()</code> flattens it to <code>&lt;key&gt;</code> (Danger/gate) + <code>&lt;key&gt;__healthy</code> (Healthy split). A curated <code>EvalCase</code>'s own assertions always override. Admin-controlled at runtime (no restart) via <code>agent_eval.default_thresholds</code> in <code>/v1/admin/app-config</code>, edited in the <strong>Administration → App Config → Trust</strong> panel, under <strong>Quality bands</strong>: each slider renders beneath the MOMENT its dimension measures (Plan · Retrieve · Act · Compose · Deliver · The run · Flow run) — grouping derived at runtime via <code>QualityDimensions.stageOfThreshold</code>, thresholdSliders' stage-host mode, so a new scorer's slider appears without a UI edit. The UI is a set of <strong>banded dual-handle sliders</strong> (<code><code>static/js/handlers/thresholdSliders.js</code></code>) — one rounded track per metric with two draggable handles and the Healthy/Review/Danger bands painted green/amber/red (direction-aware: green-left for <code>max_*</code>/lower-is-better, green-right for <code>min_*</code>/higher-is-better), a <strong>Strict / Balanced / Lenient / Clear</strong> one-click preset bar, and a per-metric <strong>Off</strong> (keeps it informational). The module owns the state (<code>init</code>/<code>setThresholds</code>/<code>getThresholds</code>/<code>applyPreset</code>); <code>adminManager</code> loads via <code>setThresholds(default_thresholds)</code> and saves via <code>getThresholds()</code> — the stored <code>{healthy, danger}</code> shape is unchanged, and <code>normalize()</code> completes legacy single-bound configs + orders the handles per direction. The panel carries its <strong>own "Save Trust Settings" button</strong>, persisting the whole <code>agent_eval</code> block (online toggle + judges + thresholds) via <code>saveFeatureSettings()</code> from where it's edited.</p>
+<blockquote>
+<p><strong>⚠ Save-handler allowlist must stay in sync with the slider metrics.</strong> The <code>POST /v1/admin/app-config</code> handler (<code><code>admin_routes.py</code></code>) coerces <code>default_thresholds</code> through a hardcoded <code>_int_keys</code>/<code>_float_keys</code> allowlist and <strong>silently drops any key not in it</strong>. A new banded metric must be added to one of those sets or it can never be persisted from the admin UI (the slider renders but every save throws it away). Fixed Jun 2026 to include <code>max_tool_calls</code>/<code>max_out_of_scope_dbs</code> (the new pair) <strong>and</strong> <code>max_tasks</code>/<code>min_parallel_efficiency</code> (a pre-existing omission from when the Tasks tier was added). <code>config.py</code> seeds <code>max_out_of_scope_dbs</code>/<code>max_tool_calls</code> so they band out-of-box on a fresh start.</p>
+</blockquote>
+<p><strong>Persistence (Jun 2026):</strong> the whole <code>agent_eval</code> block (online toggle, judges, judge rate, banded thresholds) is <strong>persisted to the <code>system_settings</code> table</strong> (key <code>agent_eval</code>, JSON) on every save and <strong>restored into <code>APP_CONFIG</code> at startup</strong> by <code>_sync_agent_eval_to_config()</code> (mirrors the <code>tts_mode</code> pattern). Persisted values override the <code>config.py</code> seed; absent → the seed stands. So an admin's saved Balanced set now survives a restart instead of resetting. (<code>SystemSettings.setting_value</code> widened <code>String(255)</code> → <code>Text</code> so the 14-threshold JSON fits.)</p>
+<blockquote>
+<p><strong>Apply semantics:</strong> a save updates <code>APP_CONFIG</code> in memory (immediate — no restart) for <strong>new</strong> turns (online auto-score) and <strong>Re-score</strong>, AND persists the <code>agent_eval</code> block to <code>system_settings</code> (above), so it survives a restart. It does <strong>not</strong> retroactively rewrite already-persisted turn scores — those are frozen snapshots (an old turn shows the thresholds in force when it ran; click <strong>Re-score</strong> to re-grade with the current set). On a fresh install with no saved settings, the <code>config.py</code> seed (<code>ONLINE_EVAL_DEFAULT_THRESHOLDS</code>) stands. <em>(Other <code>APP_CONFIG</code> blocks that aren't wired to <code>system_settings</code> — e.g. <code>RAG_ENABLED</code> — still reset to their <code>config.py</code> defaults on restart; only <code>agent_eval</code> is persisted.)</em></p>
+</blockquote>
+<p>Deterministic scoring is on by default (<code>ONLINE_EVAL_ENABLED=True</code>); judges off (<code>ONLINE_EVAL_INCLUDE_JUDGES=False</code>).</p>
+<h3 id="64b-what-makes-a-turn-failed-and-what-it-deliberately-does-not-measure">6.4b What makes a turn "failed" — and what it deliberately does not measure</h3>
+<p>The roster's live pass rate, its sparkline, the KPI dashboard, the timeline and the runs
+ledger all sit on ONE predicate: <code>analysis.turn_failed()</code> / <code>conviction_count()</code>, built
+from <code>convicting_dimensions()</code> + <code>gate_withheld()</code>.</p>
+<p><strong>A turn fails iff</strong> a check a <strong>RULE measured</strong> landed in the danger band — <strong>unless</strong> the
+judge that refines it corrected that (Rule 3.0c <code>disputed</code>, named by <code>judge_cleared()</code> and
+rendered as a <code>judge-cleared</code> mark) — <strong>or</strong> a gate <strong>withheld</strong> the answer. Amber never
+convicts (<code>banded_metric</code>: <em>"Amber (review) PASSES the gate but is flagged; only Danger
+(red) fails"</em>), and <strong>a judge alone never convicts</strong>: a model opined, no rule measured it.</p>
+<p><strong>Why <code>Scorer.gating</code> no longer decides a turn's fate.</strong> The predicate previously convicted
+only on <em>gate-eligible</em> dimensions. Laid against 18 real turns the two rules disagreed on
+exactly <strong>two</strong>, and both disagreements were the gate-eligible rule losing information: a
+turn where <code>grounded_overlap</code> AND <code>groundedness</code> — the declared refinement pair, i.e. the
+strongest grounding evidence available — <strong>both</strong> found the answer unsupported scored
+<strong>clean</strong>, because each is individually advisory; and a turn the grounding gate withheld
+with zero failing measurements, which no measurement-only rule can express. <code>Scorer.gating</code>
+keeps its real job: the Scorecard's gating-vs-flagged split.</p>
+<p><strong>A coarse check with no refining judge stands alone at full weight</strong> — the exception is
+only for a <em>declared</em> pair (<code>REFINEMENT_PAIRS</code>, one entry today), because a pair is a claim
+that two checks measure ONE property. It is the only mechanism by which a model's opinion
+can change a turn's verdict.</p>
+<p><strong>It is a QUALITY reading, not an intervention one.</strong> That is deliberate and it is the
+only honest choice: on a real 18-turn sample, 16 turns had no mechanism act at all, so an
+intervention-driven rate would have read <strong>89%</strong> on an agent whose grounding measurements
+were its worst feature. The two axes are independent — see Rule 3bb in
+<code>TRUST_STATUS_COMMUNICATION.md</code>, which carries the 2×2 and
+the worked numbers.</p>
+<p><strong>Resolved against the CURRENT registry, never the stored scalar.</strong>
+<code>eval.gating_failures</code> is a derived value written onto the span at scoring time, and a
+sink outlives a policy change: spans written before <code>Verdict.gating</code> became a derived
+property convict on ADVISORY dimensions, beside newer spans that correctly do not. One
+live agent read <strong>44%</strong> with 3 of 10 failures convicted by advisory checks alone;
+re-derived under gate-eligibility, <strong>61%</strong>; under the current rule, <strong>8 failed of 18</strong>. So the predicate reads the span's own <code>eval.dim.*.passed</code> attributes
+— the primary facts, always present — through <code>is_gating_dimension</code>, falling back to the
+stored scalar only for a span carrying no per-dimension verdicts. Nothing is rewritten:
+the Ed25519-signed record keeps every attribute it was written with; only the derived
+aggregate is recomputed. (Precedent: <code>GET /v1/evals/turn-score</code> already back-fills
+<code>gating</code> when replaying older spans.) A gate asserts no consumer reads the scalar
+directly.</p>
+<p><strong>The two interventions are treated asymmetrically, on purpose.</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>intervention</th>
+<th>treatment</th>
+<th>why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>inbound refusal (<code>eval.gate_only</code> span)</td>
+<td><strong>excluded</strong> from the quality denominator entirely</td>
+<td><em>"it must reach the gate record WITHOUT diluting a quality denominator it was never measured against"</em> — a refused request never produced an answer</td>
+</tr>
+<tr>
+<td>grounding block</td>
+<td><strong>counted as a failure</strong></td>
+<td>a turn whose answer was withheld must not read clean</td>
+</tr>
+</tbody>
+</table></div>
+<p>The second has a consequence worth stating: on a blocked turn the delivered text is
+Uderia's own withholding notice, so the delivered-text scorers <strong>abstain</strong>
+(<code>platform_authored_answer()</code>). The turn is then counted as a quality failure on evidence
+Uderia deliberately declined to gather — both blocked turns in the sample had zero
+failing gate-eligible measurements. Intended, and documented rather than discovered.</p>
+<h3 id="64c-the-human-label-a-users-vote-as-calibration-evidence">6.4c The human label — a user's vote as calibration evidence</h3>
+<p>Every deterministic scorer and every judge is Uderia grading itself. The <strong>one</strong>
+signal that comes from outside is the user's per-turn upvote/downvote, and it lands on a
+turn that is already fully instrumented — a signed trajectory, per-dimension verdicts,
+gate stamps. That makes it the cheapest ground truth Uderia will ever get, which
+is why it is recorded here rather than only where it acts.</p>
+<p><strong>Where it enters:</strong> the vote dispatcher's <code>annotation</code> consumer
+(<code>FEEDBACK_SIGNAL_ARCHITECTURE.md</code>) writes an
+<code>eval_annotations</code> row per vote — <code>user_upvote</code> / <code>user_downvote</code> /
+<code>user_vote_cleared</code>, suffixed <code>:propagated</code> when it arrived by genie propagation so a
+second-hand label can be weighted or excluded rather than mistaken for a direct one.</p>
+<p><strong>Append-only.</strong> A flip writes a NEW row; readers take the latest per <code>(session, turn)</code>.
+The sequence of what the user believed over time is preserved, matching the sink's own
+immutability rule.</p>
+<p><strong><code>judge_passed</code> is frozen at vote time</strong> — the ruling the human actually SAW, read from
+the turn's span through <code>eval/sink.py</code>. Never re-derived: a re-score can flip a verdict
+and would silently rewrite what the human was reacting to. Two cases record <code>NULL</code>
+rather than a pass, because in both there was no ruling on screen:</p>
+<ul>
+<li>the turn was <strong>never scored</strong> (the online hook is backgrounded; a fast voter beats it);</li>
+<li>the turn was <strong>refused at the door</strong> (<code>eval.gate_only</code>) and deliberately never measured.</li>
+</ul>
+<p><strong><code>eval/sink.py</code> is THE span reader.</strong> <code>rest_routes._read_online_spans</code> delegates to it,
+so the scoping and tail semantics the dashboards rely on cannot drift from the ones the
+annotation consumer uses to find the same span.</p>
+<p><strong>Reading it back:</strong> <code>analysis.vote_alignment(spans, votes)</code> returns
+<code>{upvotes, downvotes, disagreements}</code>, where a <em>disagreement</em> is a turn the scorers
+passed and the user downvoted, or one they failed and the user upvoted.
+<code>online_quality_by_agent(..., votes=…)</code> and <code>agent_runs(..., votes=…)</code> attach the
+optional keys; <strong>omitted entirely when no votes are supplied</strong>, so every existing caller
+is byte-identical. A vote on a refused turn is counted (it is real feedback) while that
+turn stays out of the measured denominator exactly as before.</p>
+<p><strong>A vote never enters a measurement</strong> (Rule 3bb.4) — not the pass rate, not a band, not
+the TRUSTED composite. It is the calibration <em>input</em>, and the disagreement count is its
+whole point: it is the only place a human says the thresholds are wrong for this
+deployment. Reading it is the intended first step before tuning Config → Trust →
+Quality bands, and the same rows are the natural κ pairs for judge calibration (§6.5).</p>
+<p><strong>Judge diagnosis on downvote</strong> is the one consumer that spends tokens, and it adds no
+judge path of its own: it calls <code>evaluate_turn_online(force_judges=True)</code>, which skips
+the sampling decision and <strong>nothing else</strong> — the same timeouts, the same span, the same
+Live-Status step and the same canonical sink described in §6.4a. It never overrides a
+profile's own judge opt-out (<code>resolve_judge_prefs</code> still wins), never runs on a
+propagated vote, runs once per turn per process, and ships <strong>off</strong>.</p>
+<h3 id="64d-the-epcs-obda-read-receipt-the-strategic_plan-verification-fix-aug-2026">6.4d The EPC's OBDA-READ receipt + the strategic_plan verification fix (Aug 2026)</h3>
+<p><strong>The consumption receipt.</strong> Every governed data-product consumption seals an
+<code>obda.consumption</code> step into the turn's EPC: <code>{product, version, request_hash,
+sql_hash, row_count, trust_state}</code> — the CLOSED <code>RECEIPT_FIELDS</code> tuple, canonical
+JSON via <code>obda.receipt_content()</code>. <code>provenance.verify_content</code> re-derives the
+receipt from the turn's stamped <code>obda.operations</code> with the <strong>same function</strong>, so the
+sealed receipt and the displayed record are checked against each other; a receipt
+matching no stamped operation is a <strong>named mismatch</strong>, never a silent skip. The
+answer capsule renders it as the <em>Data products</em> row; "Export receipt" carries it
+inside the signed chain, offline-verifiable.</p>
+<p><strong>The strategic_plan verification fix</strong> (found by the O2 live acceptance, and
+pre-existing): the <code>strategic_plan</code> EPC step seals the <strong>post-refinement</strong> plan
+(<code>executor.meta_plan</code>, deep-copied to the turn's <code>original_plan</code> at the same
+moment), but <code>verify_content</code> compared against the <strong>pre-rewrite</strong> <code>raw_llm_plan</code> —
+the two only coincide on turns where every rewrite pass was a no-op, so a genuinely
+rewritten plan read as a FALSE "content hash mismatch". The branch now checks the
+sealed artifact (<code>original_plan</code>) first, keeps <code>raw_llm_plan</code> as an any-era
+fallback, and a genuinely tampered plan still names its mismatch.</p>
+<h3 id="64a-judge-cost-allocation-one-canonical-sink-all-engines-design-imperative">6.4a Judge-cost allocation — one canonical sink, all engines (design imperative)</h3>
+<p>Every judge LLM call in the stack spends real tokens on the user's credentials, so <strong>cost must be allocated consistently at all times</strong> — the same way a normal turn's tokens are. There is exactly <strong>one</strong> sink that does this: <code>eval/online.py:_record_score_usage(user_uuid, session_id, turn_id, in_tok, out_tok, cost_usd, event_handler)</code>. It performs, idempotently, the full allocation:</p>
+<ul>
+<li><strong>cost</strong> via <code>CostManager</code>,</li>
+<li><strong>session totals</strong> (<code>update_token_count</code>) + <strong>turn totals</strong> (<code>update_turn_token_counts</code>, authoritative for plan reload). Two correctness details: (a) turn tokens are accumulated with <code>additive=True</code> so the read-modify-write happens <em>inside</em> the session lock — a concurrent background biller (memory extraction fires ~simultaneously on the same turn) can't clobber it; (b) the judge's cost is added via <code>added_cost_usd</code> (its accurate per-judge-model price) rather than re-pricing the whole turn at the <em>session</em> model's rates — so <code>turn_cost</code> stays exactly equal to the sum of the per-event costs even when the judge panel spans different-priced provider families,</li>
+<li><strong>consumption/billing ledger</strong> (<code>ConsumptionManager.update_turn_tokens</code>, in cents),</li>
+<li>a <strong>live KPI <code>token_update</code></strong> — emitted on the request <code>event_handler</code> when one is open, and <strong>always</strong> broadcast over the per-user notification channel (<code>APP_STATE["notification_queues"]</code>, session-tagged) so backgrounded/REST callers with no open stream still update the live counters. Each judge run gets a <strong>distinct per-run <code>call_id</code></strong> (<code>turn_score:&lt;turn&gt;:&lt;seq&gt;</code>), identical across that run's dual delivery (idempotent) but different across runs — so two judge runs on one turn (grounding + online) or a re-score no longer collapse into a single ledger entry. <code>token_update</code> carries <strong>absolute</strong> totals (the frontend <em>sets</em>, never adds), so double-delivery is a no-op. <code>notifications.js</code> renders it <strong>session-guarded</strong> (closes cross-session KPI pollution).</li>
+</ul>
+<p>Because the fix lives <em>in the sink</em>, every judge-spend site inherits it automatically — there is <strong>no per-engine code</strong>. The three sites that spend judge tokens all converge here:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Judge-spend site</th>
+<th>Routes to the sink via</th>
+<th>Engine coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Online eval</strong> (<code>evaluate_turn_online</code>)</td>
+<td>direct <code>_record_score_usage</code></td>
+<td>all 5 IFOC engines + genie experts — one engine-agnostic seam at <code>execution_service.run_agent_execution</code>, <em>after</em> any engine (genie or <code>PlanExecutor</code>) produced the payload</td>
+</tr>
+<tr>
+<td><strong>Grounding gate</strong> (<code>agent/grounding/runtime.py</code>)</td>
+<td><code>_attribute_judge_cost</code> → <code>defer_judge_usage</code> → <em>(flushed after the turn saves)</em> → <code>_record_score_usage</code></td>
+<td>all 5 — 4 engines via <code>executor._run_grounding_gate_full</code> (uniform <code>session_id</code>/<code>turn_id</code>/<code>event_handler</code>), genie directly at <code>coordinate_engine.py</code> with the same context</td>
+</tr>
+<tr>
+<td><strong>"Score this turn" button</strong> (<code>POST /v1/evals/score-turn</code>)</td>
+<td><code>_record_score_usage</code> + span cost attrs</td>
+<td>any persisted turn, any engine — engine-agnostic by construction (reads the turn via <code>RunRecord</code>, whose accessors are defensive across every engine shape)</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>Grounding-gate deferral (H5).</strong> The grounding judge runs <em>inline during answer assembly</em> — <strong>before</strong> the turn is persisted to <code>workflow_history</code>. Calling the sink there would find no turn row, so the turn-total billing and the persisted judge step would silently drop while session totals still incremented (breaking <code>session == Σ turns</code>). So the grounding path <strong>defers</strong>: <code>_attribute_judge_cost</code> stashes the usage via <code>defer_judge_usage(session, turn, …)</code>, and <code>execution_service</code> calls <code>flush_deferred_judge_usage(...)</code> at the post-engine seam once the turn is saved, replaying it through the sink with the turn row present.</p>
+<p><strong>Partial-timeout billing.</strong> The panel's <code>usage</code> is summed and billed for <strong>whatever actually spent</strong>, independent of whether the judges completed. A judge timeout/error clears the <code>include_judges</code> flag (those verdicts are dropped), but dimensions that finished before the timeout already spent real tokens — the cost summation is no longer gated on <code>include_judges</code>, and the grounding path attributes the panel spend in a <code>finally</code> so a timeout can't lose it.</p>
+</blockquote>
+<p>The CLI (<code>eval/cli.py</code>) is correctly <strong>exempt</strong> — it runs offline with no session to bill.</p>
+<p><strong>Live cross-engine verification (Jul 2026):</strong> a real turn per class was scored with judges on and a reference answer (so <code>AnswerCorrectnessJudge</code>, which applies to all classes, fires). The consumption ledger moved by the <strong>exact</strong> judge token count and the reload <code>turn-score</code> GET echoed the exact cost for <strong>all five</strong> engines — Ideate <code>llm_only</code> (Δ677 = 487+190), Focus <code>rag_focused</code> (Δ297 = 237+60), Optimize <code>tool_enabled</code> (Δ350 = 256+94), Coordinate <code>genie</code> (Δ315 = 250+65), and Conversation via the shared sink. Note: the dimension judges <strong>abstain at zero cost</strong> when their inputs are absent (no reference answer / no retrieved docs / no tool calls) — correct behavior, not a gap. When measuring <code>score-turn</code> accounting in isolation, re-score a <strong>settled</strong> turn: a turn's own fire-and-forget tasks (online-eval, memory extraction, next-step recommender) bill <em>after</em> <code>status=complete</code> and would otherwise race the before/after ledger snapshot.</p>
+<h4 id="the-judge-run-is-a-visible-reload-safe-live-status-step-transparency-imperative">The judge run is a visible, reload-safe Live Status step (transparency imperative)</h4>
+<p>Consistent allocation is necessary but not sufficient — the cost must also be <strong>visible as a discrete event</strong> whose sum reconciles to the turn total. Cost transparency is a core guarantee of the framework: <strong>the sum of the Live Status panel's per-event costs must equal the turn's total cost.</strong> Before Jul 2026 that invariant was broken for judges — <code>grounding_gate.to_event()</code> carries no <code>cost_usd</code>, and <code>turn_score_complete</code> was a UI overlay that was never persisted — so a judge run inflated <code>turn_cost</code> while contributing no cost-bearing event, leaving the panel's event-sum short (the <code>_getTurnCost</code> <code>[Cost Verification]</code> check would warn).</p>
+<p>The same canonical sink therefore also emits <strong>one cost-bearing <code>judge_evaluation_complete</code> Live Status step</strong> per judge run (step title <em>"Agent Quality Judged"</em>, carrying <code>input_tokens</code>/<code>output_tokens</code>/<code>cost_usd</code>/<code>judge_models</code>). It is:</p>
+<ul>
+<li><strong>broadcast live</strong> over the always-open per-user notification channel (session-guarded in <code>notifications.js</code> → <code>updateStatusWindow</code>), so it appears the moment the judge runs — covering all three callers uniformly, including the backgrounded online hook and the REST re-score button that have no open request stream;</li>
+<li><strong>persisted</strong> into the turn's <code>system_events</code> via <code>append_system_events_to_turn</code>, so it <strong>re-renders identically on a plan reload</strong> and its cost re-sums into the turn total.</li>
+</ul>
+<p>There is no double-count: it is the <em>sole</em> cost-bearing judge event <code>_getTurnCost</code> sees (the grounding-gate verdict event and the <code>turn_score_complete</code> overlay carry no cost), and it is emitted only over the notification channel (never also via <code>event_handler</code>) so a live stream can't render it twice. Deterministic-only scoring spends 0 tokens → the whole step path is a clean no-op. <strong>Live-verified:</strong> a fresh turn auto-scored by the online hook <em>and</em> manually re-scored produced <strong>two</strong> persisted "Agent Quality Judged" steps, and the panel's event-sum reconciled to the backend <code>turn_cost</code> exactly (Δ = 0). The Δ = 0 identity holds <strong>for any judge-model pricing</strong> (not only when it matches the session model) because <code>turn_cost</code> adds the judge's own per-model cost via <code>added_cost_usd</code> rather than re-pricing the turn's token totals at the session rate.</p>
+<hr>
+<h2 id="6a-grounding-gate-synchronous-on-path-enforcement-tier-11">6a. Grounding gate — synchronous on-path enforcement (Tier 1.1)</h2>
+<blockquote>
+<p>Roadmap: <code>TIER_1.1_GROUNDING_GATE.md</code>. Targets A2 (knowledge-grounded agents) · T6 (anti-hallucination grounding) · P2 (AI guardrails).</p>
+<p><strong>The answer gates as a whole</strong> — the grounding gate's scope and corpus families, the honesty gate, the guardrails, leaked-SQL recovery and the turn-failure answer — are documented in <code>ANSWER_GATES_ARCHITECTURE.md</code>. This section keeps the eval-side view: how the gate shares primitives, judges and cost accounting with the scorers.</p>
+</blockquote>
+<p>Everything above <em>observes</em>. The grounding gate is the one place the eval substrate <strong>acts on the request path</strong>: before an answer reaches the user, it can <strong>pass · annotate · withhold</strong> the answer for leaving the KG-declared trusted scope. It closes the loop Uderia already owned three-quarters of — <em>KG enrichment stamps the deployed scope → deterministic scorers detect drift → nothing enforced it</em> — the documented 230-day failure (the agent got a complete scope-correct enrichment, ignored it, brute-forced 19 calls across unrelated databases, and answered confidently-wrong).</p>
+<h3 id="6a1-module-boundary-pure-core-thin-io-adapter">6a.1 Module boundary (pure core + thin I/O adapter)</h3>
+<p><code><code>agent/grounding/</code></code> — deliberately a sibling of <code>eval/</code>, not inside it, because it runs on the request path and must stay dependency-light:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>primitives.py</code></td>
+<td>The <strong>shared</strong> scope/number math (<code>dbs_touched</code>, <code>scope_diff</code>, <code>answer_out_of_scope_refs</code>, <code>norm_nums</code>). <strong>Extracted from <code>eval/scorers/reliability.py</code></strong> so the live gate and the post-hoc <code>scope_adherence</code> scorer import one definition of "out of scope" (§5.2a). Pure, no runtime deps. <code>answer_out_of_scope_refs</code> is <strong>recall-first / allowlist-based</strong> (§6a.3a).</td>
+</tr>
+<tr>
+<td><code>types.py</code></td>
+<td><code>GroundingConfig</code> (mode/thresholds), <code>GroundingInputs</code> (scope <strong>databases + entities</strong>, tool calls, answer, grounding text), <code>GroundingVerdict</code> (<code>decision</code> ∈ pass/annotate/block, <code>needs_judge</code>, <code>answer_oos_refs</code>, <code>numeric_fidelity</code>, <code>annotation_md</code>).</td>
+</tr>
+<tr>
+<td><code>gate.py</code></td>
+<td><code>GroundingGate.evaluate(inputs) → GroundingVerdict</code> — <strong>pure, deterministic, 0-token</strong>. No I/O, no LLM, no logging.</td>
+</tr>
+<tr>
+<td><code>corpus.py</code></td>
+<td>The <strong>corpus family</strong> (knowledge lane): <code>assess()</code> extracts the answer's checkable claims — numbers (via <code>norm_nums</code>), verbatim quotes, identifiers, acronym expansions — and reports those the retrieved chunks do not support; <code>apply_second_chance()</code> widens support to the corpus before anything is flagged. Recall only; the <code>groundedness</code> judge does precision. Shares the <code>answer_support</code> property with <code>grounded_overlap</code> (ASSURANCE_SUBSTRATE).</td>
+</tr>
+<tr>
+<td><code>coordinator_figures.py</code></td>
+<td>Figures a <strong>coordinator</strong> states that nothing it received supports — the question, every expert's answer, every component result (fires on ≥2). Oct 2026, rung 1 of the trust campaign's Coordinate gap: a <strong>pure measure, not yet wired into a gate</strong> — read today by the campaign's <code>calibrate.py</code> (<code>from_turn</code>).</td>
+</tr>
+<tr>
+<td><code>enforce.py</code></td>
+<td><code>resolve_enforced_verdict(deterministic, judge_passed, reason)</code> — the <strong>pure</strong> judge-backed-enforce decision (§6a.3), CI-tested without a live model.</td>
+</tr>
+<tr>
+<td><code>adapter.py</code></td>
+<td>The only module that knows the turn shape: builds <code>GroundingInputs</code> from a turn via <strong><code>eval.types.RunRecord</code></strong> (same normalized view the scorer reads → byte-identical extraction across all engines), resolves config (global flag → profile <code>groundingConfig</code> → admin thresholds), and applies the verdict to the answer text / HTML.</td>
+</tr>
+<tr>
+<td><code>runtime.py</code></td>
+<td>The <strong>engine-agnostic orchestration</strong> <code>run_grounding(...)</code> — deterministic gate → (enforce) judge → apply — taking explicit inputs (answer, KG enrichment, profile, tool events, user/session/turn, event_handler) rather than an executor. <strong>One implementation for all five engines</strong> (charter #14): Optimize/Ideate/Focus/Conversation reach it via <code>executor._run_grounding_gate_full</code>; <strong>Coordinate/genie</strong> (which has no <code>PlanExecutor</code>) calls it directly.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="6a2-modes-the-trusted-scope-substrate">6a.2 Modes + the trusted-scope substrate</h3>
+<p>Per-profile <code>groundingConfig.mode</code>, lowest→highest: <code>off</code> → <code>observe</code> (default; compute + emit, <strong>never alter the answer</strong> — byte-identical to pre-gate behaviour) → <code>annotate</code> (deliver + attach a calm inline note) → <code>enforce</code> (withhold a judge-confirmed drift). The gate <strong>abstains (PASS)</strong> whenever no deployable KG scope was declared, so non-KG turns no-op across all engines.</p>
+<p>Scope comes from two sources, unioned: the <strong>per-query KG enrichment</strong> (<code>kg_enrichment_event.scope_databases</code>) AND an <strong>always-on trusted scope</strong> derived from the profile's bound KG (<code>get_trusted_scope</code>, §3) — so the gate is never blind on an out-of-domain query that triggered no enrichment. The always-on union is applied in <strong>one shared place</strong> — <code>grounding/adapter.py:ensure_trusted_scope</code>, which <code>runtime.run_grounding</code> calls before building inputs — so it reaches <strong>all five engines</strong> identically, including <strong>Coordinate/genie</strong> (whose coordinator never pre-stamps scope and would otherwise carry <code>None</code> on an out-of-domain query, leaving the gate blind to the exact drift it exists to catch). <code>executor._apply_trusted_scope</code> delegates to the same helper, so the live KG-display event and the gate's scope can never diverge. A <strong>discovery-KG fallback</strong> derives scope from the logical <code>database</code> root node when no physical layer resolves (<code>_derive_scope_databases</code>), so logical-only discovery KGs are protected too — without ever widening an industry-model KG's precise physical scope.</p>
+<h3 id="6a3-judge-backed-enforce-the-post-benchmark-architecture">6a.3 Judge-backed enforce (the post-benchmark architecture)</h3>
+<p>The first benchmark run (§6b) <strong>disproved</strong> a deterministic-block gate: blocking on an out-of-scope <em>tool call</em> over-blocks honest refusals (false positives) and <strong>misses answer-drift</strong> that made no out-of-scope tool call (the oos08 governance-leak class — false negatives). The <code>scope_faithfulness</code> judge got every disagreement case right and never punished an honest "not in scope". So enforcement is <strong>tiered</strong> — a cheap deterministic trigger gates an LLM-judge decision (a research-validated guardrail pattern):</p>
+<ol>
+<li><strong>The deterministic gate never blocks.</strong> In <code>enforce</code>, on a trigger — an out-of-scope <strong>tool call</strong> OR an out-of-scope identifier surfaced in the <strong>answer</strong> (<code>answer_oos_refs</code>) — it returns <code>PASS</code> with <code>needs_judge=True</code>. Numbers are observe-only (never trigger; numeric mismatch false-positives on correctly-formatted in-scope answers).</li>
+<li><strong>The <code>scope_faithfulness</code> judge makes the real call</strong> (<code>executor._enforce_grounding_with_judge</code>): <strong>drifted → BLOCK</strong> (withhold) · <strong>faithful → PASS</strong> (intact — this is how honest refusals survive) · <strong>abstain / unavailable / timeout → ANNOTATE</strong> (fail-safe: keep the answer, attach the note — never withhold on uncertainty, never break a turn).</li>
+</ol>
+<p><code>observe</code>/<code>annotate</code>/<code>off</code> never reach the judge → <strong>zero added latency/cost by default</strong>; only the opt-in <code>enforce</code> path pays a judge call, and only when the trigger fires. The judge call is bounded by <code>ONLINE_EVAL_TIMEOUT_SECONDS</code> and its token cost is routed through <code>CostManager</code> exactly like the online-eval judges (<code>_attribute_judge_cost</code> → <code>_record_score_usage</code>: session/turn totals + an idempotent <code>token_update</code> + consumption).</p>
+<h3 id="6a3a-recall-first-answer-trigger-allowlist-not-blocklist">6a.3a Recall-first answer trigger (allowlist, not blocklist)</h3>
+<p>In the tiered model the trigger's job is <strong>recall</strong> (don't miss drift → don't starve the judge) and the judge's is <strong>precision</strong> (clear false alarms). A <em>false</em> trigger costs one ~$0.0006 judge call, never a wrong verdict; a <em>missed</em> trigger delivers drift unflagged. So <code>answer_out_of_scope_refs</code> is tuned for recall, <strong>allowlist-based</strong> rather than matching known out-of-scope phrasings (which proved a leaky regex arms race — the live benchmark kept surfacing new prose forms: <code>restaurants_mvm_test database</code>, <code>'val' database</code>, <code>schema is 'X'</code>, <code>'vendor_agreements' table</code>):</p>
+<ol>
+<li><strong>Extract every identifier that is <em>structurally</em> a data reference</strong> — a qualified <code>&lt;db&gt;.&lt;table&gt;</code>, a <strong>quoted</strong> identifier next to a container word (<code>database</code>/<code>schema</code>/<code>catalog</code>/<code>table</code>, either order + a short copula), or a <strong>technical</strong> (snake_case / has-a-digit) identifier next to one. The structural requirement is all that keeps plain English ("the database") from becoming a candidate.</li>
+<li><strong>Flag any candidate not in the allowlist</strong> = <code>scope_databases ∪ scope_entities ∪ SYSTEM_DBS</code>. <code>scope_entities</code> is the KG's in-scope concept/table names (<code>handler._derive_scope_entities</code>, already stamped on the enrichment; read via <code>RunRecord.kg_scope_entities()</code> → <code>GroundingInputs.scope_entities</code>).</li>
+</ol>
+<p>So an in-scope table named in prose is <strong>recognized</strong> and stays silent, while an <strong>unrecognized</strong> container reference trips the judge — even in a phrasing no blocklist anticipated. It is <strong>self-maintaining</strong> (as the KG grows, the allowlist grows → fewer false triggers) and degrades cleanly to database-only when <code>scope_entities</code> is empty. Quoting is structural evidence on its own, so it catches short non-technical fabricated names (<code>'val'</code>) the earlier technical-only filter missed.</p>
+<h3 id="6a4-all-engine-wiring-observability-audit">6a.4 All-engine wiring, observability, audit</h3>
+<p>Charter rule: <strong>functionality must support all five engines and must not change baseline behaviour.</strong> One shared async entrypoint — <code>executor._run_grounding_gate_full(answer_text, trace_extra)</code> — runs the deterministic gate and, only when it set <code>needs_judge</code>, the judge step. Every engine seam calls it before its <code>final_answer</code> yield (you cannot withhold an answer after it has streamed): Optimize + Coordinate through the shared final-answer path, Ideate / Focus / Conversation through their own seams. Because the default is <code>observe</code>, a non-opted-in profile is <strong>byte-identical</strong> to pre-gate behaviour.</p>
+<p>Each run emits a <code>grounding_gate</code> Live-Status SSE event and stamps the verdict onto the persisted turn (<code>turn_summary["grounding"]</code>) for plan-reload/audit. The Live-Status card (<code>ui.js:_renderGroundingGateDetails</code>) surfaces the verdict, declared scope, out-of-scope databases (from tool calls) <strong>and</strong> the recall-first answer references (<code>answer_oos_refs</code>), plus — in enforce — the <strong>scope-judge adjudication</strong> (drifted → withheld · faithful → delivered · unavailable → annotated). It renders <strong>live</strong> (via the SSE event) and <strong>on reload</strong> (<code>handleReloadPlanClick</code> synthesizes a <code>grounding_gate</code> event from the persisted <code>turnData.grounding</code> into the list the turn's reload renderer replays — <code>system_events</code> for standard turns, <code>genie_events</code> for genie — both of which dispatch <code>grounding_gate</code>). The whole path <strong>fails open</strong>: any gate error returns the original answer untouched. A confirmed BLOCK records the withheld-claim action in the Ed25519 provenance chain. <strong>All five engines</strong> stamp + reload, including Coordinate/genie — which runs the same <code>grounding.runtime.run_grounding</code>, stamps <code>turn_data["grounding"]</code>, and emits the live event over the notification channel (it has no per-request <code>/ask_stream</code> status yield).</p>
+<h3 id="6a5-governance-admin">6a.5 Governance (admin)</h3>
+<p>No card of its own — the master <code>GROUNDING_GATE_ENABLED</code> toggle sits in <strong>Administration → App Config → Trust → Enforcement</strong> (<em>Grounding Enforcement</em>) (folded into the <code>agent_eval</code> block, restart-persisted via <code>_sync_agent_eval_to_config</code>) and the <strong>same</strong> <code>max_out_of_scope_dbs</code> / <code>min_numeric_fidelity</code> sliders that band the eval scorers now also feed the gate. Per-profile <code>mode</code> is set in the <strong>profile editor → Agent posture → Grounding</strong> (<code>groundingConfig</code>): an Observe / Annotate / Enforce selector + an Allow-out-of-scope toggle (<code>configurationHandler.js</code> load/save). Eval <em>observes</em>, the gate <em>enforces</em> — two halves of one grounding story sharing one set of thresholds.</p>
+<hr>
+<h2 id="6b-anti-hallucination-benchmark-the-published-proof-tier-14">6b. Anti-hallucination benchmark — the published proof (Tier 1.4)</h2>
+<blockquote>
+<p>Roadmap: <code>TIER_1.4_BENCHMARK.md</code>. The measured number is what flips A2/T6 from "built" to a defensible GREEN.</p>
+</blockquote>
+<p>The benchmark turns the grounding system into a <strong>published, reproducible proof</strong>. <code><code>eval/benchmarks/grounding/</code></code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>report.py</code></td>
+<td><strong>Pure</strong> scoring + aggregation core (CI-pure, 0-token): confusion matrix + headline numbers + markdown/JSON. The single source of truth both the admin UI/API and the published report render from.</td>
+</tr>
+<tr>
+<td><code>dataset.py</code> + <code>dataset/fitness_db.json</code></td>
+<td>30-case dataset (12 in-scope · 12 out-of-scope · 6 ambiguous) + loader/validator.</td>
+</tr>
+<tr>
+<td><code>harness.py</code></td>
+<td>The <strong>live</strong> (not CI-pure) admin/operator harness: drive each case once in <code>observe</code>, capture the baseline answer + the gate's trigger signal, label ground truth via the <code>scope_faithfulness</code> judge (<code>/v1/evals/score-turn</code>), aggregate.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What it measures (post-rearchitecture framing).</strong> Since enforce is now the <code>scope_faithfulness</code> judge gated by a deterministic trigger, the benchmark scores the <strong>trigger's recall of judge-confirmed drift</strong> — not a "counterfactual block". A <strong>single observe run</strong> yields, in one pass: the baseline answer + the trigger signal (<code>needs_judge</code>, recomputed CI-pure by <code>trigger_decision</code>, which is <strong>pinned to the live gate's <code>needs_judge</code></strong> by a unit test) + the judge ground-truth label. The confusion matrix then reads:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>judge: drifted</th>
+<th>judge: faithful</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>trigger FIRES → judge adjudicates</strong></td>
+<td>TP</td>
+<td>FP (extra judge call — never a wrong verdict)</td>
+</tr>
+<tr>
+<td><strong>trigger PASSES → delivered as-is</strong></td>
+<td>FN (the honest gap — drift the cheap trigger missed)</td>
+<td>TN</td>
+</tr>
+</tbody>
+</table></div>
+<p>Headline: <strong>trigger recall</strong> (of all judge-confirmed drifts, what share reaches the judge to be caught), <strong>trigger precision</strong> (judge-call efficiency), baseline drift rate, and the net drop in unadjudicated drift reaching the user (observe → judge-backed enforce). Honest by construction (charter): FN and FP are published, not hidden — the answer-reference trigger (<code>answer_oos_refs</code>) exists precisely to lift recall on the oos08 class the tool-call signal missed.</p>
+<p><strong>Surfaces.</strong> Today the benchmark is a <strong>CLI / operator harness</strong> (<code>python -m trusted_data_agent.eval.benchmarks.grounding.harness …</code>, admin credentials, never a consumer surface) that drives a running server and writes the externally-publishable <code>REPORT_&lt;kg&gt;_&lt;date&gt;.md</code> (matrix · headline · per-case detail) — the A2/T6 GREEN proof. Because the harness renders from the same pure <code>report.py</code> core that a view in the runtime would, the two can never disagree. <strong>Deferred (not yet built):</strong> a <code>POST /v1/evals/grounding-benchmark/run</code> API + a <strong>Grounding Benchmark</strong> admin panel (matrix/headline/trend/cost, run-from-UI) — a tracked enhancement so the proof has a home in the runtime alongside Agent Performance.</p>
+<p><strong>The corpus twin — <code><code>eval/benchmarks/corpus_grounding/</code></code>.</strong> The same shape for the knowledge lane's corpus trigger (<code>agent/grounding/corpus.py</code>): an 18-case dataset (<code>dataset/corpus_v1.json</code>) in three classes — <code>supported</code> (must not fire), <code>unsupported</code> (must fire), <code>second_chance</code> (unsupported on the first retrieval, cleared by the second-chance search). Because the corpus trigger is deterministic given (answer, chunks, question), this benchmark needs <strong>no judge and no tokens</strong> — it is CI-pure and reproducible offline. Headline: recall, false-positive rate, second-chance recovery, net precision. Gates: <code>test_corpus_grounding.py</code>, <code>test_corpus_grounding_benchmark.py</code>.</p>
+<hr>
+<h2 id="6c-the-closed-trust-loop-behavioral-trust-circuit-breaker-policy-backtest-jul-2026">6c. The closed trust loop — behavioral trust, circuit breaker, policy backtest (Jul 2026)</h2>
+<p>Three sibling modules turn the eval stream from <em>reporting</em> into a <strong>closed
+loop</strong>: measured conduct changes trust state, trust state can change
+enforcement, and any policy change can be rehearsed against sealed history
+first. All pure/deterministic/0-token; all default-off or read-only.</p>
+<h3 id="6c1-behavioral-trust-score-evaltrust_behaviorpy">6c.1 Behavioral Trust Score — <code>eval/trust_behavior.py</code></h3>
+<p>Fuses <strong>Trust-Membrane integrity</strong> (signed/changed/unsigned — resolved
+defensively per profile via <code>core.trust.composition.resolve_profile_trust</code>, so
+the removable Ontology Suite's absence degrades to <em>unknown</em>, never an error)
+with the <strong>live track record</strong> read from the same online quality spans
+<code>analysis.py</code> consumes. Per agent:</p>
+<ul>
+<li><strong>Conduct score</strong> = recency-weighted gating pass rate (half-life
+  <code>half_life_days</code>, window <code>window_turns</code>) blended with a trust-critical
+  dimension rate (the <code>trust_dims</code> list in <code>DEFAULTS</code> — six today:
+  <code>scope_adherence</code>, <code>answer_groundedness</code>, <code>governed_data_ratio</code>,
+  <code>no_tool_loops</code>, <code>output_sanity</code>, <code>content_safety</code>; weight
+  <code>trust_dim_weight</code>, abstain-safe). The Assurance Guide reads that list
+  from <code>DEFAULTS</code> (<code>assurance_points.POINT_WEIGHTS</code> → the entry's <code>weights</code>
+  row; each check answers <code>weighs on</code>), so the Guide cannot name a different
+  set than the blend uses — this paragraph once listed five.</li>
+<li><strong>State ladder</strong> (volume-gated + stale-decayed):
+  <code>provisional</code> (&lt; <code>min_turns_proven</code> evidence) · <code>at_risk</code> (&lt; <code>at_risk_floor</code>)
+  · <code>watch</code> (&lt; <code>healthy_floor</code>) · <code>proven</code> · <code>trusted</code>
+  (≥ <code>trusted_floor</code> <strong>and</strong> ≥ <code>min_turns_trusted</code>; evidence older than
+  <code>stale_days</code> caps trusted → proven).</li>
+<li><strong>Composite</strong> = behavior capped by integrity — a signature never promotes bad
+  conduct; <code>unsigned</code> caps at proven, <code>deployment_unattested</code> caps at proven (the
+  fourth Trust-Membrane state — a deployment never attested here must not out-score
+  a portable-signed agent; without a cap it could reach <code>trusted</code>, inverting the
+  ladder), <code>changed</code> caps at watch, unknown applies no cap but is reported honestly
+  (<code>compose()</code>, <code>_INTEGRITY_CAP</code>).</li>
+</ul>
+<p>Surfaces: <code>GET /v1/evals/agents/trust-behavior</code> (scope-gated), the roster's
+<strong>seal + behavior ring</strong> glyph and the <strong>Trust Posture</strong> matrix
+(<code>agentPerformanceHandler.js</code>) — all gated on the admin <code>trust_behavior.enabled</code>
+flag (default <strong>false</strong> → UI byte-identical). System scope keys cells <strong><code>tag::uuid</code></strong>
+(<code>assess_agents(per_user=True)</code>, mirroring <code>online_quality_by_agent</code>) so two users'
+same-tag agents never merge, and the requester's <code>integrity_by_tag</code> caps only the
+requester's own cells; the response carries <code>breaker_mode</code> and <code>self_uuid</code>, and the
+frontend resolves both key shapes through one <code>_tbAgent()</code> helper. Config block
+persisted via <code>system_settings</code> (<code>_sync_trust_behavior_to_config</code>). CI:
+<code>test/test_trust_behavior.py</code> (56).</p>
+<h3 id="6c2-trust-budget-circuit-breaker-evalonlinepy_run_trust_breaker">6c.2 Trust-budget circuit breaker — <code>eval/online.py:_run_trust_breaker</code></h3>
+<p>Opt-in closed-loop response (<code>trust_behavior.breaker_mode</code>:
+<code>off</code> default · <code>notify</code> · <code>freeze_autonomy</code>). Runs at the END of
+<code>evaluate_turn_online</code> (after span export so the turn counts toward the trailing
+record), on the <strong>transition edge</strong> into <code>at_risk</code> only (per process lifetime —
+one alert per bad streak, not one per turn). The pure decision is
+<code>trust_behavior.breaker_decision()</code> — trips exactly on the volume-gated
+<code>at_risk</code> state, so a new agent's few bad turns can never trip it. Actions:
+broadcast a <code>trust_breaker</code> notification (rendered as a toast,
+<code>notifications.js</code>), and in <code>freeze_autonomy</code> set the profile's
+<code>authorityConfig.autonomous=False</code> + <code>frozen_by_breaker</code> + <code>frozen_reason</code> —
+suspending <strong>unattended</strong> use only (interactive use untouched; visible and
+reversible in the Agent Authority card). Fully defensive: any failure degrades
+to a log line, never touches the turn.</p>
+<h3 id="6c3-policy-backtesting-evalbacktestpy">6c.3 Policy backtesting — <code>eval/backtest.py</code></h3>
+<p>Replays a <strong>proposed</strong> trust policy over already-persisted <code>workflow_history</code>
+turns: guardrail projections are <strong>exact</strong> (the same
+<code>guardrails.policy.evaluate_inbound/evaluate_outbound</code> engine on the stored
+query/answer text); grounding projections are <strong>trigger-level</strong> from the
+recorded gate stamp (<code>needs_judge</code> / <code>out_of_scope_dbs</code> / <code>answer_oos_refs</code>) —
+the judge is an LLM and is honestly <strong>not</strong> simulated, so a flagged turn reads
+<code>would_escalate_judge</code>, never a certain block; no stamp → abstain. Endpoint
+<code>POST /v1/evals/backtest</code> (bounded sessions/turns, optional <code>profile_tag</code>
+filter); samples are capped and never carry raw PII. UI: the <strong>Policy backtest</strong>
+panel inside Agents → Trust Posture. CI: <code>test/test_backtest.py</code> (34).</p>
+<p>Related same-wave hardening outside <code>eval/</code>: the <strong>memory firewall</strong>
+(<code>components/builtin/memory/store.py:screen_memory_content</code> — injection-bearing
+memory writes stored quarantined), the <strong>retrieval firewall</strong>
+(<code>knowledge_context</code> CW module — injection-bearing retrieved chunks defused with
+an untrusted-data label), the <strong>tool-result firewall</strong>
+(<code>agent/guardrails/runtime.py:scan_tool_result</code> — poisoned tool outputs flagged
+observe-only at the <code>invoke_mcp_tool</code> seam), and <strong>trust-aware routing</strong>
+(<code>coordinate_engine.py</code>: <code>genieConfig.requireTrustedExperts</code> routes only to 🟢
+experts, fail-closed per expert). Operator narrative:
+<a href="AGENT_TRUST_AND_ASSURANCE.html">AGENT_TRUST_AND_ASSURANCE.md §2.11</a>.</p>
+<h3 id="6c4-assurance-inbox-hitl-review-live-red-team">6c.4 Assurance Inbox + HITL review + live red-team</h3>
+<p>The remaining closed-loop internals — the trust actions become <em>worked items</em>,
+and enforcement can defer to a human.</p>
+<ul>
+<li><strong>Trust events / Assurance Inbox</strong> — <code>core/trust_events.py</code> (NOT part of the
+  removable Ontology Suite; it covers guardrail/breaker events that exist without
+  the trust membrane): a self-applying <code>trust_events</code> table for <strong>stored</strong>
+  out-of-band incidents (breaker trips, memory quarantines, retrieval defuses,
+  tool-result flags, live-redteam failures) recorded fail-open by their emit
+  sites, plus <strong>pure derivation</strong> (<code>derive_turn_events</code>) of incidents already on
+  the turn (grounding blocks, guardrail actions, honesty rewrites) and a
+  multi-turn <code>derive_session_sentinel</code>. <code>broadcast_notice()</code> pushes a live
+  <code>trust_event_notice</code> (banner + in-place inbox refresh); loop-guarded so
+  sync/worker emit sites no-op cleanly. REST <code>GET /v1/assurance/inbox</code>,
+  <code>.../inbox/&lt;id&gt;/ack</code>. CI: <code>test/test_trust_events.py</code> (29).</li>
+<li><strong>HITL review (<code>review</code> mode)</strong> — not a fourth strictness level but a
+  <strong>property of enforcement</strong> (the editor renders it as Enforce + "keep withheld
+  originals for my review"; <code>annotate</code> is likewise Observe + "disclose findings"):
+  withhold/redact exactly like <code>enforce</code>, but park the ORIGINAL as OWED work in
+  <code>core/review_queue.py</code> (self-applying <code>review_items</code>, owner-scoped, content only
+  on <code>include_content=true</code>). Distinct from the <strong>recovery ledger</strong>: plain
+  <code>enforce</code> retains a FULL withholding's original as a <code>retained</code> entry —
+  recoverable, dispositionable, but never owed, never counted in <code>pending</code>, no
+  oversight claimed (<code>APP_CONFIG.REVIEW_RETAIN_ENFORCED_BLOCKS</code>, default on;
+  routine PII redactions never auto-park; queue bounded: 90-day TTL on
+  settled+retained, per-user retained cap, pending never pruned). <code>review</code> is a
+  runtime-level composite detected from the RAW profile mode (config
+  normalization would silently degrade the unknown mode to observe — the exact
+  trap, guarded), with agent-level inheritance (<code>postureConfig.mode</code> via
+  <code>core/posture_modes.effective_posture</code>, the ONE resolver — also stamped as the
+  computed <code>posture</code> field on <code>GET /v1/profiles</code>), which substitutes <code>enforce</code>
+  for config resolution then parks + re-tags <code>mode:"review"</code>.
+  Approve/uphold via <code>POST /v1/assurance/reviews/&lt;id&gt;/approve|reject</code>; release is
+  <strong>append-only</strong> (delivered history never rewritten — the approved original
+  surfaces in the answer capsule). A <code>review_decision</code> audit event is appended to
+  the turn (live + reload-safe).
+  <strong>Release-to-conversation (opt-in per item):</strong> approve accepts
+  <code>{"release_to_conversation": true}</code> (default false = record only) — the owner
+  EXPLICITLY releases the withheld original into the conversation, forward-only:
+  (a) the <code>review_release</code> context module (12th builtin CW module, all IFOC
+  classes via the registry-default merge, self-gating to empty) injects the
+  released originals into subsequent turns' context under an explicit
+  "[Owner-released after human review]" label with the release turns surfaced in
+  the CW snapshot metadata; (b) the exact PII values of released originals join a
+  <strong>session-scoped outbound guardrail allowlist</strong>
+  (<code>guardrails/runtime._released_allowlist</code> → <code>policy.evaluate_outbound(...,
+  allowed_values=)</code>) so the agent can STATE what the owner released without
+  re-parking a new review item — exact values only, never category-level,
+  toxicity never allowlisted, consulted only when a PII finding actually fired
+  (clean-turn hot path untouched); (c) the choice is recorded as a
+  <code>review_release</code> trust event and echoed as <code>released_to_context</code> on the item,
+  the audit event, and the notification. The sealed turn itself is never
+  rewritten. CI: <code>test/test_review_queue.py</code> (66).</li>
+<li><strong>Deterministic red-team self-test</strong> — <code>eval/redteam.py</code> runs a curated attack
+  corpus through the real 0-token detectors (injection/PII/toxicity) → per-
+  category recall + benign false-positive rate. <code>POST /v1/assurance/resilience-test</code>.
+  CI: <code>test/test_redteam.py</code> (11).</li>
+<li><strong>Live red-team</strong> — <code>eval/live_redteam.py</code> (pure corpus + deterministic scorers)
+  drives REAL adversarial turns through a target profile via the internal self-
+  call path and scores whether the guards held (injection obeyed / PII echoed /
+  scope drift). Opt-in + hard-capped (token cost); scoring is reproducible + free.
+  <code>POST /v1/assurance/live-redteam</code>; a failure lands in the Assurance Inbox.
+  CI: <code>test/test_live_redteam.py</code> (23).</li>
+<li><strong>Signed audit pack</strong> — <code>POST /v1/assurance/audit-pack</code> assembles posture +
+  eval aggregates + incidents + resilience test + an EU AI Act/NIST/GDPR control
+  map, Ed25519-signed with the deployment provenance key (offline-verifiable).</li>
+<li><strong>Trust history</strong> — <code>GET /v1/assurance/trust-history/&lt;tag&gt;</code> merges an agent's
+  attestation + incidents + review decisions into an audit-facing changelog
+  (Trust History section in the roster detail).</li>
+</ul>
+<h3 id="6c5-trust-visualisation-r1r7">6c.5 Trust visualisation (R1–R7)</h3>
+<p>Pure rendering over persisted data, no backend behaviour change: the <strong>scope
+perimeter + drift overlay</strong> (KG inspector <code>dispatchKGAnimation</code> <code>grounding_gate</code>
+branch — scope as a dashed boundary, out-of-scope refs crossing it in red); the
+<strong>provenance chain drawn as a chain</strong> with inline offline verify (answer capsule);
+<strong>per-node trust glyphs</strong> in the coordination trace tree; the <strong>judged-vs-
+deterministic</strong> chip border (dashed = a model opined) + <strong>per-dimension micro-
+sparklines</strong> (<code>online_quality_by_agent.dimension_series</code>). The <strong><code>content_safety</code>
+judge</strong> (<code>eval/scorers/judges.py</code>) is the semantic complement to the deterministic
+guardrail (all classes, advisory) — see <code>AGENT_QUALITY_DIMENSIONS.md</code>.</p>
+<hr>
+<h2 id="7-analysis-layer">7. Analysis layer</h2>
+<p><code><code>eval/analysis.py</code></code> — pure functions consumed by both the dashboard and the CLI:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cluster_failures(scores)</code></td>
+<td>Groups failing reps by their <strong>set of failing dimensions</strong> → recurring failure shapes (signature, count, example cases), worst-first.</td>
+</tr>
+<tr>
+<td><code>cluster_online_failures(spans)</code></td>
+<td>Same clustering over OTLP spans.</td>
+</tr>
+<tr>
+<td><code>pass_rate_by_dimension</code> / <code>online_pass_rate_by_dimension</code></td>
+<td>Per-dimension pass rates (dashboard bars).</td>
+</tr>
+<tr>
+<td><code>online_quality_by_agent(spans)</code></td>
+<td>Per-profile-agent: turns, failures, pass rate, recency sparkline series, <strong>per-dimension</strong> pass rates (<code>dimensions</code>) <strong>and per-dimension decided-turn counts (<code>dimension_counts</code>)</strong> — drives the profile cards. The counts are the aggregate-bar denominator: deterministic dims decide every turn, judge dims only on sampled turns, so the roster shows an <code>n=</code> chip (amber + dimmed when <code>n≤2</code>) so a 1-of-1 judge verdict isn't read as a systemic failure. <strong>Excludes <code>agent.kind=='flow'</code> spans.</strong></td>
+</tr>
+<tr>
+<td><code>online_quality_by_flow(spans)</code></td>
+<td>The flow-agent analogue, keyed on <code>agent.flow_id</code> — drives the flow cards (§12a). Also emits <code>dimension_counts</code>.</td>
+</tr>
+<tr>
+<td><code>diff_runs(baseline, candidate)</code></td>
+<td>pass^k delta + per-dimension/cohort/class deltas split into <strong>regressions</strong> and <strong>improvements</strong> — experiment diffing.</td>
+</tr>
+<tr>
+<td><code>agent_kpi_dashboard(spans)</code></td>
+<td>Portfolio-wide KPI roll-up: <code>overall</code>/<code>recent</code> pass-rate trend, top <code>failing_checks</code> (by fail rate), and a per-<code>agents</code> scoreboard — drives the cross-agent KPI charts (§11.1).</td>
+</tr>
+<tr>
+<td><code>agent_timeline(spans, tag, bucket_seconds=86400)</code></td>
+<td>Day-bucketed <code>pass_rate</code>/<code>avg_cost</code>/<code>avg_latency</code> series for one agent over time + a recent series — drives the per-agent timeline card (§11.1).</td>
+</tr>
+<tr>
+<td><code>agent_runs(spans, tag)</code></td>
+<td>Every scored run for one agent (newest first) with its <strong>full per-dimension verdicts</strong> — drives the Runs Ledger (§11.1). A coordinator run carries its expert children as a nested <strong>master/slave tree</strong> (each expert matched to its own scored span by <code>slave_session_id</code>, with timing for the waterfall; a best-effort synthetic node when an expert wasn't scored). Self-cost per node; <code>rollup_*</code> are display-only.</td>
+</tr>
+<tr>
+<td><code>online_quality_by_agent</code> (extended)</td>
+<td>Now also returns per-agent <strong><code>avg_cost</code>/<code>avg_latency_ms</code>/<code>avg_tokens</code>/<code>avg_tasks</code></strong> (the comparison metric picker) and <strong><code>direct_turns</code>/<code>expert_turns</code></strong> (invocation split for the roster "N as expert" note).</td>
+</tr>
+</tbody>
+</table></div>
+<p>SME annotations (agree/disagree with a verdict) persist to <code>eval_annotations</code> and feed judge calibration.</p>
+<hr>
+<h2 id="8-persistence">8. Persistence</h2>
+<p><code><code>eval/store.py</code></code> — <code>EvalStore</code> (SQLite, content-hashed + versioned datasets):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eval_datasets</code></td>
+<td>id, name, version, content_hash, is_holdout</td>
+</tr>
+<tr>
+<td><code>eval_cases</code></td>
+<td>query, profile_class/tag/id, cohort, reference_answer, assertions, source_turn_ref</td>
+</tr>
+<tr>
+<td><code>eval_runs</code></td>
+<td>dataset_id/version, k, baseline_run_id, summary (JSON)</td>
+</tr>
+<tr>
+<td><code>eval_scores</code></td>
+<td>run_id, case_id, rep_index, dimension, kind, passed, score, threshold, explanation, evidence</td>
+</tr>
+<tr>
+<td><code>eval_annotations</code></td>
+<td>case_id/session_id/turn, reviewer, label, note</td>
+</tr>
+</tbody>
+</table></div>
+<p>The <strong>online sink</strong> is a separate NDJSON file (<code>ONLINE_EVAL_SINK</code>, default <code>tda_eval/online_eval.jsonl</code>) — the durable stream the regression dashboard tails. Offline (curated, gated) and online (live, sampled) are cleanly separated. Local store files (<code>tda_eval.db*</code>, <code>tda_eval/</code>) are gitignored.</p>
+<hr>
+<h2 id="9-rest-api-surface">9. REST API surface</h2>
+<p>All under <code>/api/v1</code>, JWT-auth, in <code><code>api/rest_routes.py</code></code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET/POST</td>
+<td><code>/evals/datasets</code></td>
+<td>List / create datasets</td>
+</tr>
+<tr>
+<td>GET/POST</td>
+<td><code>/evals/datasets/&lt;id&gt;/cases</code></td>
+<td>List / add cases</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/evals/datasets/&lt;id&gt;/mine</code></td>
+<td>Seed cases from production traces</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/runs</code></td>
+<td>List runs (newest first). <strong>Offline EvalStore reads (runs/scores/clusters/diff) + annotations require <code>VIEW_ALL_SESSIONS</code></strong> — the store is instance-global (no user column; CLI-written) and annotations feed judge calibration</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/runs/&lt;run_id&gt;</code></td>
+<td>Run summary</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/runs/&lt;run_id&gt;/scores</code></td>
+<td>Per-rep scores</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/runs/&lt;run_id&gt;/clusters</code></td>
+<td>Failure-mode clusters</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/diff?baseline=&amp;candidate=</code></td>
+<td>Experiment diff</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/evals/gate</code></td>
+<td>Regression gate (409 if it fails)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/evals/score-turn</code></td>
+<td>Ad-hoc score a session turn (deterministic; <code>include_judges</code> for live panel) — powers the manual "Score this turn". Persists the result + returns <code>judges_available</code></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/turn-score?session_id=&amp;turn=</code></td>
+<td>Read-only: latest <strong>persisted</strong> verdicts + cost for a turn (no re-score, no tokens) — auto-displays a turn's existing score on open</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/online</code></td>
+<td>Tail the raw quality spans — scoped to the caller; <code>?scope=system</code> behind <code>VIEW_ALL_SESSIONS</code> (spans carry session/turn ids + judge evidence)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/online/dashboard?scope=my\|system</code></td>
+<td>Aggregated regression view (scope-gated); returns <code>by_agent</code> (profile-agents), <code>by_flow</code> (flow-agents), <code>by_profile_class</code>, clusters, dimension rates</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/agents/kpi-dashboard?scope=my\|system</code></td>
+<td>Portfolio KPI roll-up (<code>agent_kpi_dashboard</code>) — trend, failing checks, scoreboard, cost/latency — for the cross-agent charts</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/agents/&lt;tag&gt;/timeline?scope=&amp;bucket=</code></td>
+<td>Day-bucketed pass-rate / cost / latency series for one agent (<code>agent_timeline</code>)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/agents/&lt;tag&gt;/runs?scope=&amp;runs=</code></td>
+<td>Every scored run for one agent + full verdicts + nested master/slave tree (<code>agent_runs</code>) — the Runs Ledger</td>
+</tr>
+<tr>
+<td>GET/POST</td>
+<td><code>/evals/annotations</code></td>
+<td>SME annotation queue (feeds calibration; <code>dimension</code> + <code>judge_passed</code> on the POST freeze the κ pair)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/judge-calibration</code></td>
+<td>Per-dimension judge↔human κ report over the annotations (status: calibrated / below_floor / insufficient)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/judge-queue</code></td>
+<td>Recent judge rulings (from the online spans, registry-JUDGE dims only) awaiting a human agree/disagree — the κ work queue</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/evals/backtest</code></td>
+<td>Policy backtest — replay a proposed grounding/guardrail policy over persisted turns (§6c.3; deterministic, 0-token)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/agents/trust-behavior?scope=</code></td>
+<td>Behavioral Trust Score per agent — integrity × track-record fusion (§6c.1)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/scoring-thresholds</code></td>
+<td>The live scoring bands as the Quality Dimensions Guide reads them (any authenticated reader)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/evals/library-outcomes?tag=&amp;scope=</code></td>
+<td>Read → ran per skill-library section across scored turns (<code>library_read_first</code>; SKILL_ARCHITECTURE §4a)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Assurance surface (§6c.4):</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/v1/assurance/inbox</code> (+ <code>POST /&lt;id&gt;/ack</code>, <code>GET /count</code>)</td>
+<td>Trust incidents — stored (breaker/quarantine/defuse/tool-result/redteam) + derived (grounding/guardrail/honesty/sentinel)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/assurance/inbox/derived/ack</code></td>
+<td>Acknowledge a DERIVED observation or the session sentinel — a stored disposition keyed <code>(session_id, turn_id, event_type)</code>; the sealed trace is never rewritten</td>
+</tr>
+<tr>
+<td>GET / POST</td>
+<td><code>/v1/assurance/reviews</code> · <code>/&lt;id&gt;/approve\|reject</code></td>
+<td>HITL review queue + disposition (append-only release; approve accepts <code>{release_to_conversation}</code> for forward-only release into context)</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/v1/assurance/reviews/&lt;id&gt;</code></td>
+<td>The owner withdraws a PENDING item of their own (403 for a designated approver, 409 once decided)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/assurance/resilience-test</code></td>
+<td>Deterministic red-team self-test (in-path detector recall, 0 tokens)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/assurance/live-redteam</code></td>
+<td>Live red-team — real probe turns (opt-in, budget-capped)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/assurance/audit-pack</code></td>
+<td>Signed, offline-verifiable evidence bundle (posture + eval + incidents + control map)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/assurance/trust-history/&lt;tag&gt;</code></td>
+<td>Per-agent trust changelog (sign-offs + incidents + review decisions)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/assurance/agent-story/&lt;tag&gt;</code></td>
+<td>The agent's trust story assembled from existing records (profile, corpus scans, attestation, spans, reviews, incidents) + loop-closure receipts; owner-scoped</td>
+</tr>
+<tr>
+<td>GET / POST</td>
+<td><code>/v1/assurance/trust-trip/&lt;tag&gt;</code> · <code>/reset</code></td>
+<td>The trip logbook (append-only leg markers) and starting a new leg</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/assurance/retrieval-anomaly</code></td>
+<td>Index-poisoning detection over recent turns (retrieval frequency × query diversity) → an Inbox item for human disposition, never auto-quarantine</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/assurance/vocabulary</code></td>
+<td>The registry served as Guide entries — stations, mechanisms, properties, moments, terms (<code>ASSURANCE_INSTRUMENTS_ARCHITECTURE.md</code> §6c)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The binding studio's routes (<code>/v1/assurance/bindings</code>, <code>/modules</code>, <code>/controls/&lt;key&gt;/posture</code>) are listed in <code>ASSURANCE_MODULE_PLANE_ARCHITECTURE.md</code> §7.</p>
+<p>The admin <code>agent_eval</code> block (online toggle, judges, judge rate, <strong>and the banded <code>default_thresholds</code></strong>) plus the <code>trust_behavior</code> block round-trip through <code>GET/POST /v1/admin/app-config</code> (§6.4, §15).</p>
+<p><strong>Scope gating:</strong> <code>scope=system</code> requires the <code>VIEW_ALL_SESSIONS</code> feature (enforced server-side, 403 otherwise); <code>scope=my</code> filters spans to the requesting user via the <code>user.uuid</code> span attribute. The flow roster additionally reads <code>GET /v1/flows</code> for flow identity + composed profiles.</p>
+<hr>
+<h2 id="10-cli">10. CLI</h2>
+<p><code><code>eval/cli.py</code></code> — "evals as unit tests":</p>
+<pre><code>python -m trusted_data_agent.eval.cli list
+python -m trusted_data_agent.eval.cli mine   --dataset core
+python -m trusted_data_agent.eval.cli run    --dataset core --k 3 [--judges --judge-models 3]
+python -m trusted_data_agent.eval.cli gate   --run &lt;id&gt; --baseline &lt;id&gt; --min-pass-k 0.9 --cohort risky=0.95
+python -m trusted_data_agent.eval.cli report --run &lt;id&gt;
+</code></pre>
+<p><code>gate</code> returns a <strong>non-zero exit code</strong> on failure — wire it straight into CI.</p>
+<hr>
+<h2 id="11-frontend-ux">11. Frontend / UX</h2>
+<h3 id="111-agent-performance-view">11.1 Agent Performance view</h3>
+<p><code><code>static/js/handlers/agentPerformanceHandler.js</code></code> — <code>window.agentPerformance.load()</code>, mounted by the <code>agents-view</code> switch hook in <code>ui.js</code>. Matches the command-center design language (gradient hero, <code>rounded-xl</code> metric/section cards, <code>var(--card-bg)</code>/<code>var(--border-primary)</code>), fully theme-aware, monochrome inline SVG icons, no emoji.</p>
+<p><strong>4-class health taxonomy (single source of truth).</strong> Aggregate health — every roster pill, KPI counter, metric bar, and chart — uses one banded scale: 🟢 <strong>Healthy</strong> (pass rate ≥ 0.80) · 🟡 <strong>Review</strong> (0.50–0.79, "Evaluation Recommended") · 🔴 <strong>Danger</strong> (&lt; 0.50) · ⚪ <strong>Inactive</strong> (no data). <code>HEALTH</code> map + <code>healthClassFor()</code> in <code>agentPerformanceHandler.js</code> are the canonical constants (<code>HEALTHY=0.8</code>, <code>REVIEW=0.5</code>); <code>agentKpiCharts.healthColor()</code> mirrors them (cross-ref comment locks the ramp). <strong>Atomic surfaces stay 2/3-state by design</strong> — a single binary verdict chip is pass/fail/abstain, per-turn spark bars are pass/fail, agree/disagree diff pills are binary; only rolled-up health is 4-class. The per-metric 3-band model (§5.1) reuses the same colors at the metric level on the Quality card.</p>
+<p><strong>Agent-centric, not run-centric:</strong></p>
+<ul>
+<li><strong>Cross-agent KPI charts</strong> (<code><code>static/js/handlers/agentKpiCharts.js</code></code>) — dependency-free inline-SVG 2×2 grid above the roster: pass-rate <strong>trend</strong>, top <strong>failing checks</strong>, agent <strong>scoreboard</strong>, and <strong>cost/latency</strong>, all banded by <code>healthColor</code>. Sourced from <code>GET /evals/agents/kpi-dashboard</code>.</li>
+<li><strong>Portfolio KPIs</strong> — Agents Evaluated / Healthy / Needs Attention (= Review + Danger) / Live Turns Scored / Gating Failures (profile-agents + flow-agents both count).</li>
+<li><strong>Agent health roster</strong> — one card per agent of <strong>either type</strong>: profile-agents are IFOC-colored (Ideate=green, Focus=blue, Optimize=purple, Coordinate=orange); <strong>flow-agents</strong> get an amber <strong>"Flow"</strong> badge, show their name (no <code>@</code>), a <strong>"uses @X · @Y"</strong> line of composed profiles (or "no fixed profile"), and "flow run" units. Each card has a headline pass rate (live, else offline pass^k), pass/fail micro-sparkline, a <strong>4-class status pill</strong> (Healthy/Review/Danger/Inactive), and <strong>honest "unevaluated" empty states</strong> (never fakes numbers); sorted worst-health-first. Card → agent detail.</li>
+<li><strong>Filter pills</strong> (<code>All · Ideate · Focus · Optimize · Coordinate · Flows</code>, only families present) + <strong>search</strong> (tag/name) + live count; client-side, instant, focus-preserving. The roster grid is its own scroll area (<code>max-height: 52vh</code>) so Experiments and Annotations stay reachable.</li>
+<li><strong>Agent detail</strong> — live vs offline quality, per-dimension bars, an offline-cohort pass^k table (banded), a <strong>per-agent timeline card</strong> (<code>renderAgentTimeline</code> → <code>GET /evals/agents/&lt;tag&gt;/timeline</code>), and the <strong>Runs Ledger</strong> + <strong>Coordination Trace Tree</strong> (below). Flow detail shows the flow scorers' dimensions.</li>
+<li><strong>Runs Ledger</strong> (<code>loadRunsLedger</code> → <code>GET /evals/agents/&lt;tag&gt;/runs</code>) — every scored run newest-first. Each row: band dot + relative time + invocation chip + a compact <strong>dimension band-strip</strong> (one tiny square per verdict, green/amber/red — scan many runs and spot a regression at a glance) + cost/latency; expands to the full tier-grouped verdict chips + an <strong>"open in Sessions"</strong> deep-link (<code>openSessionTrace</code> → switches to the chat lens, loads the session, opens the turn's trajectory + Quality overlay). Filter pills: band (healthy/review/danger) + invocation (direct / as-expert).</li>
+<li><strong>Coordination Trace Tree + waterfall</strong> (<code>traceTree</code>/<code>waterfall</code>) — a coordinator run expands into a Jaeger/LangSmith-style tree: root coordinator node → indented expert child nodes (connector rails), each band-colored with its <strong>own</strong> verdicts/cost/duration; an inline <strong>timing waterfall</strong> positions experts by real <code>started_at</code>/<code>completed_at</code> (honest parallel-vs-sequential detection; sequential layout when timing is absent) and shows the rolled-up turn total. This is the concrete master/slave visualization (§12b).</li>
+<li><strong>Compare</strong> (<code>renderCompare</code>) — roster "⇄ Compare agents" toggle → per-card selection checkboxes → sticky "Compare →" bar → a panel with a <strong>metric picker</strong> (pass_rate / avg_tasks / avg_tokens / avg_cost / avg_latency / turns) rendering side-by-side grouped bars (best ★) + a <strong>quality heatmap</strong> (agents × dimensions, 4-class band cells). Driven entirely by the extended <code>online_quality_by_agent</code> cells.</li>
+<li><strong>Experiments &amp; Datasets</strong> — runs table → run detail (clusters + per-class/cohort/dimension) + experiment diff.</li>
+</ul>
+<p>All three are dependency-free inline SVG/HTML with a one-time injected theme-aware stylesheet (<code>#agent-perf-ux-css</code>, <code>.ap-*</code>): CSS variables, monochrome icons, <code>prefers-reduced-motion</code>, hover elevation, fade-in, animated bars, focus-visible rings.
+- <strong>Judge Calibration &amp; Annotation Queue</strong> — agree/disagree to calibrate judges.</p>
+<p>IFOC mapping is mandatory (never show raw <code>tool_enabled</code> etc.).</p>
+<h3 id="112-my-vs-system-scoping">11.2 My vs System scoping</h3>
+<p>Mirrors the Awareness panel: <code>#agent-tab-system</code> is hidden and revealed only for admins (<code>/auth/me/features</code> → <code>view_all_sessions</code>). <code>scope=my</code> (default) filters to the requesting user's own agents; <code>scope=system</code> (admin) aggregates all users (server-enforced). In system scope the roster surfaces every profile-agent with activity (from <code>by_agent</code>), not just the viewer's profiles. Flow-agents come from <code>GET /v1/flows</code> (the viewer's flows) merged with <code>by_flow</code> online quality.</p>
+<h3 id="113-the-awareness-panel-the-trajectory-verdict-overlay-the-bridge">11.3 The Awareness panel + the trajectory verdict overlay (the bridge)</h3>
+<p>The turn's <strong>Scorecard</strong> (<code><code>ui.js::injectTrajectoryEvalOverlay</code></code>) carries the verdict chips — the same verdicts the Agents lens aggregates. It is <strong>adopted into the Trust Circle's JUDGED station panel</strong> (<code>AssuranceDial.placeScorecard</code>): JUDGED is where measurements are counted, so its reading and the checks behind it sit in one place instead of two surfaces answering the same question. Adoption runs from whichever side renders second (the dial re-seats it after its own innerHTML wipe, the same rescue/re-seat pattern as the control cluster); with no dial present the card renders in the trace as before. <strong>Collapsed by default</strong> — the headline status line is shown ("all gating checks passed · N checks" + chevron); the chips reveal on click. Chips color by band (<code>_renderVerdictChips</code>): 🟢 pass / 🔴 fail / ⚪ abstain, plus 🟡 <strong>review</strong> for banded metrics in the amber band (passing-but-flagged), and <strong>group by the moment measured</strong> (Plan · Retrieve · Act · Compose · Deliver · The run · Flow run — <code>_stageGroupsForCard</code>, reading the served model) with values formatted in natural units (<code>_fmtMetricScore</code>: counts <code>1</code>, rates <code>0%</code>, cost <code>$…</code>, latency <code>4.1s</code>, tokens with commas). <strong>Honest headline:</strong> a turn with no gating failures/reviews but non-gating health signals (a tool errored and self-correction recovered it, <code>tool_success_rate &lt; 1</code> / <code>self_correction &gt; 0</code>) reads amber <em>"passed · recovered from a tool error · N self-correction(s)"</em> — a recovered error is Review, never green "all checks passed". It renders in <strong>both</strong> moments:</p>
+<ul>
+<li><strong>After execution (live):</strong> the online hook emits a <code>turn_score_complete</code> Live-Status event (carrying verdicts + judge cost); <code>processStream</code> renders the same card immediately. This mirrors <code>next_step_generation_complete</code> — the judge token cost flows through the rigorous allocation (<code>_record_score_usage</code>: session/turn totals + an idempotent <code>token_update</code> <code>call_id="turn_score"</code> that rolls into the title-bar KPIs + the consumption ledger), so cost shows on the card and the counters, and survives reload via <code>turn_cost</code>.</li>
+<li><strong>On reload:</strong> wired in <code>eventHandlers.js::handleReloadPlanClick</code>'s <code>finally</code> (covers <strong>every</strong> profile branch — a <code>return</code> in the <code>try</code> still hits <code>finally</code>); auto-loads the turn's existing score via <code>/evals/turn-score</code> (no re-score, no tokens) and shows the cost note.</li>
+</ul>
+<p>One <strong>scoring button</strong> lets a user (re)score on demand, and its state decides the act: an answer with no score yet offers <strong>Score this answer</strong> (code checks, no tokens); a scored answer offers <strong>Ask the AI judges</strong> (code checks + the judge panel, uses tokens); a judged answer offers <strong>Ask the AI judges again</strong>. Its icon (target / scales), tooltip and accessible label name the act and its cost. <em>Why one button (Oct 2026):</em> every answer is already scored by code after delivery, so a second code-only score rarely adds anything, and a separate judges switch that did nothing until a second button was pressed read as two controls for one act. The free code-only re-score of an already-scored answer (useful only after a threshold change) is no longer offered from the card. The button lives in the <strong>assurance band header</strong> (<code>.ad-ctl-slot</code>) with the Guide button, not on the card. Self-skips flow/error turns; never disturbs the rendered trace. The note beneath the headline (<code>_qualityScoreNote</code>) states, in order, <strong>which scorers ran</strong> (the agent's class), <strong>when</strong> (<em>taken after the answer shipped</em>), <strong>how it was triggered</strong>, <strong>whether judges ran</strong>, and <strong>what it cost</strong> — so the reader never has to infer that a measurement did not affect the answer they are looking at. This is the concrete Sessions↔Agents bridge: a session trace is the raw material, graded by the same scorers the entity lens rolls up.</p>
+<hr>
+<h2 id="12-profile-class-coverage-matrix">12. Profile-class coverage matrix</h2>
+<p>All five classes are covered — every class has deterministic signals, so "deterministic-first" holds across the board; judges add the open-ended residue.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Class (IFOC)</th>
+<th>Trace signals</th>
+<th>Deterministic scorers</th>
+<th>Judge(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>llm_only</code> (Ideate)</td>
+<td>answer, format</td>
+<td>completed, answer_present, format, cost, efficiency, safety</td>
+<td>instruction_following, answer_correctness, content_safety</td>
+</tr>
+<tr>
+<td><code>rag_focused</code> (Focus)</td>
+<td>retrieved docs, citations, answer</td>
+<td>+ retrieval_performed, grounded_overlap, citations</td>
+<td>groundedness, source_consistency, answer_correctness, content_safety</td>
+</tr>
+<tr>
+<td><code>tool_enabled</code> (Optimize)</td>
+<td>plan structure, tool calls/args, self-corrections</td>
+<td>+ tool_subset, must_not_call, self_correction, plan_adherence</td>
+<td>tool_arg_optimality, answer_groundedness, scope_faithfulness, grain_faithfulness, answer_correctness, content_safety</td>
+</tr>
+<tr>
+<td><code>genie</code> (Coordinate)</td>
+<td>slaves invoked, synthesis</td>
+<td>+ routing, coordination_efficiency</td>
+<td>synthesis_quality, answer_correctness, content_safety</td>
+</tr>
+<tr>
+<td><code>conversation_with_tools</code> (Ideate + tools)</td>
+<td>tool calls, answer</td>
+<td>tool_subset, must_not_call, self_correction (+ cross-cutting)</td>
+<td>tool_arg_optimality, instruction_following, answer_groundedness, scope_faithfulness, grain_faithfulness, answer_correctness, content_safety</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>content_safety</code> (Jul 2026) applies to <strong>all</strong> profile classes; the <code>answer_correctness</code> judge also applies to every class (abstains without a reference answer).</p>
+<p>Cross-cutting scorers (completed, answer_present, format, cost, efficiency, safety, provenance_integrity) apply to all. The reliability/quality suite (§5.2a) layers further signals on top — cross-cutting (latency, clean_termination, context_health, error_recovery, output_sanity) plus per-class (tool_success_rate, no_tool_loops, numeric_fidelity, plan_execution for the tool classes; retrieval_relevance for Focus; expert_success for Coordinate).</p>
+<hr>
+<h2 id="12a-flow-agents-the-second-agent-type">12a. Flow-agents (the second agent type)</h2>
+<p>The Agents lens has <strong>two agent types</strong>, not one:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Profile-agent</th>
+<th>Flow-agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What it is</td>
+<td>An IFOC-classed profile</td>
+<td>A flow (DAG of nodes)</td>
+</tr>
+<tr>
+<td>Session</td>
+<td>Bound to a session per turn</td>
+<td><strong>Not session-bound until execution</strong> — binds to a session at run time, and <em>must</em> to run</td>
+</tr>
+<tr>
+<td>Profiles</td>
+<td>Is one</td>
+<td>Has <strong>0 or many</strong> (each node may carry its own <code>node.data.profile_id</code>)</td>
+</tr>
+<tr>
+<td>Graded on</td>
+<td>Turn trajectory (tools/plan/answer)</td>
+<td><strong>Flow structure</strong> — run completion, node success, branch correctness, budget</td>
+</tr>
+<tr>
+<td>Eval class</td>
+<td><code>llm_only</code>/<code>rag_focused</code>/…</td>
+<td><code>"flow"</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Because a flow may have <strong>no</strong> profile or <strong>several</strong>, its quality cannot be folded into "a profile" — a flow is judged <strong>as a whole agent</strong>, profile-agnostically. This is why flows get their own roster cards (a "Flow" badge + "Flows" filter pill, amber <code>#f59e0b</code>), never an IFOC color.</p>
+<p><strong>The universal task KPIs cross over to flows.</strong> While turn-shaped profile scorers never run on a flow, the Task Transparency framework (§5.2c) is agent-type-consistent: <code>classify_tasks</code> is polymorphic, so <code>scorers_for("flow")</code> returns the 6 flow scorers <strong>plus</strong> <code>tasks</code> and <code>parallel_efficiency</code> (their <code>applies_to</code> lists <code>"flow"</code>). Flow nodes carry real <code>started_at</code>/<code>completed_at</code>, making flows the <strong>strongest</strong> <code>parallel_efficiency</code> case (parallel branches yield a genuine speedup). So the Tasks tier of the Quality card reads consistently for profile-agents and flow-agents alike.</p>
+<p><strong><code>FlowRunRecord</code></strong> (<code><code>eval/flow_types.py</code></code>) normalizes a flow run + its <code>node_runs</code>: <code>completed</code>, <code>executed_nodes</code>/<code>failed_nodes</code>, <code>executed_identifiers</code> (match by id/label/type), <code>step_count</code> (incl. loop iterations), <code>cost_usd</code>, tokens, error. Input = the <code>GET /v1/flows/runs/&lt;run_id&gt;</code> shape.</p>
+<p><strong>Flow scorers</strong> (<code><code>eval/scorers/flow.py</code></code>, <code>applies_to={"flow"}</code>, CI-pure deterministic):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Scorer</th>
+<th>Dimension</th>
+<th>Gating</th>
+<th>Asserted by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FlowCompletedScorer</code></td>
+<td><code>flow_completed</code></td>
+<td>✓</td>
+<td><code>expect_complete</code> (default true)</td>
+</tr>
+<tr>
+<td><code>FlowNodesSucceededScorer</code></td>
+<td><code>flow_nodes_succeeded</code></td>
+<td>✓</td>
+<td>— (no node errored)</td>
+</tr>
+<tr>
+<td><code>FlowNodesReachedScorer</code></td>
+<td><code>flow_nodes_reached</code></td>
+<td>✓</td>
+<td><code>require_nodes</code> (subset)</td>
+</tr>
+<tr>
+<td><code>FlowForbiddenNodesScorer</code></td>
+<td><code>flow_forbidden_nodes</code></td>
+<td>✓</td>
+<td><code>forbid_nodes</code> (wrong-branch detection)</td>
+</tr>
+<tr>
+<td><code>FlowCostScorer</code></td>
+<td><code>flow_cost</code></td>
+<td>metric</td>
+<td><code>max_cost_usd</code></td>
+</tr>
+<tr>
+<td><code>FlowEfficiencyScorer</code></td>
+<td><code>flow_efficiency</code></td>
+<td>metric</td>
+<td><code>max_steps</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>scorers_for("flow")</code> returns ONLY these — flows are a distinct agent type, so turn-shaped profile scorers never run against a flow record. Flows have no judge scorers.</p>
+<p><strong>Offline</strong> (<code><code>eval/flow_runner.py</code></code>): <code>FlowEvalExecutor</code> runs a flow exactly as a user does — <code>POST /v1/flows/&lt;id&gt;/execute</code> (binds a session at run time) → poll → read the run record. <code>CompositeEvalExecutor</code> routes each case to the flow executor (<code>profile_class == "flow"</code>, carrying <code>flow_id</code>) or the turn executor, so a dataset may mix both agent types. Flows inherit the same pass^k / gate / diff machinery. The CLI <code>run</code> uses the composite by default.</p>
+<p><strong>Online</strong>: a gated, defensive hook in <code>flow_executor._run_and_record</code> (the single post-run seam) calls <code>evaluate_flow_run_online</code> → flow scorers → an <code>agent.flow.eval</code> OTLP span keyed by flow identity (<code>agent.kind='flow'</code>, <code>agent.flow_id</code>, signed attestation bound to the run id). Off by default; never affects the run. <code>online_quality_by_flow</code> aggregates these and explicitly <strong>excludes flow spans from the profile <code>by_agent</code></strong> (and vice-versa), so a flow's effective profile isn't double-counted.</p>
+<p><strong>Roster</strong>: flow-agents appear as their own cards (online <code>by_flow</code> + <code>GET /v1/flows</code> for identity), with the "Flows" filter pill and flow-run units ("3 flow runs" vs "3 live turns").</p>
+<hr>
+<h2 id="12b-genie-coordinatorexpert-masterslave-scoring">12b. Genie coordinator/expert (master/slave) scoring</h2>
+<p>A genie turn is a tree: a <strong>coordinator</strong> (master) delegating to 0..N <strong>experts</strong> (slaves, each a profile-agent running in a child session). The scoring model:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Treatment</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Quality verdicts</strong> (groundedness, citations, tool_subset, …)</td>
+<td><strong>Isolated per agent</strong> — never merged into the master</td>
+<td>A Focus expert's <code>groundedness</code> is a Focus-class dimension; merging would conflate agent types + double-count.</td>
+</tr>
+<tr>
+<td><strong>Coordination verdicts</strong> (<code>routing</code>, <code>expert_success</code>, <code>coordination_efficiency</code>)</td>
+<td><strong>On the master</strong> — the rolled-up expert-<em>outcome</em> signal</td>
+<td>"Did I call the right experts and did they succeed?" is the coordinator's job.</td>
+</tr>
+<tr>
+<td><strong>Resource metrics</strong> (cost/tokens/latency)</td>
+<td><strong>Self-cost</strong> on every node (coordinator + each expert)</td>
+<td>Portfolio sums never double-count; the coordinator's inclusive figure is a display-only <code>genie_rollup</code> annotation (<code>+ N expert $Y · turn total $Z</code>).</td>
+</tr>
+<tr>
+<td><strong>Experts</strong></td>
+<td><strong>Auto-scored</strong> (deterministic is free) in their own class; <strong>not</strong> skipped</td>
+<td>Expert quality is signal the master can't capture. The recommender <em>is</em> still skipped for slaves.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Persistence</strong> (<code>coordinate_engine.execute_genie</code>): the coordinator turn stores <code>final_summary_text</code> (full answer → <code>answer_present</code> holds), <code>slaves_invoked</code> (per-expert <code>{profile_tag, slave_session_id, status, input/output_tokens, cost_usd, started_at/completed_at/duration_ms}</code> via <code>_summarize_slaves</code>, read from each expert's child-session turn), and <code>genie_rollup</code> (inclusive cost/tokens). <code>turn_cost</code>/<code>turn_*_tokens</code> stay coordinator-only (feed consumption — experts bill their own child sessions).</p>
+<p><strong>Online hook</strong> (<code>execution_service.run_agent_execution</code>): online eval runs for experts too (the <code>_is_genie_slave</code> skip was removed for eval; the recommender keeps it), tagging the span <code>agent.invocation='expert'</code> + <code>agent.parent_session_id</code>. Coordinator spans carry <code>eval.experts</code> (the per-expert summary) + <code>eval.expert_count</code> so <code>agent_runs</code> can build the master/slave tree. <code>online_quality_by_agent</code> counts <code>direct_turns</code>/<code>expert_turns</code> and the roster shows "· N as expert".</p>
+<blockquote>
+<p><strong>Regression fixed (Jun 2026):</strong> <code>execute_genie</code> referenced an undefined <code>executor</code> on the latency <code>duration_ms</code> line; the <code>NameError</code> was swallowed by the persistence <code>try/except</code>, so <code>update_last_turn_data</code> never ran → <strong>all</strong> genie turns were dropped from <code>workflow_history</code> (broke plan-reload 404 + online scoring). Fixed with a local turn timer.</p>
+</blockquote>
+<hr>
+<h2 id="13-security-governance">13. Security &amp; governance</h2>
+<ul>
+<li><strong>Online eval</strong> is gated globally by <code>ONLINE_EVAL_ENABLED</code> (deterministic scoring <strong>on</strong> by default — free + non-blocking; the token-costing judge layer <code>ONLINE_EVAL_INCLUDE_JUDGES</code> is <strong>off</strong> by default). It <strong>never blocks or mutates a turn</strong> — it runs as a backgrounded, timeout-bounded task (§6.4).</li>
+<li><strong>System scope</strong> requires <code>VIEW_ALL_SESSIONS</code>, enforced server-side (not just a hidden tab).</li>
+<li><strong>Signed attestations</strong> reuse the Ed25519 provenance key — verdicts are tamper-evident.</li>
+<li><strong>Judges</strong> are non-gating until calibrated against human labels (κ floor).</li>
+<li><strong>Live judges</strong> (in <code>score-turn</code>/CLI) are opt-in and clearly token-costing; default is deterministic (0 tokens).</li>
+<li><strong>Genie experts auto-scored, never double-charged</strong> — experts are scored deterministically (free) and tagged <code>agent.invocation='expert'</code>; self-cost accounting (§12b) means an expert's cost appears once on its own span and only as a display annotation on the coordinator, so portfolio totals stay correct.</li>
+<li><strong>Grounding gate (§6a)</strong> is gated globally by <code>GROUNDING_GATE_ENABLED</code> (master kill-switch in the <code>agent_eval</code> block) and per-profile <code>groundingConfig.mode</code> (default <code>observe</code> — never alters an answer). It <strong>fails open</strong> (a gate error delivers the original answer) and, in <code>enforce</code>, fails <strong>safe to annotate</strong> on any judge unavailability — it can never break a turn. The judge call's token cost routes through <code>CostManager</code>/consumption like every other LLM call. A confirmed withhold is recorded in the Ed25519 provenance chain (audit: "agent attempted out-of-scope claim, gate withheld").</li>
+</ul>
+<hr>
+<h2 id="14-extending-the-system">14. Extending the system</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>To add…</th>
+<th>Do this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A <strong>deterministic scorer / metric</strong></td>
+<td>Subclass <code>Scorer</code> in <code>scorers/deterministic.py</code>, set <code>dimension</code>/<code>kind</code>/<code>applies_to</code>/<code>gating</code>, <code>register_scorer(...)</code>.</td>
+</tr>
+<tr>
+<td>An <strong>LLM judge</strong></td>
+<td>Subclass <code>JudgeScorer</code> in <code>scorers/judges.py</code>, set <code>dimension</code>/<code>applies_to</code>/<code>rubric</code>, implement <code>build_messages</code>, register.</td>
+</tr>
+<tr>
+<td>An <strong>assertion key</strong></td>
+<td>Read it in the relevant scorer's <code>score()</code>; abstain (<code>None</code>) when absent.</td>
+</tr>
+<tr>
+<td>A <strong>new online exporter</strong> (e.g. real OTLP)</td>
+<td>Implement <code>OnlineEvalExporter.export(span)</code>, call <code>set_exporter(...)</code>.</td>
+</tr>
+<tr>
+<td>A <strong>judge provider</strong></td>
+<td>Nothing — <code>build_panel</code> picks up any configured LLM family automatically.</td>
+</tr>
+<tr>
+<td>A <strong>grounding signal</strong> (a new trigger or scope source)</td>
+<td>Add the pure primitive to <code>agent/grounding/primitives.py</code> (shared by the scorer + gate) and wire it into <code>gate.py</code>'s trigger; keep the enforce decision in <code>enforce.py</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="15-deployment-configuration">15. Deployment &amp; configuration</h2>
+<p><strong>Config flags</strong> (<code><code>core/config.py</code></code>):</p>
+<p>Deterministic scoring is free, so when enabled it scores <strong>every</strong> turn/run; only the token-costing <strong>judge layer</strong> is stochastic. All four are <strong>admin-controlled at runtime</strong> via <code>GET/POST /v1/admin/app-config</code> (<code>agent_eval</code> block) + the App Config admin panel — the <code>config.py</code> values are just startup defaults, not static flags.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ONLINE_EVAL_ENABLED</code></td>
+<td><code>True</code></td>
+<td>Score every executed turn / flow run (deterministic).</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_INCLUDE_JUDGES</code></td>
+<td><code>False</code></td>
+<td>Add the LLM-judge panel to automatic scoring (costs tokens).</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_JUDGE_SAMPLE_RATE</code></td>
+<td><code>0.05</code></td>
+<td>Fraction of turns to <em>also</em> judge (1.0 = judge every turn).</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_ALWAYS_ANOMALOUS</code></td>
+<td><code>True</code></td>
+<td>Always judge errored / heavy-self-correction turns.</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_SINK</code></td>
+<td><code>tda_eval/online_eval.jsonl</code></td>
+<td>OTLP-shaped quality span sink.</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_DEFAULT_THRESHOLDS</code></td>
+<td>seeds <code>max_out_of_scope_dbs</code>/<code>max_tool_calls</code></td>
+<td>Banded global thresholds <code>{metric: {healthy, danger}}</code> that make the threshold scorers band/gate live traffic (§6.4). Seeded so the two scope/efficiency metrics band out-of-box; runtime-mutable via <code>agent_eval.default_thresholds</code> and <strong>persisted to <code>system_settings</code></strong> (survives restart; §6.4).</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_TIMEOUT_SECONDS</code></td>
+<td><code>25</code></td>
+<td>Cap on the backgrounded judge layer per turn — bounds it so it can't leak a coroutine. <strong>Floored</strong> at the per-call timeout + margin, so it always leaves room for one full judge call; a timeout keeps the rulings that completed (§6.4).</td>
+</tr>
+<tr>
+<td><code>ONLINE_EVAL_JUDGE_CALL_TIMEOUT_SECONDS</code></td>
+<td><code>20</code></td>
+<td>Per-judge LLM call timeout in the panel — a stalled model degrades to <code>unknown</code> instead of hanging the panel. Raising it raises the layer cap with it (§6.4).</td>
+</tr>
+<tr>
+<td><code>GROUNDING_GATE_ENABLED</code></td>
+<td><code>False</code></td>
+<td>Master switch for the grounding gate (§6a). Off → the gate never runs (answers byte-identical). On → per-profile <code>groundingConfig.mode</code> applies (default <code>observe</code>). In the <code>agent_eval</code> block; restart-persisted.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Three scoring paths share the deterministic core; judges are an option on all three: <strong>automatic</strong> (online hook — judges via the admin <code>agent_eval</code> settings), <strong>manual</strong> ("Score this turn" overlay — judges toggle), <strong>offline</strong> (CLI <code>run --judges</code>). Flows have only deterministic scorers (no judges). The admin settings live in <strong>Administration → App Config → Trust</strong>: <em>Scoring</em> (automatic scoring, LLM judges, judge sample rate), <em>Quality bands</em> (the banded thresholds), <em>Enforcement</em> (the grounding / guardrail masters, the Behavioral Trust Score and circuit breaker, the OBDA policy). The former single <em>Agent Evaluation</em> card under Operations is gone.</p>
+<p><strong>Restart requirements:</strong> the <code>agent_eval</code> settings are runtime-mutable (no restart); other backend changes + <code>templates/index.html</code> require a <strong>server restart</strong>; JS/CSS are browser-reload only.</p>
+<hr>
+<h2 id="16-testing">16. Testing</h2>
+<p>CI-pure (no server, no live LLM), runnable as <code>PYTHONPATH=src python test/test_eval_*.py</code> (eval) plus <code>test/test_grounding.py</code>, <code>test/test_grounding_benchmark.py</code>, <code>test/test_kg_scope_derivation.py</code> (grounding gate + benchmark, §6a/§6b):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Asserts</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_eval_deterministic.py</code></td>
+<td>47</td>
+<td>16 core scorers + banded metrics + store + real-shape hardening (list-plan / list-metadata across classes)</td>
+</tr>
+<tr>
+<td><code>test_eval_reliability.py</code></td>
+<td>48</td>
+<td>the 13 reliability/quality scorers (incl. <code>scope_adherence</code> + <code>tool_calls</code>) + banded gating + tasks/steps wiring</td>
+</tr>
+<tr>
+<td><code>test_eval_tasks.py</code></td>
+<td>34</td>
+<td>Task Transparency framework: per-class classification, planning-collapse, rework, ReAct/genie supplements, flow node parity + real parallelism, orchestrator waves, steps≠tasks, honest abstain, composition evidence + span aggregation</td>
+</tr>
+<tr>
+<td><code>test_eval_runner.py</code></td>
+<td>15</td>
+<td>pass^k, aggregation, gate, mining</td>
+</tr>
+<tr>
+<td><code>test_eval_judges.py</code></td>
+<td>47</td>
+<td>parsing, consensus, dispatch, abstain, calibration, runner wiring + no-duplicate regression (FakePanel) + <code>scope_faithfulness</code> (domain-only rubric) + <code>answer_groundedness</code></td>
+</tr>
+<tr>
+<td><code>test_eval_online.py</code></td>
+<td>54</td>
+<td>judge sampling, every-turn scoring, judges-on hook + <code>turn_score_complete</code>, signed attestation, OTLP span, exporter, admin default thresholds + 3-band (healthy/review/danger + legacy scalar), judge-cost sink accounting</td>
+</tr>
+<tr>
+<td><code>test_eval_analysis.py</code></td>
+<td>54</td>
+<td>clustering, diff, by_agent/by_flow/by_dimension, KPI dashboard, timeline, dedup, store list/annotations, REST surface</td>
+</tr>
+<tr>
+<td><code>test_eval_cli_rest.py</code></td>
+<td>17</td>
+<td>CLI exit codes, REST endpoint presence, executor</td>
+</tr>
+<tr>
+<td><code>test_eval_flow.py</code></td>
+<td>41</td>
+<td>FlowRunRecord, 6 flow scorers, dispatch isolation (+ universal task KPIs cross-over), flow span / <code>by_flow</code>, online flow hook (fake <code>flow_db</code>)</td>
+</tr>
+<tr>
+<td><code>test_eval_genie_ux.py</code></td>
+<td>42</td>
+<td>Genie master/slave (§12b): RunRecord genie accessors + SELF-cost, genie scorers (answer_present / delegated-cost annotation / expert_success), <code>agent_runs</code> ledger + nested tree + synthetic fallback + no-double-count, <code>online_quality_by_agent</code> averages + invocation split, span attrs, REST surface</td>
+</tr>
+<tr>
+<td><code>test_grounding.py</code></td>
+<td>102</td>
+<td>Grounding gate (§6a): shared primitives (incl. the prose-mention out-of-scope trigger, oos08 closed), pure <code>GroundingGate.evaluate</code> over the mode×scope matrix, judge-backed-enforce decision (<code>resolve_enforced_verdict</code>: drift→BLOCK / faithful→PASS / abstain→ANNOTATE), adapter extraction (ReAct + Optimize shapes via <code>RunRecord</code>), config resolution, annotate/block HTML, fail-open, ensure-trusted-scope</td>
+</tr>
+<tr>
+<td><code>test_grounding_benchmark.py</code></td>
+<td>34</td>
+<td>Benchmark (§6b): confusion-matrix + headline math pinned to the design mock, <code>trigger_decision</code> <strong>pinned to the live gate's <code>needs_judge</code></strong> (incl. prose-drift), caught-policy, per-class, markdown render, dataset load/validate (36 cases, 12/18/6)</td>
+</tr>
+<tr>
+<td><code>test_kg_scope_derivation.py</code></td>
+<td>17</td>
+<td>KG deployed-scope derivation (the gate/scorer ground truth): physical-identifier primary path, discovery <code>database</code>-root fallback, no-widen guarantee, always-on full-KG trusted scope</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>552</strong></td>
+<td>(399 eval + 153 grounding/benchmark/scope)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Closed-trust-loop CI suites (§6c, the assurance-inbox / review / red-team internals):</strong> <code>test_trust_behavior.py</code> (48) · <code>test_backtest.py</code> (34) · <code>test_trust_events.py</code> (29) · <code>test_review_queue.py</code> (40, incl. the tool-result-firewall scan) · <code>test_redteam.py</code> (11) · <code>test_live_redteam.py</code> (23) — 185 assertions across the six trust-program suites, cited inline in §6c.</p>
+<blockquote>
+<p><code>test_eval_runner.py</code>'s 3 mining checks are sensitive to test ordering (env-var + session-backend singleton leak between suites) and may show as failures when the whole directory runs in one process; the product code is correct in isolation. Run that suite standalone to verify.</p>
+</blockquote>
+<hr>
+<h2 id="17-file-reference-summary">17. File reference summary</h2>
+<p><strong>Backend — eval package</strong> (<code><code>src/trusted_data_agent/eval/</code></code>):
+<code>types.py</code> (incl. <code>Verdict.band</code>) · <code>scorer.py</code> (incl. <code>banded_metric</code>) · <strong><code>tasks.py</code></strong> (Task Transparency framework — <code>classify_tasks</code>, <code>TaskSet</code>, polymorphic over <code>RunRecord</code>/<code>FlowRunRecord</code>) · <code>store.py</code> · <code>scorers/{deterministic,reliability,judges,flow,plugin_properties}.py</code> · <code>aggregate.py</code> · <code>runner.py</code> · <code>gate.py</code> · <code>mining.py</code> · <code>rest_executor.py</code> · <code>flow_runner.py</code> · <code>cli.py</code> · <code>judge.py</code> · <code>calibration.py</code> · <code>online.py</code> (incl. <code>default_assertions</code>; span attrs <code>agent.invocation</code>/<code>agent.parent_session_id</code>/<code>eval.experts</code>) · <code>analysis.py</code> (incl. <code>agent_kpi_dashboard</code>, <code>agent_timeline</code>, <strong><code>agent_runs</code></strong>, per-agent averages + invocation split) · <code>flow_types.py</code>. Genie scoring (§12b): <code>types.py</code> (genie accessors), <code>scorers/{deterministic,reliability}.py</code> (self-cost + delegated annotation).</p>
+<p><strong>Backend — grounding gate (§6a) + benchmark (§6b):</strong> <code><code>agent/grounding/</code></code>: <code>primitives.py</code> (shared with <code>eval/scorers/reliability.py</code>) · <code>corpus.py</code> (corpus family) · <code>coordinator_figures.py</code> (pure measure) · <code>types.py</code> · <code>gate.py</code> (pure decision) · <code>enforce.py</code> (judge-backed-enforce decision) · <code>adapter.py</code> (RunRecord-backed extraction + apply). <code><code>eval/benchmarks/grounding/</code></code>: <code>report.py</code> (pure matrix/headline + <code>trigger_decision</code>) · <code>dataset.py</code> + <code>dataset/fitness_db.json</code> · <code>harness.py</code> (live admin harness). Scope substrate: <code>components/builtin/knowledge_graph/handler.py</code> (<code>_derive_scope_databases</code>, <code>_derive_full_kg_scope_dbs</code>, <code>get_trusted_scope</code>).</p>
+<p><strong>Integration:</strong> <code>agent/engines/coordinate_engine.py</code> (genie turn persistence — <code>final_summary_text</code>/<code>slaves_invoked</code>/<code>genie_rollup</code>, <code>_summarize_slaves</code>; and the genie grounding-gate call to <code>run_grounding</code>) · <code>agent/execution_service.py</code> (online turn-hook seam — expert scoring + invocation/parent tags) · <code>agent/grounding/runtime.py</code> (the engine-agnostic grounding orchestration <code>run_grounding</code> → judge-backed enforce → <code>_attribute_judge_cost</code> → <code>_record_score_usage</code>) · <code>agent/executor.py</code> (grounding-gate seam <code>_run_grounding_gate_full</code>, which delegates to <code>run_grounding</code>; the four standard engines <code>agent/engines/{ideate,focus,conversation}_engine.py</code> + Optimize call the shared seam) · <code>core/flow_executor.py</code> (online flow-hook seam) · <code>core/config.py</code> (<code>ONLINE_EVAL_*</code>, <code>GROUNDING_GATE_ENABLED</code>) · <code>core/provenance.py</code> (signing key) · <code>api/rest_routes.py</code> (eval endpoints incl. <code>/evals/agents/&lt;tag&gt;/runs</code>, <code>/evals/score-turn</code> which routes judge cost through <code>_record_score_usage</code>) · <code>api/routes.py</code> (turn-details surfaces <code>is_genie_slave</code> for the slave overlay note) · <code>api/admin_routes.py</code> (<code>agent_eval</code> app-config incl. grounding master toggle).</p>
+<p><strong>Frontend:</strong> <code>static/js/handlers/agentPerformanceHandler.js</code> (Agents view — profile + flow cards, timeline, <strong>Runs Ledger</strong>, <strong>Coordination Trace Tree + waterfall</strong>, <strong>Compare</strong> + injected <code>#agent-perf-ux-css</code>) · <code>static/js/handlers/agentKpiCharts.js</code> (cross-agent inline-SVG KPI charts + timeline card) · <code>static/js/ui.js</code> (<code>injectTrajectoryEvalOverlay</code>, collapsible tier-grouped <code>_renderVerdictChips</code>, <code>_fmtMetricScore</code>, <code>agents-view</code> switch hook) · <code>static/js/eventHandlers.js</code> (overlay wiring) · <code>static/js/handlers/thresholdSliders.js</code> (banded dual-handle threshold sliders + presets) · <code>static/js/adminManager.js</code> (<code>agent_eval</code> load/save via the slider module) · <code>static/js/executionDashboard.js</code> (the Awareness panel, existing) · <code>templates/index.html</code> (<code>agents-view</code>, rail topic, the App Config → Trust panel).</p>
+<p><strong>Tests:</strong> <code>test/test_eval_*.py</code> (10 suites, 399 assertions) + <code>test/test_grounding.py</code> (102), <code>test/test_grounding_benchmark.py</code> (34), <code>test/test_kg_scope_derivation.py</code> (17) — 552 total; plus the six closed-trust-loop suites (§6c, 185 assertions).</p>
+<hr>
+<h2 id="18-design-principles-methodology-grounding">18. Design principles (methodology grounding)</h2>
+<ol>
+<li><strong>Deterministic &gt; probabilistic.</strong> Grade in code wherever possible; judges only for the open-ended residue.</li>
+<li><strong>Grade what matters, not the path.</strong> Subset/superset/must-not-call, never exact-sequence.</li>
+<li><strong>Abstention is first-class.</strong> A scorer/judge returns <code>None</code> rather than fabricating a verdict.</li>
+<li><strong>Decompose metrics.</strong> One isolated judge per dimension, evidence-cited, with an "unknown" escape; diverse-family panel + majority consensus.</li>
+<li><strong>pass^k, not pass^1.</strong> Reliability surfaces the tail single-shot accuracy hides.</li>
+<li><strong>Calibrate before trusting.</strong> A judge stays advisory until it agrees with humans (Cohen's κ).</li>
+<li><strong>Golden sets from production failures</strong>, not imagination (trace mining).</li>
+<li><strong>One substrate, two lenses.</strong> Sessions (instance) and Agents (entity) over the same signed trace — bridged by the trajectory overlay.</li>
+<li><strong>Never break a turn (or a flow run).</strong> Online eval is fully wrapped, deterministic-only, off by default — on both the turn and flow seams.</li>
+<li><strong>Honest UX.</strong> Empty/"unevaluated" states over fake numbers.</li>
+<li><strong>An agent is a profile OR a flow.</strong> Flow-agents are graded as a whole (run/node/branch/budget), profile-agnostically — a flow may compose 0 or many profiles, so its quality is never folded into one. See §12a.</li>
+<li><strong>Observe and enforce share one definition.</strong> The on-path grounding gate imports the <em>same</em> primitives as the off-path <code>scope_adherence</code> scorer and defers its hard decisions to the <em>same</em> <code>scope_faithfulness</code> judge — so what the dashboard flags and what the gate withholds can never diverge. See §6a.</li>
+<li><strong>Tiered enforcement: cheap trigger, judged decision.</strong> A deterministic signal is the recall filter; an LLM judge makes the block/deliver call. Never block deterministically (it punishes honest refusals); never run the judge when nothing triggered (it wastes tokens). See §6a.3.</li>
+<li><strong>Enforce fails safe, never breaks a turn.</strong> A gate malfunction delivers the original answer (fail-open); judge unavailability degrades to an annotation (fail-safe), never a block-on-uncertainty. Default <code>observe</code> is byte-identical to no gate. See §6a.4.</li>
+<li><strong>Prove it.</strong> Enforcement quality is a published, reproducible benchmark with FN/FP shown, not a claim. See §6b.</li>
+</ol>
+  </article>
+  <footer class="docfoot">
+    Uderia is a framework for trusted data agents. ·
+    Rendered from <code>docs/Architecture/AGENT_OPS_EVAL_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    part of the Agent Trust &amp; Assurance stack ·
+    <a href="index.html">trust home</a> ·
+    <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
+    <a href="benchmarks.html">the numbers</a>.
+  </footer>
+</div>
+</html>

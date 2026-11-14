@@ -1,0 +1,30 @@
+{
+  "name": "condition",
+  "version": "1.0.0",
+  "extension_id": "condition",
+  "display_name": "Condition (deterministic)",
+  "description": "Free, reliable boolean test on the answer — numeric threshold, substring, or regex. No LLM call. Returns a bare true/false for flow decision nodes and external automation branching.",
+  "author": "TDA Core Team",
+  "license": "MIT",
+  "category": "Automation",
+  "extension_tier": "simple",
+  "requires_llm": false,
+  "keywords": ["condition", "boolean", "threshold", "compare", "contains", "regex", "branching", "deterministic", "flow"],
+  "files": {
+    "extension": "condition.py"
+  },
+  "output_target": "silent",
+  "parameters": {
+    "supported": true,
+    "required": true,
+    "description": "The rule to test: a numeric threshold (optionally with a first/last/max/min/sum selector), 'contains=TEXT', or a /regex/ pattern.",
+    "examples": [">10", "max>=100", "min<5", "sum>=1000", "last==0", "contains=error", "/out of stock/i"]
+  },
+  "output_schema": {
+    "type": "boolean",
+    "description": "true if the rule holds for the answer, false otherwise"
+  },
+  "metadata": {
+    "tags": ["built-in", "automation", "core", "deterministic"]
+  }
+}

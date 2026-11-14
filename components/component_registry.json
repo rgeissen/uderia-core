@@ -1,0 +1,66 @@
+{
+  "registry_version": "1.0.0",
+  "last_updated": "2026-05-16T00:00:00Z",
+  "components": [
+    {
+      "component_id": "chart",
+      "plugin_directory": "chart",
+      "status": "active",
+      "display_order": 1,
+      "category": "Visualization",
+      "is_builtin": true,
+      "notes": "Data visualization using G2Plot (bar, line, pie, scatter, area, etc.)"
+    },
+    {
+      "component_id": "canvas",
+      "plugin_directory": "canvas",
+      "status": "active",
+      "display_order": 2,
+      "category": "Code",
+      "is_builtin": true,
+      "notes": "Interactive code/document workspace with CodeMirror 6 editing, live preview, and syntax highlighting"
+    },
+    {
+      "component_id": "knowledge_graph",
+      "plugin_directory": "knowledge_graph",
+      "status": "active",
+      "display_order": 3,
+      "category": "Knowledge",
+      "is_builtin": true,
+      "notes": "Entity-relationship knowledge graph for context enrichment and LLM guardrail decisions"
+    },
+    {
+      "component_id": "context_window",
+      "plugin_directory": "context_window",
+      "status": "active",
+      "display_order": 4,
+      "category": "System",
+      "is_builtin": true,
+      "notes": "Context window orchestrator — budget-aware assembly of LLM context from pluggable modules"
+    },
+    {
+      "component_id": "flow",
+      "plugin_directory": "flow",
+      "status": "active",
+      "display_order": 5,
+      "category": "Automation",
+      "is_builtin": true,
+      "notes": "Visual flow builder — LLM-authored DAGs with task_llm, task_function, and decision nodes; live execution with per-node SSE animation"
+    },
+    {
+      "component_id": "dashboard",
+      "plugin_directory": "dashboard",
+      "status": "active",
+      "display_order": 6,
+      "category": "Visualization",
+      "is_builtin": true,
+      "notes": "Persistent live dashboard canvas — pin conversation visuals into a split-screen grid with auto-refresh, edit mode, drag-and-drop layout, and multi-dashboard management"
+    }
+  ],
+  "component_status_definitions": {
+    "active": "Ready for use",
+    "beta": "Still being tested",
+    "deprecated": "Being phased out",
+    "draft": "Not yet available"
+  }
+}

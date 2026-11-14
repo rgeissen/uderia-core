@@ -1,0 +1,2452 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Trust & Assurance — shared visual tokens (ONE grammar for every surface).
+
+   Single source of the trust color/shape grammar used by every assurance
+   surface (assurance dial, journey strip, trust cards, quality chips, badges,
+   Trust Circle, Assurance Inbox). PROP-002 retired the old two-idiom split
+   (verdict vs triage): every surface now speaks ONE grammar with four
+   channels, each with exactly one job —
+
+     colour   ATTENTION PRIORITY — "how urgently should a human look here":
+              pass = quiet · warn = worth a look · danger = needs you now ·
+              (absence family: grey). NEVER a verdict — the verdict is the
+              WORD on the chip ("blocked", "masked", "parked", "clean").
+     shape    the STATE FAMILY, legible without hue (Rule 9.4):
+              pass → solid fill · warn → half-fill · danger → outlined +
+              emphasized · na → sparse dash, dim · pending → dense (moving)
+              dash, never amber and never --trust-na · unknown → ultra-sparse
+              dash. Six states, on EVERY surface — the vocabulary lives in
+              static/js/handlers/trustGrammar.js.
+     the dot  ENGRAVING — ONE mark, ONE meaning: a single state-coloured dot
+              = a mechanism ACTED on this subject (this turn / ≥1 turn in the
+              window). No pairs, no count channel. Global: the dial and the
+              ring mean the same thing by it.
+     accent   ACTIONABILITY (orange) — what you can act on: hover, focus, the
+              plus, and the owed dot ("an act is owed — pin to perform it").
+
+   What the NUMBERS mean is decided by ALTITUDE, not by surface:
+   estate = worst-of `x/y agents` · agent = mode · rate · window = `n/N turns`
+   · turn = EVENTS (states are outcomes, dots are acts, nothing is a rate).
+   A station carries TWO attributes (configuration and execution) and the
+   level is the worse of them — honest only because the drill-down names
+   which attribute drove it; do not reuse the pattern without that.
+
+   `na` is a chosen posture, not a failure: it is excluded from attention tallies
+   so a default install never ships in permanent alarm. And `danger` is reserved
+   for a DETECTED discrepancy or a measured bad outcome — never for a setting the
+   operator deliberately chose.
+
+   Contract + how to add a station: docs/Architecture/TRUST_STATUS_COMMUNICATION.md
+   Enforced by: test/test_trust_circle_grammar.mjs
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --trust-pass: #34d399;
+    --trust-pass-bg: rgba(52, 211, 153, 0.12);
+    --trust-warn: #fbbf24;
+    --trust-warn-bg: rgba(251, 191, 36, 0.12);
+    --trust-danger: #f87171;
+    --trust-danger-bg: rgba(248, 113, 113, 0.12);
+    --trust-na: var(--text-muted, #94a3b8);
+    --trust-na-bg: transparent;
+    /* Trust Membrane seal states (integrity) */
+    --trust-seal-trusted: #34d399;
+    --trust-seal-changed: #f59e0b;
+    --trust-seal-unsigned: #94a3b8;
+    --trust-seal-unattested: #38bdf8;   /* publisher-signed, not attested on this deployment */
+}
+
+[data-theme="light"] {
+    --trust-pass: #059669;
+    --trust-pass-bg: rgba(5, 150, 105, 0.10);
+    --trust-warn: #b45309;
+    --trust-warn-bg: rgba(180, 83, 9, 0.10);
+    --trust-danger: #dc2626;
+    --trust-danger-bg: rgba(220, 38, 38, 0.08);
+    --trust-seal-trusted: #059669;
+    --trust-seal-changed: #b45309;
+    --trust-seal-unsigned: #64748b;
+    --trust-seal-unattested: #0284c7;
+}
+
+/* ── Trust Journey strip ──────────────────────────────────────────────────── */
+#trust-journey-strip {
+    margin: 0.75rem 1rem 0.25rem 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-primary);
+}
+
+.tj-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.tj-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tj-sub {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+}
+
+/* Autofit on ONE row: never wrap, never scroll. An overflow container would
+   CLIP the hover tooltips (::after is positioned within it), and a wrapped
+   second row breaks the "one pipeline, left to right" read — so under width
+   pressure the connectors collapse first and the stage glyphs shrink uniformly
+   (floor 15px, proportions preserved via aspect-ratio + % radius/icon). */
+.tj-track {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.tj-link {
+    flex: 1 1 8px;
+    min-width: 2px;
+    height: 1px;
+    background: var(--border-primary);
+}
+
+/* Strip-scoped shrink sizing ONLY — the answer capsule reuses .tj-stage in its
+   own container and must keep the fixed 26px canonical size. At full width the
+   flex-basis reproduces exactly 26px / 8px radius / 12px icon. */
+.tj-track .tj-stage {
+    flex: 0 1 26px;
+    min-width: 15px;
+    width: auto;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 30.5%;
+}
+.tj-track .tj-stage svg { width: 46%; height: 46%; }
+
+/* Stage node — a real button (keyboard focusable, click scrolls to its card) */
+.tj-stage {
+    position: relative;
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    /* Canonical stage-glyph shape — a rounded square, identical on EVERY surface
+       (Live Status strip + answer capsule). The state grammar stays border-style +
+       fill (solid/half/dashed); the container shape never varies per surface. */
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--trust-na);
+    background: var(--trust-na-bg);
+    color: var(--trust-na);
+    cursor: default;
+    padding: 0;
+}
+
+.tj-stage svg { width: 12px; height: 12px; display: block; }
+.tj-stage[data-scroll] { cursor: pointer; }
+.tj-stage:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: 2px; }
+
+/* Shape + fill grammar */
+.tj-stage.tj-pass {
+    border-style: solid;
+    border-color: var(--trust-pass);
+    background: var(--trust-pass-bg);
+    color: var(--trust-pass);
+}
+.tj-stage.tj-warn {
+    border-style: solid;
+    border-color: var(--trust-warn);
+    /* half-fill: the layer ran AND acted */
+    background: linear-gradient(180deg, var(--trust-warn-bg) 50%, transparent 50%);
+    color: var(--trust-warn);
+}
+.tj-stage.tj-danger {
+    border-style: solid;
+    border-width: 2px;
+    border-color: var(--trust-danger);
+    background: var(--trust-danger-bg);
+    color: var(--trust-danger);
+}
+.tj-stage.tj-na {
+    border-style: dashed;
+    border-color: var(--border-secondary, var(--trust-na));
+    color: var(--trust-na);
+    /* NB: never dim via element opacity — the u-tip tooltip is this element's
+       ::after, and a pseudo can't exceed its parent's opacity (it rendered at
+       65% and was hard to read). Dim the ICON only; the tooltip stays opaque. */
+}
+.tj-stage.tj-na svg { opacity: 0.65; }
+/* `watching` — a CHOSEN posture that records and stops nothing (W1). Absence family:
+   slate like `na`, but a LONG dash and a heavier border so it is never mistaken for
+   "not turned on" — turned on, watching, not protecting. Never amber, never green. */
+.tj-stage.tj-watching {
+    border-style: solid;
+    border-width: 1.5px;
+    border-color: var(--trust-pass);
+    color: var(--trust-pass);
+}
+
+/* Connector inherits the worse of its neighbouring stages' emphasis (set in JS
+   via class) — default stays the quiet border color. */
+.tj-link.tj-pass { background: var(--trust-pass); opacity: 0.35; }
+.tj-link.tj-warn { background: var(--trust-warn); opacity: 0.5; }
+.tj-link.tj-danger { background: var(--trust-danger); opacity: 0.6; }
+
+/* ── Behavioral Trust mark (roster ring + seal) ───────────────────────────── */
+.trust-mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+}
+.trust-mark svg { display: block; }
+
+/* ── Theme-aware CSS tooltip (no JS, respects the no-native-gray-box rule) ──
+   Positioned BELOW the glyph: the strip lives at the very top of the scrolling
+   status panel, so an above-tooltip would be clipped by the scroll container.
+   `.u-tip` is the GENERIC host class — put it + data-tip on any trust-surface
+   element instead of a native `title` attribute (the gray browser box is not
+   Uderia-UX compliant). `.u-tip-right` right-aligns for elements near the
+   panel's right edge. */
+.u-tip { position: relative; }
+
+/* uTip.js (the viewport-clamped body layer) supersedes the CSS renderer below —
+   suppressed, never doubled. The ::after tooltip is positioned inside its host, so
+   overflow ancestors (the scrolling Live Status panel) and the viewport's right
+   edge CUT it; the JS layer clamps horizontally and flips above when out of room.
+   Without the script (absence-tolerant) these rules still render the tooltip. */
+html.utip-js .u-tip[data-tip]::after,
+html.utip-js .trust-mark[data-tip]::after,
+html.utip-js .tj-stage[data-tip]::after { display: none !important; content: none; }
+/* The HOST must outrank its later siblings while the tip is open.
+   `.u-tip` is position:relative with z-index:auto, so in a list of u-tip buttons
+   every LATER button paints in the same layer and lands on top of an earlier
+   button's tooltip — the tip reads as "transparent" when it is actually being
+   overpainted by the row beneath. Raising the host (not just the ::after) lifts
+   the whole local layer, which is the only fix that survives an ancestor that
+   happens to establish a stacking context. */
+.u-tip[data-tip]:hover,
+.u-tip[data-tip]:focus-visible,
+.u-tip[data-tip]:focus-within,
+/* TC-89: .trust-mark shares the ::after mechanics below but was missing this raise, so its
+   tooltip could be overpainted by later row siblings — the exact defect this comment
+   documents. Same rule, same reason. */
+.trust-mark[data-tip]:hover,
+.trust-mark[data-tip]:focus-visible,
+.tj-stage[data-tip]:hover { z-index: 9000; }
+.u-tip[data-tip]::after,
+.trust-mark[data-tip]::after,
+.tj-stage[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-2px);
+    white-space: pre-line;
+    max-width: 300px;
+    width: max-content;
+    text-align: left;
+    /* ~10px was below comfortable reading size for a popover that carries
+       instructions (the acknowledge/quarantine tips are three lines of guidance). */
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+    /* OPAQUE, always. This read `var(--bg-overlay, var(--card-bg))`, and where
+       --bg-overlay does not resolve the fallback --card-bg is as low as 0.6 alpha —
+       so the content behind the tooltip stayed legible through it and the two layers
+       of text interleaved. A tooltip is a popover: it occludes, or it is unreadable. */
+    background-color: var(--tip-bg, #23262c);
+    /* A tooltip is a popover: it occludes, or it is unreadable. Nothing behind it
+       may show through, and nothing may composite it down — hence an explicit
+       opaque background-color (not the `background` shorthand, which a stray
+       `background-image` could still layer on), full opacity on the element
+       itself, and its own stacking context so descendants cannot escape it. */
+    isolation: isolate;
+    backdrop-filter: none;
+    border: 1px solid var(--border-primary);
+    border-radius: 0.375rem;
+    padding: 0.35rem 0.55rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease, transform 120ms ease;
+    z-index: 9000;
+}
+
+.u-tip[data-tip]:hover::after,
+.u-tip[data-tip]:focus-visible::after,
+.trust-mark[data-tip]:hover::after,
+.tj-stage[data-tip]:hover::after,
+.tj-stage[data-tip]:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Generic tooltips mimic the native hover-dwell (dense areas must not flicker) */
+.u-tip[data-tip]:hover::after,
+.u-tip[data-tip]:focus-visible::after { transition-delay: 200ms; }
+
+/* ── The tooltip's SECOND tier (`data-tip-note`, rendered by uTip.js) ─────────
+   A tip that carries a consequence AND the boundary on that consequence was three
+   sentences at one weight — a wall, where the reader has to work out which line is
+   the point. The lead states what the control DOES; the note is the caveat, set
+   quieter and separated by a hairline, so the shape of the tooltip carries the
+   hierarchy before a word is read. Opt-in: a tip with no note is unchanged. */
+#u-tip-layer .u-tip-note {
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--border-secondary, rgba(127, 127, 127, 0.22));
+    font-size: 0.66rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+/* Generic edge alignment (elements near the panel's right/left edge) */
+.u-tip.u-tip-right[data-tip]::after { left: auto; right: 0; transform: translateX(0) translateY(-2px); }
+.u-tip.u-tip-right[data-tip]:hover::after,
+.u-tip.u-tip-right[data-tip]:focus-visible::after { transform: translateX(0) translateY(0); }
+/* NAMING TRAP, read before using either: these describe ALIGNMENT, not direction.
+   `u-tip-left`  aligns the tooltip's LEFT edge to the host  → it grows RIGHTWARD
+   `u-tip-right` aligns its RIGHT edge to the host           → it grows LEFTWARD
+   So an element near the RIGHT edge of a panel needs `u-tip-right`, and vice versa.
+   Getting it backwards pushes the tooltip straight off the panel, where a scroll
+   container clips it — a pseudo-element cannot escape one, so there is no runtime
+   rescue. The pin at the band's right edge was exactly this mistake. */
+.u-tip.u-tip-left[data-tip]::after { left: 0; transform: translateX(0) translateY(-2px); }
+.u-tip.u-tip-left[data-tip]:hover::after,
+.u-tip.u-tip-left[data-tip]:focus-visible::after { transform: translateX(0) translateY(0); }
+
+/* Edge stages: keep tooltips inside the panel */
+.tj-stage[data-tip].tj-tip-left::after { left: 0; transform: translateX(0) translateY(-2px); }
+.tj-stage[data-tip].tj-tip-left:hover::after,
+.tj-stage[data-tip].tj-tip-left:focus-visible::after { transform: translateX(0) translateY(0); }
+.tj-stage[data-tip].tj-tip-right::after { left: auto; right: 0; transform: translateX(0) translateY(-2px); }
+.tj-stage[data-tip].tj-tip-right:hover::after,
+.tj-stage[data-tip].tj-tip-right:focus-visible::after { transform: translateX(0) translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+    .tj-stage[data-tip]::after { transition: none; }
+}
+
+/* ── Provenance chain, drawn as a chain (answer capsule) ─────────────────── */
+.pc-strip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+.pc-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--trust-pass);
+    color: var(--trust-pass);
+    font-size: 0.6rem;
+    background: var(--trust-pass-bg);
+    flex: 0 0 auto;
+}
+.pc-step .pc-type { color: var(--text-primary); opacity: 0.85; }
+.pc-step .pc-hash { color: var(--text-muted); font-size: 0.56rem; }
+.pc-link {
+    width: 12px;
+    height: 1.5px;
+    background: var(--trust-pass);
+    opacity: 0.45;
+    flex: 0 0 auto;
+}
+/* Honest tamper state: verification failed → the chain reads broken */
+.pc-strip.pc-broken .pc-step { border-color: var(--trust-danger); color: var(--trust-danger); background: var(--trust-danger-bg); }
+.pc-strip.pc-broken .pc-link { background: var(--trust-danger); opacity: 0.7; border-top: 1.5px dashed var(--trust-danger); height: 0; }
+
+/* ── Shared trust verdict chip grammar (for card family unification) ──────── */
+.trust-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.66rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid var(--border-secondary);
+    color: var(--text-muted);
+    /* A chip that wraps is fine; a chip that wraps mid-word is not. Top-align so a
+       two-line pill sits square against its siblings instead of floating. */
+    align-items: flex-start;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+/* Chips wrapped as UNITS, evenly spaced — they were separated by literal spaces, so a
+   wrap put the break wherever the text happened to run out. */
+.trust-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    align-items: flex-start;
+}
+
+/* An unsupported claim is usually a sentence, not an identifier. Monospace made prose
+   look like code and invited the reader to hunt for a schema name that isn't there. */
+.trust-claim {
+    font-style: italic;
+    color: inherit;
+}
+.trust-claim-ident {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-style: normal;
+}
+.trust-claim-list { display: flex; flex-direction: column; gap: 0.15rem; }
+.trust-chip.tc-pass { border-color: var(--trust-pass); color: var(--trust-pass); background: var(--trust-pass-bg); }
+.trust-chip.tc-warn { border-color: var(--trust-warn); color: var(--trust-warn); background: var(--trust-warn-bg); }
+.trust-chip.tc-danger { border-color: var(--trust-danger); color: var(--trust-danger); background: var(--trust-danger-bg); }
+/* The absence family on a chip (Rule 9.4 / PROP-002): dashes belong to absence on every
+   trust surface — na sparse, unknown ultra-sparse — so an abstained gate never wears a
+   verdict's solid border. */
+.trust-chip.tc-na { border-style: dashed; border-color: var(--trust-na); color: var(--text-muted); background: transparent; }
+.trust-chip.tc-watching { border-style: solid; border-width: 1.5px; border-color: var(--trust-pass); color: var(--trust-pass); background: transparent; }
+.trust-chip.tc-unknown { border-style: dashed; border-color: var(--trust-na); color: var(--text-muted); background: transparent; opacity: .8; }
+
+/* ── RAG Trust Hardening Wave 1 (U2): inline claim transparency ────────────
+   Unsupported-by-the-knowledge-base spans marked IN the rendered answer:
+   dotted amber underline, trust tokens, no background repaint, motion-free.
+   The u-tip carries the "unsupported ≠ false" explanation. */
+mark.claim-unsupported {
+    background: transparent;
+    color: inherit;
+    border-bottom: 2px dotted var(--trust-warn, #f59e0b);
+    padding-bottom: 1px;
+    cursor: help;
+}
+:root[data-theme="light"] mark.claim-unsupported {
+    border-bottom-color: var(--trust-warn, #b45309);
+}
+
+/* ── S3 Compute with Lineage: number provenance in the rendered answer ──────
+   A figure the answer states wears its lineage: computed with a receipt (dotted
+   underline in the pass token — hover names the operation, rows, statement; click
+   opens the rows), quoted verbatim from a result row (hairline dotted, muted),
+   or unreceipted (the agent's own arithmetic — a faint mark, never red: a number
+   that may still be right). No background repaint, motion-free. */
+mark.figure-receipted, mark.figure-quoted, mark.figure-unreceipted {
+    background: transparent;
+    color: inherit;
+    padding-bottom: 1px;
+    text-decoration: none;
+}
+mark.figure-receipted {
+    border-bottom: 2px dotted var(--trust-pass, #10b981);
+    cursor: pointer;
+}
+mark.figure-quoted {
+    border-bottom: 1px dotted var(--text-muted, #94a3b8);
+    cursor: pointer;
+}
+mark.figure-unreceipted {
+    border-bottom: 1px dashed var(--text-muted, #94a3b8);
+    cursor: help;
+}
+/* a code the knowledge graph declares ('120' = Robbery): the quoted family's hairline —
+   traceable, nothing to open (no rows: the lineage is the ontology, named on hover) */
+mark.figure-declared {
+    background: transparent;
+    color: inherit;
+    padding-bottom: 1px;
+    text-decoration: none;
+    border-bottom: 1px dotted var(--text-muted, #94a3b8);
+    cursor: help;
+}
+mark.figure-receipted:focus-visible, mark.figure-quoted:focus-visible {
+    outline: 2px solid var(--teradata-orange, #F15F22);
+    outline-offset: 2px;
+}
+.fl-backdrop {
+    position: fixed; inset: 0; z-index: 1200;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.fl-dialog {
+    background: var(--card-bg, #1f2937); color: var(--text-primary, #e5e7eb);
+    border: 1px solid var(--border-primary, #374151); border-radius: 12px;
+    width: min(720px, 100%); max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.fl-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-secondary, #374151); }
+.fl-title { font-size: 0.95rem; font-weight: 600; margin: 0; }
+.fl-close { background: transparent; border: 1px solid var(--border-secondary, #374151); color: var(--text-muted, #94a3b8); border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.fl-close:hover, .fl-close:focus-visible { color: var(--text-primary, #e5e7eb); border-color: var(--teradata-orange, #F15F22); outline: none; }
+.fl-body { padding: 12px 16px; overflow: auto; font-size: 0.85rem; }
+.fl-lead { color: var(--text-muted, #94a3b8); margin: 0 0 10px; }
+.fl-lead code { font-size: 0.78rem; color: var(--text-primary, #e5e7eb); }
+.fl-receipt { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0 0 10px; }
+.fl-receipt dt { color: var(--text-muted, #94a3b8); }
+.fl-receipt dd { margin: 0; color: var(--text-primary, #e5e7eb); }
+.fl-table-wrap { overflow: auto; max-height: 40vh; border: 1px solid var(--border-secondary, #374151); border-radius: 8px; }
+.fl-table { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+.fl-table th, .fl-table td { padding: 4px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-secondary, #374151); }
+.fl-table th { color: var(--text-muted, #94a3b8); font-weight: 600; position: sticky; top: 0; background: var(--card-bg, #1f2937); }
+.fl-table tr.fl-hit td { background: var(--trust-pass-bg, rgba(16, 185, 129, 0.12)); }
+.fl-empty { color: var(--text-muted, #94a3b8); margin: 0; }
+/* PROP-006 — where a statement's rows came from, and a combine's inputs (the second hop). */
+.fl-source { margin: 0 0 10px; color: var(--text-primary, #e5e7eb); }
+.fl-source-k { color: var(--text-muted, #94a3b8); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.fl-inputs { margin: 0 0 10px; border: 1px solid var(--border-secondary, #374151); border-radius: 8px; padding: 8px 10px; }
+.fl-inputs-h { color: var(--text-muted, #94a3b8); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.fl-inputs ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.fl-inputs li { color: var(--text-primary, #e5e7eb); }
+.fl-in-n { font-weight: 600; }
+.fl-in-sql, .fl-sql code { display: block; font-size: 0.75rem; color: var(--text-muted, #94a3b8); white-space: pre-wrap; word-break: break-word; margin-top: 2px; }
+.fl-sql { margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--border-secondary, #374151); border-radius: 8px; background: transparent; }
+
+/* ── Chunk-browser screening chips (corpus inspection — suspicious chunks) ──
+   Problem tags stamped on chunks the deterministic corpus screen flags, in the
+   knowledge repository chunk browser + chunk detail window. Labels/counts only. */
+.chunk-screen-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.chunk-screen-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 9px;
+    font-size: 10px;
+    line-height: 1.5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    border: 1px solid;
+    white-space: nowrap;
+    cursor: help;
+}
+.chunk-screen-chip--danger {
+    color: var(--trust-danger, #f87171);
+    border-color: var(--trust-danger, #f87171);
+    background: var(--trust-danger-bg, rgba(248, 113, 113, 0.12));
+}
+.chunk-screen-chip--warn {
+    color: var(--trust-warn, #fbbf24);
+    border-color: var(--trust-warn, #fbbf24);
+    background: var(--trust-warn-bg, rgba(251, 191, 36, 0.12));
+}
+
+/* Screen filter — All · Flagged · Blocking. A segmented control rather than a toggle:
+   the three populations differ by ~60x and each carries its own count, because they were
+   previously reported in three different units (chunks / documents / URLs) with no unit
+   stated. `Blocking` takes the danger token — it is the only population that gates. */
+.rag-sf-btn {
+    padding: 5px 11px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-right: 1px solid var(--border-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+.rag-sf-btn:last-child { border-right: none; }
+.rag-sf-btn:hover { background: var(--hover-bg-strong, rgba(148, 163, 184, 0.12)); color: var(--text-primary); }
+.rag-sf-btn[aria-pressed="true"] { color: var(--text-primary); background: var(--hover-bg-strong, rgba(148, 163, 184, 0.16)); }
+.rag-sf-btn[data-sf="blocking"][aria-pressed="true"] {
+    color: var(--trust-danger, #f87171);
+    background: var(--trust-danger-bg, rgba(248, 113, 113, 0.14));
+}
+.rag-sf-count { opacity: 0.7; font-weight: 500; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.rag-sf-btn[data-sf="blocking"] .rag-sf-count--zero { opacity: 0.55; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The Trust Circle — the closed loop as a living instrument (Agents lens).
+   Visual language borrowed from the anatomy-of-trust story: the dashed
+   membrane, the star, mono uppercase labels + serif-italic annotations.
+   Theme-aware via trust tokens; motion respects prefers-reduced-motion. */
+.tc-root {
+    display: grid;
+    grid-template-columns: minmax(340px, 480px) 1fr;
+    gap: 22px;
+    /* START, never CENTER. The row's height is the taller of (ring, panel), and the
+       panel's height changes with what it is showing — a peek is short, a pinned
+       station is taller, and the "?" explainer is taller again. Under `center` the
+       ring is centred in that row, so every panel-height change TRANSLATES the ring:
+       hovering a neighbour shrank the panel, the ring slid up, the pointer fell off
+       the node, `mouseleave` restored the pinned panel, the ring slid back under the
+       pointer, `mouseenter` fired — a visible flicker loop with no stable state.
+       Anchoring the ring makes panel height and ring geometry independent, so no
+       panel content can ever feed back into pointer targeting. */
+    align-items: start;
+    padding: 6px 2px 14px;
+}
+@media (max-width: 900px) { .tc-root { grid-template-columns: 1fr; } }
+
+.tc-stage {
+    position: relative;        /* anchors the shared agent-picker popover */
+    /* Lifted from rgba(0,0,0,.10): darkening an already-dark panel buried the
+       hairline star and the dashed membrane. A faint LIGHT wash reads as a stage
+       in both themes; the border still separates it from the page. */
+    background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(127,127,127,0.05));
+    border: 1px solid var(--border-secondary);
+    border-radius: 16px;
+    padding: 6px;
+}
+/* overflow visible = the belt to the viewBox's ±32px side margins: should a
+   plate ever outgrow even those, it paints into the stage's padding instead of
+   being clipped mid-glyph ("10" for "100%" — a wrong READING, not a blemish). */
+.tc-svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.tc-constellation { fill: var(--text-muted); opacity: 0.12; }
+.tc-membrane {
+    fill: none;
+    stroke: var(--an-map-soft, var(--border-primary));
+    stroke-width: 1.4;
+    stroke-dasharray: 9 7;
+}
+.tc-membrane-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.32em;
+    fill: var(--text-muted);
+    opacity: 0.85;
+}
+.tc-rail { fill: none; stroke: var(--border-secondary); stroke-width: 1; opacity: .35; }
+.tc-gnd  { fill: none; stroke: var(--border-secondary); stroke-width: 1; opacity: .4; }
+
+/* ── Markers on a band (R-3, ledger §4.3) ─────────────────────────────────────
+   The eight stations are arcs of ONE continuous band — the Live Status dial's
+   geometry at ring scale, so the two instruments read as one family. Weight
+   BEFORE colour (Rule 9.4): thickness rises with attention, so the state
+   survives a colourblind reader and reads before the hue does. `na` is dashed —
+   honest absence, a protection that exists but is not turned on. */
+.tc-bandseg { fill: none; stroke-linecap: butt; transition: stroke-width .12s ease; stroke: var(--trust-na); }
+.tc-node[data-tc-state="pass"]    .tc-bandseg { stroke: var(--trust-pass);   stroke-width: 3.4; }
+.tc-node[data-tc-state="warn"]    .tc-bandseg { stroke: var(--trust-warn);   stroke-width: 4.6; }
+.tc-node[data-tc-state="danger"]  .tc-bandseg { stroke: var(--trust-danger); stroke-width: 6.2; }
+.tc-node[data-tc-state="na"]      .tc-bandseg,
+.tc-node[data-tc-state="unknown"] .tc-bandseg { stroke: var(--trust-na); stroke-width: 1.6; stroke-dasharray: 2.5 4.5; opacity: .55; }
+/* `pending` — not in yet: denser dash, never --trust-na (Rule 9.1), and never
+   amber (Rule 3b.8 — waiting is not attention). */
+.tc-node[data-tc-state="pending"] .tc-bandseg { stroke: var(--text-muted); stroke-width: 2.2; stroke-dasharray: 1.5 2.5; opacity: .8; }
+/* `watching` — on, recording, stopping nothing, and nothing found: QUIET, so green
+   (colour = attention, Rule 4.1), but HOLLOW and thinner than `pass` — the shape channel
+   says "not protecting". Dashed means "not turned on" and stays the absence family's; a
+   dashed watching box read as off, and slate read as "no reading" (operator, prod @PXPROD). */
+.tc-node[data-tc-state="watching"] .tc-bandseg { stroke: var(--trust-pass); stroke-width: 2.0; opacity: .8; }
+.tc-bandhit { fill: none; stroke: transparent; stroke-width: 40; cursor: pointer; }
+.tc-node:hover .tc-bandseg, .tc-node:focus-visible .tc-bandseg,
+.tc-node-pinned .tc-bandseg { stroke-width: 7.2; }
+.tc-node-pinned[data-tc-state="na"] .tc-bandseg,
+.tc-node:hover[data-tc-state="na"] .tc-bandseg { stroke-width: 2.8; opacity: .85; }
+.tc-node-pinned[data-tc-state="watching"] .tc-bandseg,
+.tc-node:hover[data-tc-state="watching"] .tc-bandseg { stroke-width: 3.6; opacity: 1; }
+
+/* The acted dot — the SAME mark as the dial's, with the SAME meaning (PROP-002
+   as amended: ONE dot, ONE meaning): a single state-coloured dot = a mechanism ACTED
+   on this subject (here: on ≥1 turn in the window). The accent owed dot sits
+   further out on its own actionability channel. */
+.tc-acted-dot { stroke: none; fill: var(--trust-na); }
+.tc-node[data-tc-state="pass"]   .tc-acted-dot { fill: var(--trust-pass); }
+.tc-node[data-tc-state="warn"]   .tc-acted-dot { fill: var(--trust-warn); }
+.tc-node[data-tc-state="danger"] .tc-acted-dot { fill: var(--trust-danger); }
+
+/* The owed dot — "an act is owed here" (sign · attest · decide) on the
+   ACTIONABILITY channel: accent orange, the one colour reserved for what you
+   can act on (Rule 9.5). Deliberately not the acted mark and not a state — outstanding
+   work is neither an event nor a verdict. */
+.tc-owed-dot { fill: var(--teradata-orange, #F15F22); stroke: none; }
+
+/* The plate's hit area — the station's label, reading and motto are part of the
+   control, not a caption beside it. The text itself stays pointer-events:none
+   (thin glyphs are a miserable hit target); this rect carries the gesture. */
+.tc-plate-hit { fill: transparent; stroke: none; cursor: pointer; }
+
+/* The marker's halo — a soft seat under the box so it reads ON the band. */
+.tc-node-halo { fill: var(--bg-primary, #0b0f14); stroke: none; opacity: .85; }
+
+/* Focus-dim (the prototype's `.dim`): attending to one station quiets the seven
+   others, so the band segment, marker and plate of the focused one read as a unit.
+   CSS-only via :has() — browsers without it simply keep the flat rendering. */
+.tc-svg:has(.tc-node:hover) .tc-node:not(:hover),
+.tc-svg:has(.tc-node-pinned) .tc-node:not(.tc-node-pinned) { opacity: .45; }
+.tc-svg:has(.tc-node-pinned) .tc-node:hover { opacity: 1; }
+.tc-node { transition: opacity .15s ease; }
+.tc-close-arc {
+    fill: none;
+    stroke: var(--teradata-orange, #F15F22);
+    stroke-width: 2;
+    opacity: 0.85;
+}
+.tc-close-label {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 13.5px;
+    fill: var(--teradata-orange, #F15F22);
+}
+
+/* Station nodes — the canonical trust-token grammar (shape + fill, not hue alone) */
+.tc-node { cursor: pointer; }
+.tc-node:focus-visible .tc-node-box { outline: none; stroke-width: 2.6; }
+.tc-node-box {
+    fill: var(--card-bg);
+    stroke: var(--trust-na);
+    stroke-width: 1.6;
+    stroke-dasharray: 4 3;                       /* na default: dashed = honest absence */
+    transition: stroke 0.2s, fill 0.2s;
+}
+.tc-node-icon { color: var(--trust-na); opacity: 0.75; }
+.tc-node[data-tc-state="pass"] .tc-node-box   { stroke: var(--trust-pass);   fill: var(--trust-pass-bg);   stroke-dasharray: none; }
+.tc-node[data-tc-state="pass"] .tc-node-icon  { color: var(--trust-pass); opacity: 1; }
+.tc-node[data-tc-state="warn"] .tc-node-box   { stroke: var(--trust-warn);   fill: var(--trust-warn-bg);   stroke-dasharray: none; }
+.tc-node[data-tc-state="warn"] .tc-node-icon  { color: var(--trust-warn); opacity: 1; }
+.tc-node[data-tc-state="danger"] .tc-node-box { stroke: var(--trust-danger); fill: var(--trust-danger-bg); stroke-dasharray: none; stroke-width: 2.2; }
+.tc-node[data-tc-state="danger"] .tc-node-icon{ color: var(--trust-danger); opacity: 1; }
+.tc-node[data-tc-state="watching"] .tc-node-box { stroke: var(--trust-pass); fill: var(--card-bg); stroke-dasharray: none; stroke-width: 1.6; }
+.tc-node[data-tc-state="watching"] .tc-node-icon { color: var(--trust-pass); opacity: 0.9; }
+.tc-node:hover .tc-node-box { stroke-width: 2.4; }
+
+.tc-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    /* Blueprint, not body colour: a station NAME is the map layer — it names a
+       position on the instrument; the READING (the band + the value under it) is
+       the data. Shares --an-map with the Anatomy: structure in blue, readings in
+       primary. ONE fill declaration — the gate counts them (cascade trap, twice). */
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    fill: var(--an-map, var(--text-primary));
+    pointer-events: none;
+}
+.tc-sub {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    /* Serif italic thins out optically — at the muted grey it disappeared. A step
+       larger than the mono beside it, and mixed toward body text: still an aside,
+       no longer a whisper. */
+    font-size: 13.5px;
+    fill: color-mix(in srgb, var(--text-muted) 55%, var(--text-primary));
+    pointer-events: none;
+}
+.tc-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    /* Second line of the engraved plate — the reading, directly under the name
+       (data before decoration). It used to sit under the marker, which is exactly
+       where the band now curves through at every angle except top and bottom. */
+    font-size: 13px;
+    fill: var(--text-primary);
+    opacity: .85;
+    pointer-events: none;
+}
+
+/* Center — the agent star */
+.tc-center { cursor: pointer; }
+.tc-center-halo { fill: transparent; stroke: none; }
+/* Hover = the Anatomy grammar: no ring — the change hint lights up instead. */
+.tc-center:hover .tc-center-hint, .tc-center:focus-visible .tc-center-hint {
+    opacity: 1; fill: var(--teradata-orange, #F15F22);
+}
+/* The subject star, prototype-verbatim: faint fill + hairline stroke, the plus
+   seated in its body. Theme-aware — the identity no longer sits ON the star, so
+   the fixed-light text of the steel era is retired with the gradient. */
+/* The star wears the Anatomy's BLUEPRINT blue (--an-map): the same subject, the
+   same line colour, on both instruments — the map layer's hue, which is none of
+   the trust colours and none of the accent (colour means attention; the subject
+   never reports state). A focused agent's class tint still overrides the stroke
+   inline (applyModel); this is the estate/default dress. */
+.tc-star-i { fill: var(--an-map, var(--text-muted)); opacity: .07; stroke: none; }
+.tc-star-f { fill: none; stroke: var(--an-map, var(--text-muted)); stroke-width: .42; opacity: .85; }
+.tc-subject-plus { stroke: var(--an-map, var(--text-muted)); stroke-width: 1.5; stroke-linecap: round; opacity: .85; }
+.tc-center:hover .tc-subject-plus, .tc-center:focus-visible .tc-subject-plus { stroke: var(--teradata-orange); opacity: 1; }
+.tc-center:hover .tc-star-f { stroke: var(--teradata-orange); opacity: 1; }
+.tc-center:hover .tc-center-label { fill: var(--teradata-orange); }
+.tc-center-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 15px;
+    letter-spacing: 0.13em;
+    fill: var(--text-primary);
+}
+.tc-center-sub {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 14px;
+    fill: color-mix(in srgb, var(--text-muted) 55%, var(--text-primary));
+}
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+    .tc-sub, .tc-center-sub { fill: var(--text-primary); opacity: .8; }
+}
+.tc-center-hint {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    fill: var(--text-muted);
+    opacity: 0.7;
+    transition: opacity 0.15s, fill 0.15s;
+}
+
+/* Live pulse */
+.tc-pulse { fill: var(--teradata-orange, #F15F22); }
+@keyframes tcFlash {
+    0%   { filter: brightness(1); }
+    25%  { filter: brightness(1.9) drop-shadow(0 0 6px currentColor); }
+    100% { filter: brightness(1); }
+}
+.tc-node.tc-flash .tc-node-box, .tc-node.tc-flash .tc-node-icon { animation: tcFlash 1.4s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+    .tc-node.tc-flash .tc-node-box, .tc-node.tc-flash .tc-node-icon { animation: none; }
+}
+
+/* ── the narrative / detail panel ── */
+.tc-panel { min-width: 0; }
+.tc-eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teradata-orange, #F15F22);
+    margin: 0 0 8px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.tc-headline {
+    font-size: 17px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+    line-height: 1.3;
+}
+.tc-headline em { font-style: italic; color: var(--teradata-orange, #F15F22); }
+.tc-headline-tail { display: block; margin-top: 2px; font-weight: 500; }
+.tc-copy { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 10px; max-width: 56ch; }
+/* The verdict (W2) — three short rows, the glance layer. The row that needs you carries
+   the attention colour (colour = attention, Rule 4.1); the other two are plain. */
+.tc-verdict-prose {
+    font-family: Georgia, "Times New Roman", serif; font-style: italic;
+    font-size: 13px; line-height: 1.55; color: var(--text-muted);
+    margin: 0 0 10px; max-width: 60ch;
+}
+.tc-verdict-prose .tc-v-lead {
+    font-family: inherit; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-style: normal; font-weight: 650; color: var(--text-primary);
+}
+.tc-v-lead.tc-v-danger { color: var(--trust-danger); }
+.tc-v-lead.tc-v-warn   { color: var(--trust-warn); }
+.tc-v-lead.tc-v-pass   { color: var(--trust-pass); }
+.tc-howto { margin: 8px 0 10px; }
+.tc-howto summary { cursor: pointer; font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.tc-howto summary:focus-visible { outline: 2px solid var(--teradata-orange, #F15F22); outline-offset: 2px; }
+.tc-howto[open] summary { margin-bottom: 6px; }
+.tc-howto .tc-legend { margin-top: 6px; }
+.tc-facts { margin: 0 0 10px; padding-left: 16px; }
+.tc-facts li { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+.tc-hint { font-size: 11px; color: var(--text-muted); opacity: 0.8; margin: 6px 0 0; }
+
+/* The question a station answers (W5) — leads the panel, between the eyebrow and the
+   consequence headline; reading register, map colour (it names the position). */
+.tc-q {
+    margin: 2px 0 4px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 13.5px;
+    color: var(--text-muted);
+}
+/* The lane chip (W3) — when the station speaks; map register, not a reading. */
+.tc-lane {
+    display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9.5px;
+    letter-spacing: .02em; text-transform: none;
+    color: var(--text-muted); border: 1px solid var(--border-secondary); background: transparent;
+}
+.tc-dim-route { border-style: solid; }
+.tc-state-chip {
+    font-size: 9px; letter-spacing: 0.08em; padding: 1px 8px; border-radius: 9999px;
+    border: 1px solid; text-transform: none; font-family: inherit;
+}
+.tc-state-pass   { color: var(--trust-pass);   border-color: var(--trust-pass);   background: var(--trust-pass-bg); }
+.tc-state-warn   { color: var(--trust-warn);   border-color: var(--trust-warn);   background: var(--trust-warn-bg); }
+.tc-state-danger { color: var(--trust-danger); border-color: var(--trust-danger); background: var(--trust-danger-bg); }
+.tc-state-na     { color: var(--trust-na);     border-color: var(--trust-na);     background: transparent; border-style: dashed; }
+.tc-state-pending { color: var(--text-muted);  border-color: var(--text-muted);   background: transparent; border-style: dotted; }
+.tc-state-unknown { color: var(--trust-na);    border-color: var(--trust-na);     background: transparent; border-style: dashed; opacity: .8; }
+.tc-state-watching { color: var(--trust-pass); border-color: var(--trust-pass);   background: transparent; border-style: solid; border-width: 1.5px; }
+
+.tc-cta {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 650;
+    color: var(--teradata-orange, #F15F22);
+    border: 1px solid var(--teradata-orange, #F15F22);
+    background: rgba(241, 95, 34, 0.08);
+    border-radius: 9999px;
+    padding: 5px 14px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background 0.15s;
+}
+.tc-cta:hover { background: rgba(241, 95, 34, 0.16); }
+
+/* Pinned-station actions. A click pins the hovered panel and reveals what can be DONE
+   about that station; the buttons are derived from its state, so this row is where
+   "sign this agent" lives rather than five navigations away. */
+.tc-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tc-act { margin-top: 0; }
+.tc-act-primary { background: var(--teradata-orange, #F15F22); color: #fff; }
+.tc-act-primary:hover { background: var(--teradata-orange, #F15F22); filter: brightness(1.08); }
+.tc-act[disabled] { opacity: 0.55; cursor: progress; }
+.tc-head-ctl { float: right; display: inline-flex; align-items: center; gap: 2px; }
+.tc-unpin {
+    border: none; background: transparent; cursor: pointer;
+    color: var(--text-muted); font-size: 12px; line-height: 1; padding: 2px 4px;
+    border-radius: 4px;
+}
+.tc-unpin:hover { color: var(--text-primary); background: var(--hover-bg-strong, rgba(148,163,184,0.14)); }
+
+/* ── the derivation explainer ("?") ────────────────────────────────────────────
+   A distinct ZONE, never a fifth slot: the four slots carry the reading, this
+   carries the method. Quiet by default — a reader who trusts the number should
+   not have to look at how it was computed — and unmistakably interactive once
+   open. See docs/Architecture/TRUST_STATUS_COMMUNICATION.md §3b. */
+.tc-help {
+    border: 1px solid var(--border-secondary); background: transparent; cursor: pointer;
+    color: var(--text-muted); font-size: 11px; line-height: 1; font-weight: 700;
+    width: 17px; height: 17px; border-radius: 50%; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.tc-help:hover, .tc-help:focus-visible {
+    color: var(--text-primary); border-color: var(--teradata-orange, #F15F22);
+    background: var(--hover-bg-strong, rgba(148,163,184,0.14));
+}
+.tc-help.on {
+    color: var(--teradata-orange, #F15F22);
+    border-color: var(--teradata-orange, #F15F22);
+    background: rgba(241, 95, 34, 0.10);
+}
+.tc-deriv {
+    margin: 10px 0 2px; padding: 10px 11px; border-radius: 7px;
+    background: var(--hover-bg-strong, rgba(148,163,184,0.07));
+    border: 1px solid var(--border-secondary);
+    animation: tcDerivIn 160ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) { .tc-deriv { animation: none; } }
+@keyframes tcDerivIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+.tc-deriv-h {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px; letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 7px;
+}
+.tc-deriv-h2 { margin-top: 11px; }
+.tc-drows { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: baseline; }
+.tc-dk {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--text-muted); white-space: nowrap; padding-top: 1px;
+}
+.tc-dd { font-size: 11.5px; line-height: 1.5; color: var(--text-primary); }
+.tc-dims { display: flex; flex-wrap: wrap; gap: 5px; }
+/* A contributing dimension is a real button: it opens the Dimension Guide, which is
+   the ONE place a dimension is ever explained. Colour carries its live band, using
+   the same trust tokens the roster bars use — one vocabulary, both surfaces. */
+.tc-dim {
+    border: 1px solid var(--border-secondary); background: transparent; cursor: pointer;
+    color: var(--text-primary); font-size: 10.5px; line-height: 1.2;
+    padding: 3px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;
+}
+.tc-dim:hover, .tc-dim:focus-visible { border-color: var(--teradata-orange, #F15F22); }
+.tc-dim-v { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; opacity: 0.8; }
+/* The sample size, in the roster's vocabulary: grey = decided on fewer turns than were
+   scored; amber = ≤2 verdicts, so a single one drives the rate (Rule 3.5). */
+.tc-dim-n {
+    font-family: var(--font-mono, ui-monospace, monospace); font-size: 8.5px;
+    padding: 0 3px; border-radius: 3px; color: var(--text-muted);
+    background: var(--hover-bg-strong, rgba(127,127,127,0.14));
+}
+/* A tentative dimension is marked by SHAPE, not colour (Rule 4.1 — colour is attention):
+   its value renders as a fraction and its chip carries a dashed edge. */
+.tc-dim.tentative { border-style: dashed; }
+.tc-dim-healthy { border-color: color-mix(in srgb, var(--trust-pass) 45%, transparent); color: var(--trust-pass); }
+.tc-dim-review  { border-color: color-mix(in srgb, var(--trust-warn) 45%, transparent); color: var(--trust-warn); }
+.tc-dim-danger  { border-color: color-mix(in srgb, var(--trust-danger) 45%, transparent); color: var(--trust-danger); }
+/* Dashed = this agent's class never produces it — shown, but honestly not a reading.
+   Dropping it would overstate what the station watches. */
+.tc-dim-na { border-style: dashed; color: var(--text-muted); }
+.tc-deriv-fixed { margin-top: 7px !important; font-style: normal !important; }
+.tc-deriv-note {
+    margin: 9px 0 0; font-size: 10.5px; line-height: 1.5; color: var(--text-muted);
+    font-style: italic;
+}
+/* The pinned station keeps a visible tie to its panel — otherwise, after moving the
+   pointer away, nothing on the ring says which station the panel belongs to. */
+.tc-node-pinned .tc-node-box { stroke-width: 2.2; }
+.tc-node-pinned { filter: drop-shadow(0 0 6px rgba(241, 95, 34, 0.45)); }
+
+.tc-lastevent {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-muted);
+    border-top: 1px solid var(--border-secondary);
+    padding-top: 10px; margin-top: 2px;
+}
+.tc-lastevent-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--trust-pass);
+    animation: tcBreathe 2.6s ease-in-out infinite;
+}
+@keyframes tcBreathe { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tc-lastevent-dot { animation: none; } }
+
+/* Station panel rows — a definition grid, not a bullet list.
+   Label column is fixed and quiet; the VALUE is the scannable anchor (the two
+   attributes are the reason the panel exists, so they get the weight); the
+   qualifier trails in muted prose. A hairline separates reading from reasoning. */
+.tc-rows {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 14px;
+    row-gap: 6px;
+    align-items: baseline;
+    margin-top: 12px;
+}
+.tc-fk {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.tc-fb { min-width: 0; font-size: 0.78rem; line-height: 1.5; }
+.tc-fv {
+    font-weight: 650;
+    color: var(--text-primary);
+    /* ratios line up column-wise across rows */
+    font-variant-numeric: tabular-nums;
+}
+.tc-fd { color: var(--text-muted); }
+.tc-frule {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--border-secondary);
+    margin: 3px 0 1px;
+}
+
+/* Routing summary — names the stations wanting attention so the consumer never has
+   to scan the ring to find them, and so the ring stays honest without hovering. */
+.tc-groups { display: flex; flex-direction: column; gap: 7px; margin: 10px 0 4px; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+.tc-group { display: flex; gap: 9px; align-items: baseline; }
+.tc-group b { color: var(--text-primary); font-weight: 600; }
+.tc-group-sw { flex-shrink: 0; width: 10px; height: 10px; border-radius: 3px; position: relative; top: 1px; box-sizing: border-box; }
+.tc-g-attn   { background: var(--trust-danger); opacity: 0.45; }
+.tc-g-danger { background: var(--trust-danger); }
+.tc-g-warn   { background: var(--trust-warn); }
+.tc-g-quiet  { background: var(--trust-pass); }
+.tc-g-absent { border: 1.4px dashed var(--trust-na); background: transparent; }
+.tc-group-names { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; letter-spacing: 0.04em; margin-left: 4px; }
+.tc-group-names strong { font-weight: 600; color: var(--text-primary); }
+.tc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.tc-foot .tc-story-link { margin-top: 0; }
+.tc-foot .tc-lastevent { border-top: 0; padding-top: 0; margin-top: 0; }
+
+/* Emphasis at the TOP rung only. Pulsing amber as well would turn the signal into
+   noise, which is how operators learn to ignore a colour. */
+@keyframes tc-attn-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+.tc-node[data-tc-state="danger"] .tc-node-box { animation: tc-attn-pulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+    .tc-node[data-tc-state="danger"] .tc-node-box { animation: none; }
+}
+
+.tc-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.tc-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--text-muted); }
+.tc-leg-glyph { width: 11px; height: 11px; border-radius: 3.5px; border: 1.4px solid; display: inline-block; }
+.tc-leg-pass   { border-color: var(--trust-pass);   background: var(--trust-pass-bg); }
+.tc-leg-warn   { border-color: var(--trust-warn);   background: linear-gradient(180deg, var(--trust-warn-bg) 50%, transparent 50%); }
+.tc-leg-danger { border-color: var(--trust-danger); background: var(--trust-danger-bg); }
+.tc-leg-na     { border-color: var(--trust-na);     border-style: dashed; background: transparent; }
+/* The absence family's other two members (Rule 3b.7 — every rendered channel is
+   in the legend). `pending` is DELIBERATELY not --trust-na (Rule 9.1: not a
+   flavour of absence-by-choice) and denser-dotted; `unknown` is the sparser dash. */
+.tc-leg-pending { border-color: var(--text-muted); border-style: dotted; background: transparent; }
+.tc-leg-unknown { border-color: var(--trust-na); border-style: dashed; background: transparent; opacity: 0.55; }
+.tc-leg-watching { border-color: var(--trust-pass); border-style: solid; border-width: 2px; background: transparent; }
+.tc-legend-marks { margin-top: 6px; }
+.tc-leg-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 11px; height: 11px; font-size: 10px; line-height: 1;
+    color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.tc-leg-owed { color: var(--teradata-orange, #F15F22); font-size: 8px; }
+
+.tc-story-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-primary);
+    margin-top: 12px;
+    transition: color 0.15s;
+}
+.tc-story-link:hover { color: var(--teradata-orange, #F15F22); }
+
+/* The browser's default focus ring on the SVG station/center groups reads as a
+   blue box — replace it with the grammar's own emphasis (thicker orange box). */
+.tc-node:focus, .tc-node:focus-visible,
+.tc-center:focus, .tc-center:focus-visible { outline: none; }
+.tc-node:focus-visible .tc-node-box {
+    stroke: var(--teradata-orange, #F15F22);
+    stroke-width: 2.6;
+}
+.tc-center:focus-visible .tc-center-halo {
+    stroke: var(--teradata-orange, #F15F22);
+    opacity: 1;
+}
+
+/* Circle CTA landing: guide the eye to the target block without tearing the
+   section header out of view (the section always opens at its top). */
+@keyframes tcAnchorFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(241, 95, 34, 0.0); }
+    18%  { box-shadow: 0 0 0 3px rgba(241, 95, 34, 0.55); }
+    100% { box-shadow: 0 0 0 3px rgba(241, 95, 34, 0.0); }
+}
+.tc-anchor-flash { animation: tcAnchorFlash 2.2s ease-out; border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) {
+    .tc-anchor-flash { animation: none; box-shadow: 0 0 0 2px rgba(241, 95, 34, 0.5); }
+}
+
+/* ── The mini-circle glyph — the universal trust mark ── */
+.tc-mini { display: block; }
+.tc-mini-seg { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+.tc-mini-pass   { stroke: var(--trust-pass); }
+.tc-mini-warn   { stroke: var(--trust-warn); }
+.tc-mini-danger { stroke: var(--trust-danger); }
+.tc-mini-na     { stroke: var(--trust-na); opacity: 0.38; }
+/* The glyph is fed the DIAL's six-state vocabulary (chat header, capsule) — a
+   state without a class here rendered as an INVISIBLE segment, which is fact
+   loss (Rule 9.8). `pending` is dotted-dense (not --trust-na, Rule 9.1);
+   `unknown` is the sparser dash. */
+.tc-mini-pending { stroke: var(--text-muted); stroke-dasharray: 1.5 2; opacity: 0.7; }
+.tc-mini-unknown { stroke: var(--trust-na); stroke-dasharray: 1 3.2; opacity: 0.5; }
+.tc-mini-watching { stroke: var(--trust-pass); stroke-width: 1.4; opacity: 0.85; }
+.tc-mini-core   { fill: var(--text-muted); opacity: 0.6; }
+.tc-mini-host { display: inline-flex; cursor: pointer; }
+@keyframes tcMiniPulse { 0% { transform: scale(1); } 35% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.tc-mini-pulse .tc-mini { animation: tcMiniPulse 0.7s ease-out; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .tc-mini-pulse .tc-mini { animation: none; } }
+
+/* ── Story mode: spotlight + chapter navigation ── */
+.tc-node.tc-dim { opacity: 0.28; transition: opacity 0.5s ease; }
+.tc-node.tc-spot { opacity: 1; }
+.tc-node.tc-spot .tc-node-box { stroke-width: 2.6; filter: drop-shadow(0 0 7px currentColor); }
+.tc-svg.tc-storying .tc-close-arc { opacity: 0.35; }
+.tc-story-chapter { animation: tcChapterIn 0.45s ease both; }
+@keyframes tcChapterIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .tc-node.tc-dim { transition: none; }
+    .tc-story-chapter { animation: none; }
+}
+.tc-story-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.tc-dots { display: flex; gap: 6px; }
+.tc-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1px solid var(--border-primary); background: transparent;
+    cursor: pointer; padding: 0;
+}
+.tc-dot.on { background: var(--teradata-orange, #F15F22); border-color: var(--teradata-orange, #F15F22); }
+.tc-story-btns { display: flex; gap: 8px; }
+.tc-story-btn {
+    font-size: 11px; padding: 3px 12px; border-radius: 9999px;
+    color: var(--text-muted); border: 1px solid var(--border-secondary);
+    background: transparent; cursor: pointer;
+}
+.tc-story-btn:hover { color: var(--text-primary); border-color: var(--border-primary); }
+.tc-story-next { color: var(--teradata-orange, #F15F22); border-color: var(--teradata-orange, #F15F22); background: rgba(241,95,34,0.08); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The Agent Anatomy — configuration as an organism (Configuration → Anatomy).
+   Palette ported from static/trust/agent-anatomy-of-trust.html, mapped to
+   theme variables (the page's colors remain as dark fallbacks). */
+:root {
+    --anat-sage: #6cbf92;
+    --anat-hair: var(--border-secondary, #2c3c4e);
+    /* The BLUEPRINT channel (prototype Change 2): the map layer — star, spokes,
+       metaphor labels — carries one hue that is none of the trust colours and
+       none of the accent. Colour means attention; the map never reports state. */
+    --an-map: #8ab4e8;
+    --an-map-soft: rgba(138, 180, 232, .30);
+}
+[data-theme="light"] {
+    --anat-sage: #1e7a4e;
+    --an-map: #2f6fb0;
+    --an-map-soft: rgba(47, 111, 176, .28);
+}
+
+/* Backdrop / constellation "stars" default to --text-muted, which in light
+   mode is a dark slate — filled star shapes then read as muddy grey smudges.
+   In light mode, tint them a soft cool steel (echoing the star) at a lower
+   opacity so they stay a subtle decorative sparkle, not stray marks. */
+[data-theme="light"] .an-backdrop-star { fill: var(--an-map); opacity: 0.10; }
+[data-theme="light"] .an-const-star    { fill: var(--an-map); opacity: 0.28; }
+[data-theme="light"] .an-const-lines polyline { stroke: var(--an-map); opacity: 0.16; }
+[data-theme="light"] .tc-constellation { fill: #8ea3bf; opacity: 0.10; }
+
+
+.an-root { display: block; }
+.an-card-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+    gap: 28px;
+    align-items: start;          /* columns hug their content — no stretch */
+    padding: 4px 2px 6px;
+}
+@media (max-width: 980px) { .an-card-body { grid-template-columns: 1fr; } }
+
+.an-stage-col { min-width: 0; }
+.an-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.an-picker {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; padding: 5px 12px; border-radius: 9999px;
+    color: var(--text-primary); background: var(--card-bg);
+    border: 1px solid var(--border-primary); cursor: pointer;
+    transition: border-color 0.15s;
+}
+.an-picker:hover { border-color: var(--teradata-orange, #F15F22); }
+.an-picker-label { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+
+/* No stage box: with a RECTANGULAR dashed membrane inside, a solid stage
+   rect makes three nested rectangles. The dashed membrane IS the graphic's
+   boundary; the star sits directly on the card. (The Trust Circle can afford
+   its stage box because its membrane is a circle, not a competing rect.) */
+.an-stage {
+    padding: 6px;
+}
+.an-svg { display: block; width: 100%; height: auto; }
+
+.an-membrane-rect { fill: none; stroke: var(--border-primary); stroke-width: 2.3; stroke-dasharray: 15 12; }
+.an-membrane {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px; letter-spacing: 0.32em; fill: var(--text-muted); text-transform: uppercase;
+    opacity: 0.85;
+}
+.an-const-lines polyline { fill: none; stroke: var(--an-map); stroke-width: 0.8; opacity: 0.22; }
+.an-const-star { fill: var(--an-map); opacity: 0.34; }
+.an-backdrop-star { fill: var(--an-map); opacity: 0.14; }
+.an-const-sub { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 12px; fill: var(--text-muted); opacity: 0.8; }
+
+/* Same approach as the Trust Circle star (.tc-star): a tight CSS drop-shadow
+   that hugs the star, NOT a wide SVG feDropShadow that spreads into a grey
+   cloud behind it in light mode. Theme-invariant, like the Trust Circle. */
+/* The schematic subject (prototype Change 3): faint blueprint fill + hairline
+   stroke — the steel-gradient badge and its drop-shadow are retired; the map
+   layer must not out-render the readings. Stroke width is in PATH units (the
+   star is scaled ×13): 0.1 ≈ 1.3px on screen. */
+.an-star-i { fill: var(--an-map); opacity: .09; stroke: none; }
+.an-star-f { fill: none; stroke: var(--an-map); stroke-width: 0.1; opacity: .9; stroke-linejoin: round; }
+.an-subject-plus { stroke: var(--an-map); stroke-width: 2.1; stroke-linecap: round; opacity: .85; }
+.an-center:hover .an-subject-plus, .an-center:focus-visible .an-subject-plus { stroke: var(--teradata-orange); opacity: 1; }
+.an-center:hover .an-star-f { stroke: var(--teradata-orange); }
+/* The Anatomy SVG (viewBox 1000w) scales ~0.566 on screen vs the Trust Circle's
+   ~0.777 — so these font-px are the Trust Circle's 14/9.5px multiplied by
+   0.777/0.566 (≈1.37) to render at the SAME on-screen size. */
+/* The identity sits on the SCHEMATIC star now — a faint blueprint wash, not the
+   theme-invariant steel — so the fixed-light era text is retired for theme
+   variables (fixed light vanished on the light stage). Agent mode still
+   overrides the label fill inline with the IFOC class colour. */
+.an-core {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    fill: var(--text-primary);
+}
+.an-core-sub {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 13px;
+    fill: var(--text-muted);
+}
+
+/* Faculty nodes */
+.an-node { cursor: pointer; }
+.an-node:focus, .an-node:focus-visible { outline: none; }
+.an-node:focus-visible .an-concept,
+.an-node:focus-visible .an-found-label { fill: var(--teradata-orange, #F15F22); }
+.an-leader { stroke: var(--an-map-soft); stroke-width: 1.2; opacity: 0.6; transition: opacity 0.15s; }
+.an-node:hover .an-leader { opacity: 0.8; }
+.an-hit { fill: transparent; }
+.an-metaphor {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.14em;
+    /* The DESCRIPTION line carries primary weight; the TOPIC beneath it wears
+       blueprint, so the map layer reads on the name you navigate by. */
+    fill: var(--text-primary); text-transform: uppercase; font-family: inherit;
+}
+.an-concept { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px; fill: var(--an-map); }
+.an-node:hover .an-concept { text-decoration: underline; text-underline-offset: 3px; }
+.an-value { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; fill: var(--text-muted); }
+.an-value.an-na { font-family: Georgia, serif; font-style: italic; }
+
+/* Faculty state dots — configured / default / off (n/a-by-class renders NO dot) */
+/* Faculty markers — the ring's marker idiom: a seated box + monochrome stroke
+   icon, in the BLUEPRINT channel. Presence is weight and dash, never a trust
+   colour: configured = full blueprint · default = quiet · off = dashed ghost. */
+.an-fac-box { fill: var(--card-bg, #141a21); stroke: var(--an-map); stroke-width: 1.4; }
+/* The GLYPH is accent (operator call, and the doctrine supports it): a faculty
+   marker is a DOOR — click lands on the exact editor section — and accent is the
+   channel for what you can act on. The chassis stays blueprint (the map), so the
+   marker reads as structure carrying an actionable glyph, not a warning. Presence
+   still lives in weight and dash: quiet markers mute, off markers ghost. */
+/* SOLID at rest (operator: no transparency on the glyphs — opacity fades read as
+   washed-out, not soft); hover STRENGTHENS through WEIGHT alone: a heavier icon
+   stroke and the accent chassis (the CSS property outranks the SVG presentation
+   attribute). State distinctions live in hue and dash, never in alpha:
+   quiet = muted chassis · off = muted icon + dashed chassis. */
+.an-fac-icon { color: var(--teradata-orange, #F15F22); }
+.an-fac-quiet .an-fac-box { stroke: var(--text-muted); }
+.an-fac-quiet .an-fac-icon { color: var(--teradata-orange, #F15F22); }
+.an-fac-off .an-fac-box { stroke: var(--text-muted); stroke-dasharray: 3 2.6; }
+.an-fac-off .an-fac-icon { color: var(--text-muted); }
+.an-node:hover .an-fac-box, .an-node:focus-visible .an-fac-box { stroke: var(--teradata-orange); stroke-width: 1.8; }
+.an-node:hover .an-fac-icon, .an-node:focus-visible .an-fac-icon { color: var(--teradata-orange); stroke-width: 2.3; }
+
+/* Foundation icons take the SAME posture token their box carries. */
+.an-ftok-pass { color: var(--trust-pass); }
+.an-ftok-warn { color: var(--trust-warn); }
+.an-ftok-danger { color: var(--trust-danger); }
+.an-ftok-na { color: var(--trust-na); opacity: .7; }
+
+/* Foundations — the only trust-token surface in the anatomy */
+.an-found-sub { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 13px; fill: var(--text-muted); }
+.an-found-box { fill: var(--card-bg); stroke-width: 1.6; }
+.an-found-label { font-weight: 700; letter-spacing: 0.16em; fill: var(--text-primary); font-size: 14px; font-family: inherit; }
+.an-tok-pass { stroke: var(--trust-pass); }
+.an-tok-warn { stroke: var(--trust-warn); }
+.an-tok-danger { stroke: var(--trust-danger); stroke-width: 2.2; }
+.an-tok-na { stroke: var(--trust-na); stroke-dasharray: 5 4; }
+.an-tok-watching { stroke: var(--trust-pass); stroke-width: 1.2; }
+
+/* Side panel — the Trust Circle's editorial idiom */
+.an-panel { min-width: 0; align-self: center; padding: 12px 4px; }
+.an-eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--teradata-orange, #F15F22); margin: 0 0 8px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.an-headline { font-size: 17px; font-weight: 750; letter-spacing: -0.01em; color: var(--text-primary); margin: 0 0 8px; line-height: 1.3; }
+.an-headline em { font-style: italic; color: var(--teradata-orange, #F15F22); }
+.an-copy { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 10px; max-width: 56ch; }
+.an-facts { margin: 0 0 10px; padding-left: 16px; }
+.an-facts li { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+.an-hint { font-size: 11px; color: var(--text-muted); opacity: 0.85; margin: 6px 0 0; }
+
+.an-state-chip { font-size: 9px; letter-spacing: 0.08em; padding: 1px 8px; border-radius: 9999px; border: 1px solid; text-transform: none; }
+.an-chip-configured { color: var(--anat-sage); border-color: var(--anat-sage); background: color-mix(in srgb, var(--anat-sage) 10%, transparent); }
+.an-chip-default { color: var(--text-muted); border-color: var(--border-secondary); }
+.an-chip-off { color: var(--text-muted); border-color: var(--border-secondary); border-style: dashed; }
+.an-chip-na-class { color: var(--text-muted); border-color: transparent; font-style: italic; }
+.an-chip-pass { color: var(--trust-pass); border-color: var(--trust-pass); background: var(--trust-pass-bg); }
+.an-chip-warn { color: var(--trust-warn); border-color: var(--trust-warn); background: var(--trust-warn-bg); }
+.an-chip-danger { color: var(--trust-danger); border-color: var(--trust-danger); background: var(--trust-danger-bg); }
+.an-chip-na { color: var(--trust-na); border-color: var(--trust-na); border-style: dashed; }
+.an-chip-watching { color: var(--trust-pass); border-color: var(--trust-pass); border-style: solid; border-width: 1.5px; background: transparent; }
+
+.an-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; font-size: 11px; color: var(--text-muted); }
+.an-legend b { color: var(--text-primary); font-weight: 600; }
+.an-legend code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; }
+.an-leg-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+.an-story-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-muted); text-decoration: none;
+    border-bottom: 1px dotted var(--border-primary); margin-top: 12px; transition: color 0.15s;
+}
+.an-story-link:hover { color: var(--teradata-orange, #F15F22); }
+
+/* Anatomy Phase B — the real constellation + the cross-link triangle */
+.an-child { cursor: pointer; }
+.an-child:focus, .an-child:focus-visible { outline: none; }
+.an-child-star { filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35)); transition: fill-opacity 0.15s; }
+.an-child:hover .an-child-star, .an-child:focus-visible .an-child-star { fill-opacity: 1; }
+.an-child-tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; fill: var(--text-muted);
+}
+.an-child:hover .an-child-tag, .an-child:focus-visible .an-child-tag { fill: var(--text-primary); }
+.an-links { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; align-items: flex-start; }
+.an-links--pills { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.an-links--pills .tc-cta { background: transparent; cursor: pointer; }
+.an-links .an-story-link { background: none; border-top: none; border-left: none; border-right: none; cursor: pointer; padding: 0; }
+.an-back {
+    font-size: 11px; color: var(--text-muted); background: none; border: none;
+    cursor: pointer; padding: 0 0 8px; display: block;
+}
+.an-back:hover { color: var(--teradata-orange, #F15F22); }
+
+/* Anatomy — industrial polish */
+.an-core { text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55); }
+.an-seal-word {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.9;
+}
+.an-mini-card { fill: var(--card-bg); stroke: var(--border-primary); stroke-width: 1; }
+.an-mini-track { fill: var(--border-secondary); opacity: 0.45; }
+.an-mini-bar-pass   { fill: var(--trust-pass); opacity: 0.85; }
+.an-mini-bar-warn   { fill: var(--trust-warn); opacity: 0.8; }
+.an-mini-bar-danger { fill: var(--trust-danger); opacity: 0.85; }
+.an-mini-bar-na     { fill: transparent; }
+
+/* ── The star picker — selection lives at the star's center ── */
+.an-stage { position: relative; }
+.an-center { cursor: pointer; }
+.an-center:focus, .an-center:focus-visible { outline: none; }
+.an-center-hit { fill: transparent; }
+.an-center-hint {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.14em;
+    fill: var(--text-muted); opacity: 0.7;
+    transition: opacity 0.15s, fill 0.15s;
+}
+.an-center:hover .an-center-hint, .an-center:focus-visible .an-center-hint {
+    opacity: 1; fill: var(--teradata-orange, #F15F22);
+}
+
+.an-pick {
+    position: absolute;
+    left: 50%; top: 48%;
+    transform: translate(-50%, -50%);
+    width: 330px;
+    background: color-mix(in srgb, var(--card-bg) 92%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-primary);
+    border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    padding: 10px;
+    z-index: 30;
+    animation: anPickIn 0.16s ease both;
+}
+@keyframes anPickIn { from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .an-pick { animation: none; } }
+
+.an-pick-search {
+    width: 100%; box-sizing: border-box;
+    padding: 8px 10px; margin-bottom: 8px;
+    font-size: 12.5px; border-radius: 9px;
+    border: 1px solid var(--border-secondary);
+    background: var(--input-bg, transparent);
+    color: var(--text-primary); outline: none;
+}
+.an-pick-search:focus { border-color: var(--teradata-orange, #F15F22); }
+
+.an-pick-pills { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+.an-pick-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; padding: 3px 10px; border-radius: 9999px;
+    color: var(--text-muted); background: transparent;
+    border: 1px solid var(--border-secondary); cursor: pointer;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.an-pick-pill:hover { color: var(--text-primary); border-color: var(--border-primary); }
+.an-pick-pill.on {
+    color: var(--pill, var(--teradata-orange, #F15F22));
+    border-color: var(--pill, var(--teradata-orange, #F15F22));
+    background: color-mix(in srgb, var(--pill, var(--teradata-orange, #F15F22)) 10%, transparent);
+}
+.an-pick-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+.an-pick-list { max-height: 264px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+.an-pick-row {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; text-align: left;
+    padding: 7px 9px; border-radius: 8px;
+    border: none; background: transparent; cursor: pointer;
+    color: var(--text-primary); font-size: 12px;
+}
+.an-pick-row:hover, .an-pick-row.kb { background: var(--hover-bg-strong, rgba(127,127,127,0.10)); }
+.an-pick-row[aria-selected="true"] { background: var(--hover-bg-strong, rgba(127,127,127,0.12)); }
+.an-pick-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; flex-shrink: 0; }
+.an-pick-name {
+    color: var(--text-muted); font-size: 11px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.an-pick-empty { padding: 12px; font-size: 11.5px; color: var(--text-muted); text-align: center; }
+
+/* Composed entrance: the whole panel settles in quietly (motion-respecting). */
+.an-root { animation: anRootIn 0.3s ease both; }
+@keyframes anRootIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .an-root { animation: none; } }
+
+.an-seal { cursor: pointer; }
+.an-seal:focus, .an-seal:focus-visible { outline: none; }
+.an-seal:hover .an-seal-word, .an-seal:focus-visible .an-seal-word { opacity: 1; text-decoration: underline; text-underline-offset: 2px; }
+
+/* The masthead — the anatomy page's voice, above the star (both modes) */
+.an-masthead { grid-column: 1 / -1; padding: 2px 2px 4px; }
+.an-masthead h2 {
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin: 0 0 10px;
+    line-height: 1.05;
+}
+.an-masthead .an-thin { font-weight: 300; color: var(--text-muted); margin-left: 10px; }
+.an-epigraph {
+    font-family: inherit;              /* Uderia's own type system, italicised */
+    font-style: italic;
+    font-size: clamp(13px, 1.35vw, 15.5px);
+    line-height: 1.5;
+    color: color-mix(in srgb, var(--text-primary) 78%, var(--text-muted));
+    max-width: 64ch;
+    margin: 0;
+    padding-left: 18px;
+    border-left: 2px solid rgba(241, 95, 34, 0.45);
+    text-wrap: pretty;
+}
+
+/* Below the star: the legend row + the story link (the page's .key idiom) */
+.an-stage-foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 4px 2px;
+}
+.an-stage-foot .an-legend {
+    flex-direction: row;
+    flex-wrap: nowrap;              /* one row, always (wraps only on mobile) */
+    white-space: nowrap;
+    /* 'safe' centering: a centered flex row wider than its column clips its
+       LEFT edge irrecoverably (the green swatch was being eaten) — safe
+       falls back to start-alignment instead of clipping. */
+    justify-content: safe center;
+    gap: 14px;
+    font-size: 10.5px;
+    max-width: 100%;
+    margin-top: 0;
+}
+.an-stage-foot .an-legend code { font-size: 10px; }
+@media (max-width: 900px) { .an-stage-foot .an-legend { flex-wrap: wrap; white-space: normal; } }
+.an-stage-foot .an-story-link { margin-top: 2px; }
+
+/* Picker rows carry the canonical Uderia profile chip (class-tinted pill) */
+.an-pick-chip {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em;
+    padding: 1.5px 9px; border-radius: 9999px;
+    flex-shrink: 0; line-height: 1.5;
+}
+
+/* The agent's own description: quiet, clamped — never the headline */
+.an-desc {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    max-width: 56ch;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Faculty spec sheet — industrial key/value rows in the hover panel */
+.an-spec {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 5px 16px;
+    margin: 2px 0 10px;
+    align-items: baseline;
+}
+.an-spec-k {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-muted);
+}
+.an-spec-v { font-size: 12.5px; color: var(--text-primary); line-height: 1.45; }
+.an-panel-action {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.04em;
+    color: var(--teradata-orange, #F15F22);
+    border-top: 1px solid var(--border-secondary);
+    padding-top: 10px; margin: 4px 0 0; width: 100%;
+}
+
+/* Anatomy composition KPIs — the IFOC fingerprint bar on the Agents tile */
+.an-kpi-bar {
+    display: flex;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+    border: 1px solid var(--border-secondary);
+}
+.an-kpi-bar > div { height: 100%; }
+/* A tile's reading is never cut mid-word: the sub-line wraps to two lines, then clamps. */
+.an-kpi-sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+
+/* Anatomy composition charts — the Trust panel's bar-list idiom */
+.an-chart-row { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+.an-chart-label {
+    width: 138px; flex-shrink: 0;
+    font-size: 12.5px; color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.an-chart-track {
+    flex: 1; height: 10px; border-radius: 5px;
+    background: var(--border-secondary); opacity: 0.9;
+    overflow: hidden; display: block;
+}
+.an-chart-fill { display: block; height: 100%; border-radius: 5px; }
+.an-chart-num {
+    width: 84px; flex-shrink: 0; text-align: right;
+    font-size: 12px; color: var(--text-muted); white-space: nowrap;
+}
+.an-chart-more { font-size: 11px; color: var(--text-muted); padding: 6px 0 0 2px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ASSURANCE DIAL (migration R-2)
+   One instrument replacing the Trust Journey strip and the capsule's mini-ring.
+   Colour comes only from the three sanctioned channels (Rule 9.5): the --trust-*
+   attention tokens, and --teradata-orange for what you can act on. No literal.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ad-root { display: flex; flex-direction: column; gap: 10px; }
+
+.ad-instrument {
+    display: flex;
+    gap: 14px;
+    /* Rule 9.7 — the readings column must not stretch this row. Centring it is the
+       shape that moved an element out from under the pointer and flickered. */
+    align-items: start;
+}
+
+.ad-dial { flex: 0 0 auto; overflow: visible; }
+.ad-gnd { fill: none; stroke: var(--border-secondary); stroke-width: 1; opacity: 0.5; }
+
+.ad-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.ad-summary {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    /* A reading is a sentence, so set it like one: no orphan word on its own line, and a
+       measure short enough to scan. Full-saturation state colour across four lines read as
+       an alarm about the paragraph rather than a state of the stations, so the tint is
+       mixed back toward body text — the colour still says which way to read it, the words
+       still carry the fact. */
+    text-wrap: pretty;
+    max-width: 46ch;
+}
+.ad-summary-pass    { color: var(--text-primary); }
+.ad-summary-warn    { color: color-mix(in srgb, var(--trust-warn) 72%, var(--text-primary)); }
+.ad-summary-danger  { color: color-mix(in srgb, var(--trust-danger) 78%, var(--text-primary)); }
+.ad-summary-na,
+.ad-summary-unknown { color: var(--text-muted); }
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+    .ad-summary-warn   { color: var(--trust-warn); }
+    .ad-summary-danger { color: var(--trust-danger); }
+}
+/* The live phase cue — what the agent is doing right now, while the stations are still
+   pending. A pulsing dot draws the eye to "something is happening", the words carry the
+   fact. Distinct from a verdict: it never colours a station. */
+.ad-summary.ad-phase-live {
+    color: color-mix(in srgb, var(--teradata-orange, #F15F22) 50%, var(--text-primary));
+    display: flex; align-items: center; gap: 7px;
+}
+.ad-summary.ad-phase-live::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--teradata-orange, #F15F22);
+    animation: ad-phase-pulse 1.15s ease-in-out infinite;
+}
+@keyframes ad-phase-pulse {
+    0%, 100% { opacity: .35; transform: scale(.8); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ad-summary.ad-phase-live::before { animation: none; opacity: .9; }
+}
+
+/* Rule 9.7 — FIXED height. The reading is written in here on hover; the region's
+   height must not depend on what is written, or the panel reflows under the pointer. */
+.ad-read {
+    min-height: 34px;
+    height: 34px;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    /* Separated from the reading above it, so the standing hint is visibly an aside and
+       not the second half of the sentence. */
+    padding-top: 5px;
+    border-top: 1px solid var(--border-secondary);
+    text-wrap: pretty;
+}
+
+/* Segments — weight before colour (Rule 9.4); the stroke-width is set inline from
+   AssuranceDial.strokeFor so ONE table drives it. */
+.ad-seg { fill: none; stroke-linecap: round; transition: opacity .12s ease; }
+.ad-seg-pass    { stroke: var(--trust-pass); }
+.ad-seg-warn    { stroke: var(--trust-warn); }
+.ad-seg-danger  { stroke: var(--trust-danger); }
+.ad-seg-na      { stroke: var(--trust-na); stroke-dasharray: 2 3; }
+.ad-seg-unknown { stroke: var(--trust-na); stroke-dasharray: 1 4; }
+
+.ad-hit { fill: none; stroke: transparent; cursor: pointer; }
+.ad-foc { fill: none; stroke: transparent; stroke-width: 2; }
+.ad-st:focus-visible { outline: none; }
+.ad-st:focus-visible .ad-foc { stroke: var(--teradata-orange); }
+.ad-st:hover .ad-seg { opacity: 0.75; }
+.ad-st.ad-on .ad-foc { stroke: var(--teradata-orange); }
+
+/* Engraving marks — Rule 9.3: a promise that the click will pay. ONE mark family:
+   DOTS (ticks retired — they were visually identical to the ring's retired owed
+   double-tick, so the old grammar looked alive). Colour = the job (state colours =
+   engraving; the accent owed dot is the ring's separate actionability channel);
+   count = depth (one dot = detail engraved · two = a gate acted). */
+.ad-dot { stroke: none; }
+.ad-dot-pass    { fill: var(--trust-pass); }
+.ad-dot-warn    { fill: var(--trust-warn); }
+.ad-dot-danger  { fill: var(--trust-danger); }
+.ad-dot-na,
+.ad-dot-unknown { fill: var(--trust-na); opacity: .7; }
+/* pending shares NO --trust-na token, by contract (Rule 9.1) — see its own block. */
+
+/* Sections — one per station, revealed in place. Never a filter (Rule 9.6). */
+.ad-sections { display: flex; flex-direction: column; gap: 6px; }
+.ad-section {
+    border: 1px solid var(--border-secondary);
+    border-radius: 10px;
+    padding: 11px 13px 10px;
+    background: var(--card-bg, var(--bg-overlay, transparent));
+    /* The panel is resizable, so the rows below adapt to the space they actually get
+       rather than to a guess about it. Without support the fallback is the stacked
+       layout — the one that reads correctly at the narrow end, which is the width this
+       panel is usually at. */
+    container-type: inline-size;
+}
+/* ONE rule, not two. The second declaration silently overrode the first's `margin`,
+   which is how a border-bottom and a margin ended up specified apart from each other. */
+.ad-section-head {
+    margin: 0 0 8px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-secondary);
+    font-size: 11px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--text-muted);
+    display: flex; align-items: center; gap: 8px;
+}
+/* The station NAME is its Guide entry: hover shows what the guarantee means, click opens
+   it. Same affordance as the status line's station chip (`.status-kv-station`). */
+.ad-section-name { cursor: pointer; border-bottom: 1px dotted var(--text-muted); }
+.ad-section-name:hover { color: var(--teradata-orange); border-bottom-color: var(--teradata-orange); }
+.ad-section-name:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: 2px; border-radius: 2px; }
+.ad-chip {
+    font-size: 10px; font-weight: 500; letter-spacing: .02em; text-transform: none;
+    padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor;
+}
+.ad-chip-pass    { color: var(--trust-pass); }
+.ad-chip-warn    { color: var(--trust-warn); }
+.ad-chip-danger  { color: var(--trust-danger); }
+.ad-chip-na,
+.ad-chip-unknown { color: var(--trust-na); border-style: dashed; }
+
+/* A GRID, not a flex row. With `flex: 0 0 auto` labels every detail started at a
+   different x and its wrapped second line hung under the label — three mechanisms read as
+   three unrelated fragments. One column each: marker, mechanism, reading. */
+/* A row is [marker | mechanism | reading]. The reading used to sit in a third column
+   beside a FIXED 8.5rem label — which in this ~300px panel left about 140px for it, so
+   "confirmed drift — answer withheld" wrapped to three lines while the label column sat
+   half empty beside it. Four mechanisms rendered as a ragged block.
+
+   Stacked by default: the label leads, the reading takes the full remaining width, and
+   every reading still starts at the same x — which was the whole point of moving to a
+   grid in the first place (flex made three mechanisms read as three unrelated
+   fragments). Where the panel is genuinely wide the two return to columns, because
+   side-by-side scans faster when it fits. */
+.ad-gate {
+    display: grid;
+    grid-template-columns: 6px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 9px;
+    row-gap: 1px;
+    font-size: 12px;
+    padding: 5px 0;
+}
+.ad-gate-label, .ad-gate-detail { grid-column: 2; }
+@container (min-width: 26rem) {
+    .ad-gate { grid-template-columns: 6px minmax(0, 9rem) minmax(0, 1fr); align-items: baseline; }
+    .ad-gate-label { grid-column: 2; }
+    .ad-gate-detail { grid-column: 3; }
+}
+.ad-gate + .ad-gate { border-top: 1px solid color-mix(in srgb, var(--border-secondary) 45%, transparent); }
+/* The station's members shelved by class, as the Assurance Guide shelves them. The fold
+   line is one short row: dot · verb · kind and count · the reading. */
+.ad-grp { margin: 0; }
+.ad-grp > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;
+    padding: 7px 0 5px; cursor: pointer; border-top: 1px solid var(--border-secondary); }
+.ad-grp > summary::-webkit-details-marker { display: none; }
+.ad-grp > summary::before { content: ''; width: 0; height: 0; border-left: 5px solid var(--text-muted);
+    border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform .12s; flex: none; }
+.ad-grp[open] > summary::before { transform: rotate(90deg); }
+.ad-grp > summary .ad-gate-dot { flex: none; margin-top: 0; }   /* the row dot's top margin is for the grid rows; here the line is centred */
+.ad-grp-lead, .ad-grp-kind { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+.ad-grp-kind::before { content: '\00b7'; margin-right: 6px; opacity: .6; }
+.ad-grp-sum { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.ad-grp > .ad-gate:first-of-type { border-top: 0; }
+/* A statement ABOUT the station — not a reading OF one mechanism.
+   It used to reuse `.ad-gate`, whose grid is [6px dot | 8.5rem label | 1fr detail],
+   while emitting only TWO children. So the sentence landed in the fixed-width LABEL
+   column and a 90-character statement wrapped to four lines beside a floating dot.
+   A statement is not a row: full width, no dot, its own quieter weight. Used by every
+   station, so the absence reads the same wherever it appears. */
+.ad-note {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    padding: 5px 0 7px;
+    text-wrap: pretty;
+    max-width: 46ch;      /* a measure, so it never runs edge to edge in a wide panel */
+}
+/* Optically centred on the FIRST line rather than on the whole block: with a stacked
+   row `align-self: center` put the marker beside the reading instead of the mechanism
+   it marks. */
+.ad-gate-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: .45em; }
+.ad-gate-pass    .ad-gate-dot { background: var(--trust-pass); }
+.ad-gate-warn    .ad-gate-dot { background: var(--trust-warn); }
+.ad-gate-danger  .ad-gate-dot { background: var(--trust-danger); }
+.ad-gate-na      .ad-gate-dot,
+.ad-gate-unknown .ad-gate-dot { background: transparent; border: 1px dashed var(--trust-na); }
+/* Not part of this class — listed so the dial and the Guide name the same mechanisms;
+   dimmed, with the long dash the posture surfaces use for "on, but not here". */
+.ad-gate-offclass { opacity: .55; }
+.ad-gate-offclass .ad-gate-dot { background: transparent; border: 1px dashed var(--trust-na); border-style: dashed; width: 7px; height: 7px; border-radius: 2px; }
+.ad-gate-offclass .ad-gate-label { font-style: italic; }
+.qd-rel-chip.qd-rel-offclass { opacity: .55; border-style: dashed; }
+.ad-gate-label { color: var(--text-primary); text-wrap: pretty; font-weight: 500; }
+.ad-gate-detail { min-width: 0; color: var(--text-muted); text-wrap: pretty;
+                  font-size: 11.5px; line-height: 1.42; }
+
+/* The KEY for the row marks — a mark with no key is a guess (the runs-ledger lesson,
+   applied to the dial). Each sample reuses the shipped `.ad-gate-STATE .ad-gate-dot`
+   rules, so the key can never drift from the marks it explains. Quiet and reference-
+   weight: a separator line, an uppercase micro-label, then the samples wrapping below. */
+.ad-key {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid color-mix(in srgb, var(--border-secondary) 45%, transparent);
+    font-size: 11px; color: var(--text-muted);
+}
+.ad-key-lead {
+    flex: 0 0 100%;
+    font-size: 9px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600;
+    opacity: .7;
+}
+.ad-key-item { display: inline-flex; align-items: center; gap: 6px; }
+/* The capsule's "Made from" block: what an answer was made from, below the dial and its
+   key — the same quiet separator and micro-label as the key, so it reads as a sibling
+   section, never as part of the key. Each row is a thing to open or verify, not a verdict. */
+.ac-made {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid color-mix(in srgb, var(--border-secondary) 45%, transparent);
+}
+.ac-made .ad-key-lead { color: var(--text-muted); flex: 0 0 auto; }
+/* Folded like the sealed chain inside it; the fold line names what is inside. */
+.ac-made-sum {
+    display: flex; align-items: baseline; gap: 8px; cursor: pointer; list-style: none;
+    color: var(--text-muted);
+}
+.ac-made-sum::-webkit-details-marker { display: none; }
+.ac-made-sum::before {
+    content: ''; width: 0; height: 0; align-self: center; transition: transform .12s;
+    border-left: 5px solid var(--text-muted); border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+.ac-made[open] > .ac-made-sum::before { transform: rotate(90deg); }
+.ac-made-n { font-size: 10px; color: var(--text-muted); }
+/* Its three groups — drew on · did · to verify — each under a quiet label. */
+.ac-made-grp { margin-top: 8px; }
+.ac-made-h {
+    font-size: 9px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600;
+    color: var(--text-muted); opacity: .85; margin-bottom: 2px; width: max-content;
+}
+.ac-made-grp + .ac-made-grp { padding-top: 6px; border-top: 1px dashed color-mix(in srgb, var(--border-secondary) 45%, transparent); }
+.ac-made details { border-top: none !important; margin-top: 4px !important; padding-top: 0 !important; }
+/* One repository: its signature pill, then its documents once each. */
+.ac-src { display: flex; flex-direction: column; gap: 3px; }
+.ac-src + .ac-src { margin-top: 6px; }
+.ac-docs { display: flex; flex-wrap: wrap; gap: 2px 10px; padding-left: 2px; }
+.ac-doc { font-size: 11px; color: var(--text-primary); }
+.ac-doc-fresh, .ac-doc-more { color: var(--text-muted); }
+.ad-key-mark { display: inline-flex; align-items: center; }
+/* Centred in the key, not optically aligned to a row's first line. */
+.ad-key-mark .ad-gate-dot { margin-top: 0; }
+.ad-key-word { color: var(--text-muted); }
+
+/* A station's panel labels what it lists: its MEMBERS (what its colour is the worst of)
+   and, where a station has them, the MEASUREMENTS about it — counted at JUDGED, never
+   colouring this station. Each population gets a label so a reader can tell which kind
+   they are looking at. */
+.ad-sub-head {
+    font-size: 9px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600;
+    color: var(--text-muted); opacity: .7; margin: 7px 0 3px;
+    display: flex; align-items: baseline; gap: 6px;
+}
+.ad-sub-head:first-child { margin-top: 2px; }
+/* The SECOND population needs air, or "what ran" and "what it measures" read as one
+   list with a stray label in the middle of it. */
+.ad-gate + .ad-sub-head, .ad-note + .ad-sub-head { margin-top: 12px; }
+.ad-sub-count { font-weight: 400; letter-spacing: 0; text-transform: none; opacity: .8; }
+/* A guarantee's MEMBERS header — the same mark as the Assurance Guide's members group, so
+   "the worst of these colours" reads as one rule on both surfaces. */
+.ad-mem-head { align-items: center; color: var(--text-primary); opacity: .85; }
+/* Inside JUDGED's panel the members header already counts the measures; the adopted
+   scorecard's own "· N measures" would restate it. On the Quality card it stays. */
+.ad-scorecard-slot .qc-total, .ad-judged-measures .qc-total { display: none; }
+/* Live Status lists the turn's own measures under the scorecard slot until the scorecard shows
+   (a turn with no stored score, or one still arriving); then the scorecard alone (assuranceDial.js). */
+.ad-section:has(.ad-scorecard-slot > #trajectory-eval-results:not(.hidden):not(:empty)) .ad-judged-own { display: none; }
+.ad-meas-wrap { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 1px; }
+/* Same band vocabulary as the scorecard chip — one grammar, two surfaces. */
+.ad-meas {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; line-height: 1.3; padding: 2px 8px; border-radius: 999px;
+    background: none; text-align: left; cursor: pointer;
+    color: var(--text-muted);
+    border: 1px solid color-mix(in srgb, var(--border-secondary) 60%, transparent);
+}
+.ad-meas:hover { background: var(--hover-bg-strong, rgba(127,127,127,.10)); }
+.ad-meas:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: 1px; }
+.ad-meas-pass   { color: var(--trust-pass);
+                  border-color: color-mix(in srgb, var(--trust-pass) 33%, transparent); }
+.ad-meas-warn   { color: var(--trust-warn);
+                  border-color: color-mix(in srgb, var(--trust-warn) 33%, transparent); }
+.ad-meas-danger { color: var(--trust-danger);
+                  border-color: color-mix(in srgb, var(--trust-danger) 33%, transparent); }
+.ad-meas-pass   .ad-gate-dot { background: var(--trust-pass); }
+.ad-meas-warn   .ad-gate-dot { background: var(--trust-warn); }
+.ad-meas-danger .ad-gate-dot { background: var(--trust-danger); }
+.ad-meas-na .ad-gate-dot, .ad-meas-unknown .ad-gate-dot {
+    background: transparent; border: 1px dashed var(--trust-na);
+}
+
+@media (prefers-reduced-motion: reduce) { .ad-seg { transition: none; } }
+
+/* The capsule hosts the same instrument at a smaller scale — one dial, two sizes. */
+.ac-dial-host { display: block; margin-bottom: 10px; }
+
+/* The focused <g> was drawing the browser's default outline — a large rounded rect
+   across a quadrant. The reset only covered :focus-visible; a click focuses without
+   it, so the box appeared on every click. The custom arc (.ad-foc) is the focus mark. */
+.ad-st:focus { outline: none; }
+.ad-st { cursor: pointer; }
+
+.ad-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.ad-head svg { width: 14px; height: 14px; color: var(--teradata-orange); flex: 0 0 auto; }
+.ad-title {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-primary);
+}
+/* The routing subtitle is the FLEXIBLE member of the header row: it absorbs the
+   spare width and truncates with an ellipsis when the adopted controls need room —
+   never letter-wraps into a cramped column (the R-6 layout regression). */
+.ad-sub { font-size: 11px; color: var(--text-muted);
+          flex: 1 1 auto; min-width: 0; white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis; }
+.ad-sub-warn   { color: var(--trust-warn); }
+.ad-sub-danger { color: var(--trust-danger); }
+
+/* The adopted turn-level scoring controls (Guide · judges · Score — see R-6):
+   compact icon buttons, right-aligned before the pin, never wrapping. */
+.ad-ctl-slot { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+/* Unscoped: the cluster keeps these looks wherever it mounts — the band slot
+   normally, the Quality card on the legacy-strip path. */
+.qc-icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+    color: var(--text-muted); background: transparent;
+    border: 1px solid var(--border-secondary);
+}
+.qc-icon-btn:hover { color: var(--text-primary); background: var(--hover-bg-strong, rgba(127,127,127,0.10)); }
+.qc-icon-btn svg { width: 13px; height: 13px; }
+.qc-icon-btn[aria-pressed="true"] { color: var(--teradata-orange); border-color: rgba(241,95,34,0.5); background: rgba(241,95,34,0.12); }
+.qc-icon-btn:disabled { opacity: 0.55; cursor: default; }
+.qc-icon-btn .qc-spin { animation: qc-spin 0.9s linear infinite; }
+@keyframes qc-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .qc-icon-btn .qc-spin { animation: none; } }
+
+/* The star marks the subject (Rule 9.2). Blueprint weight, not a reading — it must
+   never be mistaken for a state. */
+.ad-star      { fill: none; stroke: var(--text-muted); stroke-width: 1.15; opacity: .55;
+                stroke-linejoin: round; }
+.ad-star-fill { fill: var(--text-muted); opacity: .06; stroke: none; }
+
+/* Station icons — they take the station's own attention colour, so the shape says
+   WHICH guarantee and the colour says how much it needs you. */
+.ad-ico { fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ad-ico-pass    { stroke: var(--trust-pass); }
+.ad-ico-warn    { stroke: var(--trust-warn); }
+.ad-ico-danger  { stroke: var(--trust-danger); }
+.ad-ico-na,
+.ad-ico-unknown { stroke: var(--trust-na); opacity: .55; }
+
+/* Locate, never filter: the trace step is flashed, never isolated. */
+.ad-located {
+    animation: ad-locate 1.4s ease-out 1;
+    border-radius: 6px;
+}
+@keyframes ad-locate {
+    0%, 100% { background: transparent; }
+    18%      { background: color-mix(in srgb, var(--teradata-orange) 16%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .ad-located { animation: none; } }
+
+/* Rule 9.1 — `pending` means "has not reported yet", which is a different fact from
+   `na` ("switched off"). It gets its own weight and a moving dash, so it reads as
+   in-flight rather than as absence. It shares NO --trust-na token, by contract. */
+
+.ad-dot-pending { fill: var(--text-muted); stroke: none; opacity: .5; }
+.ad-ico-pending  { stroke: var(--text-muted); opacity: .38; }
+.ad-chip-pending { color: var(--text-muted); border-style: dotted; }
+.ad-gate-pending .ad-gate-dot { background: transparent; border: 1px dotted var(--trust-warn); }
+.ad-summary-pending { color: var(--text-muted); }
+
+/* A gate row that can locate its step in the trace is a real control and looks like
+   one; a row with no step stays inert rather than promising a jump that goes nowhere. */
+button.ad-gate { width: 100%; text-align: left; background: none; border: 0;
+                 font: inherit; cursor: pointer; border-radius: 5px; }
+.ad-gate-linked:hover { background: var(--hover-bg-strong, rgba(127,127,127,.10)); }
+.ad-gate-linked:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: 1px; }
+
+/* The glyph is the station's most obvious affordance, so it must BE one. Stroked
+   line-art with fill:none only registers hits on the drawn pixels; this disc makes the
+   whole icon the target. `pointer-events: all` so a transparent fill still counts. */
+.ad-ico-hit { fill: transparent; pointer-events: all; cursor: pointer; }
+.ad-ico { pointer-events: none; }   /* the disc behind it owns the hit */
+.ad-st:hover .ad-ico { opacity: 1; }
+
+/* A row that opens the Guide is answering a different question from one that locates a
+   trace step, so it reads differently — a dotted underline on the label, the platform's
+   existing "this is defined elsewhere" idiom. */
+.ad-gate-guided .ad-gate-label {
+    text-decoration: underline dotted 1px;
+    text-underline-offset: 3px;
+}
+
+/* A trust-card headline naming a mechanism is a link to the Assurance Guide. The dotted
+   underline is the platform's existing "this is defined elsewhere" idiom, the same one
+   the dial's guided gate rows use — so one affordance means one thing everywhere. */
+.status-kv-mech {
+    cursor: pointer;
+    text-decoration: underline dotted 1px;
+    text-underline-offset: 3px;
+    border-radius: 3px;
+}
+.status-kv-mech:hover { color: var(--text-primary); }
+.status-kv-mech:focus-visible {
+    outline: 2px solid var(--teradata-orange);
+    outline-offset: 1px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ASSURANCE BAND — one segment, two halves
+   The assurance reading and the quality verdict are two halves of one statement
+   about this turn. As separate floating cards they read as unrelated findings, so
+   they share a segment on the SAME ground as the header's Configuration and Filter
+   bands: a hairline divides them inside it, a heavier rule closes it off from the
+   event stream, which is a different kind of thing entirely.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#assurance-band {
+    margin: -1rem -1rem 0;            /* cancel the host's p-4 so it spans edge to edge */
+    padding: 12px 1rem 0;
+    background: var(--gradient-card);
+    border-bottom: 1px solid var(--border-primary);
+    /* Symmetric with the 12px above the dial. Without it the Quality card's own border
+       sat directly on the band's closing rule — two lines touching, which reads as one
+       thick divider and puts the card outside the segment it belongs to. */
+    padding-bottom: 12px;
+}
+#assurance-band > #assurance-dial { padding-bottom: 12px; }
+
+/* Switching the ASSURANCE pill off removes the instrument along with the messages it
+   summarises. The shared hide class is scoped to trace steps, and the band is not one —
+   so it opts in here, at ID specificity, beside the rules it has to beat. */
+#assurance-band.event-filtered-hidden { display: none; }
+
+/* The fine separator, INSIDE the segment. Lighter than the closing rule, because it
+   divides two halves of one statement rather than two different things. */
+#assurance-band > #trajectory-eval-overlay {
+    border-top: 1px solid var(--border-secondary);
+    padding: 12px 0;
+    margin: 0;
+}
+
+/* Pinned: the band holds while the events scroll beneath it. Off by default — most of
+   the time the trace is what is being read and this is context already taken in. */
+#assurance-band.ad-band-pinned {
+    position: sticky;
+    top: -1rem;
+    z-index: 5;
+    /* Pinning changes BEHAVIOUR, not appearance. Swapping in an opaque `--card-bg` made
+       the band look like a different component the moment it was pinned — so it keeps
+       the header ground it already had (inherited), and stays visually identical to its
+       unpinned self.
+       Legibility over scrolling content comes from a backdrop blur rather than an opaque
+       fill: event text passing underneath softens to a wash instead of interleaving with
+       the reading, and the band still reads as part of the panel rather than a card
+       floating above it. `-webkit-` first for Safari, which still needs it. */
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+    box-shadow: 0 6px 14px -10px rgba(0, 0, 0, .40);
+}
+
+/* Where the blur is unsupported there is no soft fallback — text would read straight
+   through — so those browsers get the opaque ground instead. Legibility is the floor;
+   the transparency is the preference. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    #assurance-band.ad-band-pinned { background: var(--card-bg); }
+}
+
+.ad-pin {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: .55;
+}
+.ad-pin svg { width: 13px; height: 13px; }
+.ad-pin:hover { opacity: 1; color: var(--text-primary); }
+.ad-pin.on {
+    opacity: 1;
+    color: var(--teradata-orange);
+    border-color: color-mix(in srgb, var(--teradata-orange) 35%, transparent);
+    background: color-mix(in srgb, var(--teradata-orange) 10%, transparent);
+}
+.ad-pin:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: 1px; }
+
+/* Locked (the default) vs pinned-for-now: a filled mark for the committed choice, so a
+   double click has a visible effect and the two states are never mistaken. */
+/* Locked reads as FILLED, via inset shadow rather than a pseudo-element.
+   `.u-tip` renders its tooltip through `::after`, and the pin is a u-tip host — so a
+   `::after` dot here overrode the tooltip's own background and border-radius, painting
+   it as a large orange blob on hover and focus. Never give a `.u-tip` host its own
+   `::after` or `::before`; the tooltip owns both. */
+.ad-pin.locked {
+    background: color-mix(in srgb, var(--teradata-orange) 22%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--teradata-orange) 55%, transparent);
+}
+.ad-pin-locked-flash { animation: ad-pin-lock .7s ease-out 1; }
+@keyframes ad-pin-lock {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--teradata-orange) 55%, transparent); }
+    100% { box-shadow: 0 0 0 7px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .ad-pin-locked-flash { animation: none; } }
+
+
+/* A tooltip must never be wider than the panel it lives in. `max-width: 300px` is
+   fine on a wide surface and too wide inside the Live Status column, where the
+   overflow is then clipped rather than wrapped. Cap to the viewport as well. */
+.u-tip[data-tip]::after,
+.trust-mark[data-tip]::after,
+.tj-stage[data-tip]::after { max-width: min(300px, calc(100vw - 32px)); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE RUNNING DIAL — motion that carries information, and nothing else
+   Two facts are true while a turn runs, and only these two are animated:
+     1. a station has NOT reported yet   → an indeterminate travelling dash
+     2. a station has JUST reported      → a one-shot arrival pulse
+   A settled station is STILL. An instrument that keeps moving after it is done
+   reads as busy rather than finished, and trains the eye to ignore it — the same
+   reason a card saying "Clean" on every turn had to go.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1 · Waiting. Indeterminate by construction: the dash travels at a constant rate and
+   never fills, so it cannot imply a progress fraction the dial does not know. Slow —
+   1.8s — because this sits beside a scrolling trace and a fast crawl competes with it. */
+/* The dash travels AND the segment brightens on the pass, so the sweep is visible at a
+   glance rather than only on inspection. Staggered per position in JS, which makes the
+   dashes chase each other round the ring: the sweep covers exactly the stations still
+   outstanding and shrinks as they land, so the EXTENT of the motion is the remaining
+   work. That is what makes waiting informative instead of merely busy. */
+@keyframes ad-waiting {
+    0%   { stroke-dashoffset: 0;   opacity: .40; }
+    40%  {                         opacity: .95; }
+    100% { stroke-dashoffset: -27; opacity: .40; }
+}
+/* Neutral, not amber. `na` is also neutral, and the two are told apart by DENSITY and
+   MOTION: `na` is a sparse static dash meaning "nothing owed here"; pending is a denser
+   dash that moves, meaning "not yet". Colour is reserved for readings, and a turn that
+   has only just started has none. */
+.ad-seg-pending {
+    stroke: var(--text-muted);
+    stroke-dasharray: 5 3;
+    opacity: .5;
+    animation: ad-waiting 1.8s linear infinite;
+}
+
+/* The mark above a pending station breathes with it, so the two read as one element
+   rather than a still dot on a moving arc. */
+@keyframes ad-waiting-tick { 0%, 100% { opacity: .25; } 50% { opacity: .7; } }
+.ad-dot-pending { animation: ad-waiting-tick 1.8s ease-in-out infinite; }
+
+/* 2 · Arrival. The informative moment is the CHANGE, so it gets the one flash: the
+   segment thickens briefly and its icon lifts. One shot, then still. */
+@keyframes ad-arrive-seg {
+    0%   { stroke-width: 9; opacity: .35; }
+    45%  { opacity: 1; }
+    100% { opacity: 1; }
+}
+@keyframes ad-arrive-ico {
+    0%   { opacity: 0; transform: scale(.82); }
+    60%  { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.ad-st.ad-arrived .ad-seg { animation: ad-arrive-seg .62s cubic-bezier(.2,.8,.3,1) 1; }
+.ad-st.ad-arrived .ad-ico {
+    animation: ad-arrive-ico .62s cubic-bezier(.2,.8,.3,1) 1;
+    transform-origin: center;
+    transform-box: fill-box;
+}
+
+/* The header's routing phrase changes as stations land; a colour-only change is easy to
+   miss beside a scrolling trace, so it gets the faintest possible acknowledgement. */
+@keyframes ad-sub-shift { 0% { opacity: .35; } 100% { opacity: 1; } }
+.ad-sub.ad-sub-changed { animation: ad-sub-shift .5s ease-out 1; }
+
+/* Nothing above is load-bearing: with motion reduced the dial reads identically from
+   its static properties — dashes, weight, colour, dots. Motion is the accent, never
+   the signal. */
+@media (prefers-reduced-motion: reduce) {
+    .ad-seg-pending,
+    .ad-dot-pending,
+    .ad-st.ad-arrived .ad-seg,
+    .ad-st.ad-arrived .ad-ico,
+    .ad-sub.ad-sub-changed { animation: none; }
+}
+
+/* The station a card serves — quiet, uppercase, and a link like everything else. It is
+   the FRAME for the finding beside it, so it must read as context rather than compete
+   with the reading itself. */
+.status-kv-station {
+    margin-left: 6px;
+    font-size: 9px;
+    letter-spacing: .08em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    vertical-align: middle;
+}
+.status-kv-station:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.status-kv-station:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: 1px; }
+
+/* ── the trust-trip lens (docs/roadmap/TRUST_TRIP_RESET.md) ─────────────────
+   Whole record · This leg pill-pair on the ring's stage + the leg chip — W3's
+   ambient disclosure: while the trip lens is active, the boundary is visible ON
+   the instrument, not only inside the panels. Theme-aware via tokens; the chip
+   uses the brand accent at low opacity so it reads as a lens marker, never as a
+   trust state (colour on this surface encodes attention, and a lens is not an
+   alarm). */
+.tc-lens-host {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    /* ONE row, never wrapping: at top:10px a single line always clears the ring's
+       top plates — it was the wrap (from a too-tight max-width) that dropped the
+       chip onto the SIGNED plate. On a narrow stage the CHIP truncates instead
+       (its full text rides the u-tip), because a clipped chip is recoverable and
+       an overlapped plate is not. */
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    z-index: 3;
+    pointer-events: none;          /* the gaps must not eat ring hovers… */
+}
+.tc-lens-host > * { pointer-events: auto; }   /* …while the controls stay live */
+.tc-lens { flex: 0 0 auto; }
+.tc-lens {
+    display: inline-flex;
+    border: 1px solid var(--border-primary);
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+.tc-lens-pill {
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    padding: 4px 11px;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.tc-lens-pill:hover { color: var(--text-primary); }
+.tc-lens-pill.on {
+    color: var(--text-primary);
+    background: var(--hover-bg-strong, rgba(148, 163, 184, 0.14));
+    font-weight: 600;
+}
+.tc-lens-pill:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: -2px; }
+.tc-leg-chip {
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(241, 95, 34, 0.35);
+    background: rgba(241, 95, 34, 0.08);
+    color: var(--text-primary);
+    white-space: nowrap;
+    /* beside the pills on ONE line — truncate on narrow stages, never wrap under
+       the ring (the full text rides the tooltip / is obvious from the toggle) */
+    min-width: 0;
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tc-leg-chip.tc-leg-none {
+    border-style: dashed;                 /* honest absence, the shared grammar */
+    border-color: var(--border-primary);
+    background: transparent;
+    color: var(--text-muted);
+    font-style: italic;
+}
+/* the inline "start a new leg" confirm (two-step, never a native dialog) */
+.tc-leg-confirm { margin-top: 10px; }
+.tc-leg-confirm .tc-acts { margin-top: 8px; }
+.tc-leg-note {
+    width: 100%;
+    margin-top: 8px;
+    font-size: 11.5px;
+    padding: 6px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+.tc-leg-note:focus-visible { outline: 2px solid var(--teradata-orange); outline-offset: -1px; }
+
+/* ── the scorecard, adopted into JUDGED's station panel ──────────────────────
+   JUDGED is where measurement is counted, and the scorecard IS the measurements.
+   Rendering them in a card beside the panel that also listed them was one population
+   on two surfaces — the duplication that produced a `warn` row under a `danger`
+   segment one level up. The card's rendering won (moments, in turn order); the
+   panel's flat chip list retired.
+
+   `qc-adopted` collapses the card's own chrome once its body has moved: the controls
+   went to the band earlier and the title is restated by the panel's JUDGED header, so
+   what is left would be a frame around nothing. Collapsed rather than removed — the
+   element still carries the turn's Guide context (`data-dim-context`) and is where the
+   results are RETURNED if JUDGED is unpinned. */
+#trajectory-eval-overlay.qc-adopted {
+    background: transparent !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+#trajectory-eval-overlay.qc-adopted > div:first-child { display: none; }
+.ad-scorecard-slot { display: block; }
+.ad-scorecard-slot #trajectory-eval-results { padding: 2px 0 0; }
+
+/* ── admin → Trust: quality bands, by moment ─────────────────────────────────
+   A band tunes a MEASUREMENT, and measurement is counted in one place — so every
+   threshold lives in this one section, grouped by the moment of the turn each check
+   measures, in the order the turn runs. The moment heading is the group's only
+   chrome: a bordered card per moment would be five frames inside a section that is
+   already a frame. */
+.qb-moments { display: flex; flex-direction: column; gap: 14px; }
+.qb-moment-h {
+    font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--text-muted); margin: 0 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-secondary) 55%, transparent);
+}
+/* An empty stage renders nothing — no heading over no sliders. */
+.qb-moment:has(> div:empty) { display: none; }
+
+/* ── admin → Trust: reporting levels ─────────────────────────────────────────
+   ONE setting, eight times. That is a table, not eight bordered cards — the previous
+   layout gave each station its own card to hold a single dropdown, so five of the
+   eight were near-empty boxes beside one holding eighteen sliders. Two columns where
+   there is room, one when narrow. */
+.trust-report-grid {
+    display: grid; grid-template-columns: 1fr; gap: 2px 22px;
+}
+@media (min-width: 900px) { .trust-report-grid { grid-template-columns: 1fr 1fr; } }
+.trust-report-row {
+    display: grid; grid-template-columns: 1rem 5.5rem minmax(0, 1fr) auto;
+    align-items: center; gap: 10px; padding: 5px 0;
+}
+.trust-report-row + .trust-report-row {
+    border-top: 1px solid color-mix(in srgb, var(--border-secondary) 40%, transparent);
+}
+@media (min-width: 900px) { .trust-report-row:nth-child(2) { border-top: 0; } }
+.trust-report-name {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    color: var(--text-primary); font-family: var(--font-mono, ui-monospace, monospace);
+}
+.trust-report-sub {
+    font-size: 11px; font-style: italic; color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── the modules behind a mechanism (assurance dial station panel) ──────────
+   Collapsed by default: the mechanism's verdict is the headline and a wall of numbers
+   under every row would bury it. Indented and hair-lined so the nesting is structural
+   rather than a colour cue — the same reason a gap note carries a border weight. */
+.ad-mods { margin: 0 0 .35rem 1.1rem; }
+.ad-mods-sum {
+    cursor: pointer; font-size: .68rem; letter-spacing: .02em;
+    color: var(--text-muted); padding: .1rem 0; list-style: none;
+}
+.ad-mods-sum::-webkit-details-marker { display: none; }
+.ad-mods-sum::before { content: '▸ '; }
+.ad-mods[open] .ad-mods-sum::before { content: '▾ '; }
+.ad-mod-list { list-style: none; margin: .15rem 0 0; padding: 0;
+               border-left: 1px solid var(--border-secondary); }
+.ad-mod {
+    display: grid; grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+    gap: 0 .5rem; padding: .22rem 0 .22rem .6rem; font-size: .7rem;
+}
+.ad-mod-prop { color: var(--text-primary); font-weight: 600; }
+.ad-mod-name { color: var(--text-muted); font-style: italic; }
+.ad-mod-role { display: inline-flex; vertical-align: -1px; margin-left: .35rem; color: var(--text-muted); }
+.ad-mod-role svg { display: block; }
+.ad-mod-sum  { grid-column: 2; color: var(--text-muted); }
+.ad-mod-vals { grid-column: 2; display: flex; flex-wrap: wrap; gap: .1rem .6rem;
+               margin-top: .12rem; }
+.ad-mod-val  { color: var(--text-muted); font-size: .66rem; }
+.ad-mod-val b { color: var(--text-primary); font-weight: 600; }
+/* Shape, not colour alone: an abstention is dimmed AND its left edge goes dashed; a
+   triggered module carries a solid accent edge. Legible in greyscale (Rule 9.4a). */
+.ad-mod-abstained { opacity: .62; border-left: 2px dashed var(--border-secondary);
+                    margin-left: -1px; }
+.ad-mod-triggered { border-left: 2px solid var(--trust-warn, #b45309); margin-left: -1px; }
+
+/* ── a property's lanes (Assurance Guide) ───────────────────────────────────
+   Two rows, never a table: with at most two lanes a table is heavier than the fact. */
+.qd-lanes { display: flex; flex-direction: column; gap: .18rem; }
+.qd-lane {
+    display: grid; grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+    gap: 0 .5rem; font-size: .72rem; align-items: baseline;
+}
+.qd-lane-when { color: var(--text-muted); }
+.qd-lane-mod  { color: var(--text-primary); font-weight: 600; }
+/* The POWER a lane has, set apart so it is never mistaken for the module's name. */
+.qd-lane-mode { grid-column: 2; color: var(--text-muted); font-size: .66rem; }
+/* An unbound lane is dimmed AND its module slot goes italic — shape, not colour alone. */
+.qd-lane-empty .qd-lane-mod { font-weight: 400; opacity: .7; }

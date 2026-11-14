@@ -1,0 +1,57 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix qb: <http://purl.org/linked-data/cube#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix uderia: <https://uderia.ai/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://uderia.ai/kg/restaurants_demo> a owl:Ontology,
+        skos:ConceptScheme,
+        dcat:Dataset ;
+    uderia:kgId "restaurants_demo" .
+
+<https://uderia.ai/kg/restaurants_demo/ddl_artifact/order_order_summary> a dcat:DataService ;
+    dcterms:title "order.order_summary" ;
+    prov:wasDerivedFrom <https://uderia.ai/kg/restaurants_demo/metric/order_summary> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary> a qb:DataStructureDefinition,
+        dcat:Dataset ;
+    rdfs:label "order_summary" ;
+    dcterms:description "Order revenue summary" ;
+    dcterms:title "order_summary" ;
+    qb:component <https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_dim/order_date>,
+        <https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/avg_order_value>,
+        <https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/total_revenue> ;
+    dcat:distribution <https://uderia.ai/kg/restaurants_demo/ddl_artifact/order_order_summary> ;
+    prov:wasDerivedFrom <https://uderia.ai/kg/restaurants_demo/table/order_order_header> ;
+    uderia:entityType "metric" ;
+    uderia:name "order_summary" ;
+    uderia:properties "{\"description\": \"Order revenue summary\", \"dimensions\": [{\"expr\": \"order_date\", \"name\": \"order_date\"}], \"measures\": [{\"additive\": true, \"expr\": \"SUM(amount)\", \"name\": \"total_revenue\"}, {\"additive\": false, \"expr\": \"AVG(amount)\", \"name\": \"avg_order_value\"}], \"metric_source\": \"restaurants_demo.order.order_header\", \"owner_domain\": \"order\", \"owner_product\": \"order_header\"}" ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_dim/order_date> a qb:ComponentSpecification ;
+    qb:dimension <https://uderia.ai/kg/restaurants_demo/metric/order_summary/dimension/order_date> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/avg_order_value> a qb:ComponentSpecification ;
+    qb:measure <https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/avg_order_value> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/total_revenue> a qb:ComponentSpecification ;
+    qb:measure <https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/total_revenue> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/dimension/order_date> a qb:DimensionProperty ;
+    rdfs:label "order_date" ;
+    rdfs:comment "order_date" .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/avg_order_value> a qb:MeasureProperty ;
+    rdfs:label "avg_order_value" ;
+    rdfs:comment "AVG(amount)" ;
+    uderia:additive false .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/total_revenue> a qb:MeasureProperty ;
+    rdfs:label "total_revenue" ;
+    rdfs:comment "SUM(amount)" ;
+    uderia:additive true .
+

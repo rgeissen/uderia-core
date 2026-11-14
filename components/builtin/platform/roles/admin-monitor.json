@@ -1,0 +1,78 @@
+{
+  "id": "admin-monitor",
+  "title": "Admin Monitor",
+  "status": "active",
+  "effects": [
+    "read"
+  ],
+  "description": "Keeps an administrator informed about the whole deployment, in aggregates only: usage and cost across all users, models running without a price, the database's health and backups, the platform's maintenance jobs, the scheduler and the model providers. It never reads a user's conversations or content, changes nothing, and each of its readings of the deployment is recorded in the audit log. Its readings of the deployment are for administrators: anyone else's agent reaches only the scheduler's and the model providers' status.",
+  "operations": [
+    "consumption.system_summary",
+    "consumption.users",
+    "costs.*",
+    "admin.stats",
+    "admin.db_health",
+    "admin.platform_jobs",
+    "scheduler.status",
+    "llm.provider_health",
+    "trust.unassigned"
+  ],
+  "playbooks": [
+    "platform-playbooks:admin/*"
+  ],
+  "needs": [],
+  "rank": 8,
+  "examples": [
+    {
+      "ask": "How is the deployment doing this month?",
+      "outcome": "It reads the deployment's consumption across all users — active users, tokens, estimated cost, failed turns, the models in use — and gives you the totals, never anyone's conversations."
+    },
+    {
+      "ask": "Which models run without a price?",
+      "outcome": "It reads the price coverage and names the models in use that have no price, so their cost reads as zero until one is set."
+    },
+    {
+      "ask": "Is the database healthy, and when was it last backed up?",
+      "outcome": "It reads the database's health: unreadable reads since the start, the last backup and how many are kept."
+    },
+    {
+      "ask": "Did the nightly maintenance jobs run?",
+      "outcome": "It reads the platform's own jobs — usage resets, price sync, backups — with their schedules and how their last runs went."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Any user's conversations, questions or answers — or usage named per user",
+      "why": "The instance-wide view is aggregates; what a person asked, and how much each person used, are theirs. An agent reads its own user's conversations only, whatever the deployment allows people.",
+      "ops": [
+        "consumption.users"
+      ]
+    },
+    {
+      "what": "Signatures not yet attributed to an account",
+      "why": "They name other users' agents; assigning one is an administrator's act in person.",
+      "ops": [
+        "trust.unassigned"
+      ]
+    },
+    {
+      "what": "The user directory, or any change to a user — tier, lock, deletion",
+      "why": "Who has an account, and what they may do, is decided by an administrator in person."
+    },
+    {
+      "what": "Changing the deployment — its settings, components, prices, publishing rules",
+      "why": "The Admin Monitor reads; every setting is an administrator's to change."
+    },
+    {
+      "what": "Filling in missing prices, running a backup or a maintenance job",
+      "why": "Each one changes the deployment; it reports what is missing, you act.",
+      "args": [
+        "costs.coverage:fill"
+      ]
+    },
+    {
+      "what": "The deployment's usage, costs, users or database for an agent whose user is not an administrator",
+      "why": "Those readings are administrator-tier: anyone else's agent holding the role reaches only the scheduler's and the model providers' status."
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+    "component_id": "files",
+    "display_name": "Files",
+    "icon_accent": "#78716c",
+    "answer_surface": {
+        "open": true
+    },
+    "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 12h6M9 15h4\"/></svg>",
+    "description": "Keep what conversations produce — tables, charts, answers and every attachment — in an admin-governed, encrypted store; find them again, see where each came from, reuse them in a turn, and take them out by download",
+    "version": "1.1.0",
+    "component_type": "action",
+    "instances": "user",
+    "signals": {
+      "emits": [],
+      "listens": [
+        "uderia:component-changed"
+      ],
+      "announces": [
+        "kept",
+        "deleted",
+        "renamed",
+        "restored",
+        "used",
+        "changed"
+      ],
+      "consumes_refs": true
+    },
+    "category": "General",
+    "tool_definition": {
+        "name": "TDA_Files",
+        "description": "The user's Files — kept tables, documents, reports and uploads. 'list' finds a file by name or by what it came from; 'read' reads a kept file into this turn (a table arrives as columns and rows — and as a statement of this turn the combine step can join — a document as its text); 'save' keeps something you produced in this turn: 'content' for text you wrote (a report, a summary, a SQL script), or 'statement' to keep a query result of this turn as a CSV without repeating its rows. Never invent a file id: 'list' first.",
+        "args": {
+            "action": {
+                "type": "string",
+                "description": "'list' | 'read' | 'save'",
+                "required": true
+            },
+            "query": {
+                "type": "string",
+                "description": "list: words to match in the file name, its conversation or its question",
+                "required": false
+            },
+            "kind": {
+                "type": "string",
+                "description": "list: 'all' (default) | 'table' | 'document' | 'image' | 'export' | 'upload'",
+                "required": false
+            },
+            "file_id": {
+                "type": "string",
+                "description": "read: the file_id from 'list'",
+                "required": false
+            },
+            "name": {
+                "type": "string",
+                "description": "read: a file name, when you have no file_id. save: the file name to keep it under, with its extension (.md, .csv, .json, .sql, .txt); the extension decides the type",
+                "required": false
+            },
+            "content": {
+                "type": "string",
+                "description": "save: the text to keep (Markdown, CSV, JSON, SQL, plain text)",
+                "required": false
+            },
+            "statement": {
+                "type": "string",
+                "description": "save: a query result of THIS turn to keep as CSV — its statement number, or 'latest' for the most recent",
+                "required": false
+            }
+        }
+    },
+    "instructions": {
+        "file": "instructions.json",
+        "format": "intensity_keyed",
+        "intensity_levels": [
+            "none",
+            "medium",
+            "heavy"
+        ],
+        "intensity_tooltips": {
+            "medium": "Use TDA_Files when the user asks to find, read or keep a file",
+            "heavy": "Offer to keep reports and results the user will want again"
+        }
+    },
+    "backend": {
+        "handler_file": "handler.py",
+        "handler_class": "FilesComponentHandler",
+        "fast_path": true
+    },
+    "frontend": {
+        "renderer_file": "renderer.js",
+        "renderer_export": "renderFiles"
+    },
+    "render_targets": {
+        "default": "inline",
+        "supports": [
+            "inline",
+            "sub_window"
+        ]
+    },
+    "profile_defaults": {
+        "enabled_for": [
+            "llm_only",
+            "rag_focused",
+            "tool_enabled",
+            "genie"
+        ]
+    }
+}

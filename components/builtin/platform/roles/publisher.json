@@ -1,0 +1,113 @@
+{
+  "id": "publisher",
+  "title": "Publisher",
+  "status": "active",
+  "effects": [
+    "read",
+    "write"
+  ],
+  "description": "Prepares the user's agents for others: bundles them into a draft pack, keeps its name and version right, says whether it is ready to publish and what stands in the way, and reads the marketplace — what is there, and what a pack would need to run here. Proposing, publishing, choosing who receives it, updating subscribers, and installing anyone else's pack stay the user's.",
+  "operations": [
+    "agent_packs.*",
+    "marketplace.agent_pack*",
+    "trust.agent",
+    "trust.agents",
+    "trust.artifact",
+    "trust.history",
+    "trust.agent_pack_sign_off",
+    "profiles.list",
+    "profiles.overview"
+  ],
+  "playbooks": [
+    "platform-playbooks:publishing/*"
+  ],
+  "needs": [],
+  "rank": 7,
+  "examples": [
+    {
+      "ask": "Bundle @SALES and @DOCS into a pack called Sales Assist.",
+      "outcome": "It resolves both tags to your agents and submits a new draft pack; the agents stay where they are, and removing the pack later leaves them."
+    },
+    {
+      "ask": "Is Sales Assist ready to publish?",
+      "outcome": "It reads the pack's lifecycle, the deployment's publishing rules and each agent's trust state, and says what stands in the way — an unsigned agent, an approval still needed — and what you do next."
+    },
+    {
+      "ask": "Which packs in the marketplace are about policing?",
+      "outcome": "It searches the marketplace and lists what it finds: what each pack offers, by whom, how it is rated."
+    },
+    {
+      "ask": "What would the Policing pack need from my data sources?",
+      "outcome": "It reads the pack's requirements, resolved against your data sources, and says which agents would run here as they are and which need a source you do not have."
+    }
+  ],
+  "not_offered": [
+    {
+      "what": "Proposing, approving, publishing, deprecating or withdrawing a pack",
+      "why": "Putting your name to what others will run is yours — and approving it is an approver's, never the publisher's agent.",
+      "ops": [
+        "agent_packs.lifecycle_transition",
+        "agent_packs.publish",
+        "marketplace.agent_pack_unpublish"
+      ]
+    },
+    {
+      "what": "Choosing who a pack is offered to",
+      "why": "Whom you share with is yours to decide.",
+      "ops": [
+        "marketplace.agent_pack_audience_set"
+      ]
+    },
+    {
+      "what": "Pushing a new version to subscribers",
+      "why": "It changes other people's agents.",
+      "ops": [
+        "agent_packs.sync_subscribers"
+      ]
+    },
+    {
+      "what": "Setting a pack's service level",
+      "why": "It is a promise to subscribers — yours to make.",
+      "ops": [
+        "agent_packs.sla"
+      ]
+    },
+    {
+      "what": "Installing, forking, updating or leaving someone else's pack",
+      "why": "Bringing another publisher's agents into your estate, or letting them go, is your trust decision.",
+      "ops": [
+        "marketplace.agent_pack_install",
+        "marketplace.agent_pack_fork",
+        "marketplace.agent_pack_sync",
+        "marketplace.agent_pack_unsubscribe"
+      ]
+    },
+    {
+      "what": "Rating a pack, or emailing a pack's author",
+      "why": "A rating is a person's opinion, and a message to someone outside Uderia is yours to send.",
+      "ops": [
+        "marketplace.agent_pack_rate",
+        "agent_packs.notify_author",
+        "agent_packs.notify_author_update"
+      ]
+    },
+    {
+      "what": "The deployment's publishing rules",
+      "why": "Whether packs need approval, and who approves, is an administrator's setting.",
+      "ops": [
+        "agent_packs.governance_policy_set"
+      ]
+    },
+    {
+      "what": "Signing a pack",
+      "why": "A signature is your statement that you checked what it bundles.",
+      "ops": [
+        "trust.agent_pack_sign_off"
+      ]
+    },
+    {
+      "what": "Removing an installed pack, or exporting its file",
+      "why": "Removing a pack deletes what it brought — agents, repositories, graphs — and a pack file leaves the platform; both are yours."
+    }
+  ]
+}

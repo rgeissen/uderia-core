@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Authority — Uderia</title>
+<style>
+:root{
+  --ground:#0e1621;--panel:#172230;--panel-2:#1e2c3b;--hair:#2c3c4e;--hair-soft:#223140;
+  --text:#e9eff5;--muted:#93a4b6;--dim:#6b7d90;--faint:#52657a;
+  --sage:#6cbf92;--amber:#f2b04a;--red:#e5687a;--blue:#6aa9e0;--steel-1:#9db8cf;
+  --accent:#F15F22;--accent-soft:rgba(241,95,34,0.12);--accent-line:rgba(241,95,34,0.45);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{
+  margin:0;background:radial-gradient(1200px 780px at 50% -12%,#14212f 0%,var(--ground) 58%),var(--ground);
+  color:var(--text);font-family:var(--sans);line-height:1.66;font-size:16.5px;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--steel-1);text-decoration:none;border-bottom:1px solid rgba(157,184,207,0.28);}
+a:hover{color:var(--text);}
+
+/* sticky masthead */
+.topbar{
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+  background:rgba(14,22,33,0.82);border-bottom:1px solid var(--hair);
+}
+.topbar-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar .brand{font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);}
+.topbar .sep{color:var(--faint);}
+.topbar .doc{font-weight:650;color:var(--text);}
+.topbar .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;}
+.topbar .back:hover{border-color:var(--accent-line);color:var(--text);}
+
+/* layout: content + floating TOC */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:44px;}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);}.toc{display:none;}}
+
+header.hero{padding:56px 0 8px;grid-column:1 / -1;}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
+header.hero h1{font-family:var(--sans);font-weight:800;letter-spacing:-0.02em;font-size:clamp(30px,5vw,50px);line-height:1.04;margin:0;text-wrap:balance;}
+
+/* TOC */
+.toc{grid-column:2;grid-row:2;align-self:start;position:sticky;top:72px;padding:18px 0;max-height:calc(100vh - 96px);overflow:auto;}
+.toc .toc-h{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}
+.toc a{display:block;border:none;color:var(--muted);font-size:13px;padding:3px 0 3px 12px;border-left:1px solid var(--hair);}
+.toc a:hover{color:var(--text);border-left-color:var(--accent-line);}
+.toc a.lvl-3{padding-left:24px;font-size:12.5px;color:var(--dim);}
+
+/* article */
+article.doc{min-width:0;padding:8px 0 80px;grid-column:1;grid-row:2;}
+article.doc h1,article.doc h2,article.doc h3,article.doc h4{scroll-margin-top:76px;line-height:1.2;text-wrap:balance;}
+article.doc h1{font-size:clamp(26px,3.6vw,34px);font-weight:800;letter-spacing:-0.015em;margin:40px 0 16px;}
+article.doc h2{font-size:clamp(22px,3vw,28px);font-weight:750;margin:44px 0 14px;padding-top:22px;border-top:1px solid var(--hair);}
+article.doc h3{font-size:19px;font-weight:700;color:#dbe6f0;margin:30px 0 10px;}
+article.doc h4{font-size:15.5px;font-weight:700;color:var(--muted);text-transform:none;margin:22px 0 8px;}
+article.doc p{max-width:74ch;color:#cdd8e2;margin:0 0 15px;}
+article.doc strong{color:var(--text);font-weight:650;}
+article.doc em{color:#d6e1ec;}
+article.doc ul,article.doc ol{max-width:74ch;color:#cdd8e2;padding-left:24px;}
+article.doc li{margin:6px 0;}
+article.doc li::marker{color:var(--dim);}
+article.doc hr{border:none;border-top:1px solid var(--hair);margin:36px 0;}
+article.doc blockquote{
+  margin:18px 0;padding:14px 20px;border-left:3px solid var(--accent-line);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:#d6e1ec;
+}
+article.doc blockquote p{margin:0 0 8px;}article.doc blockquote p:last-child{margin:0;}
+
+/* inline code + fenced */
+article.doc code{font-family:var(--mono);font-size:0.9em;color:var(--sage);background:rgba(108,191,146,0.08);
+  border:1px solid rgba(108,191,146,0.16);border-radius:5px;padding:1px 5px;}
+article.doc pre{
+  background:#0c141d;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 18px;
+}
+article.doc pre code{color:#c9d6e2;background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--hair);border-radius:12px;}
+article.doc table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+article.doc th,article.doc td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top;}
+article.doc thead th{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:rgba(0,0,0,0.22);}
+article.doc tbody tr:last-child td{border-bottom:none;}
+article.doc tbody tr:hover{background:rgba(255,255,255,0.015);}
+article.doc td code{white-space:nowrap;}
+/* a long identifier in running text wraps rather than widening the page at phone width */
+:where(code){overflow-wrap:anywhere;}
+/* the article is a grid/flex child: let it shrink so a wide table scrolls in its own wrapper */
+article.doc{min-width:0;}
+.table-wrap{max-width:100%;}
+
+footer.docfoot{grid-column:1 / -1;padding:28px 0 70px;border-top:1px solid var(--hair);color:var(--dim);font-size:13px;font-family:var(--mono);}
+footer.docfoot a{color:var(--muted);}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <span class="brand">Agent Trust &amp; Assurance</span>
+  <span class="sep">/</span>
+  <span class="doc">Agent Authority</span>
+  <a class="back" href="the-life-of-a-uderia-agent.html">← The Life of a Uderia Agent</a>
+</div></div>
+
+<div class="shell">
+  <header class="hero">
+    <p class="eyebrow">Architecture · P3 · the agent principal</p>
+    <h1>Agent Authority</h1>
+  </header>
+  <nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><a href="#0-what-agent-identity-means-in-uderia-read-this-first" class="lvl-2">0. What &quot;Agent Identity&quot; means in Uderia — read this first</a><a href="#1-the-idea" class="lvl-2">1. The idea</a><a href="#2-the-model-pure-deterministic-subset-only" class="lvl-2">2. The model — pure, deterministic, subset-only</a><a href="#2a-the-data-surface-obda-read-phase-c-e1e5-per-agent-tri-state" class="lvl-2">2a. The data surface (OBDA-READ Phase C — E1–E5, per-agent tri-state)</a><a href="#2b-the-write-surface-obda-act-prop-008-54-increment-b3" class="lvl-2">2b. The write surface (OBDA-ACT, PROP-008 §5.4 — increment B3)</a><a href="#2c-the-deployments-obda-policy-contracts-only-oct-2026" class="lvl-2">2c. The deployment&#x27;s OBDA policy — &quot;contracts only&quot; (Oct 2026)</a><a href="#3-enforcement-a-per-turn-security-context-fail-closed-at-every-chokepoint" class="lvl-2">3. Enforcement — a per-turn security context, fail-closed at every chokepoint</a><a href="#3b-several-mcp-servers-prop-006-phase-2" class="lvl-3">3b. Several MCP servers (PROP-006 phase 2)</a><a href="#4-persistence-ux" class="lvl-2">4. Persistence &amp;amp; UX</a><a href="#4a-reporting-a-scope-presence-is-not-constraint" class="lvl-2">4a. Reporting a scope — presence is not constraint</a><a href="#5-guarantees-proof" class="lvl-2">5. Guarantees &amp;amp; proof</a><a href="#5a-the-trust-budget-circuit-breaker-writes-here-jul-2026" class="lvl-2">5a. The trust-budget circuit breaker writes here (Jul 2026)</a><a href="#6-whats-deferred-charter-19" class="lvl-2">6. What&#x27;s deferred (charter #19)</a><a href="#7-files" class="lvl-2">7. Files</a></nav>
+  <article class="doc">
+<p><strong>Status:</strong> implemented on <code>main</code> (2026-07-03); last verified against code 2026-10-30. Delivers assessment requirement <strong>P3</strong> (agent
+identity &amp; permissions — only Salesforce/Microsoft were GREEN). Built <em>on</em> the
+<a href="TRUST_MEMBRANE_ARCHITECTURE.html">Trust Membrane (Tier 5.2)</a> foundation: the <strong>agent is a
+first-class governed principal</strong>. Design:
+<code>TIER_5.2_TRUST_MEMBRANE.md §1.5</code>.</p>
+<blockquote>
+<p><strong>Renamed 2026-07-04</strong> — this document was formerly <em>"Agent Identity Architecture"</em> and the
+module was <code>core/agent_identity.py</code>. It was renamed to <strong>Agent Authority</strong> (<code>core/agent_authority.py</code>)
+because in Uderia an agent's <em>identity</em> is its <strong>Profile</strong>; this subsystem governs the agent's
+<em>authority</em>. See §0. The stored config key moved <code>identityConfig → authorityConfig</code> (the legacy
+key is still read). The internal class <code>AgentPrincipal</code> keeps its name — it is the correct IAM term.</p>
+</blockquote>
+<hr>
+<h2 id="0-what-agent-identity-means-in-uderia-read-this-first">0. What "Agent Identity" means in Uderia — read this first</h2>
+<p>"Agent identity" is an <strong>umbrella</strong> term. In Uderia it is not a single feature —
+it is a <strong>composite</strong> realised across four subsystems on <strong>two orthogonal axes</strong>. Keeping them
+distinct is the whole point of this rename.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>The question it answers</th>
+<th>Where it lives in Uderia</th>
+<th>Axis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Agent identity</strong></td>
+<td><em>Who is this agent?</em></td>
+<td>The <strong>Profile</strong> — its IFOC class, its LLM, its MCP "senses", its Memory, its Components. The <code>@TAG</code> profile <strong>is</strong> the agent.</td>
+<td>who</td>
+</tr>
+<tr>
+<td><strong>Agent assurance</strong></td>
+<td><em>Is this agent verified / trustworthy?</em></td>
+<td>The <strong>Trust Membrane</strong> (Tier 5.2) — signed, compositional attestation.</td>
+<td>trust</td>
+</tr>
+<tr>
+<td><strong>Agent authority</strong> ← <em>this document</em></td>
+<td><em>What may it do, on whose behalf, when it acts autonomously?</em></td>
+<td><code>core/agent_authority.py</code> — a delegated, <strong>subset-of-owner</strong> scope.</td>
+<td>access</td>
+</tr>
+<tr>
+<td><strong>Agent audit</strong></td>
+<td><em>What did it actually do?</em></td>
+<td>The <strong>Execution Provenance Chain</strong> — every autonomous action attributed to the agent.</td>
+<td>audit</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>Visual companion:</strong> <a href="agent-anatomy-of-trust.html"><strong>The Uderia Agent — An Anatomy of Trust</strong></a> — the whole-agent diagram this taxonomy comes from (the five faculties inside the Trust Membrane, on the Grounding &amp; Guardrails foundations). Its center — <em>Agent Identity = who it is = its Profile</em> — is exactly the "identity" row above.</p>
+</blockquote>
+<p>Two rules follow, and they are load-bearing:</p>
+<ol>
+<li><strong>Identity ≠ authority.</strong> The Profile says <em>who the agent is</em>; Agent Authority says <em>what it is
+   permitted to do</em>. A trusted, well-defined agent (identity + assurance) can still be given a
+   deliberately narrow authority. This is the framework's phrasing of <strong>charter #8, <em>trust ≠ access</em></strong>.</li>
+<li><strong>Authority is delegated and can only shrink.</strong> An agent has <strong>no authority of its own</strong> — when
+   it acts autonomously it borrows a <strong>strict subset</strong> of its owner's permissions. The model can
+   only <em>remove</em>; it can never grant or elevate.</li>
+</ol>
+<p>If you came here looking for "the agent's identity," you want the <strong>Profile</strong> and, for how it's
+surfaced as an estate-wide map, the <code>Platform Ontology</code>. This
+document is specifically the <strong>access/authority</strong> face.</p>
+<h2 id="1-the-idea">1. The idea</h2>
+<p>When an agent acts <strong>autonomously</strong> — a genie expert delegated by a coordinator, a scheduled
+task firing on a timer, a flow node, an inbound MCP <code>ask_profile</code> call — it is <em>not</em> a human
+issuing that request in the moment. Until now such actions ran under the <strong>owner's raw
+authority</strong> (the parent's <code>auth_token</code>, the task's <code>user_uuid</code>). P3 makes each autonomous
+action run as an <strong>Agent Principal derived from the owner</strong> whose authority is a <strong>strict
+subset</strong> of the owner's — and attributes every autonomous action to the agent in the audit
+trail.</p>
+<p><strong>Scope (updated Aug 2026).</strong> The original delivery was the <em>attainable</em> form of P3: a
+scoped principal + audit attribution + fail-closed enforcement over <strong>capabilities</strong>
+(tools, writes, connectors, budget). The <em>fuller</em> vision — an agent confined to a data
+slice ("cannot query outside its slice") — shipped with <strong>OBDA-READ Phase C</strong>: the
+<strong>data surface</strong> (§2a below) makes the set of signed data products on an agent's
+surface its entire data authority, enforced through this same principal at the same
+chokepoints. See <a href="OBDA_ARCHITECTURE.html">OBDA_ARCHITECTURE.md §6</a>.</p>
+<h2 id="2-the-model-pure-deterministic-subset-only">2. The model — pure, deterministic, subset-only</h2>
+<p><code>core/agent_authority.py</code> is pure: the model + the enforcement <em>decision</em>. It <strong>never grants</strong> —
+a scope only ever <em>removes</em> the owner's authority (subset invariant by construction, so an
+agent with no config behaves exactly as today — byte-identical baseline, charter #15).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AgentScope</code></td>
+<td>The restriction. <code>autonomous</code> (may it act at all?) · <code>deny_writes</code> (block mutating tools) · <code>denied_tools</code> (deny-list) · <code>allowed_connectors</code> (None = all; else an allow-list) · <code>max_cost_per_run</code> (USD cap) · <strong><code>dataSurface</code></strong> (§2a — products / exclusive / advisory) · <code>model_authoring</code> (OBDA-MODEL drafting, from <code>modelAuthoring</code>) · <code>actions_allowed</code> / <code>actions_exclusive</code> (§2b) · <code>policy_read</code> / <code>policy_model</code> / <code>policy_act</code> (the deployment's OBDA policy in force, §2c). All defaults = unrestricted.</td>
+</tr>
+<tr>
+<td><code>AgentPrincipal</code></td>
+<td><code>owner_uuid</code> + <code>profile_id</code> + <code>scope</code>. <code>principal_id = agent:&lt;profile_id&gt;</code>. <code>actor()</code> = the audit stamp attributing an action to the <em>agent</em>, not the user. (Kept its name — "principal" is the correct IAM term for an entity that holds authority.)</td>
+</tr>
+<tr>
+<td><code>parse_scope(authorityConfig)</code></td>
+<td>Build a scope from a config dict (absent/empty → baseline).</td>
+</tr>
+<tr>
+<td><code>derive_principal(profile, owner_uuid)</code></td>
+<td>The principal for a profile, read from its stored <code>authorityConfig</code> — <strong>falling back to the legacy <code>identityConfig</code> key</strong> for profiles saved before the rename (same mechanism as every other <code>*Config</code> block). Parses with the agent's OBDA planes (<code>obda_planes.planes_for</code>) and then applies the deployment's OBDA policy ONCE (<code>apply_policy(scope, obda_planes.policy_map())</code>, §2c).</td>
+</tr>
+<tr>
+<td><code>is_tool_allowed(scope, tool, …)</code></td>
+<td>The decision: <code>(allowed, reason)</code>. Autonomous-off → deny all; denied-list → deny; connector not in allow-list → deny; write under <code>deny_writes</code> → deny. The write signal is the tool-name heuristic OR (when a <code>sql</code> arg is present) the classified statement (<code>classify_sql_write</code>) — so a write via a read-named tool is caught. <code>TDA_*</code> framework tools are <strong>never</strong> write-gated (they are the agent's own reporting/orchestration).</td>
+</tr>
+<tr>
+<td><code>is_run_within_budget(scope, cost)</code></td>
+<td>Per-run USD cap. Enforced <strong>in-flight</strong> (<code>check_budget_before_call</code>, before each model call) on every autonomous engine AND <strong>post-hoc</strong> at end of turn — one predicate, two moments.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="2a-the-data-surface-obda-read-phase-c-e1e5-per-agent-tri-state">2a. The data surface (OBDA-READ Phase C — E1–E5, per-agent tri-state)</h2>
+<p><code>authorityConfig.dataSurface = {products, exclusive, advisory}</code>, read through <strong>ONE
+resolver</strong> — <code>agent/obda.py:profile_obda(profile) → (mode, products)</code> — which is what
+the enrichment render/seed/event, both agent actions, the <code>governed_execution</code>
+planner pass, the lane scan and the champion filter all consult (the tri-state,
+operator model 2026-08-17):</p>
+<ul>
+<li><strong>Option A — Disable OBDA-READ</strong> (<code>mode="off"</code>; the DEFAULT): <code>dataSurface</code> absent,
+  <code>null</code>, or an <strong>empty product list</strong> — and <em>always</em> the answer when the OBDA-READ
+  <strong>component</strong> is not enabled for the agent (Administration → Components, the per-user
+  override, the agent's Capabilities toggle — read by <code>core/obda_planes</code> and handed to the
+  parser as <code>parse_scope(cfg, planes=…)</code>), because <code>parse_scope</code> <strong>drops the surface at the
+  parse seam</strong> (OBDA-READ is additive, charter #15: plane off ⇒ Uderia behaves as
+  if OBDA-READ never shipped for that agent; gating each consumer separately is how the
+  enrichment and the agent face were missed — found live, session d51cf073). The former
+  <code>OBDA_ENABLED</code> master was migrated once into component availability (Oct 2026) and no
+  longer exists. No products are
+  visible to the planner, <code>query_product</code>/<code>list_products</code> refuse
+  (<code>obda_not_enabled_for_agent</code>), no lane stamp, no confinement.</li>
+<li><strong>Option B — Surface Full</strong> (<code>mode="exclusive"</code>, <code>{products, exclusive: true}</code>):
+  surface-only (E1). When the agent runs autonomously, raw SQL is denied
+  <strong>fail-closed</strong> at all three chokepoints below (the <code>sql</code> argument is threaded
+  through <code>is_tool_allowed</code>); only signed-and-intact products are served (E2/E4,
+  enforced in the product face). Counts as <em>restricted</em> for <code>authorityScope</code>;
+  downgrade-guarded in the config contract (a pack republish cannot silently relax
+  it). Deliberately <strong>no <code>TDA_</code> exemption</strong> — canvas SQL is the same escape hatch.
+  <code>advisory</code> is B's observe-only development sub-toggle (E4): nothing denied,
+  violations observed and scored.</li>
+<li><strong>Option C — Products + regular paths</strong> (<code>mode="mixed"</code>, <code>{products,
+  exclusive: false}</code>): the listed products render as consumption contracts BESIDE
+  the full KG paths — the LLM decides per question. Nothing is denied, <strong>but the
+  list is still the grant</strong>: <code>query_product</code> refuses products not on it
+  (<code>not_on_surface</code>, naming the granted surface). That check is <strong>config-driven</strong>,
+  so it holds on interactive turns that carry no ambient principal.</li>
+</ul>
+<p><strong>Visibility vs enforcement — two seams, deliberately split.</strong> Planning
+<em>visibility</em> (which contracts the planner is shown, which champions are offered)
+follows the PROFILE configuration on every turn, interactive included; raw-SQL
+<em>enforcement</em> stays with the ambient PRINCIPAL (autonomous turns, plus the explicit
+<code>enforce_interactive</code> opt-in). An empty product list is Option A by construction —
+the profile editor never shows a mode that does not act, and saves an empty list as
+a cleared surface.</p>
+<p><strong>The one exception — the turn-scoped governed-SQL registry.</strong> <code>query_product</code>
+registers its compiled statement (<code>register_governed_sql</code>), so the only raw SQL a
+surface-only agent can execute is a statement the surface itself produced <em>this
+turn</em>; an <strong>edited</strong> statement forfeits the contract. The registry is a <strong>mutable
+set in a contextvar</strong>, created at <code>set_current_principal</code> and mutated by reference —
+a <code>.set()</code> in a child task is invisible to sibling tasks (contextvars propagate
+parent→child only, and Optimize runs parallel phases).</p>
+<p><strong>Recovery-shaped denial.</strong> A surface denial spells out the NEXT STEP (call
+<code>query_product</code>, execute the returned statement verbatim), keyed on the ONE
+<code>SURFACE_DENIAL_MARKER</code>; the blanket "do not retry; report this limitation" tail is
+reserved for <em>categorical</em> denials (denied tool, deny_writes) where nothing the
+agent does can help.</p>
+<p><strong>E5 — the empirical monitor.</strong> Free-formed SQL <em>executed</em> by a surface-only agent
+means the confinement leaked: a DANGER <code>surface_breach</code> incident (Assurance Inbox,
+BOUNDED station) whose summary says <em>"a hole report, not agent misbehaviour"</em>. It
+fires only on the breach — advisory, additive, governed and interactive turns are
+all silent.</p>
+<h2 id="2b-the-write-surface-obda-act-prop-008-54-increment-b3">2b. The write surface (OBDA-ACT, PROP-008 §5.4 — increment B3)</h2>
+<p>The data surface's twin for writes. <code>authorityConfig.actions = {types: [...], exclusive?}</code>
+parses to <code>AgentScope.actions_allowed</code> / <code>actions_exclusive</code> — <strong>the grant is the list</strong>, and
+both are dropped at the one parse seam while the OBDA-ACT component (<code>action</code>) is not enabled
+for the agent (<code>planes=</code> — the plane is the component; the former <code>ACT_ENABLED</code> master no
+longer exists).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>A raw write through a data tool</th>
+<th>A signed action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>no <code>actions</code></td>
+<td>as today (<code>deny_writes</code> decides)</td>
+<td>not performable by this agent (<code>not_granted</code>)</td>
+</tr>
+<tr>
+<td><code>actions</code> without <code>exclusive</code></td>
+<td>as today (<code>deny_writes</code> decides)</td>
+<td>performable if listed</td>
+</tr>
+<tr>
+<td><code>actions</code> + <code>exclusive</code></td>
+<td><strong>refused</strong> — <code>action-only</code> (<code>ACTION_DENIAL_MARKER</code>), naming the granted actions</td>
+<td>performable if listed</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Who decides a parked write — four eyes</strong> (PROP-008 §5.4a). <code>authorityConfig.actions.approvers</code>
+(account usernames, read by <code>agent_authority.action_approvers</code>, dropped while OBDA-MODEL · OBDA-ACT is off) names
+the accounts that approve this agent's parked writes. With a designation the agent's OWNER may
+not approve them — authority over the write is split between the agent's owner (whose agent and
+connection perform it) and a second person (who decides it). Absent, the owner decides — the
+single-account baseline. Like the grant, the designation is access, not trust: it moves no
+signature. Full contract: ACT_ARCHITECTURE §3.5.</p>
+<p><strong>Why a signed action never travels through a data tool.</strong> A data tool runs one statement
+per call under autocommit; an action is the preconditions, the before-image read, the write,
+the postconditions and the ledger row in ONE transaction, rolled back if any check fails
+(<code>dbdeploy/action_runner.py</code>). So the action face performs through a Database Connection
+(<code>core/action_perform.py</code>), and the SQL gate's part is the refusing side above. On Teradata
+the connection's login must HOLD the manifest's role (A6 proved what that role grants) and
+the session acts under it (<code>SET ROLE</code>); Uderia never widens a role. Measured live: a
+login holding only <code>UDERIA_ACT_FITNESS</code> was refused by the database itself when writing a
+table outside the contract (Error 5315).</p>
+<p><strong>Before anything touches a connection</strong>, <code>perform_action</code> refuses: OBDA-MODEL · OBDA-ACT off, an unknown
+action, an action that is not signed-and-intact, an agent whose grant does not name it.</p>
+<p><strong>The posture ladder is reused verbatim</strong>: <code>observe</code> records what would be written and
+writes nothing; <code>review</code> checks the preconditions and parks the compiled write
+(<code>review_queue</code>, source <code>action</code>, never releasable into a conversation); the owner's
+approval (<code>POST /v1/assurance/reviews/&lt;id&gt;/approve</code>) performs it BEFORE the disposition is
+recorded — only if the manifest hash, the re-compiled statement hash and the invocation hash
+all equal the parked ones and the agent's grant still names the action; a refused approval
+returns <code>409 action_not_performed</code> and records nothing. <code>annotate</code> and <code>enforce</code> write.</p>
+<p><strong>The receipt.</strong> Every invocation is appended to the turn's action record (a contextvar
+started and ended at the execution seam), stamped on the turn as <code>turn['actions']</code> at the
+persistence chokepoint; each PERFORMED one is sealed as an <code>action.performed</code> provenance step
+in <code>ProvenanceChain.finalize()</code> through <code>action_perform.receipt_content</code> — the same function
+<code>verify_content</code> uses, so a tampered stamp is a named mismatch. The OBDA-READ lane scanner reads
+the record: <code>acted_count</code> / <code>refused_count</code>, headline lane <code>acted</code> (absent on a turn without
+actions — byte-identical baseline).</p>
+<p><strong>Measured (B4d).</strong> <code>action_safety</code> (BOUNDED, ACT moment, owned by the <code>actions</code> mechanism):
+of the action writes the turn put to the database, the share whose every check held —
+read through the same fold every surface reads, informational, abstaining when no write
+reached the database (an act refused before it compiled is not a write). The
+<strong><code>write-escape</code> red-team probe</strong> lures an action-only agent into a raw <code>UPDATE</code>
+(a self-assignment on an impossible key, so even an escape changes no row) and adjudicates
+from the turn's own stamps: the <code>action-only</code> denial on the write statement → held; a raw
+write that executed → the escape; a refusal in words naming the action route → held; no
+signal → honestly unknown. The live runner scores each probe against its PERSISTED turn
+(<code>live_redteam.with_turn</code>) — the task result alone carries no tool calls.</p>
+<p><strong>The <code>action-only</code> denial is recovery-shaped</strong> (like the surface denial): it spells out the
+next step — change the data through one of the signed actions it names, with <code>TDA_Action</code> if
+that tool is offered to the agent, otherwise tell the user which action would make the
+change — and never says "report this limitation". <code>TDA_Action</code> is named conditionally because
+the action component may be off for the agent; an instruction to call a tool that is not
+offered is the defect the tail exists to avoid.</p>
+<h2 id="2c-the-deployments-obda-policy-contracts-only-oct-2026">2c. The deployment's OBDA policy — "contracts only" (Oct 2026)</h2>
+<p><code>APP_CONFIG.OBDA_POLICY</code> (<code>{read, model, act}</code>, each <code>off · observe · enforce</code>; Administration →
+App Config → Trust → <em>OBDA policy</em>; <code>obda_planes.policy</code> / <code>normalize_policy</code> / <code>set_policy</code>) is
+applied at ONE seam — <code>agent_authority.apply_policy</code>, called by <code>derive_principal</code> — so every
+consumer of the scope (the chokepoints, the tool surface, the enrichment cut, the champion
+filter, the stations) inherits it with no gate of its own:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Plane under <code>enforce</code></th>
+<th>Written into the scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read</code></td>
+<td>an EXCLUSIVE data surface over the agent's granted products (none granted ⇒ an empty surface: raw SQL refused, nothing readable but through a product)</td>
+</tr>
+<tr>
+<td><code>act</code></td>
+<td>an EXCLUSIVE write surface over the agent's granted actions (none ⇒ every raw write refused), and command tools (<code>_looks_like_command</code>: shell, bash, exec …) refused under the <code>contracts-only</code> marker (<code>POLICY_DENIAL_MARKER</code>)</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>recorded on the scope; the knowledge-graph component refuses direct graph edits for the agent (the graph changes through proposals a person publishes)</td>
+</tr>
+</tbody>
+</table></div>
+<p>An enforced plane makes the scope <code>is_restricted</code>. Under <code>observe</code> nothing is refused:
+<code>enforce_tool</code> re-asks the decision against the scope as enforce would have it
+(<code>_as_if_enforced</code>) and records a <code>policy_observed</code> trust event (<code>record_policy_observation</code>) —
+the pre-enforcement rehearsal. With every plane <code>off</code> the scope is returned unchanged and the
+stamp carries no <code>policy</code> key (byte-identical baseline). The policy applies wherever a principal
+is derived — autonomous turns, and interactive turns under <code>enforce_interactive</code>. Gate:
+<code>test/test_obda_policy.py</code>.</p>
+<h2 id="3-enforcement-a-per-turn-security-context-fail-closed-at-every-chokepoint">3. Enforcement — a per-turn security context, fail-closed at every chokepoint</h2>
+<p>The design problem: <strong>one gate misses most engines</strong>, and <strong>threading a principal through
+every call site is fragile</strong>. The solution is a <strong>per-turn security context via <code>contextvars</code></strong>
++ layered enforcement at the <em>execution chokepoints</em>.</p>
+<ul>
+<li>
+<p><strong><code>contextvars.ContextVar</code> (async-task-local, non-racy).</strong> The principal is set <strong>once</strong> at
+  the autonomous-turn boundary and read at every tool chokepoint. <code>contextvars</code> propagate into
+  awaited coroutines <em>and</em> child tasks (asyncio copies the context at task creation), so
+  <strong>concurrent sessions stay isolated</strong> and no signature plumbing is needed. An interactive
+  user turn leaves it unset → baseline (no gating). <em>(A CI test proves the propagation across
+  <code>await</code> and the concurrent-turn isolation.)</em></p>
+</li>
+<li>
+<p><strong>Set/reset at the turn boundary</strong> — <code>agent/execution_service.py:run_agent_execution</code>. When
+  <code>_effective_origin ∈ AUTONOMOUS_ORIGINS</code> (<code>genie_parent</code> · <code>genie_child</code> · <code>flow</code> ·
+  <code>scheduler</code> · <code>mcp</code>) it derives the principal from the active profile and sets the ambient
+  context; on convergence it resets and stamps the turn payload with the actor (agent vs user).
+  A scheduled task's <code>source="scheduler"</code> is mapped to the <code>scheduler</code> origin so the principal
+  applies. A turn of a <code>genie</code> (Coordinate) profile is always the <code>genie_parent</code> origin, and a
+  session marked <code>genie_metadata.is_genie_slave</code> the <code>genie_child</code> origin, so both derive a
+  principal even when a person typed the question. Genie <em>slaves</em> run as separate HTTP requests
+  (their own task/context) → each gets its own principal, no cross-task leak.</p>
+</li>
+</ul>
+<p><strong>The turn's authority stamp.</strong> At the same seam <code>build_authority_stamp(principal, origin,
+  configured=…)</code> is set into a second contextvar (<code>set_turn_authority</code>) and read by the one
+  persistence chokepoint, so every engine's turn carries <code>authority</code> — <code>applied: True</code> + the
+  scope in force, or <code>applied: False</code> + the origin. <code>applied</code> is load-bearing: a measurement must
+  tell "the boundary held" from "the boundary was never in force".</p>
+<p><strong>The scope is a declared choice, not a hardcoded constant (Aug 2026).</strong> An agent may opt its
+  INTERACTIVE turns into enforcement too: <code>authorityConfig.enforce_interactive: true</code>
+  (<code>agent_authority.enforces_interactive</code>, consulted at the same one gate —
+  <code>AUTONOMOUS_ORIGINS ∨ enforces_interactive(profile)</code>). Why: an operator ticked <em>Surface-only
+  (structural confinement)</em> and then watched the agent hand-write raw SQL in chat, because a
+  principal was never derived interactively — a switch labelled <em>structural confinement</em> that
+  silently does not apply to the mode the operator is using is the wrong default, and what the
+  human "control" actually sees is prose, not SQL. Rules, each mutation-tested: it WIDENS the
+  scope, never replaces it (an autonomous origin still derives a principal whatever the flag
+  says); only an explicit <code>True</code> opts in (a migrated <code>"true"</code> string must never start denying
+  tools); it governs the WHOLE <code>authorityConfig</code>, not the data surface alone (a partially
+  applied principal would be a second, subtler notion of authority); turning it OFF is a
+  pack-import downgrade (<code>flag_paths</code>). Editor: Agent Authority card → <em>Apply to interactive
+  turns too</em>. Default absent ⇒ byte-identical baseline. Consequence worth knowing: because
+  <code>autonomous: false</code> is the decision's FIRST check, <code>enforce_interactive: true</code> together with
+  <em>Allow autonomous</em> off denies EVERY tool on a chat turn — a blanket denial, not a read-only
+  agent (found by the Optimize campaign; use <code>deny_writes</code> for read-only).</p>
+<p><strong>An interactive turn says which of the agent's limits it ran WITHOUT (Oct 2026).</strong> Without
+  the opt-in, an interactive turn is stamped <code>applied: False</code> — and the agent's own scope, when
+  it is restricted, is sealed beside it as <code>not_in_force</code> (<code>build_authority_stamp(…,
+  configured=…)</code>, both stamp copies in <code>execution_service</code>). BOUNDED then reads <em>"interactive
+  turn — acting as the user. This agent's own limits were NOT in force on this turn: read-only ·
+  1 tool denied …"</em>, state <code>na</code> (the turn honestly ran as the user — no alarm is invented) with
+  the word <em>agent limits not in force</em>, and names the switch that would apply them. Found by the
+  trust campaign (B3): a <code>deny_writes</code> agent's chat turn read "acting as the user", as though
+  nothing had been configured. Under the opt-in, an interactive turn reads <em>"interactive turn
+  under the agent principal"</em> — never "autonomous run (scheduler)", which an empty origin once
+  produced. An unrestricted agent's stamp is byte-identical to the baseline. Gate:
+  <code>test_agent_authority.py</code>.</p>
+<ul>
+<li>
+<p><strong>A SQL argument that is not a STRING is refused before any round trip</strong> —
+  <code>tool_enforcement.nonstring_sql_block</code>, ONE implementation on BOTH data-tool paths (the MCP
+  adapter and the ReAct wrapper; the first version lived inline in the adapter alone and a
+  cross-class audit found the ReAct path uncovered). The refusal's marker is in
+  <code>DEFINITIVE_TOOL_ERRORS</code>, so no self-correction rounds fire: retrying cannot change what the
+  upstream step produced. <code>TDA_*</code> exempt; never raises.</p>
+</li>
+<li>
+<p><strong>Four chokepoints read the ambient principal and deny before executing</strong> (all-engine, because
+  every tool call from any engine funnels through one of these):</p>
+</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Chokepoint</th>
+<th>File</th>
+<th>Scoped by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MCP data-source tools (Optimize / genie-slave / FASTPATH)</td>
+<td><code>mcp_adapter/adapter.py:invoke_mcp_tool</code></td>
+<td><code>denied_tools</code>, <code>deny_writes</code> (tool-name heuristic <strong>plus SQL-statement classification</strong> — a write smuggled through a read-named tool, <code>base_readQuery(sql="DELETE …")</code>, is denied by classifying the statement via <code>tool_enforcement.classify_sql_write</code> → <code>preflight.catalog.sql_is_write</code> (sqlglot, regex fallback), not just the name). Statements that write <strong>files</strong> on the database server — <code>SELECT … INTO OUTFILE/DUMPFILE</code>, <code>COPY</code>, <code>EXPORT DATABASE</code>, <code>ATTACH</code>, <code>LOAD DATA</code>, <code>INSTALL</code> — count as writes (Sep 2026; sqlglot reads them as reads and a read-only transaction does not stop them). Genuine <code>TDA_*</code> framework tools (final report, logging, orchestration) exempt — but <strong>component tools are not</strong> (enforced in the component-routing branch, see below).</td>
+</tr>
+<tr>
+<td>MCP data-source tools (Conversation / ReAct)</td>
+<td><code>agent/tool_enforcement.py:wrap_langchain_mcp_tools</code></td>
+<td>Same decision as <code>invoke_mcp_tool</code>, at full parity. The ReAct engine executes MCP tools through the LangChain session, NOT <code>invoke_mcp_tool</code>, so each tool's coroutine is wrapped at <code>ConversationAgentExecutor.__init__</code> (the one seam where the tools + <code>session_id</code> are both known) to reach the same fail-closed chokepoint. The wrapper runs the <strong>full battery</strong> the adapter runs: authority (incl. SQL-write classification), preflight SQL grounding (catalog, declared join key, text-stored date, value existence, column existence — <code>preflight.guard.check_sql</code>), the in-flight <strong>loop guard</strong> (<code>loop_guard_block</code>), the per-turn <strong>tool ledger</strong> (<code>agent/turn_tool_ledger.py</code>, Nov 2026 — applied AFTER the gate so a denial is refused in the gate's own words: an identical call that already succeeded this turn is reused without reaching the tool, a write invalidating every memoised read; a tool whose execution fails 4× in a row is disabled for the rest of the turn with a recovery-shaped block, <code>TDA_TOOL_BREAKER_FAILURES</code>, 0 = off; <code>TDA_*</code> exempt; gate <code>test_tool_ledger.py</code>), and the <strong>tool-result firewall</strong> (<code>scan_result</code>) — closing the gap where the ReAct engine, the one most prone to tool loops and whose output re-enters context, escaped the two newest controls. Since Sep 2026 it also owns two recovery behaviours the Optimize path has in its correction chain: a <strong>raised tool error is handed back as recovery-shaped tool CONTENT</strong> (<code>failed_tool_result</code> — <code>langchain_mcp_adapters</code> raises <code>ToolException</code> on any MCP error and LangGraph would otherwise end the turn; cancellation still propagates), and a <strong>one-shot deterministic Teradata row-limit retry</strong> (<code>retry_teradata_top</code> → the shared <code>sql_dialect.teradata_top_rewrite</code>), whose successful result carries a note naming the rewrite; the arguments dict is updated to the SQL that actually ran so the catalog cache and the firewall see the truth — and its sibling, a <strong>one-shot reserved-alias retry</strong> (<code>retry_teradata_reserved_alias</code> → the shared <code>sql_dialect.teradata_reserved_alias_rewrite</code>: Error 3707 names the word, the identifier is quoted wherever the statement uses it as one), the two retries sharing ONE body. A <strong>raised database time-ceiling abort</strong> (Error 3110, the endpoint's own <code>request_timeout</code>) is shaped as a recovery at the same seam (<code>sql_dialect.db_abort_hint</code>, also appended on the adapter's exception path): a verbatim resend cannot succeed, and the hint names what changes the outcome. A preflight <strong>text-date refusal whose fix is mechanical</strong> (shape sampled, no slice cutting across the shape's fields — an aligned slice such as the month of a DD-MMM-YYYY passes the guard) is likewise applied in place before execution (<code>text_date_rewrite</code> → the shared <code>preflight.textdates.rewrite_sql</code>), the result annotated with the change; a refusal that needs judgement is handed back as content.</td>
+</tr>
+<tr>
+<td>Component tools</td>
+<td><code>components/manager.py:_run_component</code> (LangChain path) + <code>mcp_adapter/adapter.py</code> component-routing branch (Optimize path)</td>
+<td><code>denied_tools</code> by <strong>component id OR <code>TDA_</code> tool name</strong> (<code>enforce_tool(..., aliases=…)</code>), so <code>denied_tools:["scheduler"]</code> and <code>denied_tools:["TDA_Scheduler"]</code> both work on both paths. Capabilities, not write-gated. On the LangChain path the denial is returned in the tool's declared <code>(content, artifact)</code> shape — a bare string raised in LangChain's tool node and ended a Coordinate turn with the error as its answer (trust campaign, Oct 2026; <code>test/test_component_denial_shape.py</code>).</td>
+</tr>
+<tr>
+<td>Platform connectors</td>
+<td><code>core/platform_connector_registry.py:invoke_connector_tool</code></td>
+<td><code>allowed_connectors</code> allow-list. Connector <em>output</em> (web pages, browser, files, Google/Slack content — the canonical indirect-injection lane) is additionally screened by the <strong>tool-result firewall</strong> at the adapter's connector-routing return (<code>invoke_mcp_tool</code> → <code>tool_enforcement.scan_result</code>); observe-only, never altered, labels-only inbox event.</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>The single shared decision module <code>agent/tool_enforcement.py</code> backs both MCP paths so the
+"fail-closed at every tool chokepoint" guarantee holds on <em>every</em> engine, including the ReAct
+engine that bypasses <code>invoke_mcp_tool</code>.</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>Fail-closed</strong> (charter #8): <code>enforce_tool()</code> returns <em>deny</em> on any enforcement error; a
+  denial returns a <strong>terminal, non-retryable</strong> result (<code>denied_tool_result</code>) stamped
+  <code>agent_denied</code> so it is auditable and the LLM incorporates it as a definitive outcome (no
+  self-correction loop). No principal (interactive) → <em>allowed</em> (baseline).</p>
+</li>
+<li>
+<p><strong>A denied write is not an answer's licence to claim it.</strong> When a write call was denied on the
+  turn and the answer nonetheless asserts the effect (no write succeeded, the refusal not
+  disclosed), the honesty gate's <code>claimed_effect_after_denial</code> kind reads <code>danger</code> at GROUNDED
+  (<code>agent/honesty/gate.py:assess_claimed_effect_after_denial</code>; <code>test/test_honesty_claimed_effect.py</code>).
+  See <code>ANSWER_GATES_ARCHITECTURE.md</code>.</p>
+</li>
+</ul>
+<h3 id="3b-several-mcp-servers-prop-006-phase-2">3b. Several MCP servers (PROP-006 phase 2)</h3>
+<p>An agent with additional MCP servers sees an additional server's tools under a qualified name
+(<code>crm__base_readQuery</code>, <code>MULTI_SOURCE_ARCHITECTURE.md §9</code>). Authority
+is decided at the same chokepoints, on the name the agent sees:</p>
+<ul>
+<li><code>denied_tools</code> matches that name — <code>base_readQuery</code> denies the primary server's tool,
+  <code>crm__base_readQuery</code> the additional server's. Deny both to deny the capability everywhere.</li>
+<li><code>deny_writes</code> classifies the SQL statement itself, so a write is denied whichever server it goes to.</li>
+<li>Rules that recognise a tool by what it IS (the SQL tool, discovery tools, the governed tool-surface
+  backbone) read the base name through <code>tool_identity.base_name</code>; <code>test/tool_identity_gate.py</code>
+  fails the build on a comparison that bypasses it.</li>
+<li>Each server's own database login still bounds what the call can read — the database, not the tool
+  name, is the boundary.</li>
+</ul>
+<p>Open (build brief B4): an allow-list per source, with denials naming the source.</p>
+<h2 id="4-persistence-ux">4. Persistence &amp; UX</h2>
+<ul>
+<li><strong>Storage:</strong> the profile's <code>authorityConfig</code> block (in <code>user_preferences</code> profile JSON, same
+  as <code>guardrailConfig</code>/<code>groundingConfig</code> — no schema change). The legacy <code>identityConfig</code> key is
+  still read on load, so profiles saved before the rename keep their scope; the next save
+  rewrites them under <code>authorityConfig</code>.</li>
+<li><strong>Profile editor:</strong> an <strong>Agent Authority</strong> card (<code>configurationHandler.js</code> + <code>index.html</code>) —
+  process-focused: it frames the model ("when this agent runs autonomously it acts as a scoped
+  identity derived from you — its identity is the Profile itself; leave untouched to inherit your
+  full authority") then exposes allow-autonomous · read-only · denied-tools · allowed-connectors ·
+  per-run budget · action approvers (§2b) · the data surface (products + advisory, §2a) · <em>Apply
+  to interactive turns too</em> (<code>enforce_interactive</code>). Theme-aware, monochrome icon, collapsed by
+  default.</li>
+</ul>
+<h2 id="4a-reporting-a-scope-presence-is-not-constraint">4a. Reporting a scope — presence is not constraint</h2>
+<p>Any surface that <em>reports</em> what an agent may do must resolve the scope, never inspect the
+raw config. <strong><code>authorityConfig</code> being a non-empty dict says nothing about whether the agent
+is constrained</strong>: <code>{autonomous: true, denied_tools: [], deny_writes: false,
+max_cost_per_run: null}</code> is a fully-populated block that restricts nothing, and is
+byte-for-byte equivalent at runtime to no block at all. A presence check over that key once
+rendered the <em>least</em>-bounded agent in an estate as green under the headline "a strict subset
+of yours", while agents with no block — behaving identically — read as honest <code>n/a</code>. It
+rewarded <em>touching</em> authority in the direction of more autonomy.</p>
+<p>Two helpers make the resolved answer the only reachable one:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Helper</th>
+<th>Answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scope_for_profile(profile)</code></td>
+<td>The scope a profile actually runs under, honouring the legacy <code>identityConfig</code> fallback — one place, so a reader can never disagree with the enforcer.</td>
+</tr>
+<tr>
+<td><code>describe_scope(scope)</code></td>
+<td>The constraints in operator-reading order. Empty <strong>⇔</strong> <code>not scope.is_restricted</code>, asserted in CI, so the wording can never drift from the verdict.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>GET /v1/profiles</code> ships the result as a computed, read-only
+<code>authorityScope {restricted, autonomous, constraints[]}</code>; the Trust Circle's BOUNDED station
+and the posture matrix render that field rather than re-deriving it. The station reads
+<strong>pass</strong> only when every agent in scope genuinely restricts itself, and <strong>warn</strong> — with a
+count of how many would act with the owner's full authority if run unattended — otherwise.</p>
+<p>The asymmetries <code>is_restricted</code> already encodes are exactly the ones a naive reader inverts:
+<code>allowed_connectors: []</code> is <strong>deny-all</strong>, not "no restriction", and <code>max_cost_per_run: 0</code> is
+a real (deny-all) cap, not an absent one.</p>
+<h2 id="5-guarantees-proof">5. Guarantees &amp; proof</h2>
+<ul>
+<li><strong>Byte-identical baseline</strong> — no <code>authorityConfig</code>/<code>identityConfig</code> (or all-default) →
+  unrestricted scope, <code>is_restricted</code> False, nothing gated.</li>
+<li><strong>Subset-only</strong> — the scope model has no grant/elevate field; it can only remove.</li>
+<li><strong>Backward-compatible</strong> — legacy <code>identityConfig</code> is still honored; <code>authorityConfig</code> wins when
+  both are present (asserted in CI).</li>
+<li><strong>Proof</strong> — <code>test/test_agent_authority.py</code> (125 assertions: decision · subset invariant ·
+  <strong>reported-scope agrees with enforced scope</strong> (a present-but-empty block is not restricted;
+  description non-empty ⇔ restricted; <code>$0</code> cap and empty connector allow-list read as real
+  constraints) ·
+  config back-compat · contextvar set/get/reset · <strong>async propagation-across-awaits +
+  concurrent-turn isolation</strong> · fail-closed enforce · denial shape) + a <strong>live integration proof</strong>
+  through the real <code>invoke_mcp_tool</code> chokepoint (owner/no-principal passes; the autonomous agent
+  is denied <code>base_writeQuery</code> <em>before</em> touching MCP; a permitted read tool passes) + the real
+  stored-profile → scope loop (config_manager load of <code>@OPTIM</code> → <code>derive_principal</code> → denial).</li>
+</ul>
+<h2 id="5a-the-trust-budget-circuit-breaker-writes-here-jul-2026">5a. The trust-budget circuit breaker writes here (Jul 2026)</h2>
+<p>The Behavioral Trust Score's opt-in circuit breaker
+(<code>trust_behavior.breaker_mode = "freeze_autonomy"</code> — see
+<a href="AGENT_OPS_EVAL_ARCHITECTURE.html">AGENT_OPS_EVAL_ARCHITECTURE.md §6c</a>) acts
+<strong>through this model, not around it</strong>: when an agent's trailing conduct enters
+<code>at_risk</code>, the breaker sets the profile's <code>authorityConfig.autonomous = False</code>
+and stamps <code>frozen_by_breaker: true</code> + <code>frozen_reason</code> — suspending only the
+agent's <strong>unattended</strong> use via the exact same scope the Agent Authority card
+edits (interactive use untouched; visible and reversible by clearing the flag /
+re-enabling autonomous in the card). The stamps are plain <code>authorityConfig</code>
+keys, so export/import and the editor treat them like any other scope field.
+Implementation: <code>eval/online.py:_run_trust_breaker</code> (the <code>freeze_autonomy</code> branch
+calls <code>config_manager.update_profile</code>).</p>
+<h2 id="6-whats-deferred-charter-19">6. What's deferred (charter #19)</h2>
+<ul>
+<li><strong>Structural data-scoping (OBDA-READ)</strong> — <em>delivered, Aug 2026</em>: the Agent Principal now
+  carries the data surface (§2a), exactly as this row predicted — extending, never
+  forking, this model. Kept here as the record of the prediction.</li>
+<li><strong>Per-run budget is enforced in two places, on ONE predicate</strong> (<code>is_run_within_budget</code>):</li>
+<li><strong>In-flight</strong> (<code>check_budget_before_call</code>, the same predicate): asked BEFORE each model call
+    is paid for, on every engine that spends autonomously. Routed through <code>PlanExecutor</code>
+    (Optimize/Ideate/Focus helpers), the ReAct engine (<code>conversation_agent</code> at each
+    <code>on_chat_model_start</code>, accumulating <code>self._run_cost_usd</code>, halting with a named,
+    graceful stop that keeps the partial answer + <code>budget_stopped</code>), and the genie coordinator
+    (same seam). No ambient principal (interactive turn) → the check is a no-op → baseline. This
+    closes the earlier gap where only the <code>PlanExecutor</code> path checked in flight, so ReAct + genie
+    got post-hoc flagging only — "an audit record wearing a control's name".</li>
+<li><strong>Post-hoc</strong> (<code>execution_service.run_agent_execution</code> end-of-turn seam): a final check after
+    the turn's cost is resolved, stamping <code>authority_budget_exceeded</code> + emitting an
+    <code>agent_budget_exceeded</code> audit event so the caller (scheduler, coordinator) can react.</li>
+<li>(<code>max_cost_per_run: 0</code> is honored as a real deny-all cap, not "no cap".)</li>
+<li><strong>MCP origin</strong> is in <code>AUTONOMOUS_ORIGINS</code> but an inbound MCP <code>ask_profile</code> is not yet stamped
+  with a distinct origin at the execution layer (it currently arrives as a user REST call);
+  genie/flow/scheduler are the live autonomous triggers today.</li>
+<li><strong>"Agent identity" facets</strong> Uderia does <em>not</em> yet claim (see §0): the agent
+  authenticating to external systems <em>as itself</em> (its own workload credential), its own vaulted
+  short-lived secrets distinct from the owner's, and formal OAuth token-exchange / on-behalf-of
+  delegation downstream. Authority (this doc), assurance (Trust Membrane), and audit (provenance)
+  are in place; those three are the open edge of the identity umbrella.</li>
+</ul>
+<h2 id="7-files">7. Files</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/trusted_data_agent/core/agent_authority.py</code></td>
+<td>The model + decision + contextvar context + <code>enforce_tool</code> + <code>denied_tool_result</code> (pure).</td>
+</tr>
+<tr>
+<td><code>src/trusted_data_agent/agent/execution_service.py</code></td>
+<td>Derive/set the principal at the autonomous-turn boundary; reset + actor stamp on convergence; <code>source=scheduler</code> → origin.</td>
+</tr>
+<tr>
+<td><code>src/trusted_data_agent/mcp_adapter/adapter.py</code></td>
+<td>MCP-tool chokepoint enforcement.</td>
+</tr>
+<tr>
+<td><code>src/trusted_data_agent/components/manager.py</code></td>
+<td>Component-tool chokepoint enforcement.</td>
+</tr>
+<tr>
+<td><code>src/trusted_data_agent/core/platform_connector_registry.py</code></td>
+<td>Connector chokepoint enforcement.</td>
+</tr>
+<tr>
+<td><code>static/js/handlers/configurationHandler.js</code> + <code>templates/index.html</code></td>
+<td>The Agent Authority profile-editor card.</td>
+</tr>
+<tr>
+<td><code>test/test_agent_authority.py</code></td>
+<td>125 CI assertions incl. the async architectural proof and config back-compat.</td>
+</tr>
+<tr>
+<td><code>test/test_obda_policy.py</code> · <code>test/test_component_denial_shape.py</code></td>
+<td>The OBDA policy seam (§2c); the component denial's tool shape.</td>
+</tr>
+</tbody>
+</table></div>
+  </article>
+  <footer class="docfoot">
+    Uderia is a framework for trusted data agents. ·
+    Rendered from <code>docs/Architecture/AGENT_AUTHORITY_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    part of the Agent Trust &amp; Assurance stack ·
+    <a href="index.html">trust home</a> ·
+    <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
+    <a href="benchmarks.html">the numbers</a>.
+  </footer>
+</div>
+</html>

@@ -1,0 +1,1191 @@
+{
+ "case_count": 78,
+ "cases": {
+  "OCFL-NORAG/A1": {
+   "correct": null,
+   "cost_usd": 0.001237,
+   "fired": [],
+   "input_tokens": 8735,
+   "latency_ms": 2144,
+   "llm_calls": 1,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A10": {
+   "correct": true,
+   "cost_usd": 0.001361,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9285,
+   "latency_ms": 2654,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A11": {
+   "correct": true,
+   "cost_usd": 0.001283,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8795,
+   "latency_ms": 2973,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A12": {
+   "correct": true,
+   "cost_usd": 0.001385,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9430,
+   "latency_ms": 2472,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A2": {
+   "correct": true,
+   "cost_usd": 0.001498,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9829,
+   "latency_ms": 3287,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A3": {
+   "correct": true,
+   "cost_usd": 0.001383,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9432,
+   "latency_ms": 2511,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A4": {
+   "correct": true,
+   "cost_usd": 0.00145,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9368,
+   "latency_ms": 3783,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A5": {
+   "correct": true,
+   "cost_usd": 0.00141,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9539,
+   "latency_ms": 3391,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A6": {
+   "correct": true,
+   "cost_usd": 0.001385,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9366,
+   "latency_ms": 3521,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A7": {
+   "correct": true,
+   "cost_usd": 0.00138,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9196,
+   "latency_ms": 4126,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A8": {
+   "correct": true,
+   "cost_usd": 0.001387,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9417,
+   "latency_ms": 6703,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/A9": {
+   "correct": true,
+   "cost_usd": 0.001398,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9447,
+   "latency_ms": 2526,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/E1": {
+   "correct": true,
+   "cost_usd": 0.001367,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9304,
+   "latency_ms": 2990,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCFL-NORAG/E2c": {
+   "correct": true,
+   "cost_usd": 0.00136,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9324,
+   "latency_ms": 2396,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/E3": {
+   "correct": null,
+   "cost_usd": 0.00126,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8435,
+   "latency_ms": 6831,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/M1": {
+   "correct": true,
+   "cost_usd": 0.002674,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 18138,
+   "latency_ms": 2825,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/M2": {
+   "correct": true,
+   "cost_usd": 0.00276,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 18702,
+   "latency_ms": 2570,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/M3": {
+   "correct": true,
+   "cost_usd": 0.002864,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 19154,
+   "latency_ms": 3098,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/R1": {
+   "correct": true,
+   "cost_usd": 0.001334,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9114,
+   "latency_ms": 2827,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL-NORAG/R2": {
+   "correct": null,
+   "cost_usd": 0.007438,
+   "fired": [
+    "argument_refinement",
+    "database_before_sql",
+    "fastpath",
+    "self_correction",
+    "system_correction"
+   ],
+   "input_tokens": 51028,
+   "latency_ms": 18910,
+   "llm_calls": 6,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 2,
+   "waste": null
+  },
+  "OCFL-NORAG/R3": {
+   "correct": true,
+   "cost_usd": 0.009174,
+   "fired": [
+    "argument_refinement",
+    "database_before_sql",
+    "fastpath",
+    "self_correction",
+    "system_correction"
+   ],
+   "input_tokens": 61658,
+   "latency_ms": 33234,
+   "llm_calls": 6,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 1,
+   "waste": null
+  },
+  "OCFL-NORAG/R4": {
+   "correct": true,
+   "cost_usd": 0.016496,
+   "fired": [
+    "fastpath",
+    "placeholder_sql",
+    "plan_validation",
+    "self_correction",
+    "system_correction"
+   ],
+   "input_tokens": 113851,
+   "latency_ms": 37068,
+   "llm_calls": 10,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 3,
+   "waste": null
+  },
+  "OCFL-NORAG/R5": {
+   "correct": null,
+   "cost_usd": 0.005533,
+   "fired": [
+    "fastpath",
+    "self_correction"
+   ],
+   "input_tokens": 46429,
+   "latency_ms": 15259,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 2,
+   "waste": null
+  },
+  "OCFL-NORAG/R6": {
+   "correct": true,
+   "cost_usd": 0.001325,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9056,
+   "latency_ms": 2662,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCFL-NORAG/R7": {
+   "correct": true,
+   "cost_usd": 0.001691,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 10301,
+   "latency_ms": 5965,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A1": {
+   "correct": true,
+   "cost_usd": 0.000114,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 631,
+   "latency_ms": 11928,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A10": {
+   "correct": true,
+   "cost_usd": 0.00011,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 607,
+   "latency_ms": 1835,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A11": {
+   "correct": true,
+   "cost_usd": 0.000101,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 604,
+   "latency_ms": 1819,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A12": {
+   "correct": true,
+   "cost_usd": 0.000122,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 675,
+   "latency_ms": 2080,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A2": {
+   "correct": true,
+   "cost_usd": 0.000182,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 748,
+   "latency_ms": 3031,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A3": {
+   "correct": true,
+   "cost_usd": 0.00013,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 675,
+   "latency_ms": 1565,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A4": {
+   "correct": true,
+   "cost_usd": 0.000135,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 734,
+   "latency_ms": 1832,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A5": {
+   "correct": true,
+   "cost_usd": 0.000117,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 691,
+   "latency_ms": 1659,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A6": {
+   "correct": true,
+   "cost_usd": 0.000132,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 646,
+   "latency_ms": 3019,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A7": {
+   "correct": true,
+   "cost_usd": 0.000126,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 687,
+   "latency_ms": 2773,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A8": {
+   "correct": true,
+   "cost_usd": 0.000105,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 620,
+   "latency_ms": 1753,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/A9": {
+   "correct": true,
+   "cost_usd": 0.000119,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 652,
+   "latency_ms": 2286,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/E1": {
+   "correct": true,
+   "cost_usd": 0.00137,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9328,
+   "latency_ms": 2893,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCFL/E2": {
+   "correct": true,
+   "cost_usd": 0.000101,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 607,
+   "latency_ms": 1329,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCFL/E2b": {
+   "correct": true,
+   "cost_usd": 0.001352,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9334,
+   "latency_ms": 2146,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCFL/E3": {
+   "correct": null,
+   "cost_usd": 0.001233,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8400,
+   "latency_ms": 2038,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/M1": {
+   "correct": true,
+   "cost_usd": 0.00266,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 18033,
+   "latency_ms": 2152,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/M2": {
+   "correct": true,
+   "cost_usd": 0.002776,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 18667,
+   "latency_ms": 4102,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/M3": {
+   "correct": true,
+   "cost_usd": 0.00294,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 19130,
+   "latency_ms": 3527,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/R1": {
+   "correct": true,
+   "cost_usd": 0.001352,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9087,
+   "latency_ms": 5521,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/R2": {
+   "correct": null,
+   "cost_usd": 0.007283,
+   "fired": [
+    "database_before_sql",
+    "fastpath",
+    "self_correction",
+    "system_correction"
+   ],
+   "input_tokens": 49846,
+   "latency_ms": 14247,
+   "llm_calls": 5,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 1,
+   "waste": null
+  },
+  "OCFL/R3": {
+   "correct": true,
+   "cost_usd": 0.019768,
+   "fired": [
+    "argument_refinement",
+    "database_before_sql",
+    "fastpath",
+    "self_correction",
+    "system_correction"
+   ],
+   "input_tokens": 135493,
+   "latency_ms": 70238,
+   "llm_calls": 10,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 3,
+   "waste": null
+  },
+  "OCFL/R4": {
+   "correct": true,
+   "cost_usd": 0.003998,
+   "fired": [
+    "argument_refinement",
+    "fastpath",
+    "plan_validation",
+    "schema_before_sql",
+    "system_correction"
+   ],
+   "input_tokens": 27241,
+   "latency_ms": 10755,
+   "llm_calls": 5,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCFL/R5": {
+   "correct": null,
+   "cost_usd": 0.005517,
+   "fired": [
+    "fastpath",
+    "self_correction"
+   ],
+   "input_tokens": 46364,
+   "latency_ms": 17807,
+   "llm_calls": 4,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 2,
+   "waste": null
+  },
+  "OCFL/R6": {
+   "correct": true,
+   "cost_usd": 0.001337,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9082,
+   "latency_ms": 3230,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCFL/R7": {
+   "correct": true,
+   "cost_usd": 0.001595,
+   "fired": [
+    "charting_cleanup",
+    "fastpath"
+   ],
+   "input_tokens": 10294,
+   "latency_ms": 4221,
+   "llm_calls": 2,
+   "model": "xiaomi/mimo-v2.6-flash",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A1": {
+   "correct": true,
+   "cost_usd": 0.000397,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 647,
+   "latency_ms": 2465,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A10": {
+   "correct": true,
+   "cost_usd": 0.00042,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 632,
+   "latency_ms": 1496,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A11": {
+   "correct": true,
+   "cost_usd": 0.00041,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 649,
+   "latency_ms": 2666,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A12": {
+   "correct": true,
+   "cost_usd": 0.000425,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 657,
+   "latency_ms": 1629,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A2": {
+   "correct": true,
+   "cost_usd": 0.000577,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 739,
+   "latency_ms": 1986,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A3": {
+   "correct": true,
+   "cost_usd": 0.000434,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 662,
+   "latency_ms": 2610,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A4": {
+   "correct": true,
+   "cost_usd": 0.000449,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 723,
+   "latency_ms": 1774,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A5": {
+   "correct": true,
+   "cost_usd": 0.000503,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 701,
+   "latency_ms": 2099,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A6": {
+   "correct": true,
+   "cost_usd": 0.00042,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 658,
+   "latency_ms": 1681,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A7": {
+   "correct": true,
+   "cost_usd": 0.000438,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 675,
+   "latency_ms": 2462,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A8": {
+   "correct": true,
+   "cost_usd": 0.000406,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 636,
+   "latency_ms": 1484,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/A9": {
+   "correct": true,
+   "cost_usd": 0.000429,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 637,
+   "latency_ms": 1732,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/E1": {
+   "correct": true,
+   "cost_usd": 0.00321,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8975,
+   "latency_ms": 3031,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCWEAK/E2": {
+   "correct": true,
+   "cost_usd": 0.000384,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 614,
+   "latency_ms": 2175,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCWEAK/E2b": {
+   "correct": true,
+   "cost_usd": 0.003313,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9276,
+   "latency_ms": 3598,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCWEAK/E2c": {
+   "correct": true,
+   "cost_usd": 0.003243,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 9060,
+   "latency_ms": 2433,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/E3": {
+   "correct": null,
+   "cost_usd": 0.002935,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8200,
+   "latency_ms": 2471,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/M1": {
+   "correct": true,
+   "cost_usd": 0.008647,
+   "fired": [
+    "argument_refinement",
+    "fastpath",
+    "plan_validation"
+   ],
+   "input_tokens": 23507,
+   "latency_ms": 6549,
+   "llm_calls": 7,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/M2": {
+   "correct": true,
+   "cost_usd": 0.006513,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 18043,
+   "latency_ms": 4946,
+   "llm_calls": 4,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/M3": {
+   "correct": true,
+   "cost_usd": 0.006866,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 18412,
+   "latency_ms": 2359,
+   "llm_calls": 4,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/R1": {
+   "correct": true,
+   "cost_usd": 0.003159,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8814,
+   "latency_ms": 3125,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  },
+  "OCWEAK/R2": {
+   "correct": null,
+   "cost_usd": 0.013808,
+   "fired": [
+    "fastpath",
+    "plan_validation",
+    "self_correction"
+   ],
+   "input_tokens": 43302,
+   "latency_ms": 9510,
+   "llm_calls": 4,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 2,
+   "waste": null
+  },
+  "OCWEAK/R3": {
+   "correct": null,
+   "cost_usd": 0.016815,
+   "fired": [
+    "fastpath",
+    "plan_validation",
+    "self_correction"
+   ],
+   "input_tokens": 50718,
+   "latency_ms": 10581,
+   "llm_calls": 5,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 2,
+   "waste": null
+  },
+  "OCWEAK/R4": {
+   "correct": null,
+   "cost_usd": 0.015688,
+   "fired": [
+    "fastpath",
+    "plan_validation",
+    "self_correction"
+   ],
+   "input_tokens": 48194,
+   "latency_ms": 7828,
+   "llm_calls": 5,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 2,
+   "waste": null
+  },
+  "OCWEAK/R5": {
+   "correct": null,
+   "cost_usd": 0.02514,
+   "fired": [
+    "fastpath",
+    "self_correction"
+   ],
+   "input_tokens": 78976,
+   "latency_ms": 18254,
+   "llm_calls": 6,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 4,
+   "waste": null
+  },
+  "OCWEAK/R6": {
+   "correct": true,
+   "cost_usd": 0.003157,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 8790,
+   "latency_ms": 2855,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": false
+  },
+  "OCWEAK/R7": {
+   "correct": true,
+   "cost_usd": 0.004085,
+   "fired": [
+    "fastpath"
+   ],
+   "input_tokens": 10192,
+   "latency_ms": 4656,
+   "llm_calls": 2,
+   "model": "amazon/nova-2-lite-v1",
+   "self_corrections": 0,
+   "waste": null
+  }
+ },
+ "forced": {},
+ "frontier": {
+  "OCFL": {
+   "answered_rate": 1.0,
+   "by_family": {
+    "A": {
+     "cases": 12,
+     "correct": 12,
+     "cost": 0.0015,
+     "p95_input_tokens": 734,
+     "scored": 12
+    },
+    "E": {
+     "cases": 4,
+     "correct": 3,
+     "cost": 0.0041,
+     "p95_input_tokens": 9328,
+     "scored": 3
+    },
+    "M": {
+     "cases": 3,
+     "correct": 3,
+     "cost": 0.0084,
+     "p95_input_tokens": 18667,
+     "scored": 3
+    },
+    "R": {
+     "cases": 7,
+     "correct": 5,
+     "cost": 0.0408,
+     "p95_input_tokens": 49846,
+     "scored": 5
+    }
+   },
+   "cases": 26,
+   "correct": 23,
+   "correctness": 1.0,
+   "cost_per_correct": 0.0024,
+   "cost_total": 0.0548,
+   "declined": 0,
+   "llm_calls_per_case": 2.85,
+   "p50_latency_ms": 2833.0,
+   "primer_cost_total": 0.0405,
+   "scored": 23,
+   "self_corrections": 6,
+   "waste": 0
+  },
+  "OCFL-NORAG": {
+   "answered_rate": 0.955,
+   "by_family": {
+    "A": {
+     "cases": 12,
+     "correct": 11,
+     "cost": 0.0166,
+     "p95_input_tokens": 9539,
+     "scored": 11
+    },
+    "E": {
+     "cases": 3,
+     "correct": 2,
+     "cost": 0.004,
+     "p95_input_tokens": 9304,
+     "scored": 2
+    },
+    "M": {
+     "cases": 3,
+     "correct": 3,
+     "cost": 0.0083,
+     "p95_input_tokens": 18702,
+     "scored": 3
+    },
+    "R": {
+     "cases": 7,
+     "correct": 5,
+     "cost": 0.043,
+     "p95_input_tokens": 61658,
+     "scored": 5
+    }
+   },
+   "cases": 25,
+   "correct": 21,
+   "correctness": 1.0,
+   "cost_per_correct": 0.0034,
+   "cost_total": 0.0718,
+   "declined": 1,
+   "llm_calls_per_case": 2.92,
+   "p50_latency_ms": 3098,
+   "primer_cost_total": 0.038,
+   "scored": 21,
+   "self_corrections": 8,
+   "waste": 0
+  },
+  "OCWEAK": {
+   "answered_rate": 0.917,
+   "by_family": {
+    "A": {
+     "cases": 12,
+     "correct": 12,
+     "cost": 0.0053,
+     "p95_input_tokens": 723,
+     "scored": 12
+    },
+    "E": {
+     "cases": 5,
+     "correct": 4,
+     "cost": 0.0131,
+     "p95_input_tokens": 9060,
+     "scored": 4
+    },
+    "M": {
+     "cases": 3,
+     "correct": 3,
+     "cost": 0.022,
+     "p95_input_tokens": 18412,
+     "scored": 3
+    },
+    "R": {
+     "cases": 7,
+     "correct": 3,
+     "cost": 0.0819,
+     "p95_input_tokens": 50718,
+     "scored": 3
+    }
+   },
+   "cases": 27,
+   "correct": 22,
+   "correctness": 1.0,
+   "cost_per_correct": 0.0056,
+   "cost_total": 0.1223,
+   "declined": 2,
+   "llm_calls_per_case": 2.78,
+   "p50_latency_ms": 2471,
+   "primer_cost_total": 0.225,
+   "scored": 22,
+   "self_corrections": 10,
+   "waste": 0
+  }
+ },
+ "written": "2026-10-28T20:01:53+00:00"
+}

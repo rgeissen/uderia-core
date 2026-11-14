@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence — Uderia</title>
+<style>
+:root{
+  --ground:#0e1621;--panel:#172230;--panel-2:#1e2c3b;--hair:#2c3c4e;--hair-soft:#223140;
+  --text:#e9eff5;--muted:#93a4b6;--dim:#6b7d90;--faint:#52657a;
+  --sage:#6cbf92;--amber:#f2b04a;--red:#e5687a;--blue:#6aa9e0;--steel-1:#9db8cf;
+  --accent:#F15F22;--accent-soft:rgba(241,95,34,0.12);--accent-line:rgba(241,95,34,0.45);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{
+  margin:0;background:radial-gradient(1200px 780px at 50% -12%,#14212f 0%,var(--ground) 58%),var(--ground);
+  color:var(--text);font-family:var(--sans);line-height:1.66;font-size:16.5px;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--steel-1);text-decoration:none;border-bottom:1px solid rgba(157,184,207,0.28);}
+a:hover{color:var(--text);}
+
+/* sticky masthead */
+.topbar{
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+  background:rgba(14,22,33,0.82);border-bottom:1px solid var(--hair);
+}
+.topbar-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar .brand{font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);}
+.topbar .sep{color:var(--faint);}
+.topbar .doc{font-weight:650;color:var(--text);}
+.topbar .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;}
+.topbar .back:hover{border-color:var(--accent-line);color:var(--text);}
+
+/* layout: content + floating TOC */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:44px;}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);}.toc{display:none;}}
+
+header.hero{padding:56px 0 8px;grid-column:1 / -1;}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
+header.hero h1{font-family:var(--sans);font-weight:800;letter-spacing:-0.02em;font-size:clamp(30px,5vw,50px);line-height:1.04;margin:0;text-wrap:balance;}
+
+/* TOC */
+.toc{grid-column:2;grid-row:2;align-self:start;position:sticky;top:72px;padding:18px 0;max-height:calc(100vh - 96px);overflow:auto;}
+.toc .toc-h{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}
+.toc a{display:block;border:none;color:var(--muted);font-size:13px;padding:3px 0 3px 12px;border-left:1px solid var(--hair);}
+.toc a:hover{color:var(--text);border-left-color:var(--accent-line);}
+.toc a.lvl-3{padding-left:24px;font-size:12.5px;color:var(--dim);}
+
+/* article */
+article.doc{min-width:0;padding:8px 0 80px;grid-column:1;grid-row:2;}
+article.doc h1,article.doc h2,article.doc h3,article.doc h4{scroll-margin-top:76px;line-height:1.2;text-wrap:balance;}
+article.doc h1{font-size:clamp(26px,3.6vw,34px);font-weight:800;letter-spacing:-0.015em;margin:40px 0 16px;}
+article.doc h2{font-size:clamp(22px,3vw,28px);font-weight:750;margin:44px 0 14px;padding-top:22px;border-top:1px solid var(--hair);}
+article.doc h3{font-size:19px;font-weight:700;color:#dbe6f0;margin:30px 0 10px;}
+article.doc h4{font-size:15.5px;font-weight:700;color:var(--muted);text-transform:none;margin:22px 0 8px;}
+article.doc p{max-width:74ch;color:#cdd8e2;margin:0 0 15px;}
+article.doc strong{color:var(--text);font-weight:650;}
+article.doc em{color:#d6e1ec;}
+article.doc ul,article.doc ol{max-width:74ch;color:#cdd8e2;padding-left:24px;}
+article.doc li{margin:6px 0;}
+article.doc li::marker{color:var(--dim);}
+article.doc hr{border:none;border-top:1px solid var(--hair);margin:36px 0;}
+article.doc blockquote{
+  margin:18px 0;padding:14px 20px;border-left:3px solid var(--accent-line);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:#d6e1ec;
+}
+article.doc blockquote p{margin:0 0 8px;}article.doc blockquote p:last-child{margin:0;}
+
+/* inline code + fenced */
+article.doc code{font-family:var(--mono);font-size:0.9em;color:var(--sage);background:rgba(108,191,146,0.08);
+  border:1px solid rgba(108,191,146,0.16);border-radius:5px;padding:1px 5px;}
+article.doc pre{
+  background:#0c141d;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 18px;
+}
+article.doc pre code{color:#c9d6e2;background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--hair);border-radius:12px;}
+article.doc table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+article.doc th,article.doc td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top;}
+article.doc thead th{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:rgba(0,0,0,0.22);}
+article.doc tbody tr:last-child td{border-bottom:none;}
+article.doc tbody tr:hover{background:rgba(255,255,255,0.015);}
+article.doc td code{white-space:nowrap;}
+/* a long identifier in running text wraps rather than widening the page at phone width */
+:where(code){overflow-wrap:anywhere;}
+/* the article is a grid/flex child: let it shrink so a wide table scrolls in its own wrapper */
+article.doc{min-width:0;}
+.table-wrap{max-width:100%;}
+
+footer.docfoot{grid-column:1 / -1;padding:28px 0 70px;border-top:1px solid var(--hair);color:var(--dim);font-size:13px;font-family:var(--mono);}
+footer.docfoot a{color:var(--muted);}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <span class="brand">Agent Trust &amp; Assurance</span>
+  <span class="sep">/</span>
+  <span class="doc">Evidence</span>
+  <a class="back" href="the-life-of-a-uderia-agent.html">← The Life of a Uderia Agent</a>
+</div></div>
+
+<div class="shell">
+  <header class="hero">
+    <p class="eyebrow">Architecture · Evidence · PROP-009</p>
+    <h1>Evidence</h1>
+  </header>
+  <nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><a href="#1-the-question-this-answers" class="lvl-2">1. The question this answers</a><a href="#2-the-records" class="lvl-2">2. The records</a><a href="#3-owner-scoped-agent-attestations" class="lvl-2">3. Owner-scoped agent attestations</a><a href="#4-the-bill-of-materials" class="lvl-2">4. The bill of materials</a><a href="#41-what-it-records" class="lvl-3">4.1 What it records</a><a href="#42-when" class="lvl-3">4.2 When</a><a href="#43-how-it-is-sealed-and-verified" class="lvl-3">4.3 How it is sealed and verified</a><a href="#44-the-delivered-answer-verifies-on-every-engine" class="lvl-3">4.4 The delivered answer verifies on every engine</a><a href="#5-the-evidence-record-and-the-usage-index-prop-009-43" class="lvl-2">5. The evidence record and the usage index (PROP-009 §4.3)</a><a href="#6-the-read-model-prop-009-43-51" class="lvl-2">6. The read model (PROP-009 §4.3, §5.1)</a><a href="#the-answer-view" class="lvl-3">The answer view</a><a href="#7-artefact-usage-and-the-estate-prop-009-52-53" class="lvl-2">7. Artefact usage and the estate (PROP-009 §5.2, §5.3)</a><a href="#8-portable-bundles-and-the-offline-verifiers-prop-009-44" class="lvl-2">8. Portable bundles and the offline verifiers (PROP-009 §4.4)</a><a href="#9-the-evidence-ledger-prop-009-45" class="lvl-2">9. The evidence ledger (PROP-009 §4.5)</a><a href="#10-key-custody-and-external-anchoring-prop-009-46-opt-in" class="lvl-2">10. Key custody and external anchoring (PROP-009 §4.6) — opt-in</a><a href="#verified-against-real-services-oct-2026" class="lvl-3">Verified against real services (Oct 2026)</a><a href="#11-gates" class="lvl-2">11. Gates</a></nav>
+  <article class="doc">
+<blockquote>
+<p><strong>Status:</strong> implemented on <code>main</code> (Oct 2026); last verified against code 2026-10-30. Proposal and decisions:
+<code>PROP-009</code>. This document is the live contract;
+the proposal is the record of why.</p>
+</blockquote>
+<h2 id="1-the-question-this-answers">1. The question this answers</h2>
+<p><em>"For this answer, what produced it, and was each part signed and unchanged at that moment?"</em></p>
+<p>Uderia already signs turns (the Ed25519 provenance chain), artefacts (the Trust Membrane), acts
+(OBDA-ACT receipts) and audit packs. Evidence is the <strong>index over those signatures plus the one record
+that was missing</strong> — which versions of an agent's parts a turn actually ran with. It never copies
+an artefact: artefacts stay where they live, so an attestation is always compared with the real,
+live artefact.</p>
+<h2 id="2-the-records">2. The records</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Record</th>
+<th>Where</th>
+<th>Written by</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Current attestation</td>
+<td><code>trust_attestations</code></td>
+<td><code>trust.store.sign</code> / <code>record_attestation</code></td>
+<td>One row per artefact — per <strong>owner</strong> for agents (§3). The badge reads it.</td>
+</tr>
+<tr>
+<td>Attestation history</td>
+<td><code>trust_attestation_history</code></td>
+<td>every store write</td>
+<td>Append-only: <code>sign</code> · <code>renew</code> · <code>record</code> · <code>reinstate</code> · <code>revoke</code> · <code>retire</code> · <code>migrated</code> · <code>assigned</code>. A re-sign never erases what was signed before. <code>renew</code> (Oct 2026) is a signature re-established by the owner's standing post-sync policy (<code>core/trust/renewal.py</code>, see <a href="TRUST_MEMBRANE_ARCHITECTURE.html">TRUST_MEMBRANE_ARCHITECTURE.md</a>); it counts as an establishing event exactly like <code>sign</code> (<code>store._ESTABLISHING_EVENTS</code>).</td>
+</tr>
+<tr>
+<td>Signing keys</td>
+<td><code>trust_signing_keys</code></td>
+<td><code>sign</code> (local) · <code>reinstate</code> (carried) · migration</td>
+<td><code>active</code> · <code>retired</code> (an earlier local key) · <code>carried</code> (another signer's).</td>
+</tr>
+<tr>
+<td>Bill of materials</td>
+<td><code>turn['bom']</code> + a <code>trust.bom</code> chain step</td>
+<td>the turn (§4)</td>
+<td>The signed parts the turn ran with.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-owner-scoped-agent-attestations">3. Owner-scoped agent attestations</h2>
+<p>Bootstrap copies the same profile ids into every account, so the portable agent signature
+(<code>agent</code>) and the deployment attestation (<code>agent_deployment</code>) are keyed
+<code>(kind, artifact_id, owner_uuid)</code>. Every other kind keeps <code>owner_uuid = ''</code>: graphs, collections,
+flows, dashboards, canvases and packs have deployment-unique ids; skills and extensions are
+deployment-wide by design.</p>
+<ul>
+<li>A scoped read that names no owner sees only the <strong>unassigned</strong> bucket — <em>unsigned</em>, never another
+  account's signature. A structural gate requires every production caller of a scoped kind to pass
+  the owner (<code>test_trust_attestation_history</code> §G).</li>
+<li>The one-time migration rebuilds the table (SQLite cannot alter a table-level <code>UNIQUE</code>), copies
+  every row unchanged, and attributes scoped rows with one rule, <code>store.attribute_owner</code>: the sole
+  account holding the agent; else the signer, if the signer holds it; else unassigned.</li>
+<li>Unassigned rows are listed by <code>GET /v1/trust/unassigned</code> with the reason in words and resolved by
+  an administrator (<code>POST /v1/trust/unassigned/assign</code>) — never assigned by guess.</li>
+<li>Deleting a profile retires its agent <strong>and</strong> deployment attestations, for that owner only.</li>
+</ul>
+<h2 id="4-the-bill-of-materials">4. The bill of materials</h2>
+<h3 id="41-what-it-records">4.1 What it records</h3>
+<pre><code class="language-json">{
+  &quot;version&quot;: 1, &quot;profile_id&quot;: &quot;profile-…&quot;, &quot;profile_tag&quot;: &quot;IDGGT&quot;, &quot;owner_uuid&quot;: &quot;…&quot;,
+  &quot;resolved&quot;: &quot;turn_start&quot;, &quot;resolved_at&quot;: &quot;2026-10-08T15:40:49Z&quot;,
+  &quot;badge&quot;: &quot;unsigned&quot;,
+  &quot;agent&quot;:      {&quot;kind&quot;: &quot;agent&quot;, &quot;artifact_id&quot;: &quot;profile-…&quot;, &quot;label&quot;: &quot;IDGGT&quot;,
+                 &quot;live_hash&quot;: &quot;…&quot;, &quot;attested_hash&quot;: &quot;…&quot;, &quot;history_id&quot;: 812,
+                 &quot;state&quot;: &quot;trusted&quot;, &quot;badge&quot;: &quot;changed&quot;},
+  &quot;deployment&quot;: {&quot;kind&quot;: &quot;agent_deployment&quot;, &quot;artifact_id&quot;: &quot;profile-…&quot;, &quot;label&quot;: &quot;deployment&quot;,
+                 &quot;live_hash&quot;: &quot;…&quot;, &quot;attested_hash&quot;: &quot;…&quot;, &quot;history_id&quot;: 815, &quot;state&quot;: &quot;trusted&quot;,
+                 &quot;required&quot;: true,
+                 &quot;summary&quot;: {&quot;provider&quot;: &quot;Google&quot;, &quot;model&quot;: &quot;gemini-…&quot;, &quot;tools&quot;: 31,
+                             &quot;prompts&quot;: 12, &quot;connectors&quot;: 0}},
+  &quot;parts&quot;: [{&quot;kind&quot;: &quot;ontology&quot;, &quot;artifact_id&quot;: &quot;kg-…&quot;, &quot;label&quot;: &quot;Fitness&quot;,
+             &quot;live_hash&quot;: &quot;…&quot;, &quot;attested_hash&quot;: &quot;…&quot;, &quot;history_id&quot;: 790, &quot;state&quot;: &quot;changed&quot;}]
+}
+</code></pre>
+<ul>
+<li><strong><code>agent.state</code></strong> is the agent's own signature against its live composition; its ingredients
+  report on their own rows (never twice). <strong><code>agent.badge</code></strong> is the portable badge (signature and
+  every ingredient green); the top-level <strong><code>badge</code></strong> is the composite badge, equal to the turn's
+  integrity stamp.</li>
+<li>An ingredient whose content could not be read is marked <code>unresolved</code> and is never <code>trusted</code>
+  (<code>attestation.ingredient_state</code>, the same rule the badge and the sign gate use).</li>
+<li><strong>Data products and actions are not repeated here.</strong> Each is sealed by its own receipt step in
+  the same chain (<code>obda.consumption</code>, <code>action.performed</code>); the evidence tree joins them at read time.</li>
+</ul>
+<h3 id="42-when">4.2 When</h3>
+<p>Resolved once at turn <strong>start</strong>, at the seam that already resolved the integrity stamp:
+<code>executor.run()</code> for the four standard engines and the Coordinate engine's own turn assembly
+(<code>agent/engines/coordinate_engine.py</code> — genie is dispatched directly). <code>composition.turn_evidence()</code> is one resolution with two
+products — the stamp and the BOM — so they cannot disagree; <code>turn_integrity_stamp</code> is its first
+half. A part edited <em>during</em> the turn is recorded as it was at the start (<code>resolved: turn_start</code>).
+Cost measured on real profiles: +6 to +11 ms per turn.</p>
+<h3 id="43-how-it-is-sealed-and-verified">4.3 How it is sealed and verified</h3>
+<ul>
+<li>Held in a contextvar for the turn (<code>trust.evidence.set_turn_bom</code>, reset to <code>None</code> at every turn
+  start so an earlier turn's BOM cannot leak).</li>
+<li><code>ProvenanceChain.finalize()</code> seals a <code>trust.bom</code> step whose content is
+  <code>evidence.bom_step_content(bom)</code> — <code>bom:v1:&lt;sha256 of the canonical BOM&gt;:&lt;part count&gt;</code> — so a BOM
+  of any size binds fully under the chain's 4 KB content cap.</li>
+<li><code>session_manager.update_last_turn_data</code> stamps <code>turn['bom']</code> (internal keys dropped).</li>
+<li><code>provenance.verify_content</code> re-derives the step from the stamp through the same function. An
+  edited stamp, or a sealed BOM with no stamp, is a named mismatch.</li>
+<li>With the Ontology Suite removed, no step is sealed and no stamp is written.</li>
+</ul>
+<h3 id="44-the-delivered-answer-verifies-on-every-engine">4.4 The delivered answer verifies on every engine</h3>
+<p><code>verify_content</code> checked the <code>turn_complete</code> step against <code>final_summary</code>, which only Optimize
+writes; the other four engines store <code>final_summary_text</code>. Every non-Optimize answer therefore
+read as altered (1,310 historical turns on the reference instance). The step now verifies against
+the engine's own field. A legacy genie turn that kept only <code>final_response</code>, cut to 500
+characters, is re-derivable when the answer was short and otherwise reported as <strong>not checkable</strong>
+— never as tampering. After the fix, all 2,133 historical turns verify with no mismatch.</p>
+<h2 id="5-the-evidence-record-and-the-usage-index-prop-009-43">5. The evidence record and the usage index (PROP-009 §4.3)</h2>
+<p><code>core/trust/evidence_index.py</code> — two tables beside the attestations, written once per turn at
+<code>session_manager.update_last_turn_data</code> for any turn carrying a BOM (never by scanning session
+files; a re-save of the same turn replaces its rows; every write fails soft):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>evidence_turns</code></td>
+<td>One row per (owner, session, turn): profile, chain tip, key fingerprint, the BOM as JSON, answered at. <strong>Content-free</strong> — hashes, labels and attestation references, never answer text. Outlives the session (§9.3).</td>
+</tr>
+<tr>
+<td><code>evidence_parts</code></td>
+<td>One row per signed part the turn used — agent, deployment, each ingredient, each <strong>data product</strong> it read (from its <code>obda.consumption</code> receipts, identified as <code>&lt;kg_id&gt;::&lt;name&gt;</code> through the agent's ontology), each <strong>action</strong> it performed (<code>&lt;kg_id&gt;::&lt;action&gt;</code>) — with the content hash it used and its state then.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>usage(kind, id, owner, current_hash)</code> answers "which answers used this, and how many used the
+version it has now" (<code>since_current</code>). A caller's view counts only their own turns; the system
+view (<code>VIEW_ALL_SESSIONS</code>) counts every account's.</p>
+<h2 id="6-the-read-model-prop-009-43-51">6. The read model (PROP-009 §4.3, §5.1)</h2>
+<p><code>core/trust/evidence_view.turn_view(owner, session_id, turn, session_data)</code>:</p>
+<ul>
+<li><strong>When answered</strong> comes only from the sealed BOM. It is never re-resolved: re-resolving would
+  show today's state as yesterday's fact.</li>
+<li><strong>Now</strong> is resolved live through the badge's own rules: the agent's current composition
+  (<code>_resolve_profile_trust_detail</code>), its deployment, each ingredient by <code>ingredient_state</code> — or,
+  for a part the agent no longer uses, directly by <code>content.live_hash</code>.</li>
+<li><strong>Status</strong>, one word beside the pair: <code>unchanged</code> · <code>changed_since</code> (the content hash moved) ·
+  <code>not_found</code> (cannot be found now — never read as <em>unsigned</em>) · <code>no_longer_used</code> (still exists,
+  no longer one of the agent's parts) · <code>recorded</code> (data read and acts performed, which have no
+  "now" comparison).</li>
+<li><strong>Absence is said:</strong> a turn without a BOM reads <em>"parts not recorded — this answer predates
+  evidence recording"</em>; a turn whose session file is gone is read from <code>evidence_turns</code> with
+  <em>"session deleted — content not retained"</em>.</li>
+<li><strong>Chain:</strong> the turn's own chain and content are re-verified (<code>verify_chain</code> + <code>verify_content</code>);
+  an edited BOM stamp makes the turn read invalid, naming the <code>trust.bom</code> step.</li>
+</ul>
+<p>REST: <code>GET /v1/evidence/turn/&lt;session_id&gt;/&lt;turn&gt;</code> (own turns; another user's is 404) and
+<code>GET /v1/evidence/artifact/&lt;kind&gt;/&lt;id&gt;/usage</code> (<code>?scope=system</code> behind <code>VIEW_ALL_SESSIONS</code>).
+Blueprint <code>api/evidence_routes.py</code>, registered only beside the Trust Membrane.</p>
+<h3 id="the-answer-view">The answer view</h3>
+<p><code>static/js/handlers/evidenceView.js</code> (<code>window.EvidenceView</code>, loaded only with the suite). The
+answer capsule (<em>Why trust this answer?</em>) renders an <strong>Evidence</strong> row only when the script is
+present and mounts it after load (fresh on re-open, since "now" moves):</p>
+<ul>
+<li><strong>Collapsed:</strong> the summary words — <em>"12 parts · 5 not signed-and-intact when answered · 1
+  changed since"</em> — as an attention chip, with the parts that need a look named on the row.</li>
+<li><strong>Opened:</strong> the chain verification, then the tree. Each part shows the fixed-order pair
+  <strong>when answered · now</strong> in state words (a missing side reads <code>—</code>), and a status word only for
+  the exception (<code>changed since</code>, <code>not found now</code>, <code>no longer used by the agent</code>).</li>
+<li><strong>Detail</strong> (one click down): signer and time, the key fingerprint and whether it is this
+  deployment's key, a retired one or another signer's, and both content hashes.</li>
+<li><strong>The owed act:</strong> <em>Open trust record</em> only on an ingredient that changed since or was not
+  signed; nothing on a signed, unchanged part.</li>
+<li>The receipt export carries the evidence beside the chain.</li>
+</ul>
+<h2 id="7-artefact-usage-and-the-estate-prop-009-52-53">7. Artefact usage and the estate (PROP-009 §5.2, §5.3)</h2>
+<ul>
+<li><strong>The trust popover</strong> (<code>trustBadge.openArtifactTrust</code>) carries one more line, read from the
+  usage index: <em>"Used by 3 answers · every one with this version"</em>, or <em>"… · 31 answers with
+  this version, 183 with an earlier one"</em>, with the answers one click down. Nothing is used yet
+  → <em>"Not used by any recorded answer yet"</em>; an unreadable count shows nothing, never a guess.</li>
+<li><strong><code>GET /v1/evidence</code></strong> lists every current signature the caller may see, read against the
+  artefact as it is now (the Trust Membrane's own <code>_resolve_artifact_state</code>, and the deployment
+  resolver for an <code>agent_deployment</code>), worst first: <em>changed since signed</em> · <em>made with a retired
+  key</em> · <em>recorded without a signature</em> · intact. Visibility reuses the membrane's ownership gate
+  and fails closed. Usage and labels come from two single queries over the index
+  (<code>usage_counts</code>, <code>labels</code>), so the list never queries per row for them. A filter narrows the
+  list; the summary always describes the whole scope.</li>
+<li><strong>The Evidence tab</strong> in Trust (rendered by <code>evidenceView.mountEstate</code>, present only with the
+  suite): the summary chip, <em>Verify all shown</em>, filter pills, a kind selector and search; each
+  row expands to the answers that used it, and each answer to its own evidence tree. The list is
+  re-read when shown again after a minute ("now" moves).</li>
+<li><strong>Routes:</strong> SIGNED leads with <em>Open Evidence — the changed signatures</em> (or <em>every signature</em>),
+  PROVEN with <em>Open Evidence — what each answer was made with</em>; both keep their earlier route
+  beneath it. Without the view the stations are unchanged.</li>
+<li><em>Verify all shown</em> exports the shown signatures as a bundle and checks it in the reader's
+  browser (§8).</li>
+</ul>
+<h2 id="8-portable-bundles-and-the-offline-verifiers-prop-009-44">8. Portable bundles and the offline verifiers (PROP-009 §4.4)</h2>
+<p><strong>One export, every caller.</strong> <code>POST /v1/evidence/export</code> (<code>core/trust/evidence_bundle.build</code>)
+returns a self-contained file: for each attestation the record <strong>as it was signed</strong> (from the
+history row an answer's bill of materials names, so a later re-sign never changes what an
+answer's evidence says; or the current record for an artefact asked for directly), its
+signature, the public key it was signed with and its fingerprint, and — up to
+<code>EVIDENCE_CONTENT_LIMIT_BYTES</code> (256 KB, env <code>TDA_EVIDENCE_CONTENT_LIMIT_BYTES</code>; <code>content:"all"</code>
+lifts it, <code>"none"</code> omits it) — the <strong>exact bytes</strong> whose sha256 is the signed version hash. For
+each answer: the sealed chain, the bill of materials and (on request) the question, the answer
+and its trust stamps. Presets: an answer's <strong>Export evidence</strong> (the former receipt, now one
+verifiable file), <strong>Export shown</strong> on the Evidence tab, and <strong>Export for audit</strong> — every visible
+signature plus the deployment's signed audit pack, embedded unchanged.</p>
+<p><strong>The bytes come from one source.</strong> <code>attestation.content_capture</code> records what <code>content_hash</code>
+hashed while it is open; the bundle runs the badge's own resolver under a capture and keeps the
+recorded bytes whose digest equals the signed hash. Nothing re-implements a resolver, so what a
+bundle carries is by construction what the signature binds. When the artefact as it is now no
+longer produces those bytes (changed since signed, or gone), or they exceed the limit, the entry
+carries the hash only and <strong>names why</strong>. The capture never changes what is hashed (gate A1). It only
+sees bytes hashed through <code>content_hash</code>, so every signable kind must hash there: ontology extensions,
+action types and data products once used a private <code>_canon_hash</code>, and every export of them read
+<em>"changed since it was signed"</em> while the answer's own view read them intact. Gate H3 refuses any trust
+module that hashes canonical JSON outside <code>content_hash</code>.</p>
+<p><strong>Two verifiers, one rule set.</strong> <code>scripts/verify_evidence.py</code> (needs only <code>cryptography</code>) and
+<code>static/js/evidenceVerify.js</code> (WebCrypto Ed25519 + SHA-256) check: each signature over
+<code>&lt;kind&gt;|&lt;version_hash&gt;</code> with the carried key, the key's fingerprint, and sha256 of the carried
+content; each answer's chain (every step hash, link and signature; root, tip, count) and that
+the sealed <code>trust.bom</code> step is the digest of the bill of materials; that an exported question
+and answer hash to the chain's <code>query_intake</code> and <code>turn_complete</code> steps (the chain seals the first
+4,096 characters, counted in code points by both verifiers; a longer text says only that prefix
+is checked; the export carries the answer field the chain sealed, and an answer from an older
+record that the chain does not cover is marked <em>not checked</em>, never verified); an embedded audit pack's
+canonical hash and signature. The browser re-encodes the bill of materials exactly as Python's
+<code>json.dumps(sort_keys=True, separators=(",", ":"))</code> does — ASCII escapes, code-point key order —
+and takes every number from the bundle <strong>text</strong>, so <code>1.0</code> stays <code>1.0</code>; the bundle therefore
+travels as text in the app, and anything the app adds (the answer's evaluation) is appended to
+the text, never re-serialized. A gate runs both verifiers on the same bundles and requires the
+same verdict on each, tampered or not.</p>
+<p><strong>Who signed it.</strong> A bundle carries its keys, so alone it proves the record is internally
+consistent. The fingerprint, obtained separately from the deployment's operator, proves who
+signed it; both verifiers ask for it and say "signer not confirmed" without it.</p>
+<p><strong>The offline page</strong> <code>static/trust/verify-evidence.html</code> (built by
+<code>scripts/build_evidence_verifier_page.py</code>) inlines the verifier module verbatim — a gate asserts
+the copy is identical — so it runs from disk with no network.</p>
+<h2 id="9-the-evidence-ledger-prop-009-45">9. The evidence ledger (PROP-009 §4.5)</h2>
+<p><code>core/trust/ledger.py</code> keeps an append-only, hash-chained record (<code>trust_ledger</code>, in the auth
+db) of every attestation event and every answer's sealed record, so that editing, inserting or
+removing history after the fact is detectable:</p>
+<pre><code>entry_hash = sha256("ledger:v1:&lt;seq&gt;:&lt;entry_type&gt;:&lt;ref&gt;:&lt;digest&gt;:&lt;prev_hash&gt;")
+</code></pre>
+<ul>
+<li><strong>attestation</strong> — ref <code>h:&lt;history id&gt;</code>, digest = sha256 of the history row's canonical record
+  (every field that says what was attested, by whom, when; numbers normalized so a value reads
+  back exactly as it was written). Entered by <code>store._append_history</code> in the <strong>same
+  transaction</strong>, after the row's own write, so the write lock is held and no two writers take
+  one sequence number. Every event goes through that one seam — sign, record, reinstate,
+  renew, revoke, retire, assign and the migration's seeding.</li>
+<li><strong>turn</strong> — ref = sha256(owner|session|turn) (no identifier in a deployment-wide table),
+  digest = sha256(<code>turn:v1:&lt;chain tip&gt;:&lt;bill-of-materials digest&gt;</code>). Entered by
+  <code>evidence_index.record_turn</code> when the record is new or changed — never twice for the same
+  content, however often a turn is saved.</li>
+<li><strong>Backfill.</strong> A database that predates the ledger is entered once, in history order, as
+  <code>backfilled</code>, before anything live; the reading says how many were entered when it began.</li>
+</ul>
+<p><strong><code>verify</code></strong> walks the chain (gaps, links, recomputed hashes) and cross-checks it against the
+tables it records: an <strong>edited</strong> row or record, a <strong>removed</strong> one (pruning), and one <strong>written
+around</strong> the ledger (unledgered). A <strong>checkpoint</strong> is the tip signed with the deployment key;
+every export carries one, and <code>POST /v1/evidence/ledger {checkpoints}</code> proves the ledger still
+contains each earlier tip — so a truncated ledger, or one rewritten and rebuilt consistently
+(which internal checks alone cannot see), fails against a checkpoint taken before.</p>
+<p><strong>Exports</strong> carry the checkpoint, each attestation's ledger record, each answer's ledger ref,
+and the contiguous segment from the earliest included entry to the tip (up to 20,000 entries;
+beyond that each record's own entry, said so). Both verifiers check the checkpoint signature,
+the segment's links up to the signed tip, and that every record re-derives the digest it was
+entered with.</p>
+<p><strong>Shown</strong> as one chip on the Evidence tab (<em>"ledger intact · 178 entries · 178 entered when it
+began"</em>, or <em>"ledger NOT intact — 1 record edited after entry"</em> in danger), with its limit in the
+tooltip. Which records moved is listed only with <code>VIEW_ALL_SESSIONS</code> — the ledger is
+deployment-wide.</p>
+<p><strong>Honest limit.</strong> The host administrator holds the signing key and could rebuild the whole
+chain and re-sign a new tip; what they cannot do is make the rebuilt ledger contain a
+checkpoint someone exported earlier. Key custody and external anchoring (§10) remove the
+remaining trust in the host.</p>
+<h2 id="10-key-custody-and-external-anchoring-prop-009-46-opt-in">10. Key custody and external anchoring (PROP-009 §4.6) — opt-in</h2>
+<p>Both are off by default, and with them off every signature Uderia makes is byte-identical
+to before (Ed25519 is deterministic; a gate compares against the direct key call). The settings
+below are <code>APP_CONFIG</code> keys (<code>core/config.py</code>); each is set from the environment with a <code>TDA_</code>
+prefix (<code>TDA_EVIDENCE_SIGNER</code>, <code>TDA_EVIDENCE_ANCHOR</code>, …). The command signer also honours
+<code>TDA_EVIDENCE_SIGNER_TIMEOUT_SECONDS</code> (default 10).</p>
+<p><strong>Who signs — one seam.</strong> <code>core/signing.py</code> sits behind the only three signing sites: a
+provenance-chain step (<code>ProvenanceChain._sign</code>), <code>eval.online.sign_payload</code> (attestations, audit
+packs, ledger checkpoints) and <code>eval.online.sign_attestation</code>. <code>get_key_fingerprint</code> and
+<code>get_provenance_public_key_pem</code> report the signer's key.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th><code>EVIDENCE_SIGNER</code></th>
+<th>Where the key is</th>
+<th>What the host can do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local</code> (default)</td>
+<td>the <code>tda_keys</code> file on this host</td>
+<td>sign anything — including re-signing a rewritten history</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>outside this host: an HSM, a cloud KMS (<code>gcloud kms asymmetric-sign</code>, <code>EC_SIGN_ED25519</code>), a Vault transit key, <code>pkcs11-tool -m EDDSA</code></td>
+<td>request signatures; it cannot read the key</td>
+</tr>
+</tbody>
+</table></div>
+<p>The command signer runs <code>EVIDENCE_SIGNER_COMMAND</code> with the message on stdin and reads a base64
+signature from stdout; the public key is the Ed25519 PEM at <code>EVIDENCE_SIGNER_PUBLIC_KEY</code>. Every
+returned signature is <strong>verified against that key before it is used</strong> — a signer that answers
+wrongly, fails, or whose key cannot be read yields <em>no</em> signature (the existing degraded mode),
+never a bad one. Under it the local key file is never loaded. One process call per signature:
+for a busy deployment point it at a local signing agent rather than a cold CLI.</p>
+<p>Switching custody (a restart with the new configuration) registers the new key and marks the
+old one retired, and an answer's chain is
+verified with <strong>the key the chain names</strong> (from <code>trust_signing_keys</code>), so older answers keep
+verifying after a rotation or a custody switch.</p>
+<p><strong>External anchoring.</strong> <code>core/trust/anchoring.py</code> publishes a signed ledger checkpoint every
+<code>EVIDENCE_ANCHOR_INTERVAL_SECONDS</code> (default 3600; skipped when the tip has not moved) — started
+at boot only when <code>EVIDENCE_ANCHOR</code> is set and the suite is present — or on demand
+(<code>POST /v1/evidence/ledger/anchor</code>, admin; <code>409 anchoring_off</code> when unset). A tip is skipped only
+when the same sequence number <strong>and</strong> hash were already published: a ledger truncated and
+re-extended reuses a sequence number with a different hash, and that rewritten tip is published
+so it conflicts with what went out before. A checkpoint that cannot be signed is never
+published; the failure is recorded:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th><code>EVIDENCE_ANCHOR</code></th>
+<th><code>EVIDENCE_ANCHOR_TARGET</code></th>
+<th>Receipt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td>a path on storage this host cannot rewrite (WORM mount, append-only volume)</td>
+<td>the appended line</td>
+</tr>
+<tr>
+<td><code>webhook</code></td>
+<td>an append-only log / transparency service (<code>EVIDENCE_ANCHOR_TOKEN</code> = bearer)</td>
+<td>the HTTP status</td>
+</tr>
+<tr>
+<td><code>rfc3161</code></td>
+<td>a Time-Stamp Authority URL</td>
+<td>the authority's signed token (check with <code>openssl ts -verify</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The RFC 3161 request timestamps sha256(the checkpoint payload) and is byte-identical to
+<code>openssl ts -query -sha256 -cert -no_nonce</code> (gate-asserted). Each anchor is recorded in
+<code>trust_ledger_anchors</code>, and the ledger reading re-proves that the ledger still contains every
+anchored tip; a failed publish is recorded and shown (<em>"ledger intact · the last anchor failed:
+…"</em>, as warn). The record of anchors lives on this host too — the external copy is the proof.</p>
+<p><strong>Shown:</strong> the ledger endpoint reports <code>custody {signer, key_on_host, fingerprint}</code> and
+<code>anchoring {enabled, sink, interval_seconds, anchors, last_seq, last_at, last_ok, last_error}</code>; the Evidence tab's ledger
+tooltip states custody and anchoring in words; every bundle carries <code>custody</code>, and its stated
+limit follows it.</p>
+<h3 id="verified-against-real-services-oct-2026">Verified against real services (Oct 2026)</h3>
+<p>Each opt-in path was run once against a real external service, not a stand-in. These runs used a throwaway database and never touched the deployment key:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Service</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command signer</td>
+<td>SoftHSM 2 over PKCS#11 (<code>pkcs11-tool --sign -m EDDSA</code>, an Ed25519 key held in the token)</td>
+<td><code>sign_payload</code>, a sealed provenance chain, and an attestation all signed by the token key. <code>verify_chain</code> is valid. An exported bundle passes <code>scripts/verify_evidence.py --fingerprint &lt;token key&gt;</code>. No local key file was loaded.</td>
+</tr>
+<tr>
+<td>Webhook anchor</td>
+<td>A local HTTP receiver, reached through real <code>httpx</code></td>
+<td>The signed checkpoint arrived with the bearer token. An unmoved tip is not re-sent.</td>
+</tr>
+<tr>
+<td>RFC 3161 anchor</td>
+<td>freetsa.org</td>
+<td>Status <em>Granted</em>. <code>openssl ts -verify -data &lt;checkpoint payload&gt; -CAfile cacert.pem -untrusted tsa.crt</code> returns OK on the stored receipt and FAILED (message imprint mismatch) on a payload altered by one byte.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The command signer takes a raw 64-byte signature as well as base64, so an HSM CLI can be used as it is.</p>
+<h2 id="11-gates">11. Gates</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test/test_trust_attestation_history.py</code></td>
+<td>migration preserves every reading · attribution rule · owner isolation · history · signing keys · every scoped caller passes an owner</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_bom.py</code></td>
+<td>canonical form · <code>turn_evidence</code> · seal and verification · re-sign survival · contextvar isolation · engine wiring · the answer field on every engine</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_view.py</code></td>
+<td>the index (per part, re-save, owner isolation, usage) · when-answered vs now · status words · absence (not recorded, session gone) · chain re-verification · wiring · REST scoping</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_estate.py</code></td>
+<td>rows, flags and the worst-first summary · usage counts equal the index · visibility fails closed · filters never change the summary · station routes and the suite guard</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_bundle.py</code></td>
+<td>content capture never changes a hash · bundle content included / changed / over the limit / not requested · as-signed-when-answered across a re-sign · the Python verifier on clean and five tampers, fingerprints, the audit pack · the browser verifier reaches the same verdict on every case (Node WebCrypto) · the offline page inlines the module · route and UI wiring</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_ledger.py</code></td>
+<td>the chain and turn de-duplication · every attestation event entered in its transaction · backfill once, before live entries · detection of edited, removed and written-around records, edited and removed entries, truncation and consistent rewrite against a checkpoint · answer records · the bundle's ledger proof in both verifiers (incl. a cut segment and a broken checkpoint signature) · words and admin-only detail</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_custody.py</code></td>
+<td>the default is byte-identical at all three signing sites · the command signer signs, reports its key, never loads the local key, seals a chain that verifies · a wrong, failing or keyless signer yields no signature · anchoring off by default, file/webhook/RFC 3161 sinks, unmoved tip skipped, failures recorded, a rewritten tip at a reused sequence number re-published, an unsigned checkpoint never published, the request equals openssl's, anchored tips re-proved after truncation · an older answer verifies with the key it names after a custody switch · the ledger and bundle wording follow custody · surfaces</td>
+</tr>
+<tr>
+<td><code>test/test_evidence_view_ui.mjs</code></td>
+<td>the shipped renderer: state words, the fixed-order pair, absence, the owed act, mount/cache/fresh, the capsule wiring and the suite guard</td>
+</tr>
+</tbody>
+</table></div>
+  </article>
+  <footer class="docfoot">
+    Uderia is a framework for trusted data agents. ·
+    Rendered from <code>docs/Architecture/EVIDENCE_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    part of the Agent Trust &amp; Assurance stack ·
+    <a href="index.html">trust home</a> ·
+    <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
+    <a href="benchmarks.html">the numbers</a>.
+  </footer>
+</div>
+</html>

@@ -1,0 +1,57 @@
+{
+  "component_id": "skill_library",
+  "display_name": "Skill Library",
+  "icon_accent": "#0ea5e9",
+  "answer_surface": {
+    "open": false
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253\"/></svg>",
+  "description": "Progressive disclosure skills: lets an agent open one section of a skill's bundled library mid-turn, by name, instead of carrying the whole document in every prompt. You choose which sections each agent may open; anything else is refused. Offered only to agents that have such a skill — otherwise it is not present at all.",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "none",
+  "signals": {
+    "emits": [],
+    "listens": [],
+    "announces": [],
+    "consumes_refs": false
+  },
+  "category": "Knowledge",
+  "tool_definition": {
+    "name": "TDA_SkillLibrary",
+    "description": "Reads a section of your skill's on-demand LIBRARY. Your always-resident skill content is the lean root; the full reference corpus is fetched section-by-section through this tool. Call 'read' with the section's anchor (the anchor index is in your skill context) BEFORE answering from that section's domain — never answer from memory what the library holds. Call 'list_sections' to re-list the available anchors.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "'read' (fetch one section by anchor) | 'list_sections' (the anchor index)",
+        "required": true
+      },
+      "anchor": {
+        "type": "string",
+        "description": "The section anchor to read, exactly as listed in the anchor index (e.g. 'search', 'teradata/modules/domain/01-keymap'). Required for 'read'.",
+        "required": false
+      },
+      "skill_id": {
+        "type": "string",
+        "description": "Which progressive skill's library to read. Omit when exactly one progressive skill is active — it is inferred.",
+        "required": false
+      }
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "SkillLibraryHandler"
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed"
+  },
+  "profile_defaults": {
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "files-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on using Files (TDA_Files) well — when to keep something, naming files so they are found again, keeping query results without retyping rows, and finding the file the user means.",
+  "author": "Uderia",
+  "tags": ["files", "export", "reports", "reuse"],
+  "keywords": ["files", "save", "keep", "file", "csv", "report", "TDA_Files"],
+  "use_cases": [
+    "Deciding whether a result or report is worth keeping",
+    "Naming a kept file so the user finds it later",
+    "Keeping a query result as CSV without retyping its rows",
+    "Finding and reading the kept file the user refers to"
+  ],
+  "main_file": "files-expert.md",
+  "last_updated": "2026-10-24",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "folder"
+  }
+}

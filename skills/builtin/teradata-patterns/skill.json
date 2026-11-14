@@ -1,0 +1,1124 @@
+{
+  "name": "teradata-patterns",
+  "version": "1.0.0",
+  "description": "A library of Teradata SQL patterns, read one section at a time. Every statement in it was executed on a live Teradata before it shipped.",
+  "author": "Uderia",
+  "license": "Sections derived from teradata-labs/loom (Apache-2.0); see NOTICE.md",
+  "tags": [
+    "teradata",
+    "sql",
+    "patterns",
+    "performance",
+    "data-quality"
+  ],
+  "keywords": [
+    "teradata",
+    "sql",
+    "qualify",
+    "cast",
+    "explain",
+    "skew",
+    "spool",
+    "statistics",
+    "dbc",
+    "profiling",
+    "duplicates",
+    "outliers",
+    "missing values"
+  ],
+  "use_cases": [
+    "Writing a Teradata statement for a task the model has no reliable form for",
+    "Diagnosing a slow query, skew, spool or stale statistics from the DBC views",
+    "Profiling a table, validating its data, finding duplicates, missing values and outliers"
+  ],
+  "main_file": "teradata-patterns.md",
+  "last_updated": "2026-10-01",
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "database",
+    "progressive": {
+      "enabled": true,
+      "index": [
+        {
+          "anchor": "analytics/attribution",
+          "title": "Attribution analysis",
+          "summary": "Multi-touch attribution of conversions to channels: journeys via XMLAGG, first/last/linear/time-decay/U-shaped credit in SQL, and the ATTRIBUTION operator.",
+          "file": "library/analytics/attribution.md",
+          "sha256": "d733b37ac83cb5bc881a0c9af9f4ea0f3b4b810ce41d01ecea13cc2ad5f39b7a",
+          "statements": 4,
+          "requires": {
+            "journey_exploration": [
+              "XMLAGG"
+            ],
+            "attribution_function": [
+              "ATTRIBUTION"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "25eace81659b67ead1ada54c46ccf64d8af227f8630e30c05282c21182375a5c",
+              "3e6ff2dacfaa1ba5f1f56b045a01466fb1183cac47a9ea7f9ebf004050abefb5",
+              "59d06765208bd3a21531b4e7a84cc65ad38204fbcc7603480a33f769c4414e33",
+              "e64e6cd6c570bb1082d8c7c6a8da0930461bffccdc2182465eef69eedc4b1851"
+            ]
+          }
+        },
+        {
+          "anchor": "analytics/churn_analysis",
+          "title": "Customer churn analysis",
+          "summary": "Derive a churn flag from order history (no order in the last N days), then churn rate overall, by segment and tenure, churned-vs-retained metrics, risk scores.",
+          "file": "library/analytics/churn_analysis.md",
+          "sha256": "fa883cf633d8ee97a6d3868ad9ed23ef08f3fbf5f2dae7b164c554ea95b35fbb",
+          "statements": 8,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "0fede1e04f2cbed977c12eb9488fbf05452f0e6b8bebfabc5c37915e0c2cba59",
+              "83301795d4e4d9fad75eded35749244d7bc092f9f57a50ea51a91935d72ff117",
+              "8faf27f4517b53b10f03e53b9b7c5b9ab79ca877dc3edf8eff38bd478eee93f8",
+              "a622848893943dd4766125d3f5b3428928c37337095955bf09b88f2c35f4a36b",
+              "b077bc3ee1c2f35db265af8d3313215c77571a6d96e4aee4a9cebfa6920c8554",
+              "bb03cd81772545f0d151268f74ad5ce2d4b76039b51aa670625223dd104f40c5",
+              "cf10f0245c0f1c632e8132a734d8f697bad007d269156597991648a93543c887",
+              "ea81f430f00f4aaa7c28f14e32e3f651b3b212d93a8eb15d2fa62a9799273eb1"
+            ]
+          }
+        },
+        {
+          "anchor": "analytics/customer_health_scoring",
+          "title": "Customer health scoring",
+          "summary": "A 0-100 customer health score from order recency, frequency and spend plus click-stream activity, as weighted components with tiers and actions.",
+          "file": "library/analytics/customer_health_scoring.md",
+          "sha256": "e968b779b6bceb2bd9a47d1175af7db6fff42450a32e57514103bc2cd1000765",
+          "statements": 5,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "3bb0c29c699d226ba73f7b45355fce48470b2f94ba4b43c48eb6f0dfaa807c37",
+              "47143f02036c1c2ea44241d4e4aca220abb2cd5676426fa2c3e9173e0352bbf1",
+              "6a94a274cdbc0488345de970b90ef2cfb6fea0baa492ed2b56b62520a54c603e",
+              "83be348502190d2faad841dc858d4b690066dc95cd8ea2fdf59962c907c8e7d5",
+              "c1b1851f868cef9489a054a11e13ec3785ba79b01cf2f2f019045eaf2e333c96"
+            ]
+          }
+        },
+        {
+          "anchor": "analytics/funnel_analysis",
+          "title": "Funnel analysis",
+          "summary": "Step-by-step funnel conversion from an event table with GROUP BY flags, an ordered time-limited funnel built with MIN timestamps, drop-off and cohort splits.",
+          "file": "library/analytics/funnel_analysis.md",
+          "sha256": "fa9ae88f9be427871f832ae9c5e2ca3a8d1f11bec9571068195e6e7ae87c135f",
+          "statements": 4,
+          "requires": {
+            "cohort_funnel": [
+              "TRUNC"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "59558bda7c8af529cdf7854036f6f2abe9a1c5d56f47568d0b441631e5d17ec3",
+              "9589d399e7e4867ae827a7d4ce95f69f7af732496fd4caab34b4779332594fb9",
+              "cafbfccd0428100ca7e3f1fd9575d17e368d731eb8d3a6a0128d678a0c79dcef",
+              "dd1d5d2da554fcc3308bad7bef48895f323c6c3f9516be76ac153e5cac6345c7"
+            ]
+          }
+        },
+        {
+          "anchor": "analytics/npath",
+          "title": "nPath sequence analysis",
+          "summary": "Find ordered event sequences per user with the NPATH table operator: SYMBOLS, PATTERN operators, MODE, and RESULT with ACCUMULATE, FIRST, LAST, COUNT.",
+          "file": "library/analytics/npath.md",
+          "sha256": "8a16743e5bdc3707736b400a71dab454b1592af28d5b05ab8e3196f3bd24b396",
+          "statements": 8,
+          "requires": {
+            "basic_pattern": [
+              "NPATH"
+            ],
+            "with_gaps": [
+              "NPATH"
+            ],
+            "anchors_and_operators": [
+              "NPATH"
+            ],
+            "abandoned_cart": [
+              "NPATH"
+            ],
+            "per_session": [
+              "NPATH",
+              "SESSIONIZE"
+            ],
+            "sample_matches": [
+              "NPATH"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "2f25ba97d7526bacf1a985ea3ebb3911037a4de83da4b930aec2a2521a0c0121",
+              "4d51d545650b9aae35d86f1f45f4c5a8e2ed88909b7820245bf5d1907dba3740",
+              "6602cd197cbfebb25704a5ca4a507ef610b55657aac7b8990f829e15f43f6181",
+              "8fe7d90ccc5599c0611799bac918fbdf3f5a845f1393b30af17813ffed98c47c",
+              "90206194c61934891caf2a6c44a0f5e51cb2829b2982671f0300f844f98c0730",
+              "9ee295909c156bb6bfa10d05e08f85fbdfc4b9003da893a0ee81dab1cb266743",
+              "a6c7f11c2714cac6375f47e007b018620e401f0c6ba4d94bf80e05f449b0d933",
+              "ef1b895454158000850bb1b84061908132b53903e9b52a12750675de917a8990"
+            ]
+          }
+        },
+        {
+          "anchor": "analytics/sessionize",
+          "title": "Sessionize: group events into sessions",
+          "summary": "Split each user's time-ordered events into sessions on an idle timeout with the SESSIONIZE table operator, or with LAG and a running SUM.",
+          "file": "library/analytics/sessionize.md",
+          "sha256": "58c77af18b72f6692500d14e5677a707d3f2fd4c1472615d70f29c5c0fc37a25",
+          "statements": 7,
+          "requires": {
+            "basic": [
+              "SESSIONIZE"
+            ],
+            "session_metrics": [
+              "SESSIONIZE"
+            ],
+            "bounce_rate": [
+              "SESSIONIZE"
+            ],
+            "conversion_by_session": [
+              "SESSIONIZE"
+            ],
+            "filtered_input": [
+              "SESSIONIZE"
+            ],
+            "click_lag": [
+              "SESSIONIZE"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "3a72aa6fce99cb3cada1531fe454474a4df350cae055788613ccbe065cbcca1b",
+              "7258d9b19c29b9468554fd419d2eb51e44d05bb5cf6548f26dfc9c0f23b54228",
+              "795b6deb96f7249b5f8492b27bc733787094af11189b75ec354445a02b646901",
+              "b434f823269c15d370fac82b9d8fafb43850ed697c74c33998d7a0a1cb388bd5",
+              "cadf88ee1289812cbc31c01f9633cf8ae7b6e030c62cccec50f2cde056ab56d5",
+              "ddf5b39d75010633b6de84da556354450652657e1c8813455bb9a3cb234a9b81",
+              "e8495cca49f3ed4058e34ac5ace7005829887d832db523cb0aaf8e0e3b0865b9"
+            ]
+          }
+        },
+        {
+          "anchor": "core/data_types_casting",
+          "title": "Teradata data types and casting",
+          "summary": "CAST with FORMAT, TRYCAST, TO_NUMBER, TO_DATE and TO_CHAR for numbers, dates and timestamps; date and interval arithmetic; UNION typing; AIVector columns.",
+          "file": "library/core/data_types_casting.md",
+          "sha256": "725b356a60f69ea16b551f88cc49afd3c88e7d4dd849dbc3e2f85782d3a6d838",
+          "statements": 12,
+          "requires": {
+            "string_to_number": [
+              "TO_NUMBER"
+            ],
+            "date_cast": [
+              "TO_DATE"
+            ],
+            "timestamp_cast": [
+              "TO_TIMESTAMP"
+            ],
+            "try_cast": [
+              "TRYCAST"
+            ],
+            "format_display": [
+              "TO_CHAR"
+            ],
+            "vector_insert": [
+              "AIVECTOR"
+            ],
+            "vector_read": [
+              "LENGTH"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "07867a820dc58539b6267c4c166de1d01c4327b2f1158b3a6d44c7f22e61ec1c",
+              "7fc32953e347e6bddd42fc8ec206a25313756f76687498963ec6ba28bad3c6e1",
+              "857947333d1f4b71aa589e1a89a0cbc18cf9b4bc866ad1bd0e2e331b2c361ad4",
+              "984e5320f7df9a2d3ad4abbd4543764833803a140aa0df870850c3ea905398c7",
+              "a6b3db76d66719abe6a32c9a6c465b8b4d95f9930e627e4b1ad73159274a5a44",
+              "b42d559530d0f4e7d3de6e049e3018a50aa5d2313d4cb6d1f96bd45211c060b4",
+              "c4031e40878ae8488af09a8eebc918ffb488a90efeffaa1c322248e6d45e1a37",
+              "c771a9b722b1e4ce6cdc91606fac2ca344ba068ccfe958e31de088c9ae8910fb",
+              "ca579929c91257730d114eaeafb2d54ce29a2db59dfd553dc5e37df80a02b6fa",
+              "cb1f85eed0678a66e91d019a2864d45bce9602edaf24ea23ddc04136ec07652d",
+              "ee7380e3822be376a5969ea0a0fb567bc0fdd63f02b73ae321f01f3416c58c52",
+              "fbf2ec4da58329acfa39a9bce1bd9bc99cfc332d2cc197add24f80a6efeec422"
+            ]
+          }
+        },
+        {
+          "anchor": "core/sql_basics",
+          "title": "Teradata SQL basics and dialect differences",
+          "summary": "Teradata forms of everyday SQL that differ from PostgreSQL and MySQL: QUALIFY, TOP and SAMPLE, REPLACE VIEW, volatile tables, CTAS, reserved words.",
+          "file": "library/core/sql_basics.md",
+          "sha256": "218e36bc8ec140fdaaf966213dae31c43ed37bd3229ed3b3af4eebbe931e8c80",
+          "statements": 8,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "0095ced1de6cece8e371dae7dfeee7877b4a99d598ae569be5ad5a912f74f1ed",
+              "237b61b2884580d131e214ae1f98b756f1eaa680d8ea01baaed29119974f463d",
+              "6a593b65a5ad1bb707ff622371876a8cc932ac562034d80078d5c2a4437b1096",
+              "7189ad0dc229f5d10837cf583fd6615b9db3803df8006517065fa4481446149e",
+              "a6d7a982764bac4a1cd2aa3d2ae6617a8ca18045c7fbecb43c65a542598a0a82",
+              "b192a2637cf9de664f5f3b0f028dea722a9ceea418367e11944772b53c9654d0",
+              "d3b74a8db68322245e97d7d9918888ed770f05a38ff83cfe6510c32f57d4dd91",
+              "ff00b815d2902398ad85e43b1593f1ed2eafaa0a7c3de5d11395c99f5206ab4c"
+            ]
+          }
+        },
+        {
+          "anchor": "data_quality/data_profiling",
+          "title": "Data profiling",
+          "summary": "Profile a table: row and duplicate counts, nulls and statistics per column (TD_ColumnSummary, TD_UnivariateStatistics), value frequencies, text patterns, CORR.",
+          "file": "library/data_quality/data_profiling.md",
+          "sha256": "24d8d697e0871351566051d25ee51309e34297c18d2b8d76472a685ffd52d6eb",
+          "statements": 9,
+          "requires": {
+            "all_columns_profile": [
+              "TD_COLUMNSUMMARY"
+            ],
+            "column_statistics": [
+              "TD_UNIVARIATESTATISTICS"
+            ],
+            "text_patterns": [
+              "REGEXP_SIMILAR"
+            ],
+            "data_quality_score": [
+              "TD_COLUMNSUMMARY"
+            ],
+            "profile_snapshot": [
+              "TD_COLUMNSUMMARY"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "39528eedaee013fc96a0e4a9f5ea0983eb4b1f8340044c10ffef46fd92ef3c42",
+              "54dfc3929723124fba919077f781e00eba59c0991858a547da0721659ee8e7ea",
+              "8d58687b4daba79fef2148178d633d51ec9c167c45fcd4de6c5a13d296b07291",
+              "d905575311b504ff7832fe4fecd60b0e4c5e6f75dc6edb6bd1bfbc9a34e753df",
+              "e2ba8a465bedcaa2fdb91ba5c8f933567c637da8b2e169e587574f98e18d98ed",
+              "e7a60b3ec8655c4a3de93af11d1e00e56d876af74fdbaf0805c4321858b55981",
+              "f1ff366770fadf1effbe1f8f9a38186d6797084a2980d141250529729b2ce57c",
+              "f524c58ebd698e1cff06673f8e14e585753b25500041b5762cbfdd61003956a6",
+              "f94d0007ec805d43e60bc557f6bd3c4551aebf2d770c29e5d7c61ea4943f3dd8"
+            ]
+          }
+        },
+        {
+          "anchor": "data_quality/data_validation",
+          "title": "Data validation rules",
+          "summary": "Find rows that break a rule: required fields, ranges, allowed values, REGEXP_SIMILAR formats, TRYCAST conversions, orphaned keys, duplicates, CHECK constraints.",
+          "file": "library/data_quality/data_validation.md",
+          "sha256": "5c80eedfc073810d084b8ef01d418f441a44917c771a878681255553051ea8c6",
+          "statements": 10,
+          "requires": {
+            "basic_validation": [
+              "REGEXP_SIMILAR"
+            ],
+            "validation_summary": [
+              "REGEXP_SIMILAR"
+            ],
+            "format_validation": [
+              "REGEXP_SIMILAR"
+            ],
+            "data_type_validation": [
+              "REGEXP_SIMILAR",
+              "TRYCAST"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "019a85be1f2e693d319a03d5fcb548977c93344e5f0db1966f60d4ecf56053ca",
+              "4c1c8cf838223f67b6cdd37b33f580568399191c62f7c05d59c9a4f3f58b7596",
+              "5169fef283659d3756233830f8214a4bf5caa9203045e91d5cca9279c7c8e25e",
+              "807992434bd953ea30ad052d57ea17d066769124845e2cd664b2c7dee704637e",
+              "94990fbde19f8a9ac5b89ca0c3ab0344e29c88937fa99e7e1cba2f9bb58f11a8",
+              "a31b81b0847414561ecdb719223928fe600ceed4baeaea288a67374bd291c268",
+              "b29712fabc3697acde0a7ad9ed06b6fddf7fa9f6b703c0e05377cbe737e3b92e",
+              "bbdbfee7769c0d0a6a45771c7ccf09479c677bbba99827afe69a1ef140d4b904",
+              "cf0c85e79385a6478e5f43982a8d6e92cb12877c05c8dc974a18d614aa575827",
+              "f4a23b609c897f42dc97b5168726707256caca8b546d03490c9986f921e9eba3"
+            ]
+          }
+        },
+        {
+          "anchor": "data_quality/duplicate_detection",
+          "title": "Duplicate detection and deduplication",
+          "summary": "Find rows that share a key, repeat in every column or differ by a typo (EDITDISTANCE, NGRAM, StringSimilarity); keep one per key, flag, delete or merge a copy.",
+          "file": "library/data_quality/duplicate_detection.md",
+          "sha256": "ed42d0848ee89e61c63bf9a793583513bfb863a8345acefd574d86f9b6850d64",
+          "statements": 9,
+          "requires": {
+            "fuzzy_duplicates": [
+              "EDITDISTANCE",
+              "NGRAM",
+              "STRINGSIMILARITY"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "084d7ec728961fd0cf02a748b93833a5c1cf55e0444620704a0e61fe854315ec",
+              "3b5a02e03638afee0aa9cdc1a5560dc46cb1ec23d2400b397681d6b8b819cf42",
+              "480a22d7d58bc94bc55925448cb318e295112bda8769692256cb92bdbe69743d",
+              "78e17a5459302f55ee30fd703f9f8f3309114df5012824a9a6b49302ed59a1d3",
+              "895ba7cb7e99b8d713e2b35def3de22adb066fe5cb4f7753aaeb5b2437cc5b8d",
+              "a8194876a0f48a4e4ec79de35c2ea183910a4e81fa9cffc3a2c6791cfabd3aa4",
+              "e56b7daa89cab1b8f811386a1c48bcac7bad91d2075306afe0ea3b902c6e58e0",
+              "e9889dc6e853e700fab0cae35567ef052db17f1bb4c04e6709c081ff0bc1d593",
+              "ef878b63a7b4c1afa1f1aa4490edfd7e9c9ce55442046b3fbefb2f49e30f803b"
+            ]
+          }
+        },
+        {
+          "anchor": "data_quality/missing_value_analysis",
+          "title": "Missing value analysis and imputation",
+          "summary": "Count NULLs per column, find missing-value patterns by row, period and group, and fill them on a copy with mean, median, mode or LAST_VALUE IGNORE NULLS.",
+          "file": "library/data_quality/missing_value_analysis.md",
+          "sha256": "54b316019dd649f127acd3f555ccf75f27051e1033f303446336d6e026d23660",
+          "statements": 10,
+          "requires": {
+            "temporal_missing_analysis": [
+              "TRUNC"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "06debe09128ac6f5b0e39a6c0c50c5466e6726d45398840f9453e689153e7106",
+              "0c12ea702076212e5db88bc0da59c010ed40c2b3de5e6c803f1af7f0ff101f21",
+              "49d4d318e24283ec364d504bc69050a7dfe004c46a624d21990b66bd66533dcb",
+              "526fb6a9167bfba802c9b2ebada9b115fbc99c0c3f14388c55beae5cf3cec78e",
+              "736ca2d9a81dba233c24c70d6677b42cfe8799da1b08c3d5f19efdd45c97bdfb",
+              "911a0c978653b8fd92ba20dbaa1d44ea99f8d49758e7d543c4e35d900eb4ca5b",
+              "93b7a967ed655a23fd416a879c1edec5031a1ae97e83c107e14258eb16889f1d",
+              "ac0d0f572bddcbd84740ff4b7a5e2d21e4c45d644e8d809a7a37005f18ec3d18",
+              "f8d185b35d3a806761222fb429daeb60231c4de27fb8d381a10915cdc89ef4df",
+              "fcf4e9d7e463fb81ba83d419f2d99cca19b2c2d51b2a13c151cc26ed88b7a5d4"
+            ]
+          }
+        },
+        {
+          "anchor": "data_quality/outlier_detection",
+          "title": "Outlier detection",
+          "summary": "Flag unusual numeric values by z-score, IQR (PERCENTILE_CONT), median absolute deviation, percentile bands or a two-column distance, overall or per group.",
+          "file": "library/data_quality/outlier_detection.md",
+          "sha256": "a77181abd016b5bcb153dfc4b2832d5beac1d42a7e64172581ddcfa746d0264b",
+          "statements": 8,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "26708f8fe372b676034cef315765acdf654ba7794634a1594d8930141b3215d6",
+              "47e2cdc8a99af105db2158b7074ac1c6d79e0774c9b3b0b9e3ce7da71d9c3dc0",
+              "596a1818adf9155500d86b520564417be7e41fff0a60fa07fa100d082d98c4ee",
+              "6ac6298f829468abcfc9209b08265b12d93a1ddfd7749ab4fe8fcc1c3ff478da",
+              "880106a9309c32248e7ed0fa6e41c0b4adaf0af2eec1d94eed8add3c628956ae",
+              "89deb35acff330a492bf84286fb166f395ef0730f89ccb5677d44c2c25958f08",
+              "a5267811dbc590e9505099989d004547878d930fd9d94338393a3e9f3f1ba94a",
+              "dd45497ad0afd58e01e99cae972de4b7aa4a03aa9e37bb3808e076dc8a2be8d8"
+            ]
+          }
+        },
+        {
+          "anchor": "geospatial/geometry_basics",
+          "title": "ST_Geometry basics",
+          "summary": "Storing points, lines and polygons in an ST_Geometry column: construction from WKT, SRIDs, sizing, the geospatial index, validity and reading geometries back.",
+          "file": "library/geospatial/geometry_basics.md",
+          "sha256": "49fa26d4793c9a61634f397d1cad708779a3026f187f162b34901f4a68a34f54",
+          "statements": 10,
+          "requires": {
+            "create_geometry_table": [
+              "ST_GEOMETRY"
+            ],
+            "insert_points": [
+              "ST_GEOMETRY"
+            ],
+            "insert_polygons": [
+              "ST_GEOMETRY"
+            ],
+            "validity_check": [
+              "ST_GEOMETRY"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "04864be3a9876c6f02c42544af1fd14cf26964f12ba6214fb65afe155e40c412",
+              "337530b3d4c5dc0b8f13b0ee20b97de7d331cb41b3df5e534df96a48459ab87c",
+              "4ecaa808934b9242f61ac42d6ea2c6e10590154706e9239ce33ded5a52dcfcd9",
+              "557a667685e643180f28fcf706a0e93509d2eac3dcd623a9b16d8d0aaae05740",
+              "7a882eadc2199d227d9faecfddf2ee877cbcb4975c5846a30f2b7937feb8b613",
+              "7ba9754579e93bdc680aa44f1bc41cf252abd2f2b5faa40a449f266231a98d2c",
+              "7e110fb5a4ccc86b41abdc32de0f78b2745317c10b81c7060132b908499bb7e0",
+              "9768cc66486baa572e97b779986d8bcda803b4a96c1d652d0a471882aa5335fa",
+              "bb865fe27b27bd08716a99ee13fc8ee8c7f87f74e89ec888061152d0cf6b1bfb",
+              "fa911385b648907c61a0a1b4399a46d7b2e30054bedec8ecad9fb44e2191a9d3"
+            ]
+          }
+        },
+        {
+          "anchor": "geospatial/spatial_operations",
+          "title": "Spatial operations",
+          "summary": "Area, perimeter, centroids, buffers in metres, set operations, AggGeom unions, simplification, polygon splitting and MGRS references.",
+          "file": "library/geospatial/spatial_operations.md",
+          "sha256": "d8a1e923b79719cfff4cdb3a1bb1a9c085b62544e956215162423a30dd4e87ff",
+          "statements": 10,
+          "requires": {
+            "buffer_rectangle": [
+              "ST_SPHEROIDALBUFFERMBR"
+            ],
+            "union_per_group": [
+              "AGGGEOM"
+            ],
+            "union_of_all": [
+              "AGGGEOM"
+            ],
+            "simplify": [
+              "ST_GEOMETRY"
+            ],
+            "polygon_split": [
+              "POLYGONSPLIT"
+            ],
+            "mgrs": [
+              "FROM_MGRS",
+              "TO_MGRS"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "14661f4dd73c5854bf4d421a580fd7a401213ae6ed5da8a27d0c1e9555a9f201",
+              "15298a7a6bc7968630e6c51c0772559122c1426014477c99a92084998f204408",
+              "1b2ea51f69bb5f862b91b2f32217b05beee9a54d7933f6cb59b896b7200be637",
+              "272cd5d9b7a7be1f1d3cd8f09ad3d197f7e4496beab8e99772db37045f1f0aa1",
+              "285b168fddc55447081320d5aa6bce7e4d59cf2e4de9c9b821fb2dedab3395be",
+              "2f1f9ad157390530130b37c2ee13571773c82ef69f795a9d4fdc0247c8f90181",
+              "7cedd9335126479a02999d1507d104e323ae37f7159cfb4af49d6e10ff1cef50",
+              "8d3c7b09ed37e754a9549e1555dbf4b9f99a158a961c252cad274603c5446d99",
+              "ab188e1a8f1822d5dc18aeddda207420917825157a5ff18be454c9677031efab",
+              "cc3c51557dc1ef7d0a675d4bd0968b5d705a3f9c720e338a73caf41a2dcc4789"
+            ]
+          }
+        },
+        {
+          "anchor": "geospatial/spatial_relationships",
+          "title": "Spatial relationships",
+          "summary": "Point in polygon, containment, intersection, touching and overlapping regions, DE-9IM patterns, planar versus spherical distance.",
+          "file": "library/geospatial/spatial_relationships.md",
+          "sha256": "d9515880d7f9d6ed70471a856db0be3c13033f6fd6f437ed56e89863e9b1306d",
+          "statements": 9,
+          "requires": {
+            "inside_search_area": [
+              "ST_GEOMETRY"
+            ],
+            "route_crossings": [
+              "ST_GEOMETRY"
+            ],
+            "distance_units": [
+              "ST_SPHEROIDALDISTANCE"
+            ],
+            "within_radius": [
+              "ST_GEOMETRY"
+            ],
+            "mbr_prefilter": [
+              "ST_GEOMETRY"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "1d6501cd568ad7ed44a6b566e9120290aed217f3717c1a6f046ce34d425b8318",
+              "3dee4ca15d20ad3b417042af4fa1712ee8d93e8001f29d0829de9643dd8d7d18",
+              "3eb66e1b4e19a925352393c6149ee79840dc30370fad07fcd217b0d0f3f8c119",
+              "908ac5cb60578a2129af434c882941587d9642fa72f6ede95d8841a3a404d9d5",
+              "b05afcd1595006b28389f62ee6a2b3b4d631bbde1e27aed058f14644c8347eb6",
+              "bcae72c7c9b2adb69f1114b50bf4ec3f57ef0da427f712df935fce8b4fa98811",
+              "dc432113ca4acdbb7e11744541918270533b32d663b9d302c365b577b2381d8d",
+              "e2a41d7c58175d1ae77ee6cee272a7c035c7c715e8f69571841cf704e079e939",
+              "f3271c1989d57c6cb8c97542532087a17170634b716489ee6a14ee0c8a4ae2ae"
+            ]
+          }
+        },
+        {
+          "anchor": "hypothesis_testing/anova",
+          "title": "One-way ANOVA",
+          "summary": "TD_ANOVA: do the means of a measure differ across groups? Long and wide input, what the input may contain, and reading the result.",
+          "file": "library/hypothesis_testing/anova.md",
+          "sha256": "fd0b335a0e70bbfec9e7ccc7f6a5a864c27ef69afb0d48482b27d715b9f39031",
+          "statements": 5,
+          "requires": {
+            "long_format": [
+              "TD_ANOVA"
+            ],
+            "named_groups": [
+              "TD_ANOVA"
+            ],
+            "wide_format": [
+              "TD_ANOVA"
+            ],
+            "interpret": [
+              "TD_ANOVA"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "00d4692e0b94364547e03ef19b49e192e17e3ae7fea7b646bca495824829549a",
+              "2d7eb42f8bad14cc50e6c9a895784098e675c596048de2990779dc840cc1726d",
+              "5a10e5c977c69dc8993325c9a12502d57a6059927ba41da5c3e1b1f006fb3dd3",
+              "904f646c5cfa93ac1c6d4067cabef927d1411b636be2de90656a56317427d3fd",
+              "a58d949471aa3d67ac1cf92d20390e7d7c358a6129feb5cf32e9e451d8af02a3"
+            ]
+          }
+        },
+        {
+          "anchor": "hypothesis_testing/statistical_tests",
+          "title": "Statistical tests",
+          "summary": "TD_ChiSq for independence, TD_FTest for equal variances, TD_ZTest for means — input shapes and required parameters.",
+          "file": "library/hypothesis_testing/statistical_tests.md",
+          "sha256": "c70772811314e3c0a47d4f275c120b0d982da101e0ba490480bdba057249c07c",
+          "statements": 7,
+          "requires": {
+            "chisq_independence": [
+              "TD_CHISQ"
+            ],
+            "chisq_expected_counts": [
+              "TD_CHISQ"
+            ],
+            "ftest_two_samples": [
+              "TD_FTEST"
+            ],
+            "ftest_from_variances": [
+              "TD_FTEST"
+            ],
+            "ztest_two_samples": [
+              "TD_ZTEST"
+            ],
+            "ztest_one_sample": [
+              "TD_ZTEST"
+            ],
+            "ztest_small_sample": [
+              "TD_ZTEST"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "2d5ba15b231e7f493fe2bc8621657b256ee868c4f80f5f3640f1762e8487d057",
+              "31a30aafc1d54a3b6bd8e10bfde3ef666c220a25ece9675006a693d7c08cc012",
+              "5cd4385f5cae9ffa3d48a2b4d495f6423c548ebbe6dd715822a525739ff51ab0",
+              "5f19639b025a3dcfe8c502059f828d714921e9c0ab76a9c610e3fb44983b1419",
+              "68fd3dfc1ffb74a4abc8c4e6758690d2a0a2e8bed8ab42b8bf2e09a86d190e28",
+              "cf545174bd935fef285cde07fbaafc9b35f8b7b25e4b49c160b4cc8c9bfae5cb",
+              "ebb1b09ea7561df89c1fa875b34676bf49f9cbfa9b509a48c0c7531cfba44e1c"
+            ]
+          }
+        },
+        {
+          "anchor": "performance/catalog_views",
+          "title": "Teradata catalog views (DBC)",
+          "summary": "Metadata queries on DBC.DatabasesV, TablesV, ColumnsV, IndicesV, TableSizeV, DiskSpaceV, StatsV, SessionInfoV and UserRightsV, with the columns each view has.",
+          "file": "library/performance/catalog_views.md",
+          "sha256": "c60d4d95f4bc0ff588cc57a62af27f05903a1f4fab6d02a34b600f3b57a872ad",
+          "statements": 13,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "0f43bae7dd3820ad863a5defe56b1ba14c60c6b8be2ab28e42167897b26f756a",
+              "319f2f2dca9c7b7f97772f5f3b1a78689d06ed27cdf4cc7822b5bd66d4d22157",
+              "34369e5ade74164bc11f3d8b871557783eeeeb90ff28161af2f3d72100584287",
+              "41d051e08283875a1069d9ffb25bdd037c8a11838faccb39a49d1b2c4632b2b5",
+              "48de7969405dbf7906894673a73e7f13f0e9f094bd43b5ea964a982afbba4ea2",
+              "584a802201c9b90786a7482441ff77311eb3088dae5874ca0a9983b7cbf7570f",
+              "5e082d282ff676ab4fbf7d277c3ec3cd061fa8159593fd78be8aa38087c450e8",
+              "6bb71a200ca6b13b3ea325de8bf5e9a41f9f0b8c95b78a7f638f57c5f6f59879",
+              "9eda84af875a48dd6a8d46102234b6d90ee7118246d156d362c67c852f87a7cd",
+              "aaf452542b667e2ea245a714f5a1a981454259a20ad7468e2f15a562bceb9a8d",
+              "c65ba367a8831f1d511e9a5a79b83aa76addb2ba9b50f2a211d2c619feb4ad53",
+              "d3f5cc9d0f4bb87ec6a3db80ec968b661f923e3fee94aa1eef27ce2eca97db8c",
+              "e923813555cb21a80d2ba3845e94d6b9dfb260b860cf6b54f072e8095d5170c2"
+            ]
+          }
+        },
+        {
+          "anchor": "performance/explain_analysis",
+          "title": "EXPLAIN plan analysis",
+          "summary": "EXPLAIN and DYNAMIC EXPLAIN, reading access paths, join methods and confidence phrases, COLLECT STATISTICS to raise confidence, HASHAMP skew checks.",
+          "file": "library/performance/explain_analysis.md",
+          "sha256": "0b10affbf05b984dc2fc941eebb79730926e28a31c9be4d7d01e95af4c7942d9",
+          "statements": 6,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "023392bcf94c9abefffa94b31d595ded7371c8bcfae895e766cf345e619d6ece",
+              "49d3b22727feed872aa063b9190fa852fb7034ed0773d03a75a63996502dbb8d",
+              "7be29a87b665352b988f8ff6dd99316e868f33d6813af06a2e9cee41bb79e999",
+              "94d40ca289815db5dd922b5177c67758d5c228b9e7ab83b6ee50372503a38fe2",
+              "9da0cdca2bac7f5c9d441e0d0ebdee16ae36a5681561d0a760aeb311ff0e4251",
+              "fee44958451e8efb3c3221d6e933446d8561af12b81c888fd1d832a16818700b"
+            ]
+          }
+        },
+        {
+          "anchor": "performance/pi_skew_detection",
+          "title": "Primary index skew detection",
+          "summary": "Measure how a primary index, or a candidate column list, spreads rows across AMPs with HASHAMP/HASHBUCKET/HASHROW, DBC.IndicesV and DBC.TableSizeV.",
+          "file": "library/performance/pi_skew_detection.md",
+          "sha256": "636e38ff6e83a428541bcacd266d68a0eae5e9ae4dc19ed5b16462a0e4fac26e",
+          "statements": 6,
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "3c16ebc8856c709701ee376b4f7a4696cf88ec75a1c92ea8301d8c0ec14130a0",
+              "a89fc67278aefb2c984df93c01223c1e9561f5d18eee4683fbd7686a08fe732d",
+              "b93bdc228a268bf2f80499f93f398dafa39bb64f3aae18a3d37c9827928961c6",
+              "c562fde0593602824567ecee7fceb1288b1d19eaa6a7cefde4f4352c52807c0f",
+              "f09a7b59e38c0729596317d6783fb0bfff0578c095ed5068a7385f26b2e6c6ea",
+              "f20f1d3ca3748398fb4175e0d37c0e7dd7127f764f94c8cdc0745b5326db555c"
+            ]
+          }
+        },
+        {
+          "anchor": "performance/query_tuning",
+          "title": "Query tuning",
+          "summary": "Plan-changing rewrites: predicates that keep primary index and partition access, matching join key types, pre-aggregation, volatile and NoPI tables, CTEs.",
+          "file": "library/performance/query_tuning.md",
+          "sha256": "30d3a9ca5e306a4a3c2fc39c98e0de57ecd34c75580d153f3797e07b6c6016a8",
+          "statements": 7,
+          "requires": {
+            "anti_pattern_function_on_index": [
+              "TO_CHAR"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "17c1a3225f5a25528f470ed4491810e4f3cdd7346646a57b5c08830a0ae8fc65",
+              "2aba7e00a1796150edb1f2a77b282860592b190b4d3c8eef0b6854ebf35013fa",
+              "30bbecbad5e76d578f255b02940fc8afd29be448411b3b38eec908ffd56fa964",
+              "4b56148c2275ac68c30bc8a867f0e191682663660124d86f4d1823554c3eac18",
+              "4be5d12dd70317355d57020fb0d165450d45cb6e5f1785a81dab9cd087a64ea8",
+              "95917a799cbeeff3a39b3855d1e41fec2f2e47aed3dc36ee92358f85ce898ad4",
+              "bd8d301926e9dba6d03832a20cbc9299fbbe0b4825df4d042f876982bc1a6275"
+            ]
+          }
+        },
+        {
+          "anchor": "performance/spool_space_analysis",
+          "title": "Spool space analysis",
+          "summary": "Find the requests and users that consume spool: DBC.QryLogV.SpoolUsage, current and peak spool per user in DBC.DiskSpaceV, live sessions via MonitorSession.",
+          "file": "library/performance/spool_space_analysis.md",
+          "sha256": "94d32c9eb0aa6f4cd9fc86198818b428b8fc1e253584201716642eeaf1db442e",
+          "statements": 8,
+          "requires": {
+            "current_spool_usage": [
+              "MONITORSESSION"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "3d63628f3e2d2516177db25b51127c2784e2f66cee4d8ff07ecd5eaeab8e746f",
+              "54689bb5209834c3e4ef13cf5bf02a05742cc37976574bae58efbd4071f94913",
+              "69360b681e79211a177a7adec226bc45e6ff8782ec063eb8ed780c54f2fd888b",
+              "7f9fc108fc324e35dd98d6d55d1d7ec55bc828367e9e0ac099aa111f3df7054f",
+              "b1fc54297c4d8250ae3732ba472fade7b875e3d3185da6f80a94c3f6b80cf480",
+              "b5215fd6b27b60f92707f3e165ac4a936a13cf5833decea4391d76b971d8d768",
+              "de0791e4c971498e1de5eaf7d0f382a24e8bef377be1701783819034ab3cc201",
+              "ee3628e97b708d6653ef7635da694faedb25827c305240c0bcff7bfaa3509ab3"
+            ]
+          }
+        },
+        {
+          "anchor": "performance/statistics_collection",
+          "title": "Statistics collection",
+          "summary": "COLLECT STATISTICS in its accepted forms (column, multi-column, index, PARTITION, sample, summary), and DBC.StatsV queries for missing and stale statistics.",
+          "file": "library/performance/statistics_collection.md",
+          "sha256": "e1d4d7eefc103264b63b968a01fc618b72fba3428dd00826754f214108d8ce30",
+          "statements": 9,
+          "requires": {
+            "statistics_recommendations": [
+              "OREPLACE",
+              "XMLAGG"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "4a9dd14c2e08c0e192ee0d2b2b7133dd0afa1c33ffe26ffabf4b218bf343539b",
+              "5f49634bd01e0015899409a2323f733c31aa1373e81509faa154363fc1237614",
+              "79b76fcf6ec332cf79877ef10f914a33311398adc7b14f73ac0dcb922229bdc8",
+              "a9ff4c9945cd9c65beff38b59f56cda1052c896cbc2a54fd08b7e66ccc23a726",
+              "ba6cf6065518b1670e19be3129e0ef80c1d63c4127a37dc38c1233bbcc0b33c0",
+              "c014a2d4bade87436a592f92335becf0db417defab3abb1455268b5f11fd0425",
+              "d9ebaddc3d222308436d792be6745024fba7d11669ed11cbcc8e924c0c386010",
+              "f569d03a33d6ce4d09a0b133ff76b56485052f14d8ade49336604b4a23fa9f5f",
+              "fe3aed8f7244bc19206acb83fdeb14ae291bf9a3123ba7cf9725ee0059e0de50"
+            ]
+          }
+        },
+        {
+          "anchor": "timeseries/arima",
+          "title": "ARIMA forecasting",
+          "summary": "TD_ARIMAESTIMATE, TD_ARIMAVALIDATE, TD_ARIMAFORECAST and TD_AUTOARIMA calls, chained through volatile ART tables, plus SARIMA and TD_DICKEY_FULLER.",
+          "file": "library/timeseries/arima.md",
+          "sha256": "22f6313f3fb4967436b72619553b077355c26556f59534bd90d9ccf2888ef841",
+          "statements": 10,
+          "requires": {
+            "stationarity_check": [
+              "TD_DICKEY_FULLER",
+              "TRUNC"
+            ],
+            "arima_estimate": [
+              "TD_ARIMAESTIMATE",
+              "TD_EXTRACT_RESULTS"
+            ],
+            "arima_validate": [
+              "TD_ARIMAVALIDATE",
+              "TD_EXTRACT_RESULTS"
+            ],
+            "arima_forecast": [
+              "TD_ARIMAFORECAST"
+            ],
+            "fitted_and_forecast": [
+              "TD_ARIMAESTIMATE",
+              "TD_ARIMAFORECAST",
+              "TD_EXTRACT_RESULTS"
+            ],
+            "auto_arima": [
+              "TD_ARIMAFORECAST",
+              "TD_AUTOARIMA",
+              "TD_EXTRACT_RESULTS"
+            ],
+            "seasonal_arima": [
+              "TD_ARIMAESTIMATE",
+              "TD_ARIMAFORECAST"
+            ],
+            "normalized_arima": [
+              "TD_ARIMAESTIMATE",
+              "TD_ARIMAFORECAST",
+              "TD_EXTRACT_RESULTS",
+              "TD_SEASONALNORMALIZE",
+              "TD_UNNORMALIZE"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "40620fddd0fcf19633aa382114ad5c84640fc6ffcfe0e6dc0f1d41fc2cb8bde6",
+              "4d632c048dd67864adc3ca762671a0ff9481e64170bd82de97fa1a3da6298c27",
+              "73e59176b49e2d96d8559ee809f497ae977fa65219d3abec4037ef45614a5036",
+              "8dce1aa3cc7812bbc9d83c4d59ab65d47d8657b00d6a75cf9162dccb44606ead",
+              "8fa40c4e018a7bd455c43c308f934e36b6a4b04ed609fd4c912e68fd32b6af34",
+              "a65e0c2afe11e97c887456dc3cb7a9865b644021fcab9f9058efca7a7cea6c9c",
+              "c54207a7823947053e0d09244bb811ece28dc5a9eda8185cbc25a693eccdf94b",
+              "e942cb2f1b834283b25ecd1326afdb28b3298851a76d4ac3eb18079b08fd5637",
+              "ed9b58803d4ef2db2a8ea126c430a8a7b13f7b9ffa75747233e3bfc5f05ab928",
+              "ef6a42807c034fe9dc46d7bf2ec45cdbe23b50f2aa0acfcfa0eb3e6ab5a1cf5c"
+            ]
+          }
+        },
+        {
+          "anchor": "timeseries/holt_winters",
+          "title": "Holt-Winters forecasting",
+          "summary": "TD_HOLT_WINTERS_FORECASTER calls for additive and multiplicative seasonality, fixed smoothing factors, level/trend/season layers, and model comparison.",
+          "file": "library/timeseries/holt_winters.md",
+          "sha256": "736611f2aa65e73e8323308aff411f0ad5bd48c94363fcaa10cc92ef323a5def",
+          "statements": 7,
+          "requires": {
+            "additive_forecast": [
+              "TD_HOLT_WINTERS_FORECASTER"
+            ],
+            "multiplicative_forecast": [
+              "TD_HOLT_WINTERS_FORECASTER"
+            ],
+            "model_comparison": [
+              "TD_EXTRACT_RESULTS"
+            ],
+            "decomposition": [
+              "TD_EXTRACT_RESULTS"
+            ],
+            "custom_smoothing": [
+              "TD_EXTRACT_RESULTS",
+              "TD_HOLT_WINTERS_FORECASTER"
+            ],
+            "holdout_backtest": [
+              "TD_HOLT_WINTERS_FORECASTER"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "0f174f4cbabf10e5a493bf65aa3dac9f510edd11e5bac3cf9cf7c8473810cf34",
+              "3cd016c15642aa8db5a8eedd59c496d2e5efa875f013d0237b05c89490d6646c",
+              "5fe662f8ddb6b5956885bbc1f9f50011a85f87dc791a0479a3794dc559d2c0dd",
+              "9bc27b0fe85d06efdfde2f89e04bac46fe7311b5786bb8ec38adf10d55f54e27",
+              "af25be72999edaa87036c4444aa60ce855d2a5fb9f9428c500c7c4cb76a6feb7",
+              "ecc769a34091c1c967b7ee63bf3b16fc353b9ee7b276097f749cacad83e0de46",
+              "f234ea95d6477183970b9e8907e31455b88d81828f1f60ed24caf9cd606e0d68"
+            ]
+          }
+        },
+        {
+          "anchor": "timeseries/moving_average",
+          "title": "Moving average",
+          "summary": "Trailing and exponential moving averages with AVG OVER and a recursive WITH, crossover signals, and the UAF functions TD_SMOOTHMA, TD_MAMEAN, TD_SIMPLEEXP.",
+          "file": "library/timeseries/moving_average.md",
+          "sha256": "5f3638ec47014bdd8a1074f786e6e712536633bc357ec1e83eda4d56a1e30c42",
+          "statements": 9,
+          "requires": {
+            "uaf_smoothma": [
+              "TD_SMOOTHMA"
+            ],
+            "uaf_smoothma_exponential": [
+              "TD_SMOOTHMA"
+            ],
+            "uaf_mamean_forecast": [
+              "TD_EXTRACT_RESULTS",
+              "TD_MAMEAN"
+            ],
+            "uaf_simpleexp_forecast": [
+              "TD_EXTRACT_RESULTS",
+              "TD_SIMPLEEXP"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "11501227754f2392d298bfcacb80198b2f349c6aecbd7f28c16d8e7c759c69c7",
+              "35e4c7ecf7c76593b13e94508b40c2945b2710586dc290ba73a5f78b48dd27cb",
+              "50b3b7aa8ec978d255ecdb14e59e1147db5e592f640c4b26b0eca7b30ff51572",
+              "72c898e8d2e216f44959f79f41ddf52d30cc83e203404a46549c32600777b67c",
+              "a0c5c6fd10245438add64b956697fa63156ecd2c1a5a84f57578a233befc1d3e",
+              "bbcdeb518457dd2296ee2ded4e7506879a0089a29da0ec5031f8308297b43812",
+              "c88170261f99e4d1f83ac5835f2967714998bb94158038dea28045020b819ee8",
+              "dce5c021c47c1ffab7399ccdfa48c662f50efaa36b0b11cef25ab09e208d7599",
+              "dfdd205b4c4ec7c065dd750fdbede8ba22b94c9afa5c8f3649f45e898131710b"
+            ]
+          }
+        },
+        {
+          "anchor": "timeseries/signal_processing",
+          "title": "Signal processing with UAF functions",
+          "summary": "TD_DFFT, TD_IDFFT, TD_DFFTCONV, TD_WINDOWDFFT, TD_POWERSPEC, TD_LINESPEC, TD_CONVOLVE, TD_DTW, TD_DWT, TD_IDWT and TD_BINARYSERIESOP on a regular series.",
+          "file": "library/timeseries/signal_processing.md",
+          "sha256": "3e921a7278e6c7c586ac45fead84605a43d46d8a9e25bc04de1c22c63891f1df",
+          "statements": 8,
+          "requires": {
+            "fft": [
+              "TD_DFFT",
+              "TD_DFFTCONV",
+              "TD_IDFFT"
+            ],
+            "windowed_fft": [
+              "TD_WINDOWDFFT"
+            ],
+            "spectra": [
+              "TD_LINESPEC",
+              "TD_POWERSPEC"
+            ],
+            "periodicity_removal": [
+              "TD_BINARYSERIESOP",
+              "TD_GENSERIES4SINUSOIDS"
+            ],
+            "convolution": [
+              "TD_CONVOLVE"
+            ],
+            "dtw": [
+              "TD_DTW"
+            ],
+            "wavelets": [
+              "TD_DWT",
+              "TD_IDWT"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "2a35725b403d9c89f2191b7221cd80d13c01291932549133c3de1cd3f8179af3",
+              "32b49b183a83337eeff80e91f154cd8c0107f90a7ca7e27a44be70bc8f9ee1c0",
+              "64f5e6c91c8a10416a72eb7433f71081485c2ff290f265f0b8c3afd0e0f1418b",
+              "7b6911ce52ed5d7b3fa7ac5d8e31a8ecff4cf96a2ad6656daf3f5dd29a930961",
+              "b0fafbd053e500f99c0fb6f5dc591c250061854925149a027db3eb068db16ec6",
+              "eb3e00c955a05280ed0074fa288812df798d1b8fc588eff89aed35e4a12103d2",
+              "f6aa50b79fcba52d42b8ab3ac50ca9937bbea370d56d0ccada51b880c4d1b44d",
+              "fd71b2a6c5cfaa36924e232b4b94c35a4af9735ee9c872ff4e0edd71657ae80b"
+            ]
+          }
+        },
+        {
+          "anchor": "timeseries/uaf_concepts",
+          "title": "UAF call syntax",
+          "summary": "How to call any TD_SYSFNLIB UAF function: SERIES_SPEC, MATRIX_SPEC, ART_SPEC, GENSERIES_SPEC, FUNC_PARAMS, INTO ART and TD_EXTRACT_RESULTS.",
+          "file": "library/timeseries/uaf_concepts.md",
+          "sha256": "0771d27d04f418c91c5b894ee51c0aa4d7749e5459b1ee33686965b615f405df",
+          "statements": 12,
+          "requires": {
+            "series_spec": [
+              "TD_SINFO"
+            ],
+            "series_id_and_multivar": [
+              "TD_SINFO"
+            ],
+            "interval": [
+              "TD_SEASONALNORMALIZE"
+            ],
+            "func_params_and_index": [
+              "TD_SMOOTHMA"
+            ],
+            "into_art": [
+              "TD_SMOOTHMA"
+            ],
+            "permanent_art": [
+              "TD_SINFO",
+              "TD_SMOOTHMA"
+            ],
+            "extract_results": [
+              "TD_EXTRACT_RESULTS",
+              "TD_MAMEAN"
+            ],
+            "art_chaining": [
+              "TD_ARIMAESTIMATE",
+              "TD_ARIMAFORECAST",
+              "TD_ARIMAVALIDATE"
+            ],
+            "complex_payload": [
+              "TD_DFFT",
+              "TD_IDFFT"
+            ],
+            "genseries_spec": [
+              "TD_ACF"
+            ],
+            "matrix_spec": [
+              "TD_MINFO"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-01",
+            "statements": [
+              "09fe45c74fe373f5f1c726e06aafb02fd90d44b083785ffa156045af805cfa50",
+              "0af5df6e39345ddd4c4dd04e131edfcff6acc3c4fc45f549907061e3a6ed89e4",
+              "539aefe8337f9cd9648eeeb23affe40e4f7d478a2cdeb7a1ead02d9fd2e460db",
+              "78fc8d0124bcfac939651ddd3ba70044e3281146780486d4aa614706ac363bca",
+              "7e48fd0ab4329031ff0ca42c135f5160ae6465e26a2d8dd9f9b007bf5b14723c",
+              "8917d49dd054d1edbde763ece625ef19761ad047d7b072627809d768b5083293",
+              "99421f466d09377ca83ca73b8177491e17aa5142ba3ebabe40748c3d6ed7bbab",
+              "a6aba0f5071fcc1a519cb1e403fb837c85335312ed16b56f89947f9e7df908be",
+              "bbf80c6c93de2662e2b360231a14bb37b1423df707e9fe47a1d206c6582bce10",
+              "dbadf8dde2dbd9af2e6cb5d92826dfcef637a6bbf322b1cf6416255a35abb679",
+              "eb143968e5ab77156d2f875a4c389cd5b4126d0cb6eea278e71ba1996270a6a9",
+              "f08ffd59822244035f2a5260d520786280047730ff9abdd7b09437790693357f"
+            ]
+          }
+        },
+        {
+          "anchor": "vector_search/vector_distance",
+          "title": "Vector distance search",
+          "summary": "TD_VectorDistance: nearest neighbours by cosine, Euclidean or Manhattan distance — which input is the target, what TopK limits.",
+          "file": "library/vector_search/vector_distance.md",
+          "sha256": "7e5d464ae9026f9d713d63eb5dc402997de0fd3afbafad4571476a9456ffc69f",
+          "statements": 5,
+          "requires": {
+            "nearest_to_one_item": [
+              "TD_VECTORDISTANCE"
+            ],
+            "nearest_with_attributes": [
+              "TD_VECTORDISTANCE"
+            ],
+            "all_nearest_neighbours": [
+              "TD_VECTORDISTANCE"
+            ],
+            "compare_measures": [
+              "TD_VECTORDISTANCE"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "06490fc56aa1824e4ae23499651c699c501a82af0d1d6d44ed1ec908020d8f67",
+              "2474142ebf745d0c4b869c245f459c741aedd154c1fe761192f34d51e1b7c872",
+              "602393ed064c4f39f07fc78e562e1dc8961bb35b92778016313dac43e0692b9c",
+              "6dc987bdb2392f528710e94cf8b5dac2cd08a835611338a251040f21a4f5b442",
+              "dd06eaadebff323ed4c0a17835a040963d5b373749c76919bb996d6c0f7f76ca"
+            ]
+          }
+        },
+        {
+          "anchor": "vector_search/vector_normalize",
+          "title": "Vector normalization",
+          "summary": "TD_VectorNormalize: scale vectors to unit length or to fractions of their sum, what that changes for distance search and what it does not.",
+          "file": "library/vector_search/vector_normalize.md",
+          "sha256": "cd859bf7005aa20d21bfacac19e92f43c7fd66ad1776beb1f598c586d111214f",
+          "statements": 4,
+          "requires": {
+            "unit_vectors": [
+              "TD_VECTORNORMALIZE"
+            ],
+            "persist_unit_vectors": [
+              "TD_VECTORNORMALIZE"
+            ],
+            "what_changes": [
+              "TD_VECTORDISTANCE",
+              "TD_VECTORNORMALIZE"
+            ],
+            "fractions": [
+              "TD_VECTORNORMALIZE"
+            ]
+          },
+          "executed": {
+            "system": "Teradata 20.00.24.60",
+            "on": "2026-10-02",
+            "statements": [
+              "00c9fa8d972ea9cc4a3d075811a1c4d1446b269d427ae83adcde0b79d8ddb8fc",
+              "117e2fdb5080a2012a2df6fa1edcd22470b246d36df716a1ae28c5d4bce152fd",
+              "ddfec603d59e9b16131da1e2c4edcb4e526f23165d5e7e86d382683e5cef448c",
+              "f0e40c00c9dfa5bf8aebdc86210c5d2692a0fce595396d0ff770b677211f1507"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

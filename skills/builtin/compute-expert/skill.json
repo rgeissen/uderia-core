@@ -1,0 +1,22 @@
+{
+  "name": "compute-expert",
+  "version": "1.0.0",
+  "description": "Judgement for Compute with Lineage (TDA_Compute): when to compute over rows versus let the query aggregate, which operation states what the question asked, how to read a receipt, and how to present a computed figure so its lineage survives into the answer.",
+  "author": "Uderia",
+  "tags": ["compute", "arithmetic", "lineage", "receipt", "sql"],
+  "keywords": ["total", "sum", "average", "top", "rank", "change", "percent", "difference", "pivot", "TDA_Compute", "receipt"],
+  "use_cases": [
+    "Deciding whether a total belongs in the SQL (GROUP BY, SUM) or in a compute step over the rows",
+    "Choosing the operation that states what was asked (rank vs filter, pct_change vs diff)",
+    "Presenting a computed figure exactly as receipted, with what it was computed over",
+    "Recovering from a refusal that names several numeric columns",
+    "Reading a receipt's rows-used against the row count to spot NULL-riddled measures"
+  ],
+  "main_file": "compute-expert.md",
+  "last_updated": "2026-09-20",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "calculator"
+  }
+}

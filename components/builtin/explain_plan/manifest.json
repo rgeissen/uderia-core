@@ -1,0 +1,58 @@
+{
+  "component_id": "explain_plan",
+  "display_name": "EXPLAIN Plan",
+  "icon_accent": "#f97316",
+  "answer_surface": {
+    "open": true,
+    "word": "Plan", "pin": true},
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"4\" rx=\"1\"/><rect x=\"3\" y=\"17\" width=\"6\" height=\"4\" rx=\"1\"/><rect x=\"15\" y=\"17\" width=\"6\" height=\"4\" rx=\"1\"/><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 7v4M6 17v-3h12v3\"/></svg>",
+  "description": "Reads a Teradata EXPLAIN result the agent ran this turn and draws it as a graph of steps — operation, inputs, join method, data movement, row estimates and their confidence — with the findings a plan reader looks for first: product joins, estimates made without statistics, redistribution and duplication, full scans.",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "page",
+  "signals": {
+    "emits": [
+      "uderia:component-changed"
+    ],
+    "listens": [],
+    "announces": [],
+    "consumes_refs": false
+  },
+  "category": "Knowledge",
+  "tool_definition": {
+    "name": "TDA_ExplainPlan",
+    "description": "Reads the result of an EXPLAIN that ran THIS turn (statement number; the latest EXPLAIN by default) and returns the plan as steps with findings (product joins, estimates without statistics, data movement, full scans); the user sees it drawn as a graph. Run `EXPLAIN <the SELECT>` with your SQL tool first — this tool does not run SQL. Teradata plans only.",
+    "args": {
+      "statement": {
+        "type": "integer",
+        "description": "Statement number of the EXPLAIN this turn. Omit for the latest EXPLAIN.",
+        "required": false
+      }
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "ExplainPlanHandler"
+  },
+  "frontend": {
+    "renderer_file": "renderer.js",
+    "renderer_export": "renderExplainPlan"
+  },
+  "render_targets": {
+    "default": "inline",
+    "supports": [
+      "inline"
+    ]
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed"
+  },
+  "profile_defaults": {
+    "on_for_new_agents": false,
+    "enabled_for": [
+      "tool_enabled",
+      "llm_only"
+    ]
+  }
+}

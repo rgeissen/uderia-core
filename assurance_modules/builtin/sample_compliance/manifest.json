@@ -1,0 +1,83 @@
+{
+  "pack_id": "sample_compliance",
+  "display_name": "Sample · Regulatory disclaimer",
+  "version": "1.0.0",
+  "author": "Uderia",
+  "description": "The reference implementation of an assurance-module pack, shipped disabled. It demonstrates the two declarative forms — a pattern rule over the answer, and a metric expression over counts — and a tunable that becomes a slider. Copy it, do not enable it: it asserts a disclaimer rule no real deployment shares.",
+
+  "properties": [
+    {
+      "key": "disclaimer_present",
+      "label": "Regulatory disclaimer",
+      "question": "Does an answer that gives financial figures carry the required disclaimer?",
+      "lanes": ["IN_FLIGHT", "POST_HOC"]
+    },
+    {
+      "key": "answer_brevity",
+      "label": "Answer brevity",
+      "question": "Is the answer within the length this deployment considers readable?",
+      "lanes": ["POST_HOC"],
+      "lane_notes": {
+        "in_flight": "length is a style preference — withholding an answer for being long would be the wrong product."
+      }
+    }
+  ],
+
+  "assessors": [
+    {
+      "key": "disclaimer_rule",
+      "property": "disclaimer_present",
+      "label": "Disclaimer phrase rule",
+      "tier": "declarative",
+      "requires": ["answer"],
+      "subject_is_model_output": true,
+      "spec": {
+        "field": "answer",
+        "finding_noun": "figure without a disclaimer",
+        "patterns": {
+          "flag": ["\\$\\s?[0-9][0-9,.]*", "\\b[0-9][0-9,.]*\\s?(?:USD|EUR|GBP)\\b"],
+          "clear": ["not investment advice", "for informational purposes only"]
+        }
+      }
+    },
+    {
+      "key": "brevity_metric",
+      "property": "answer_brevity",
+      "label": "Answer word count",
+      "tier": "declarative",
+      "requires": ["answer"],
+      "spec": {
+        "metric_expr": "answer_words",
+        "metric_name": "answer_words",
+        "gate": 600,
+        "higher_is_better": false
+      }
+    }
+  ],
+
+  "tunables": [
+    {
+      "key": "max_answer_words",
+      "label": "Answer length ceiling",
+      "property": "answer_brevity",
+      "metric": "answer_words",
+      "gate": 600,
+      "healthy": 300,
+      "higher_is_better": false,
+      "stage": "compose"
+    }
+  ],
+
+  "suggested_bindings": [
+    { "property": "disclaimer_present", "lane": "IN_FLIGHT", "assessor": "disclaimer_rule" },
+    { "property": "disclaimer_present", "lane": "POST_HOC", "assessor": "disclaimer_rule" },
+    { "property": "answer_brevity", "lane": "POST_HOC", "assessor": "brevity_metric" }
+  ],
+
+  "guide": {
+    "disclaimer_present": {
+      "desc": "Whether an answer stating money carries the disclaimer the deployment requires.",
+      "long": "A deterministic phrase rule: an answer containing a currency figure must also contain one of the clearing phrases. It reports; it does not decide. Bound in flight it can reach the gate that consults this property; bound post-hoc it grades the same assessment, so the two can never disagree."
+    }
+  }
+}

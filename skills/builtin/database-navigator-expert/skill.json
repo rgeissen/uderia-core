@@ -1,0 +1,38 @@
+{
+  "name": "database-navigator-expert",
+  "version": "1.1.0",
+  "description": "Expert guidance on using the Database Navigator (TDA_DatabaseNavigator) well — reading object roles and column flags, choosing declared over inferred joins, respecting masked personal data, and turning catalog facts into correct SQL.",
+  "author": "Uderia",
+  "tags": [
+    "database",
+    "catalog",
+    "schema",
+    "navigator",
+    "sql"
+  ],
+  "keywords": [
+    "describe",
+    "schema",
+    "catalog",
+    "table",
+    "column",
+    "foreign key",
+    "join",
+    "preview",
+    "TDA_DatabaseNavigator"
+  ],
+  "use_cases": [
+    "Deciding whether to describe a table before writing SQL",
+    "Reading a table's inferred role (fact, dimension, bridge, lookup) to plan a query",
+    "Choosing declared foreign keys over inferred join candidates",
+    "Handling columns flagged as personal data or text-stored dates",
+    "Turning a catalog description into a precise, small first query",
+    "Running an agent's own read-only query well: aggregate in SQL, respect the row bound and the source's dialect"
+  ],
+  "main_file": "database-navigator-expert.md",
+  "last_updated": "2026-09-24",
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "database"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "format",
+  "version": "1.0.0",
+  "extension_id": "format",
+  "display_name": "Format Template",
+  "description": "Render a string from the answer and the values extracted from it (numbers, entities) using a template. Deterministic, no LLM — build alert messages and labels in a flow without an extra LLM node.",
+  "author": "TDA Core Team",
+  "license": "MIT",
+  "category": "Transform",
+  "extension_tier": "simple",
+  "requires_llm": false,
+  "keywords": ["format", "template", "render", "string", "message", "label", "deterministic", "flow"],
+  "files": {
+    "extension": "format_ext.py"
+  },
+  "output_target": "silent",
+  "parameters": {
+    "supported": true,
+    "required": true,
+    "description": "Template string. Placeholders: {answer}, {n0}/{n1}…, {nfirst}/{nlast}/{nmax}/{nmin}/{nsum}, {e0}/{e1}…",
+    "examples": ["Reorder {n0} items", "Alert: {nmax} exceeds threshold", "{answer}"]
+  },
+  "output_schema": {
+    "type": "string",
+    "description": "The rendered template"
+  },
+  "metadata": {
+    "tags": ["built-in", "transform", "core", "deterministic"]
+  }
+}

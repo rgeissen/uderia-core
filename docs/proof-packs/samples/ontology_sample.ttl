@@ -1,0 +1,171 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix qb: <http://purl.org/linked-data/cube#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix uderia: <https://uderia.ai/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://uderia.ai/kg/restaurants_demo/rel/Order-has_property-amount> a uderia:Relationship ;
+    uderia:relSource <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:relSourceName "Order" ;
+    uderia:relSourceProvenance "manual" ;
+    uderia:relSourceType "entity" ;
+    uderia:relTarget <https://uderia.ai/kg/restaurants_demo/attribute/amount> ;
+    uderia:relTargetName "amount" ;
+    uderia:relTargetType "attribute" ;
+    uderia:relType "has_property" .
+
+<https://uderia.ai/kg/restaurants_demo/rel/Order-has_property-order_date> a uderia:Relationship ;
+    uderia:relSource <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:relSourceName "Order" ;
+    uderia:relSourceProvenance "manual" ;
+    uderia:relSourceType "entity" ;
+    uderia:relTarget <https://uderia.ai/kg/restaurants_demo/attribute/order_date> ;
+    uderia:relTargetName "order_date" ;
+    uderia:relTargetType "attribute" ;
+    uderia:relType "has_property" .
+
+<https://uderia.ai/kg/restaurants_demo/rel/Order-relates_to-Revenue> a uderia:Relationship ;
+    uderia:relSource <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:relSourceName "Order" ;
+    uderia:relSourceProvenance "manual" ;
+    uderia:relSourceType "entity" ;
+    uderia:relTarget <https://uderia.ai/kg/restaurants_demo/business_concept/Revenue> ;
+    uderia:relTargetName "Revenue" ;
+    uderia:relTargetType "business_concept" ;
+    uderia:relType "relates_to" .
+
+<https://uderia.ai/kg/restaurants_demo/rel/Sales-contains-Order> a uderia:Relationship ;
+    uderia:cardinality "1:N" ;
+    uderia:relSource <https://uderia.ai/kg/restaurants_demo/domain/Sales> ;
+    uderia:relSourceName "Sales" ;
+    uderia:relSourceProvenance "manual" ;
+    uderia:relSourceType "domain" ;
+    uderia:relTarget <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:relTargetName "Order" ;
+    uderia:relTargetType "entity" ;
+    uderia:relType "contains" .
+
+<https://uderia.ai/kg/restaurants_demo/rel/order_order_header-implements-Order> a uderia:Relationship ;
+    uderia:relSource <https://uderia.ai/kg/restaurants_demo/table/order_order_header> ;
+    uderia:relSourceName "order.order_header" ;
+    uderia:relSourceProvenance "manual" ;
+    uderia:relSourceType "table" ;
+    uderia:relTarget <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:relTargetName "Order" ;
+    uderia:relTargetType "entity" ;
+    uderia:relType "implements" .
+
+<https://uderia.ai/kg/restaurants_demo/rel/order_summary-measures-Order> a uderia:Relationship ;
+    uderia:relSource <https://uderia.ai/kg/restaurants_demo/metric/order_summary> ;
+    uderia:relSourceName "order_summary" ;
+    uderia:relSourceProvenance "manual" ;
+    uderia:relSourceType "metric" ;
+    uderia:relTarget <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:relTargetName "Order" ;
+    uderia:relTargetType "entity" ;
+    uderia:relType "measures" .
+
+<https://uderia.ai/kg/restaurants_demo/domain/Sales> a skos:Concept ;
+    rdfs:label "Sales" ;
+    dcterms:description "sales domain" ;
+    skos:definition "sales domain" ;
+    skos:inScheme <https://uderia.ai/kg/restaurants_demo> ;
+    skos:narrower <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    skos:prefLabel "Sales" ;
+    uderia:entityType "domain" ;
+    uderia:name "Sales" ;
+    uderia:properties "{\"description\": \"sales domain\"}" ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary> a qb:DataStructureDefinition ;
+    rdfs:label "order_summary" ;
+    dcterms:description "Order revenue summary" ;
+    qb:component <https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_dim/order_date>,
+        <https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/avg_order_value>,
+        <https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/total_revenue> ;
+    uderia:entityType "metric" ;
+    uderia:name "order_summary" ;
+    uderia:properties "{\"description\": \"Order revenue summary\", \"dimensions\": [{\"expr\": \"order_date\", \"name\": \"order_date\"}], \"measures\": [{\"additive\": true, \"expr\": \"SUM(amount)\", \"name\": \"total_revenue\"}, {\"additive\": false, \"expr\": \"AVG(amount)\", \"name\": \"avg_order_value\"}], \"metric_source\": \"restaurants_demo.order.order_header\", \"owner_domain\": \"order\", \"owner_product\": \"order_header\"}" ;
+    uderia:rel_measures <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_dim/order_date> a qb:ComponentSpecification ;
+    qb:dimension <https://uderia.ai/kg/restaurants_demo/metric/order_summary/dimension/order_date> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/avg_order_value> a qb:ComponentSpecification ;
+    qb:measure <https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/avg_order_value> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/comp_meas/total_revenue> a qb:ComponentSpecification ;
+    qb:measure <https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/total_revenue> .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/dimension/order_date> a qb:DimensionProperty ;
+    rdfs:label "order_date" ;
+    rdfs:comment "order_date" .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/avg_order_value> a qb:MeasureProperty ;
+    rdfs:label "avg_order_value" ;
+    rdfs:comment "AVG(amount)" ;
+    uderia:additive false .
+
+<https://uderia.ai/kg/restaurants_demo/metric/order_summary/measure/total_revenue> a qb:MeasureProperty ;
+    rdfs:label "total_revenue" ;
+    rdfs:comment "SUM(amount)" ;
+    uderia:additive true .
+
+<https://uderia.ai/kg/restaurants_demo/table/order_order_header> a dcat:Dataset ;
+    rdfs:label "order.order_header" ;
+    prov:wasDerivedFrom <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:entityType "table" ;
+    uderia:name "order.order_header" ;
+    uderia:properties "{\"infrastructure\": \"teradata\", \"layer\": \"physical\"}" ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo> a owl:Ontology,
+        skos:ConceptScheme,
+        dcat:Dataset ;
+    dcterms:description "A sample Uderia KG exported to open standards (Tier 4.1 proof)." ;
+    dcterms:title "Restaurants Demo Ontology" ;
+    uderia:kgId "restaurants_demo" .
+
+<https://uderia.ai/kg/restaurants_demo/attribute/amount> a owl:DatatypeProperty ;
+    rdfs:label "amount" ;
+    rdfs:domain <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:entityType "attribute" ;
+    uderia:name "amount" ;
+    uderia:properties "{\"layer\": \"logical\", \"semantic_type\": \"currency\"}" ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo/attribute/order_date> a owl:DatatypeProperty ;
+    rdfs:label "order_date" ;
+    rdfs:domain <https://uderia.ai/kg/restaurants_demo/entity/Order> ;
+    uderia:entityType "attribute" ;
+    uderia:name "order_date" ;
+    uderia:properties "{\"layer\": \"logical\", \"semantic_type\": \"date\"}" ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo/business_concept/Revenue> a skos:Concept ;
+    rdfs:label "Revenue" ;
+    dcterms:description "money earned" ;
+    skos:definition "money earned" ;
+    skos:inScheme <https://uderia.ai/kg/restaurants_demo> ;
+    skos:prefLabel "Revenue" ;
+    uderia:entityType "business_concept" ;
+    uderia:name "Revenue" ;
+    uderia:properties "{\"description\": \"money earned\"}" ;
+    uderia:source "manual" .
+
+<https://uderia.ai/kg/restaurants_demo/entity/Order> a owl:Class ;
+    rdfs:label "Order" ;
+    dcterms:description "a customer order" ;
+    uderia:entityType "entity" ;
+    uderia:name "Order" ;
+    uderia:properties "{\"description\": \"a customer order\", \"domain\": \"Sales\", \"layer\": \"logical\"}" ;
+    uderia:rel_has_property <https://uderia.ai/kg/restaurants_demo/attribute/amount>,
+        <https://uderia.ai/kg/restaurants_demo/attribute/order_date> ;
+    uderia:rel_relates_to <https://uderia.ai/kg/restaurants_demo/business_concept/Revenue> ;
+    uderia:source "manual" .
+

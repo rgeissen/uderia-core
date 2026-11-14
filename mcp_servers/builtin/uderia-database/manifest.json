@@ -1,0 +1,22 @@
+{
+  "id": "uderia-database",
+  "name": "uderia-database",
+  "display_name": "Database Connection",
+  "description": "Centralized database connections (Teradata, PostgreSQL, MySQL, SQLite, DuckDB, MongoDB, JDBC) shared by every participant — the Canvas, the Database Navigator, agent queries, PDM deployment and other data consumers. A User-type connector: each user manages their own connections; the admin governs availability.",
+  "version": "1.0.0",
+  "install_type": "builtin",
+  "connector_type": "database",
+  "requires_user_auth": true,
+  "security_acknowledgment_required": false,
+  "tools": [],
+  "tool_schemas": [],
+  "auth_schema": {
+    "type": "db_connections",
+    "display_name": "Database Connections",
+    "description": "Add and manage your database connections — relational databases and MongoDB. Used by the Canvas, the Database Navigator, agent queries, industry-model PDM deployment, and other data features.",
+    "icon": "database",
+    "multi": true,
+    "drivers": ["teradata", "postgresql", "mysql", "sqlite", "duckdb", "mongodb", "jdbc"]
+  },
+  "tags": ["database", "sql", "connection", "teradata", "postgresql", "duckdb", "mongodb", "built-in"]
+}

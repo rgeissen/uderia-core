@@ -1,0 +1,21 @@
+{
+  "name": "memory-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on using agent memory (TDA_Memory) well — deciding what is genuinely durable, phrasing memories, choosing scope, and avoiding memory pollution.",
+  "author": "Uderia",
+  "tags": ["memory", "personalization", "preferences", "cross-session"],
+  "keywords": ["memory", "remember", "forget", "preference", "TDA_Memory", "personalization"],
+  "use_cases": [
+    "Deciding whether a statement is durable enough to remember",
+    "Phrasing a memory as a concise reusable fact",
+    "Choosing global vs profile scope",
+    "Avoiding storing transient or query-specific data"
+  ],
+  "main_file": "memory-expert.md",
+  "last_updated": "2026-06-28",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "cpu"
+  }
+}

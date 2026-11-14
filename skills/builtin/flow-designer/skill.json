@@ -1,0 +1,20 @@
+{
+  "name": "flow-designer",
+  "version": "1.0.0",
+  "description": "Design principles, node patterns, and orchestration recipes for building Uderia Flow workflows. Teaches the LLM how to structure flows correctly using a single tool call per user intent.",
+  "author": "Uderia",
+  "tags": ["flow", "workflow", "orchestration", "design"],
+  "keywords": ["flow", "workflow", "node", "edge", "insert_node", "decision", "loop", "scope", "task_llm", "task_function"],
+  "use_cases": [
+    "Designing multi-step AI workflows",
+    "Adding nodes between existing nodes",
+    "Building conditional branches and loops",
+    "Coordinating multiple LLM profiles in a flow"
+  ],
+  "main_file": "flow-designer.md",
+  "last_updated": "2026-05-15",
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "workflow"
+  }
+}

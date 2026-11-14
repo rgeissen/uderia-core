@@ -1,0 +1,30 @@
+{
+  "module_id": "findings",
+  "display_name": "Findings",
+  "version": "1.0.0",
+  "description": "Verified results earlier turns' tools returned — row counts, columns, single-row values — re-read by the model instead of recalled; the newest turn's findings are pinned under condensation; the text shown is handed to the grounding gate as vouched evidence.",
+  "category": "history",
+
+  "capabilities": {
+    "condensable": true,
+    "purgeable": false,
+    "has_cache": false
+  },
+
+  "applicability": {
+    "profile_types": ["tool_enabled", "llm_only", "rag_focused"],
+    "required": false
+  },
+
+  "defaults": {
+    "priority": 68,
+    "target_pct": 3,
+    "min_pct": 0,
+    "max_pct": 8
+  },
+
+  "handler": {
+    "file": "handler.py",
+    "class": "FindingsModule"
+  }
+}

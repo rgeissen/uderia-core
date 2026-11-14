@@ -1,0 +1,30 @@
+{
+  "module_id": "review_release",
+  "display_name": "Released Reviews",
+  "version": "1.0.0",
+  "description": "Forward-only injection of withheld originals the owner EXPLICITLY released into this conversation after human review (HITL release-to-conversation). The sealed turn is never rewritten; the release is appended to future context, clearly labelled as a human decision.",
+  "category": "governance",
+
+  "capabilities": {
+    "condensable": true,
+    "purgeable": false,
+    "has_cache": false
+  },
+
+  "applicability": {
+    "profile_types": ["tool_enabled", "llm_only", "rag_focused", "genie"],
+    "required": false
+  },
+
+  "defaults": {
+    "priority": 66,
+    "target_pct": 3,
+    "min_pct": 0,
+    "max_pct": 10
+  },
+
+  "handler": {
+    "file": "handler.py",
+    "class": "ReviewReleaseModule"
+  }
+}

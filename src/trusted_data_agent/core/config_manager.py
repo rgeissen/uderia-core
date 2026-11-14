@@ -1,0 +1,3143 @@
+# src/trusted_data_agent/core/config_manager.py
+"""
+Persistent configuration management for TDA.
+Handles saving and loading application configuration to/from tda_config.json.
+"""
+
+import asyncio
+import json
+import logging
+import copy
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+from datetime import datetime, timezone
+from sqlalchemy import text
+
+# Per-user async locks — serialise concurrent profile writes for the same account
+_user_config_locks: dict[str, asyncio.Lock] = {}
+
+
+def reclassification_needed(current: dict | None, incoming: dict | None) -> bool:
+    """Does writing ``incoming`` over ``current`` make the profile's classification
+    snapshot stale? ONE rule for every seam that rewrites a profile — the editor's
+    update endpoint and the agent-pack in-place update — because the snapshot is the
+    reachable tool/prompt catalog the trust envelope's deployment half hashes, and a
+    seam that rewrites the binding without saying so leaves a signed agent reading
+    `changed` with nothing telling its owner why (the pack seam did exactly that).
+
+    The rule, unchanged from the editor's: a profile that was never classified has
+    nothing to go stale, so it is never flagged; otherwise a change of MCP binding
+    (``mcpServerId`` / legacy ``mcp_servers``) or of classification mode always
+    flags, and a change of LLM (``llmConfigurationId`` / legacy provider+model)
+    flags only under ``full`` mode, the one that uses the LLM to categorise.
+    Only keys PRESENT in ``incoming`` are compared — absence is not a change.
+    """
+    cur = current or {}
+    inc = incoming or {}
+    cr = cur.get("classification_results") or {}
+    if not (isinstance(cr, dict) and cr.get("last_classified")):
+        return False
+    if "classification_mode" in inc and inc["classification_mode"] != cur.get("classification_mode"):
+        return True
+    if "mcpServerId" in inc and inc["mcpServerId"] != cur.get("mcpServerId"):
+        return True
+    if "mcp_servers" in inc and inc["mcp_servers"] != cur.get("mcp_servers", []):
+        return True
+    # PROP-006 phase 2 (M10): adding, removing or renaming an ADDITIONAL server changes the
+    # reachable catalog just as rebinding the primary does. Only the (server, alias) set counts —
+    # a changed tool selection does not, exactly as for the primary.
+    if "additionalMcpServers" in inc:
+        def _set(v):
+            return sorted((str(e.get("id")), str(e.get("alias"))) for e in (v or []) if isinstance(e, dict))
+        if _set(inc.get("additionalMcpServers")) != _set(cur.get("additionalMcpServers")):
+            return True
+    if cur.get("classification_mode") == "full":
+        if "llmConfigurationId" in inc and inc["llmConfigurationId"] != cur.get("llmConfigurationId"):
+            return True
+        if ("llm_provider" in inc and inc["llm_provider"] != cur.get("llm_provider")) or \
+           ("llm_model" in inc and inc["llm_model"] != cur.get("llm_model")):
+            return True
+    return False
+
+
+class ConfigUnavailableError(RuntimeError):
+    """A user's configuration exists but could not be read (the database failed, or the stored
+    JSON is damaged). Distinct from "no configuration" — that one bootstraps; this one must
+    never be answered with the template, which would be saved over the real configuration."""
+
+
+def _get_user_config_lock(user_uuid: str) -> asyncio.Lock:
+    """Return (creating if needed) the per-user asyncio.Lock for config writes."""
+    if user_uuid not in _user_config_locks:
+        _user_config_locks[user_uuid] = asyncio.Lock()
+    return _user_config_locks[user_uuid]
+
+app_logger = logging.getLogger("quart.app")
+
+
+#: The two categories the runtime INJECTS into APP_STATE on every activation ("System
+#: Tools" = the TDA_* framework tools, "Component Tools" = the action components). They
+#: are platform tools, never part of the MCP surface a profile reaches, and this is the ONE
+#: declaration every consumer of that fact reads: the persistence chokepoint strips them
+#: before a record is written (`save_profile_classification`), and the trust envelope's
+#: deployment reader (`trust.deployment.catalog_from_classification`) ignores them in a
+#: record that predates the strip — so a platform release that adds a component (S3 added
+#: `TDA_Compute`, 2026-09) can never again read as this agent's deployment drift.
+RUNTIME_INJECTED_CATEGORIES = ("System Tools", "Component Tools")
+
+
+class ConfigManager:
+    """
+    Manages persistent configuration stored in tda_config.json.
+    
+    The configuration file stores application objects that need to persist
+    across application restarts, such as:
+    - RAG collection metadata
+    - User preferences (future)
+    - Custom settings (future)
+    """
+    
+    DEFAULT_CONFIG_FILENAME = "tda_config.json"
+    
+    # Schema version for future migration support
+    CURRENT_SCHEMA_VERSION = "1.0"
+    
+    def __init__(self, config_path: Optional[Path] = None):
+        """
+        Initialize the configuration manager.
+        
+        Args:
+            config_path: Path to the config file. If None, uses project root.
+        """
+        if config_path is None:
+            # Use the get_project_root utility to find the correct project root
+            from trusted_data_agent.core.utils import get_project_root
+            project_root = get_project_root()
+            config_path = project_root / self.DEFAULT_CONFIG_FILENAME
+        
+        self.config_path = Path(config_path)
+        self._user_configs = {}  # Memory cache for loaded user configs from database
+        pass  # ConfigManager initialized
+    
+    def _get_default_config(self) -> Dict[str, Any]:
+        """
+        Returns the default configuration structure.
+
+        The default collection is NOT created here, but rather by RAGRetriever
+        when it initializes, so it can use the current MCP server name.
+
+        Returns:
+            Default configuration dictionary
+        """
+        return {
+            "schema_version": self.CURRENT_SCHEMA_VERSION,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_modified": datetime.now(timezone.utc).isoformat(),
+            "rag_collections": [],  # Empty - default collection created by RAGRetriever
+            "mcp_servers": [],  # MCP server configurations
+            "active_mcp_server_id": None,  # ID of currently active MCP server
+            "llm_configurations": [],  # LLM configuration settings
+            "active_llm_configuration_id": None,  # ID of currently active LLM configuration
+            "profiles": [],  # Profile configurations
+            "default_profile_id": None,  # ID of the default profile (for consumption)
+            "master_classification_profile_id": None,  # DEPRECATED: Legacy single master (backward compatibility only)
+            "master_classification_profile_ids": {},  # NEW: Per-server masters {mcp_server_id: profile_id}
+            "active_for_consumption_profile_ids": []  # IDs of profiles active for consumption
+        }
+    
+    def _strip_credentials(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Remove all credentials from configuration for security before database storage.
+        
+        Args:
+            config: Configuration dictionary
+            
+        Returns:
+            Configuration dictionary with credentials removed
+        """
+        config = copy.deepcopy(config)
+        
+        # Strip credentials from LLM configurations
+        if "llm_configurations" in config:
+            for llm_config in config["llm_configurations"]:
+                if "credentials" in llm_config:
+                    llm_config["credentials"] = {}
+        
+        app_logger.debug("Stripped credentials from configuration before database storage")
+        return config
+    
+    def load_config(self, user_uuid: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Load per-user configuration from database (user_preferences).
+        If user has no configuration yet, bootstrap from tda_config.json template.
+        tda_config.json is read-only and never modified.
+        
+        Args:
+            user_uuid: User UUID for per-user configuration (required for per-user config)
+        
+        Returns:
+            Configuration dictionary
+        """
+        # If no user_uuid, return read-only bootstrap template from tda_config.json
+        if not user_uuid:
+            return self._load_bootstrap_template()
+        
+        # Check memory cache first
+        if user_uuid in self._user_configs:
+            return self._user_configs[user_uuid]
+        
+        # Load from database. THREE outcomes, kept apart (Oct 2026 incident): a read that FAILED
+        # is not "no configuration". The old shape fell through every exception to the
+        # new-user bootstrap — cached the template AS the user's configuration and saved it
+        # over theirs; only failing writes stopped it when prod's database became unreadable
+        # for nine minutes. A failed read now raises; nothing is cached, bootstrapped or saved.
+        from trusted_data_agent.auth.database import get_db_session
+        from trusted_data_agent.auth.models import UserPreference
+        try:
+            with get_db_session() as session:
+                prefs = session.query(UserPreference).filter_by(user_id=user_uuid).first()
+                stored = prefs.preferences_json if prefs else None
+        except Exception as e:
+            app_logger.error(f"Configuration of user {user_uuid} could not be READ — refusing to "
+                             f"bootstrap over it: {e}", exc_info=True)
+            raise ConfigUnavailableError(f"the configuration of user {user_uuid} could not be read: {e}") from e
+
+        if stored:
+            try:
+                user_config = json.loads(stored)
+            except (TypeError, ValueError) as e:
+                # a stored configuration that does not parse is DAMAGED, not absent — keep it for
+                # repair; never replace it with the template
+                app_logger.error(f"Configuration of user {user_uuid} is stored but unreadable — kept "
+                                 f"untouched, not replaced: {e}")
+                raise ConfigUnavailableError(f"the stored configuration of user {user_uuid} is unreadable: {e}") from e
+
+            # migrations on a configuration that WAS read: a failure is logged, the configuration
+            # read is still the one returned (never the template)
+            try:
+                original_profile_count = len(user_config.get("profiles", []))
+                user_config = self._sync_new_default_profiles(user_config)
+                new_profile_count = len(user_config.get("profiles", []))
+                transport_patched = self._migrate_mcp_server_transport(user_config)
+                comp_defaults_patched = False
+                if "component_profile_defaults" not in user_config:
+                    bootstrap = self._load_bootstrap_template()
+                    user_config["component_profile_defaults"] = bootstrap.get("component_profile_defaults", {})
+                    comp_defaults_patched = True
+                self._user_configs[user_uuid] = user_config
+                if new_profile_count > original_profile_count or transport_patched or comp_defaults_patched:
+                    self.save_config(user_config, user_uuid)
+                self.ensure_default_vector_store_config(user_uuid)
+                self.migrate_inline_vector_store_configs(user_uuid)
+                self.ensure_default_kg_backend_config(user_uuid)
+            except Exception as e:  # noqa: BLE001
+                app_logger.error(f"Configuration of user {user_uuid} loaded; a migration step failed "
+                                 f"(the loaded configuration stands): {e}", exc_info=True)
+            self._user_configs[user_uuid] = user_config
+            app_logger.info(f"Loaded configuration from database for user {user_uuid}")
+            return user_config
+
+        # No configuration in database - bootstrap from tda_config.json template
+        app_logger.info(f"No configuration found for user {user_uuid} - bootstrapping from tda_config.json")
+        bootstrap_config = self._load_bootstrap_template()
+        
+        # Create deep copy for this user
+        user_config = copy.deepcopy(bootstrap_config)
+
+        # Assign first LLM to @CHAT profile during bootstrap
+        llm_configs = user_config.get("llm_configurations", [])
+        first_llm_id = llm_configs[0]["id"] if llm_configs else None
+
+        if first_llm_id:
+            profiles = user_config.get("profiles", [])
+            for profile in profiles:
+                if profile.get("tag") == "CHAT" and profile.get("profile_type") == "llm_only":
+                    if not profile.get("llmConfigurationId"):
+                        profile["llmConfigurationId"] = first_llm_id
+                        app_logger.info(f"✅ Assigned LLM {first_llm_id} to @CHAT profile during bootstrap")
+
+        # Bootstrap configuration - do NOT auto-set profile defaults
+        # The first profile activated by the user will become the default
+        # This allows a clean bootstrap state where no profiles are pre-selected
+        # Values are inherited from tda_config.json template (which has null/empty defaults)
+
+        app_logger.info(f"Bootstrap complete for user {user_uuid} - no default/master/active profiles auto-set (user must activate a profile first)")
+
+        self._user_configs[user_uuid] = user_config
+
+        # Save to database for future loads
+        self.save_config(user_config, user_uuid)
+
+        # Bootstrap default vector store config for new users
+        self.ensure_default_vector_store_config(user_uuid)
+
+        # Bootstrap default KG backend config for new users
+        self.ensure_default_kg_backend_config(user_uuid)
+
+        return user_config
+    
+    def _load_bootstrap_template(self) -> Dict[str, Any]:
+        """Load read-only bootstrap template from tda_config.json."""
+        try:
+            if not self.config_path.exists():
+                app_logger.warning(f"Config file not found at {self.config_path}. Using default config.")
+                return self._get_default_config()
+            
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # Validate schema version
+            schema_version = config.get("schema_version", "unknown")
+            if schema_version != self.CURRENT_SCHEMA_VERSION:
+                app_logger.warning(
+                    f"Config schema version mismatch. Expected {self.CURRENT_SCHEMA_VERSION}, "
+                    f"got {schema_version}. Using existing config as-is."
+                )
+            
+            return config
+
+        except json.JSONDecodeError as e:
+            app_logger.error(f"Invalid JSON in config file: {e}. Using default config.")
+            return self._get_default_config()
+
+        except Exception as e:
+            app_logger.error(f"Error loading config file: {e}. Using default config.", exc_info=True)
+            return self._get_default_config()
+
+    def _sync_new_default_profiles(self, user_config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Sync any new default profiles from bootstrap template to user config.
+
+        This handles the case where new default profiles (like Genie) are added
+        to tda_config.json after a user has already bootstrapped. Without this,
+        existing users would never see new default profiles.
+
+        Only profiles with IDs starting with 'profile-default-' are synced.
+        User-created profiles and modifications to existing profiles are preserved.
+
+        Args:
+            user_config: User's current configuration
+
+        Returns:
+            Updated user configuration with any new default profiles added
+        """
+        try:
+            bootstrap_config = self._load_bootstrap_template()
+            bootstrap_profiles = bootstrap_config.get("profiles", [])
+            user_profiles = user_config.get("profiles", [])
+
+            # Get set of existing profile IDs in user config
+            existing_profile_ids = {p.get("id") for p in user_profiles}
+
+            # Find default profiles in bootstrap that are missing from user config
+            new_profiles_added = []
+            for bootstrap_profile in bootstrap_profiles:
+                profile_id = bootstrap_profile.get("id", "")
+
+                # Only sync profiles with default prefix
+                if not profile_id.startswith("profile-default-"):
+                    continue
+
+                # Skip if user already has this profile
+                if profile_id in existing_profile_ids:
+                    continue
+
+                # Add the missing default profile
+                user_profiles.append(copy.deepcopy(bootstrap_profile))
+                new_profiles_added.append(profile_id)
+
+            if new_profiles_added:
+                user_config["profiles"] = user_profiles
+                app_logger.info(f"Synced {len(new_profiles_added)} new default profile(s) to user config: {new_profiles_added}")
+
+            return user_config
+
+        except Exception as e:
+            app_logger.warning(f"Error syncing default profiles: {e}")
+            return user_config
+
+    def _migrate_mcp_server_transport(self, user_config: Dict[str, Any]) -> bool:
+        """
+        One-time migration: backfill the transport field on MCP servers saved before
+        the transport selector was introduced.  Infers the type from the path suffix:
+          /sse  → sse
+          /mcp  → http  (Streamable HTTP, MCP spec 2025-03-26)
+          other → sse   (conservative default matching prior display behaviour)
+
+        Returns True if any server was patched (caller should persist the config).
+        """
+        patched = False
+        _PATH_TRANSPORT = {'/sse': 'sse', '/mcp': 'http'}
+        for server in user_config.get('mcp_servers', []):
+            if server.get('transport'):
+                continue
+            path = server.get('path', '')
+            # Match the longest suffix first so e.g. /api/mcp → http
+            inferred = next(
+                (t for suffix, t in _PATH_TRANSPORT.items() if path.endswith(suffix)),
+                'sse'
+            )
+            server['transport'] = {'type': inferred}
+            app_logger.info(
+                f"Migrated MCP server '{server.get('name')}' transport → {inferred} (path={path})"
+            )
+            patched = True
+        return patched
+
+    def save_config(self, config: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Save per-user configuration to database (user_preferences).
+        tda_config.json is never modified - it serves only as bootstrap template.
+        
+        Args:
+            config: Configuration dictionary to save
+            user_uuid: User UUID for per-user configuration storage (required)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not user_uuid:
+                app_logger.warning("save_config called without user_uuid - configuration not saved (tda_config.json is read-only)")
+                return False
+            
+            # Update last_modified timestamp
+            config["last_modified"] = datetime.now(timezone.utc).isoformat()
+            
+            # Store in per-user memory cache
+            self._user_configs[user_uuid] = config
+            
+            # Persist to database (user_preferences.preferences_json)
+            from trusted_data_agent.auth.database import get_db_session
+            from trusted_data_agent.auth.models import UserPreference
+            
+            with get_db_session() as session:
+                prefs = session.query(UserPreference).filter_by(user_id=user_uuid).first()
+                if not prefs:
+                    prefs = UserPreference(user_id=user_uuid)
+                    session.add(prefs)
+                
+                # Store config in preferences_json (excluding credentials for security)
+                safe_config = self._strip_credentials(config)
+                prefs.preferences_json = json.dumps(safe_config)
+                prefs.updated_at = datetime.utcnow()
+                session.commit()
+            
+            app_logger.info(f"Configuration saved to database for user {user_uuid}")
+            return True
+            
+        except Exception as e:
+            app_logger.error(f"Error saving config for user {user_uuid}: {e}", exc_info=True)
+            return False
+    
+    def get_rag_collections(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get RAG collections from the database.
+        
+        Args:
+            user_uuid: Optional user UUID to filter collections (owned + subscribed)
+        
+        Returns:
+            List of RAG collection metadata dictionaries
+        """
+        from trusted_data_agent.core.collection_db import get_collection_db
+        collection_db = get_collection_db()
+        return collection_db.get_all_collections(user_uuid)
+    
+    def save_rag_collections(self, collections: list, user_uuid: Optional[str] = None) -> bool:
+        """
+        Save RAG collections - DEPRECATED, collections now stored in database.
+        This method is kept for backward compatibility but does nothing.
+        
+        Args:
+            collections: List of RAG collection metadata dictionaries (ignored)
+            user_uuid: Optional user UUID (ignored)
+            
+        Returns:
+            Always returns True
+        """
+        app_logger.warning("save_rag_collections called but collections are now in database")
+        return True
+    
+    def add_rag_collection(self, collection_metadata: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Add a new RAG collection to the database.
+        
+        Args:
+            collection_metadata: Collection metadata dictionary
+            user_uuid: Optional user UUID (unused, owner is in collection_metadata)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        from trusted_data_agent.core.collection_db import get_collection_db
+        collection_db = get_collection_db()
+        try:
+            collection_db.create_collection(collection_metadata)
+            return True
+        except Exception as e:
+            app_logger.error(f"Failed to add collection: {e}", exc_info=True)
+            return False
+    
+    def update_rag_collection(self, collection_id: int, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Update an existing RAG collection in the database.
+        
+        Args:
+            collection_id: ID of the collection to update
+            updates: Dictionary of fields to update
+            user_uuid: Optional user UUID (unused)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        from trusted_data_agent.core.collection_db import get_collection_db
+        collection_db = get_collection_db()
+        return collection_db.update_collection(collection_id, updates)
+    
+    def remove_rag_collection(self, collection_id: int, user_uuid: Optional[str] = None) -> bool:
+        """
+        Remove a RAG collection from the database.
+        
+        Args:
+            collection_id: ID of the collection to remove
+            user_uuid: Optional user UUID (unused)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        from trusted_data_agent.core.collection_db import get_collection_db
+        collection_db = get_collection_db()
+        return collection_db.delete_collection(collection_id)
+    
+    # ========================================================================
+    # MCP SERVER CONFIGURATION METHODS
+    # ========================================================================
+    
+    def get_mcp_servers(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get all MCP server configurations.
+
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of MCP server configuration dictionaries
+        """
+        config = self.load_config(user_uuid)
+        return config.get("mcp_servers", [])
+
+    def get_default_collection_for_mcp_server(self, mcp_server_id: str, user_uuid: Optional[str] = None) -> Optional[int]:
+        """
+        Get the default RAG collection ID for a specific MCP server.
+
+        Args:
+            mcp_server_id: The MCP server ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Collection ID of the default collection for this MCP server, or None if not found
+        """
+        try:
+            from trusted_data_agent.core.collection_db import get_collection_db
+            collection_db = get_collection_db()
+
+            # Get all collections for this MCP server
+            all_collections = collection_db.get_all_collections()
+
+            # Filter by MCP server and repository type (planner)
+            from trusted_data_agent.core.agent_learning import is_agent_repository
+            server_collections = [
+                c for c in all_collections
+                if c.get('mcp_server_id') == mcp_server_id
+                and c.get('repository_type') == 'planner'
+                and (user_uuid is None or c.get('owner_user_id') == user_uuid)
+                # one agent's learning repository is never the user's shared default (OC-F5)
+                and not is_agent_repository(c)
+            ]
+
+            if not server_collections:
+                app_logger.warning(f"No collections found for MCP server '{mcp_server_id}'")
+                return None
+
+            # Return the first (oldest) collection for this MCP server as the default
+            # Collections are typically sorted by ID (creation order)
+            default_collection = sorted(server_collections, key=lambda c: c.get('id', 0))[0]
+            return default_collection.get('id')
+
+        except Exception as e:
+            app_logger.error(f"Error getting default collection for MCP server '{mcp_server_id}': {e}", exc_info=True)
+            return None
+    
+    def ensure_default_collection_for_mcp_server(self, mcp_server_id: str,
+                                                 user_uuid: Optional[str] = None) -> Optional[int]:
+        """The user's own default planner repository for a server — CREATED if none
+        exists. The default is provisioned at login, but a user can delete it, and the
+        seeding loop's write-fallback (a turn guided by a subscribed or locked
+        repository the user cannot write) lands learned cases there: with no default
+        the lesson was dropped. Nothing is created without a user and a server."""
+        cid = self.get_default_collection_for_mcp_server(mcp_server_id, user_uuid)
+        if cid is not None or not (mcp_server_id and user_uuid):
+            return cid
+        try:
+            import uuid as _uuid
+            from trusted_data_agent.core.collection_db import get_collection_db
+            server_name = next((str(sv.get("name")) for sv in (self.get_mcp_servers(user_uuid) or [])
+                                if sv.get("id") == mcp_server_id), None)
+            display = f"Default Collection - {server_name}" if server_name else "Default Collection"
+            cid = get_collection_db().create_collection({
+                "name": display,
+                "collection_name": f"tda_rag_coll_default_{_uuid.uuid4().hex[:6]}",
+                "mcp_server_id": mcp_server_id,
+                "enabled": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "description": "Your default collection for RAG cases",
+                "owner_user_id": user_uuid,
+                "visibility": "private",
+                "is_marketplace_listed": False,
+                "subscriber_count": 0,
+                "marketplace_metadata": {},
+                "repository_type": "planner",
+            })
+            app_logger.info(f"Created default planner collection {cid} ('{display}') for "
+                            f"user {user_uuid} on server {mcp_server_id} — none existed")
+            try:
+                from trusted_data_agent.core.config import APP_STATE
+                APP_STATE["rag_collections"] = self.get_rag_collections()
+            except Exception:
+                pass
+            try:
+                from trusted_data_agent.agent.rag_retriever import get_rag_retriever
+                r = get_rag_retriever()
+                if r is not None:
+                    r.ensure_loaded(cid)
+            except Exception as le:
+                app_logger.debug(f"default collection {cid} created but not loaded yet: {le}")
+            return cid
+        except Exception as e:
+            app_logger.error(f"Could not create a default planner collection for server "
+                             f"'{mcp_server_id}': {e}", exc_info=True)
+            return None
+
+    def heal_planner_bindings(self, user_uuid: str) -> int:
+        """Re-point every profile planner binding the user cannot read to the user's OWN
+        default planner for that profile's server (or drop it when the profile has no server).
+
+        Why this exists: the bootstrap template carries concrete collection ids
+        (``ragCollections: [1]`` on the Optimize/Coordinate profiles) copied from the
+        install that produced it, so every bootstrapped account inherited a binding to the
+        ADMIN's planner — unreadable for the user (retrieval is owner-or-subscription), hence
+        inert at runtime, yet counted by trust composition as an ingredient only the admin
+        could sign. Runs at every login (idempotent): an existing account heals on its next
+        login, a new one right after its default collections are created.
+
+        Scope: ``ragCollections`` and ``autocompleteCollections``, PLANNER collections only.
+        A knowledge binding is a Focus agent's configured corpus and is never rewritten here.
+        A binding to a collection that no longer exists is left alone (composition logs it as
+        dangling). Returns the number of profiles rewritten; never raises.
+        """
+        if not user_uuid:
+            return 0
+        try:
+            from trusted_data_agent.core.collection_db import get_collection_db
+            from trusted_data_agent.core.agent_mcp_servers import primary_of
+            db = get_collection_db()
+            profiles = self.get_profiles(user_uuid)
+            own_default: Dict[str, Optional[int]] = {}
+            rows: Dict[int, Optional[Dict[str, Any]]] = {}
+
+            def _row(cid):
+                if cid not in rows:
+                    rows[cid] = db.get_collection_by_id(cid)
+                return rows[cid]
+
+            def _default_for(server_id):
+                if server_id not in own_default:
+                    own_default[server_id] = (self.get_default_collection_for_mcp_server(server_id, user_uuid)
+                                              if server_id else None)
+                return own_default[server_id]
+
+            from trusted_data_agent.core import agent_learning as _al_h
+            _all_rows = None
+
+            def _learns_own(pid):
+                nonlocal _all_rows
+                if _all_rows is None:
+                    _all_rows = db.get_all_collections()
+                return _al_h.learns_own(pid, user_uuid, rows=_all_rows)
+
+            changed = 0
+            for prof in profiles:
+                server_id = primary_of(prof)   # the agent's own default planner is keyed to its FIRST server
+                touched = False
+                for field in ("ragCollections", "autocompleteCollections"):
+                    ids = prof.get(field)
+                    if not isinstance(ids, list) or not ids:
+                        continue
+                    out: list = []
+                    for cid in ids:
+                        try:
+                            cid_i = int(cid)
+                        except (TypeError, ValueError):
+                            out.append(cid)
+                            continue
+                        coll = _row(cid_i)
+                        if (coll is None
+                                or (coll.get("repository_type") or "").lower() != "planner"
+                                or db.can_user_read(coll, user_uuid)):
+                            out.append(cid)
+                            continue
+                        # an agent that learns into its OWN repository never gets the shared
+                        # default as a replacement — the unreadable binding is just dropped (OC-F5)
+                        repl = None if (field == "ragCollections" and _learns_own(prof.get("id"))) \
+                            else _default_for(server_id)
+                        app_logger.info(
+                            f"heal_planner_bindings: profile @{prof.get('tag')} {field} bound planner "
+                            f"{cid_i} ('{coll.get('name')}') the user cannot read → "
+                            f"{'own default ' + str(repl) if repl is not None else 'dropped (no server)'}")
+                        if repl is not None:
+                            out.append(repl)
+                    seen: set = set()
+                    deduped = [x for x in out if not (x in seen or seen.add(x))]
+                    if deduped != ids:
+                        prof[field] = deduped
+                        touched = True
+                if touched:
+                    changed += 1
+            if changed:
+                self.save_profiles(profiles, user_uuid, aspect="planner_bindings")
+                app_logger.info(f"heal_planner_bindings: rewrote {changed} profile(s) for user {user_uuid}")
+            return changed
+        except Exception as e:  # noqa: BLE001 — a heal must never break login
+            app_logger.warning(f"heal_planner_bindings failed for user {user_uuid}: {e}", exc_info=True)
+            return 0
+
+    def save_mcp_servers(self, servers: list, user_uuid: Optional[str] = None) -> bool:
+        """
+        Save MCP server configurations.
+        
+        Args:
+            servers: List of MCP server configuration dictionaries
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["mcp_servers"] = servers
+        return self.save_config(config, user_uuid)
+    
+    def add_mcp_server(self, server: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Add a new MCP server configuration.
+        Also creates a default RAG collection for this MCP server.
+
+        Args:
+            server: MCP server configuration dictionary
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        servers = self.get_mcp_servers(user_uuid)
+        servers.append(server)
+        success = self.save_mcp_servers(servers, user_uuid)
+
+        if success:
+            # Create a default RAG collection for this MCP server
+            try:
+                from trusted_data_agent.agent.rag_retriever import RAGRetriever
+                from trusted_data_agent.core.config import APP_STATE
+
+                rag_retriever = APP_STATE.get('rag_retriever_instance')
+                if rag_retriever:
+                    server_name = server.get('name', 'Unknown Server')
+                    server_id = server.get('id')
+
+                    # Create default collection for this MCP server
+                    collection_name = f"Default Collection - {server_name}"
+                    collection_description = f"Default planner repository for MCP server: {server_name}"
+
+                    collection_id = rag_retriever.add_collection(
+                        name=collection_name,
+                        description=collection_description,
+                        mcp_server_id=server_id,
+                        owner_user_id=user_uuid,
+                        repository_type="planner",
+                        embedding_model="all-MiniLM-L6-v2"
+                    )
+
+                    if collection_id:
+                        app_logger.info(f"Created default RAG collection {collection_id} for MCP server '{server_name}' (ID: {server_id})")
+                    else:
+                        app_logger.warning(f"Failed to create default RAG collection for MCP server '{server_name}'")
+                else:
+                    app_logger.warning("RAG retriever not available - skipping default collection creation")
+            except Exception as e:
+                app_logger.error(f"Error creating default RAG collection for MCP server: {e}", exc_info=True)
+                # Don't fail the MCP server addition if collection creation fails
+
+        return success
+    
+    def update_mcp_server(self, server_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Update an existing MCP server configuration.
+        
+        Args:
+            server_id: Unique ID of the server to update
+            updates: Dictionary of fields to update
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        servers = self.get_mcp_servers(user_uuid)
+        app_logger.info(f"Looking for MCP server {server_id} in {len(servers)} servers for user {user_uuid}")
+        app_logger.debug(f"Available server IDs: {[s.get('id') for s in servers]}")
+        
+        server = next((s for s in servers if s.get("id") == server_id), None)
+        
+        if not server:
+            app_logger.warning(f"MCP server with ID {server_id} not found for update")
+            return False
+        
+        server.update(updates)
+        return self.save_mcp_servers(servers, user_uuid)
+    
+    async def remove_mcp_server(self, server_id: str, user_uuid: Optional[str] = None) -> tuple[bool, Optional[str]]:
+        """
+        Remove an MCP server configuration.
+
+        CASCADE DELETE: Automatically deletes all collections associated with this MCP server.
+
+        Prevents deletion if:
+        - Any profiles reference this server (mcpServerId)
+        - Any profiles use the server's collections (in ragCollections or knowledgeConfig)
+
+        Args:
+            server_id: Unique ID of the server to remove
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str])
+            If successful, error_message is None
+            If failed, error_message contains the reason
+        """
+        # Check if any profiles reference this server
+        profiles = self.get_profiles(user_uuid)
+        # Every class that calls MCP tools depends on its servers — primary AND additional
+        # (PROP-006 M9; the guard used to see Optimize agents' primary server only, so deleting an
+        # Ideate+tools agent's server left it pointing at nothing).
+        from trusted_data_agent.core.profile_capabilities import consumes_mcp_catalog
+        from trusted_data_agent.core.agent_mcp_servers import server_ids_of
+        dependent_profiles = [
+            p for p in profiles
+            if (p.get("profile_type") == "tool_enabled" or consumes_mcp_catalog(p))
+            and str(server_id) in server_ids_of(p)
+        ]
+
+        if dependent_profiles:
+            profile_names = [
+                p.get("profileName") or p.get("name") or f"@{p.get('tag')}" or "Unknown"
+                for p in dependent_profiles
+            ]
+            names_list = ", ".join(profile_names)
+            error_msg = f"Cannot delete MCP server: {len(dependent_profiles)} profile(s) depend on it: {names_list}"
+            app_logger.warning(f"{error_msg} (Server ID: {server_id})")
+            return False, error_msg
+
+        # CASCADE DELETE: Automatically delete all collections assigned to this server
+        collections = self.get_rag_collections(user_uuid)
+        assigned_collections = [
+            c for c in collections
+            if c.get("mcp_server_id") == server_id
+        ]
+
+        # Additional safety check: Ensure no profiles (other than those already checked)
+        # are using any of these collections in their ragCollections or knowledgeConfig
+        if assigned_collections:
+            collection_ids = {c.get("id") for c in assigned_collections}
+            profiles_using_collections = []
+
+            for p in profiles:
+                # Check ragCollections array
+                rag_collections = p.get("ragCollections", [])
+                if isinstance(rag_collections, list):
+                    if any(cid in collection_ids for cid in rag_collections if isinstance(cid, int)):
+                        profiles_using_collections.append(p)
+                        continue
+
+                # Check knowledgeConfig.collections
+                knowledge_config = p.get("knowledgeConfig", {})
+                knowledge_collections = knowledge_config.get("collections", [])
+                if isinstance(knowledge_collections, list):
+                    knowledge_ids = {kc.get("id") for kc in knowledge_collections if isinstance(kc, dict)}
+                    if any(cid in collection_ids for cid in knowledge_ids):
+                        profiles_using_collections.append(p)
+
+            if profiles_using_collections:
+                profile_names = [
+                    p.get("profileName") or p.get("name") or f"@{p.get('tag')}" or "Unknown"
+                    for p in profiles_using_collections
+                ]
+                names_list = ", ".join(profile_names)
+                error_msg = f"Cannot delete MCP server: {len(profiles_using_collections)} profile(s) use its collections: {names_list}"
+                app_logger.warning(f"{error_msg} (Server ID: {server_id})")
+                return False, error_msg
+
+        if assigned_collections:
+            app_logger.info(f"Cascade deleting {len(assigned_collections)} collection(s) for MCP server {server_id}")
+            try:
+                from trusted_data_agent.agent.rag_retriever import RAGRetriever
+                from trusted_data_agent.core.config import APP_STATE
+
+                rag_retriever = APP_STATE.get('rag_retriever_instance')
+                if rag_retriever:
+                    for coll in assigned_collections:
+                        coll_id = coll.get("id")
+                        coll_name = coll.get("name", "Unknown")
+                        app_logger.info(f"  Deleting collection {coll_id} ('{coll_name}')")
+
+                        # remove_collection() is the single backend-aware entry point:
+                        # handles ChromaDB/Teradata deletion, runtime cache eviction,
+                        # and database removal in one call.  user_id is intentionally
+                        # omitted so only the global-default guard (ID 0) applies —
+                        # all MCP-bound collections must be removable here.
+                        try:
+                            await rag_retriever.remove_collection(coll_id)
+                            app_logger.info(f"  ✓ Deleted collection {coll_id}")
+                        except Exception as coll_error:
+                            app_logger.error(f"  ✗ Failed to delete collection {coll_id}: {coll_error}")
+                            # Continue with other collections even if one fails
+                else:
+                    app_logger.warning("RAG retriever not available - collections may not be fully deleted")
+            except Exception as e:
+                app_logger.error(f"Error during cascade delete of collections: {e}", exc_info=True)
+                error_msg = f"Failed to delete associated collections: {str(e)}"
+                return False, error_msg
+
+        servers = self.get_mcp_servers(user_uuid)
+        original_count = len(servers)
+        servers = [s for s in servers if s.get("id") != server_id]
+
+        if len(servers) == original_count:
+            error_msg = "MCP server not found"
+            app_logger.warning(f"MCP server with ID {server_id} not found for removal")
+            return False, error_msg
+
+        success = self.save_mcp_servers(servers, user_uuid)
+
+        if success and assigned_collections:
+            app_logger.info(f"✅ Successfully deleted MCP server {server_id} and {len(assigned_collections)} associated collection(s)")
+
+        return success, None if success else "Failed to save configuration"
+    
+    def get_active_mcp_server_id(self, user_uuid: Optional[str] = None) -> Optional[str]:
+        """
+        Get the ID of the currently active MCP server.
+        
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            Active MCP server ID or None
+        """
+        config = self.load_config(user_uuid)
+        return config.get("active_mcp_server_id")
+    
+    def set_active_mcp_server_id(self, server_id: Optional[str], user_uuid: Optional[str] = None) -> bool:
+        """
+        Set the active MCP server ID.
+        
+        Args:
+            server_id: ID of the server to set as active, or None to clear
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["active_mcp_server_id"] = server_id
+        return self.save_config(config, user_uuid)
+    
+    def get_all_mcp_tools(self, mcp_server_id: Optional[str] = None, user_uuid: Optional[str] = None) -> list:
+        """
+        Get the list of all available tools for a specific MCP server.
+        If no server_id provided, uses the active MCP server.
+        
+        Args:
+            mcp_server_id: Optional MCP server ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            List of all available tool names from the MCP server
+        """
+        if not mcp_server_id:
+            mcp_server_id = self.get_active_mcp_server_id(user_uuid)
+        
+        if not mcp_server_id:
+            return []
+        
+        config = self.load_config(user_uuid)
+        mcp_servers = config.get("mcp_servers", [])
+        
+        for server in mcp_servers:
+            if server.get("id") == mcp_server_id:
+                return server.get("all_tools", [])
+        
+        return []
+    
+    def get_all_mcp_prompts(self, mcp_server_id: Optional[str] = None, user_uuid: Optional[str] = None) -> list:
+        """
+        Get the list of all available prompts for a specific MCP server.
+        If no server_id provided, uses the active MCP server.
+        
+        Args:
+            mcp_server_id: Optional MCP server ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            List of all available prompt names from the MCP server
+        """
+        if not mcp_server_id:
+            mcp_server_id = self.get_active_mcp_server_id(user_uuid)
+        
+        if not mcp_server_id:
+            return []
+        
+        config = self.load_config(user_uuid)
+        mcp_servers = config.get("mcp_servers", [])
+        
+        for server in mcp_servers:
+            if server.get("id") == mcp_server_id:
+                return server.get("all_prompts", [])
+        
+        return []
+    
+    def get_profile_enabled_tools(self, profile_id: str, user_uuid: Optional[str] = None) -> list:
+        """
+        Get the list of enabled tools for a specific profile — always the profile's OWN
+        selection.
+
+        Tool SELECTION is authoritative and literal for every profile, including an
+        EMPTY selection: an inheriting profile whose tools are all unselected runs with
+        ZERO MCP tools (only the always-on TDA_* core tools and any enabled components).
+        The selection is never silently replaced by a parent's set.
+
+        This is independent of classification inheritance. `inherit_classification`
+        shares only the tool *classification* metadata (categories/scopes), loaded from
+        the per-server master via load_profile_classification_into_state() /
+        get_profile_classification() — a separate path that is untouched here. An
+        inheriting profile still chooses which of those classified tools to enable
+        (including none), and that choice is honoured verbatim downstream by
+        get_profile_disabled_tools() -> APP_STATE['disabled_tools'].
+
+        Args:
+            profile_id: Profile ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of enabled tool names (the profile's own selection; may be empty)
+        """
+        profiles = self.get_profiles(user_uuid)
+        target_profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        if not target_profile:
+            return []
+
+        # Frontend stores selection as 'tools'; legacy field was 'enabled_tools'.
+        # Coerce: the key may be PRESENT and null (a pack import that wrote it that
+        # way), and `.get(key, default)` returns None for that — this function
+        # promises a list, and a caller that iterates or measures it must not have
+        # to defend against None.
+        selection = target_profile.get("tools", target_profile.get("enabled_tools", []))
+        return list(selection) if isinstance(selection, (list, tuple)) else []
+
+    def get_profile_enabled_prompts(self, profile_id: str, user_uuid: Optional[str] = None) -> list:
+        """
+        Get the list of enabled prompts for a specific profile — always the profile's OWN
+        selection (same contract as get_profile_enabled_tools).
+
+        An empty selection is literal: the profile runs with ZERO MCP prompts. Prompt
+        selection is never replaced by a parent's set; only the classification metadata
+        is inherited, via a separate path.
+
+        Args:
+            profile_id: Profile ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of enabled prompt names (the profile's own selection; may be empty)
+        """
+        profiles = self.get_profiles(user_uuid)
+        target_profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        if not target_profile:
+            return []
+
+        # Frontend stores as 'prompts'; legacy field was 'enabled_prompts'.
+        # Coerce for the same reason as the tools twin: a present-but-null value
+        # would otherwise return None from a function documented to return a list.
+        selection = target_profile.get("prompts", target_profile.get("enabled_prompts", []))
+        return list(selection) if isinstance(selection, (list, tuple)) else []
+
+    def get_profile_disabled_tools(self, profile_id: str, user_uuid: Optional[str] = None) -> list:
+        """
+        Dynamically calculate disabled tools for a profile.
+        This is the set difference: all_tools - enabled_tools
+        TDA_ tools are NEVER disabled (mandatory core capabilities).
+
+        Args:
+            profile_id: Profile ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of disabled tool names for this profile (excluding TDA_ tools)
+        """
+        profile = next((p for p in self.get_profiles(user_uuid) if p.get("id") == profile_id), None)
+        if not profile:
+            return []
+
+        # PROP-006 phase 2: an agent with ADDITIONAL MCP servers judges every name by the selection
+        # of the server it belongs to (a single-server agent never reaches this branch).
+        from trusted_data_agent.core.agent_mcp_servers import is_multi_server, disabled_by_selection
+        if is_multi_server(profile):
+            from trusted_data_agent.core.config import APP_STATE
+            return disabled_by_selection(profile, list((APP_STATE.get('mcp_tools') or {}).keys()),
+                                         "tools", exempt=self._platform_tool_names(profile_id))
+
+        # Get enabled tools for this profile
+        enabled_tools_list = self.get_profile_enabled_tools(profile_id, user_uuid)
+
+        # Handle wildcard: if enabled_tools is ['*'], all tools are enabled (nothing disabled)
+        if enabled_tools_list == ['*']:
+            return []
+
+        # Get all tools from APP_STATE (populated from live MCP server during classification)
+        # Fallback to config file if APP_STATE not available
+        from trusted_data_agent.core.config import APP_STATE
+        all_tools = set(APP_STATE.get('mcp_tools', {}).keys()) if APP_STATE.get('mcp_tools') else set()
+
+        # If APP_STATE has no tools yet, fallback to config file (for backwards compatibility)
+        if not all_tools:
+            mcp_server_id = profile.get("mcpServerId")
+            all_tools = set(self.get_all_mcp_tools(mcp_server_id, user_uuid))
+
+        enabled_tools = set(enabled_tools_list)
+
+        # Platform connector tools are governed by their own chain (admin → user → profile).
+        # They bypass the primary server's profile.tools[] filter, same as TDA_* tools.
+        platform_tool_names: set = set()
+        try:
+            from trusted_data_agent.core.platform_connector_registry import get_effective_tool_names
+            platform_tool_names = get_effective_tool_names(profile_id)
+        except Exception:
+            pass
+
+        # Calculate disabled tools, excluding TDA_* tools and platform MCP server tools
+        disabled_tools = {
+            tool for tool in all_tools
+            if tool not in enabled_tools
+            and not tool.startswith('TDA_')
+            and tool not in platform_tool_names
+        }
+
+        return list(disabled_tools)
+    
+    @staticmethod
+    def _platform_tool_names(profile_id: str) -> set:
+        try:
+            from trusted_data_agent.core.platform_connector_registry import get_effective_tool_names
+            return set(get_effective_tool_names(profile_id))
+        except Exception:
+            return set()
+
+    def get_profile_disabled_prompts(self, profile_id: str, user_uuid: Optional[str] = None) -> list:
+        """
+        Dynamically calculate disabled prompts for a profile.
+        This is the set difference: all_prompts - enabled_prompts
+        TDA_ prompts are NEVER disabled (mandatory core capabilities).
+
+        Args:
+            profile_id: Profile ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of disabled prompt names for this profile (excluding TDA_ prompts)
+        """
+        profile = next((p for p in self.get_profiles(user_uuid) if p.get("id") == profile_id), None)
+        if not profile:
+            return []
+
+        from trusted_data_agent.core.agent_mcp_servers import is_multi_server, disabled_by_selection
+        if is_multi_server(profile):
+            from trusted_data_agent.core.config import APP_STATE
+            return disabled_by_selection(profile, list((APP_STATE.get('mcp_prompts') or {}).keys()), "prompts")
+
+        # Get enabled prompts for this profile
+        enabled_prompts_list = self.get_profile_enabled_prompts(profile_id, user_uuid)
+
+        # Handle wildcard: if enabled_prompts is ['*'], all prompts are enabled (nothing disabled)
+        if enabled_prompts_list == ['*']:
+            return []
+
+        # Get all prompts from APP_STATE (populated from live MCP server during classification)
+        # Fallback to config file if APP_STATE not available
+        from trusted_data_agent.core.config import APP_STATE
+        all_prompts = set(APP_STATE.get('mcp_prompts', {}).keys()) if APP_STATE.get('mcp_prompts') else set()
+
+        # If APP_STATE has no prompts yet, fallback to config file (for backwards compatibility)
+        if not all_prompts:
+            mcp_server_id = profile.get("mcpServerId")
+            all_prompts = set(self.get_all_mcp_prompts(mcp_server_id, user_uuid))
+
+        enabled_prompts = set(enabled_prompts_list)
+
+        # Calculate disabled prompts, but exclude TDA_ prompts (they are ALWAYS enabled)
+        disabled_prompts = {prompt for prompt in all_prompts if prompt not in enabled_prompts and not prompt.startswith('TDA_')}
+
+        return list(disabled_prompts)
+
+    # ========================================================================
+    # PROFILE CONFIGURATION METHODS
+    # ========================================================================
+
+    def get_profiles(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get all profile configurations.
+        
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            List of profile configuration dictionaries
+        """
+        config = self.load_config(user_uuid)
+        return config.get("profiles", [])
+
+    def get_profile(self, profile_id: str, user_uuid: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Get a single profile by ID.
+
+        Args:
+            profile_id: Profile ID to retrieve
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Profile configuration dictionary or None if not found
+        """
+        profiles = self.get_profiles(user_uuid)
+        return next((p for p in profiles if p.get("id") == profile_id), None)
+
+    def get_dual_model_configs(self, profile_id: str, user_uuid: str) -> Optional[Dict[str, Any]]:
+        """
+        Returns strategic and tactical model configs for a profile.
+        Falls back to main llmConfigurationId if dual-model not configured.
+
+        Args:
+            profile_id: Profile ID to retrieve dual-model configuration for
+            user_uuid: User UUID for per-user configuration isolation
+
+        Returns:
+            Dictionary with keys:
+                - 'strategic': LLM config dict for strategic planning (or None)
+                - 'tactical': LLM config dict for tactical execution (or None)
+                - 'is_dual_model': Boolean indicating if different models are used
+            Returns None if profile not found
+        """
+        profile = self.get_profile(profile_id, user_uuid)
+        if not profile:
+            app_logger.warning(f"Profile '{profile_id}' not found for user '{user_uuid}'")
+            return None
+
+        dual_config = profile.get('dualModelConfig')
+        base_llm_id = profile.get('llmConfigurationId')
+
+        llm_configs = self.get_llm_configurations(user_uuid)
+
+        # Helper to get config by ID
+        def get_config(config_id):
+            if not config_id:
+                return None
+            return next((cfg for cfg in llm_configs if cfg['id'] == config_id), None)
+
+        # Resolve strategic and tactical model IDs
+        if dual_config:
+            strategic_id = dual_config.get('strategicModelId') or base_llm_id
+            tactical_id = dual_config.get('tacticalModelId') or base_llm_id
+        else:
+            strategic_id = base_llm_id
+            tactical_id = base_llm_id
+
+        strategic_config = get_config(strategic_id)
+        tactical_config = get_config(tactical_id)
+
+        return {
+            'strategic': strategic_config,
+            'tactical': tactical_config,
+            'is_dual_model': (strategic_id != tactical_id and strategic_id and tactical_id)
+        }
+
+    def save_profiles(self, profiles: list, user_uuid: Optional[str] = None, *,
+                      changed_profile_id: Optional[str] = None, aspect: str = "profile",
+                      announce: bool = True) -> bool:
+        """
+        Save profile configurations — and tell the open UI (ui_notify): every profile write,
+        from this page, another tab, a REST script or the MCP server, passes through here, so
+        the live announcement is made here and nowhere else.
+
+        Args:
+            profiles: List of profile configuration dictionaries
+            user_uuid: Optional user UUID for per-user configuration isolation
+            changed_profile_id: the one profile that changed (None = unknown / several)
+            aspect: what changed, for the UI's debugging only
+            announce: False for a write the caller announces itself
+
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["profiles"] = profiles
+        ok = self.save_config(config, user_uuid)
+        if ok and announce and user_uuid:
+            try:
+                from trusted_data_agent.core.ui_notify import announce_profile_config_change
+                announce_profile_config_change(user_uuid, changed_profile_id, aspect)
+            except Exception:  # noqa: BLE001 — a live notice never breaks a save
+                pass
+        return ok
+
+    def add_profile(self, profile: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Add a new profile configuration.
+
+        Args:
+            profile: Profile configuration dictionary
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        profiles = self.get_profiles(user_uuid)
+        profiles.append(profile)
+        ok = self.save_profiles(profiles, user_uuid, changed_profile_id=profile.get("id"), aspect="profile_added")
+        if ok:
+            self._provision_learning(profile, user_uuid)
+        return ok
+
+    @staticmethod
+    def _provision_learning(profile: Dict[str, Any], user_uuid: Optional[str]) -> None:
+        """A new Optimize agent learns into its own planner repository (core/agent_learning)."""
+        try:
+            from trusted_data_agent.core.agent_learning import provision_for_new_agent
+            provision_for_new_agent(profile, user_uuid)
+        except Exception as e:  # noqa: BLE001 — never fail the creation over its notebook
+            app_logger.warning(f"learning repository for new agent {profile.get('id')} skipped: {e}")
+
+    async def add_profile_locked(self, profile: Dict[str, Any], user_uuid: str) -> bool:
+        """Async-safe profile creation — acquires a per-user lock before the
+        read-modify-write so concurrent subscribe calls cannot clobber each other.
+
+        Returns False (without raising) when a profile with the same ID already
+        exists; True on successful insertion.
+        """
+        lock = _get_user_config_lock(user_uuid)
+        async with lock:
+            profiles = self.get_profiles(user_uuid)
+            if any(p.get("id") == profile.get("id") for p in profiles):
+                return False
+            profiles.append(profile)
+            ok = self.save_profiles(profiles, user_uuid, changed_profile_id=profile.get("id"), aspect="profile_added")
+        if ok:
+            self._provision_learning(profile, user_uuid)
+        return ok
+
+    def update_profile(self, profile_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Update an existing profile configuration.
+        
+        Args:
+            profile_id: Unique ID of the profile to update
+            updates: Dictionary of fields to update
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        profiles = self.get_profiles(user_uuid)
+        profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        
+        if not profile:
+            app_logger.warning(f"Profile with ID {profile_id} not found for update")
+            return False
+        
+        profile.update(updates)
+        return self.save_profiles(profiles, user_uuid, changed_profile_id=profile_id,
+                                  aspect=",".join(sorted(updates.keys()))[:80] or "profile")
+
+    def remove_profile_keys(self, profile_id: str, keys, user_uuid: Optional[str] = None) -> bool:
+        """Drop the given top-level keys from a profile (a merge cannot remove a key).
+
+        `update_profile` is a shallow dict.update, so a block that must DISAPPEAR —
+        e.g. a `genieConfig` left behind when a pack changes a profile's type — needs a
+        removal, not an update to a falsy value that some readers still `.get()` into.
+        """
+        profiles = self.get_profiles(user_uuid)
+        profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        if not profile:
+            return False
+        for k in keys:
+            profile.pop(k, None)
+        return self.save_profiles(profiles, user_uuid)
+
+    def remove_profile(self, profile_id: str, user_uuid: Optional[str] = None) -> bool:
+        """
+        Remove a profile configuration.
+
+        Args:
+            profile_id: Unique ID of the profile to remove
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        profiles = config.get("profiles", [])
+        original_count = len(profiles)
+        config["profiles"] = [p for p in profiles if p.get("id") != profile_id]
+
+        if len(config["profiles"]) == original_count:
+            app_logger.warning(f"Profile with ID {profile_id} not found for removal")
+            return False
+
+        # Clean up per-server master classification references
+        master_ids = config.get("master_classification_profile_ids", {})
+        stale = [sid for sid, pid in master_ids.items() if pid == profile_id]
+        for sid in stale:
+            del master_ids[sid]
+            app_logger.info(f"Cleared master classification reference for MCP server {sid} (profile {profile_id} deleted)")
+        config["master_classification_profile_ids"] = master_ids
+
+        # Clean up legacy single master reference
+        if config.get("master_classification_profile_id") == profile_id:
+            config["master_classification_profile_id"] = None
+            app_logger.info(f"Cleared legacy master_classification_profile_id (profile {profile_id} deleted)")
+
+        ok = self.save_config(config, user_uuid)
+        if ok:
+            # #30 — a signature must not outlive its subject. This is the ONE removal
+            # chokepoint (pack uninstall and the REST delete endpoint both route here),
+            # so the agent's attestation retires with the profile. Defensive import:
+            # the Ontology Suite is physically removable.
+            try:
+                from trusted_data_agent.core.trust import store as _trust_store
+                # owner-scoped: deleting this account's agent never retires another
+                # account's signature on a shared bootstrap id; the deployment
+                # attestation goes with it.
+                if _trust_store.retire(profile_id, ("agent", "agent_deployment"),
+                                       owner_uuid=user_uuid):
+                    app_logger.info(f"Retired trust attestation for deleted profile {profile_id}")
+            except ImportError:
+                pass
+            # …and what it learned goes with it (its own planner repositories, OC-F5).
+            try:
+                from trusted_data_agent.core.agent_learning import retire_for_removed_agent
+                retire_for_removed_agent(profile_id, user_uuid)
+            except Exception as e:  # noqa: BLE001 — never fail the removal over its notebook
+                app_logger.warning(f"learning repositories of removed agent {profile_id} kept: {e}")
+        return ok
+
+    def validate_profile(self, profile: Dict[str, Any], user_uuid: Optional[str] = None) -> tuple[bool, str]:
+        """
+        Validate a profile's configuration.
+
+        Args:
+            profile: Profile configuration dictionary
+            user_uuid: Optional user UUID for validating references to other profiles
+
+        Returns:
+            Tuple of (is_valid: bool, error_message: str)
+            If valid, returns (True, "")
+            If invalid, returns (False, "error message")
+        """
+        profile_type = profile.get("profile_type", "tool_enabled")
+
+        if profile_type == "rag_focused":
+            # RAG focused REQUIRES knowledge collections
+            knowledge_config = profile.get("knowledgeConfig", {})
+            knowledge_collections = knowledge_config.get("collections", [])
+
+            if not knowledge_collections or len(knowledge_collections) == 0:
+                return False, "RAG focused profiles require at least 1 knowledge collection"
+
+        elif profile_type == "genie":
+            # Genie profiles REQUIRE genieConfig (but slaveProfiles can be empty - user will configure later)
+            genie_config = profile.get("genieConfig", {})
+            if not genie_config:
+                return False, "Genie profiles require genieConfig"
+
+            # Note: slaveProfiles can be empty - activation will prompt user to add children
+            slave_profiles = genie_config.get("slaveProfiles", [])
+
+            # Only validate child profiles if any are configured
+            if slave_profiles and len(slave_profiles) > 0 and user_uuid:
+                all_profiles = self.get_profiles(user_uuid)
+                profile_map = {p.get("id"): p for p in all_profiles}
+                current_profile_id = profile.get("id")
+
+                for slave_pid in slave_profiles:
+                    # Check if referencing self
+                    if slave_pid == current_profile_id:
+                        return False, "Genie profiles cannot reference themselves as children"
+
+                    slave = profile_map.get(slave_pid)
+                    if not slave:
+                        return False, f"Child profile {slave_pid} not found"
+                    # NOTE: Genie profiles CAN now have other Genie profiles as children
+                    # Circular dependencies and depth limits are checked below
+
+                # Get max nesting depth from global settings
+                global_settings = self.get_genie_global_settings()
+                max_depth = int(global_settings.get('maxNestingDepth', {}).get('value', 3))
+
+                # Check for circular dependencies and depth limits
+                has_error, error_msg, detected_depth = self._detect_circular_genie_dependency(
+                    profile_id=current_profile_id,
+                    slave_profiles=slave_profiles,
+                    user_uuid=user_uuid,
+                    depth=0,
+                    max_depth=max_depth
+                )
+
+                if has_error:
+                    return False, error_msg
+
+        elif profile_type == "llm_only":
+            # llm_only profiles have optional capabilities via flags
+            llm_config_id = profile.get("llmConfigurationId")
+            if not llm_config_id:
+                return False, "Conversation profiles require an LLM configuration"
+
+            # If useMcpTools is enabled, MCP server is required
+            use_mcp_tools = profile.get("useMcpTools", False)
+            if use_mcp_tools:
+                mcp_server_id = profile.get("mcpServerId")
+                if not mcp_server_id:
+                    return False, "Conversation profiles with MCP Tools enabled require an MCP server configuration"
+
+        return True, ""
+
+    def _detect_circular_genie_dependency(
+        self,
+        profile_id: str,
+        slave_profiles: List[str],
+        user_uuid: str,
+        visited_path: Optional[set] = None,
+        depth: int = 0,
+        max_depth: int = 3
+    ) -> tuple[bool, str, int]:
+        """
+        Detect circular dependencies in Genie child profiles using DFS with path tracking.
+
+        This method prevents:
+        1. Circular dependencies (A → B → A)
+        2. Excessive nesting depth (A → B → C → D when max is 3)
+
+        Args:
+            profile_id: Current profile being validated
+            slave_profiles: List of child profile IDs for current profile (parameter name preserved for API compatibility)
+            user_uuid: User UUID for profile lookup
+            visited_path: Set of profile IDs in current traversal path (cycle detection)
+            depth: Current nesting depth (0 = top level)
+            max_depth: Maximum allowed nesting depth
+
+        Returns:
+            Tuple of (has_error: bool, error_message: str, max_depth_found: int)
+            - (False, "", depth) if valid
+            - (True, "error message", depth) if circular or too deep
+
+        Algorithm:
+            1. Initialize visited_path if first call
+            2. Check max depth limit
+            3. For each child profile:
+               a. Check if it's in visited_path (circular dependency)
+               b. If child is Genie type, recursively check its children
+               c. Track maximum depth encountered
+            4. Return result
+        """
+        if visited_path is None:
+            visited_path = set()
+
+        # Check depth limit
+        if depth > max_depth:
+            return True, f"Genie nesting exceeds maximum depth of {max_depth} levels", depth
+
+        # Add current profile to path
+        visited_path.add(profile_id)
+
+        # Get all profiles for lookup
+        all_profiles = self.get_profiles(user_uuid)
+        profile_map = {p.get("id"): p for p in all_profiles}
+
+        max_depth_encountered = depth
+
+        # Check each child
+        for slave_id in slave_profiles:
+            # Check for circular reference
+            if slave_id in visited_path:
+                # Build path string for error message
+                path_list = list(visited_path) + [slave_id]
+                path_tags = []
+                for pid in path_list:
+                    p = profile_map.get(pid)
+                    if p:
+                        path_tags.append(f"@{p.get('tag', pid)}")
+                cycle_path = " → ".join(path_tags)
+                return True, f"Circular dependency detected: {cycle_path}", depth
+
+            slave_profile = profile_map.get(slave_id)
+            if not slave_profile:
+                continue  # Skip missing profiles (caught by other validation)
+
+            # If child is also a Genie, recursively check
+            if slave_profile.get("profile_type") == "genie":
+                slave_genie_config = slave_profile.get("genieConfig", {})
+                nested_slaves = slave_genie_config.get("slaveProfiles", [])
+
+                # Recursively check this Genie's children
+                has_error, error_msg, nested_depth = self._detect_circular_genie_dependency(
+                    profile_id=slave_id,
+                    slave_profiles=nested_slaves,
+                    user_uuid=user_uuid,
+                    visited_path=visited_path.copy(),  # Important: copy to isolate branches
+                    depth=depth + 1,
+                    max_depth=max_depth
+                )
+
+                if has_error:
+                    return True, error_msg, nested_depth
+
+                max_depth_encountered = max(max_depth_encountered, nested_depth)
+
+        return False, "", max_depth_encountered
+
+    def get_default_profile_id(self, user_uuid: Optional[str] = None) -> Optional[str]:
+        """
+        Get the ID of the currently default profile.
+        
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            Default profile ID or None
+        """
+        config = self.load_config(user_uuid)
+        return config.get("default_profile_id")
+
+    def set_default_profile_id(self, profile_id: Optional[str], user_uuid: Optional[str] = None) -> bool:
+        """
+        Set the default profile ID.
+        
+        Args:
+            profile_id: ID of the profile to set as default, or None to clear
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["default_profile_id"] = profile_id
+        return self.save_config(config, user_uuid)
+
+    def get_active_for_consumption_profile_ids(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get the IDs of the profiles active for consumption.
+        
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            List of active profile IDs
+        """
+        config = self.load_config(user_uuid)
+        return config.get("active_for_consumption_profile_ids", [])
+
+    def set_active_for_consumption_profile_ids(self, profile_ids: list, user_uuid: Optional[str] = None) -> bool:
+        """
+        Set the IDs of the profiles active for consumption.
+
+        Args:
+            profile_ids: List of profile IDs to set as active
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["active_for_consumption_profile_ids"] = profile_ids
+        return self.save_config(config, user_uuid)
+
+    def get_master_classification_profile_id(
+        self,
+        user_uuid: Optional[str] = None,
+        mcp_server_id: Optional[str] = None,
+        strict: bool = False
+    ) -> Optional[str]:
+        """
+        Get master classification profile ID for a specific MCP server.
+
+        The master profile is the reference for classification inheritance.
+        Always returns a tool_enabled profile ID (not llm_only).
+
+        IMPORTANT: With per-server masters, you should pass mcp_server_id.
+        If mcp_server_id is not provided, falls back to legacy single-master behavior.
+
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+            mcp_server_id: MCP server ID to get master for (NEW - supports multiple masters)
+            strict: If True, ONLY return explicitly set per-server master (no fallbacks).
+                   Use strict=True for inheritance validation to ensure data integrity.
+
+        Returns:
+            Master classification profile ID or None if:
+            - (strict=True) No per-server master explicitly set for this MCP server
+            - (strict=False) No tool_enabled profiles exist for this server
+        """
+        config = self.load_config(user_uuid)
+
+        # === STRICT MODE: Only return explicitly set per-server master ===
+        if strict and mcp_server_id:
+            master_ids = config.get('master_classification_profile_ids', {})
+            if isinstance(master_ids, dict) and mcp_server_id in master_ids:
+                master_id = master_ids[mcp_server_id]
+                app_logger.debug(f"[STRICT] Found master classification profile for MCP server {mcp_server_id}: {master_id}")
+                return master_id
+            else:
+                app_logger.debug(f"[STRICT] No master classification profile set for MCP server {mcp_server_id}")
+                return None
+
+        # === NON-STRICT MODE: Check per-server master with fallbacks ===
+        if mcp_server_id:
+            master_ids = config.get('master_classification_profile_ids', {})
+            if isinstance(master_ids, dict) and mcp_server_id in master_ids:
+                master_id = master_ids[mcp_server_id]
+                app_logger.debug(f"Found master classification profile for MCP server {mcp_server_id}: {master_id}")
+                return master_id
+
+        # === BACKWARD COMPATIBILITY: Legacy single master ===
+        legacy_master_id = config.get('master_classification_profile_id')
+        if legacy_master_id:
+            app_logger.debug(f"Using legacy single master classification profile: {legacy_master_id}")
+            return legacy_master_id
+
+        # === FALLBACK: Find first tool_enabled profile for this server ===
+        if mcp_server_id:
+            profiles = self.get_profiles(user_uuid)
+            for profile in profiles:
+                if (profile.get('profile_type') != 'llm_only' and
+                    profile.get('mcpServerId') == mcp_server_id):
+                    app_logger.debug(
+                        f"No master classification profile set for MCP server {mcp_server_id}, "
+                        f"using first tool_enabled profile: {profile['id']}"
+                    )
+                    return profile['id']
+
+        # === LEGACY FALLBACK: Any tool_enabled profile ===
+        profiles = self.get_profiles(user_uuid)
+        for profile in profiles:
+            if profile.get('profile_type') != 'llm_only':
+                app_logger.debug(f"No master classification profile set, using first tool_enabled profile: {profile['id']}")
+                return profile['id']
+
+        app_logger.warning(f"No tool_enabled profiles found for user {user_uuid} - cannot determine master classification profile")
+        return None
+
+    def get_dependent_profiles(self, master_profile_id: str, user_uuid: Optional[str] = None) -> list:
+        """Returns profiles that inherit classification from the given master profile."""
+        config = self.load_config(user_uuid)
+        master_ids = config.get("master_classification_profile_ids", {})
+        legacy_master = config.get("master_classification_profile_id")
+
+        affected_servers = {sid for sid, pid in master_ids.items() if pid == master_profile_id}
+
+        dependents = []
+        for p in config.get("profiles", []):
+            if not p.get("inherit_classification"):
+                continue
+            p_mcp = p.get("mcpServerId")
+            if p_mcp in affected_servers:
+                dependents.append(p)
+            elif legacy_master == master_profile_id and p.get("id") != master_profile_id:
+                if p not in dependents:
+                    dependents.append(p)
+        return dependents
+
+    def set_master_classification_profile_id(
+        self,
+        profile_id: str,
+        user_uuid: Optional[str] = None
+    ) -> Dict[str, str]:
+        """
+        Set master classification profile for user.
+
+        Validates that profile is tool_enabled before setting.
+        Master classification profile must have an MCP server configured.
+        If the profile has inherit_classification enabled, it will be disabled automatically.
+
+        Args:
+            profile_id: ID of the profile to set as master
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Dictionary with "status" key:
+            - {"status": "success"} if successful
+            - {"status": "error", "message": "..."} if validation fails
+        """
+        # Validate profile exists
+        profile = self.get_profile(profile_id, user_uuid)
+        if not profile:
+            return {"status": "error", "message": f"Profile {profile_id} not found"}
+
+        # Validate profile is tool_enabled (not llm_only or rag_focused)
+        profile_type = profile.get('profile_type')
+        if profile_type == 'llm_only':
+            return {
+                "status": "error",
+                "message": "Master classification profile must be tool-enabled (llm_only profiles have no tools/prompts to inherit)"
+            }
+        if profile_type == 'rag_focused':
+            return {
+                "status": "error",
+                "message": "Master classification profile must be tool-enabled (rag_focused profiles don't use planner/tools)"
+            }
+
+        # Validate profile has MCP server
+        if not profile.get('mcpServerId'):
+            return {
+                "status": "error",
+                "message": "Master classification profile must have an MCP server configured"
+            }
+
+        # If profile has inherit_classification enabled, disable it (prevent circular dependency)
+        if profile.get('inherit_classification', False):
+            app_logger.info(f"Disabling inherit_classification for profile {profile_id} as it's being set as master")
+            self.update_profile(profile_id, {'inherit_classification': False}, user_uuid)
+
+        # === NEW: Store master per MCP server ===
+        mcp_server_id = profile.get('mcpServerId')
+        config = self.load_config(user_uuid)
+
+        # Initialize master_classification_profile_ids if it doesn't exist
+        if 'master_classification_profile_ids' not in config or not isinstance(config['master_classification_profile_ids'], dict):
+            config['master_classification_profile_ids'] = {}
+
+        # Set master for this MCP server
+        config['master_classification_profile_ids'][mcp_server_id] = profile_id
+
+        # === BACKWARD COMPATIBILITY: Also update legacy single master (deprecated) ===
+        config['master_classification_profile_id'] = profile_id
+
+        success = self.save_config(config, user_uuid)
+
+        if not success:
+            return {"status": "error", "message": "Failed to save configuration"}
+
+        app_logger.info(f"Set master classification profile for MCP server {mcp_server_id} to {profile_id} (user: {user_uuid})")
+        return {"status": "success", "mcp_server_id": mcp_server_id}
+
+    # ========================================================================
+    # PROFILE CLASSIFICATION METHODS
+    # ========================================================================
+    
+    def get_profile_classification(self, profile_id: str, user_uuid: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get classification results for a specific profile.
+        
+        Args:
+            profile_id: Profile ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            Classification results dictionary or empty dict if not found
+        """
+        profiles = self.get_profiles(user_uuid)
+        profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        if profile:
+            # A COPY, never the stored object. `load_config` serves an in-memory cache, so
+            # a live reference here IS the persisted record — and every reader that
+            # enriched what it read (the loader once, then the resource-panel endpoint
+            # writing "System Tools"/"Component Tools" into it, found live 2026-09-22)
+            # mutated the record, which the next save of that user's config wrote to disk.
+            # Two readers were fixed one at a time; making the getter itself hand out a
+            # copy is the version of the fix a third reader cannot walk around. Writers go
+            # through `save_profile_classification` / `clear_profile_classification`.
+            return copy.deepcopy(profile.get("classification_results", {}))
+        return {}
+    
+    #: The categories `load_profile_classification_into_state` INJECTS into APP_STATE at
+    #: activation. They are runtime scaffolding — always-active platform tools and the
+    #: profile's enabled components — never part of the MCP surface a classification
+    #: discovered, and the adapter is explicit that they "must not be sent to the LLM for
+    #: classification or stored in classification_results".
+    #:
+    #: Stripped HERE, at the one chokepoint that persists a classification, because the
+    #: leak had two different shapes and a per-caller guard would have caught one:
+    #:   * the loader aliased the stored dict onto APP_STATE and the injection mutated
+    #:     the record in place (fixed at that site by deep-copying); and
+    #:   * the adapter persists `STATE['structured_tools']` AS-IS, and APP_STATE is
+    #:     process-global — so when a classification short-circuits ("Forcing light
+    #:     classification mode"), whatever a PREVIOUS profile's activation injected is
+    #:     still there and is written into THIS profile's record (found live on
+    #:     production 2026-09-08, after the first fix, on two `llm_only` profiles).
+    #: Making the invariant structural — a persisted classification never contains the
+    #: injected categories — is the only version of this fix that a future write path
+    #: cannot walk around.
+    #:
+    #: Exactly the two categories the injector creates: precise, so an MCP tool that
+    #: happens to be named `TDA_something` is never stripped by a name heuristic.
+    _RUNTIME_INJECTED_CATEGORIES = RUNTIME_INJECTED_CATEGORIES
+
+    @classmethod
+    def _without_runtime_injected(cls, classification_results: Dict[str, Any]) -> Dict[str, Any]:
+        """A copy of the classification with the runtime-injected categories removed.
+
+        Copies rather than mutates: the caller is usually handing us APP_STATE's own
+        structures, which the runtime is still using.
+        """
+        if not isinstance(classification_results, dict):
+            return classification_results
+        out = dict(classification_results)
+        tools = out.get("tools")
+        if isinstance(tools, dict):
+            dropped = [k for k in cls._RUNTIME_INJECTED_CATEGORIES if k in tools]
+            if dropped:
+                out["tools"] = {k: v for k, v in tools.items()
+                                if k not in cls._RUNTIME_INJECTED_CATEGORIES}
+                app_logger.debug(
+                    f"Classification save: dropped runtime-injected categor(ies) {dropped} "
+                    f"— they are re-injected into APP_STATE on every activation")
+        return out
+
+    def save_profile_classification(self, profile_id: str, classification_results: Dict[str, Any], 
+                                   user_uuid: Optional[str] = None) -> bool:
+        """
+        Save classification results for a specific profile.
+        
+        Args:
+            profile_id: Profile ID
+            classification_results: Classification data including tools, prompts, resources
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        from datetime import datetime, timezone
+
+        # The record is the MCP surface. Runtime-injected platform tools never enter it,
+        # whichever caller is saving and whatever happens to be in APP_STATE right now.
+        classification_results = self._without_runtime_injected(classification_results)
+
+        profiles = self.get_profiles(user_uuid)
+        profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        
+        if not profile:
+            app_logger.warning(f"Profile {profile_id} not found for classification save")
+            return False
+        
+        # Stamp the time ONLY on a snapshot that holds something. A clear passes an
+        # empty block with `last_classified: None`, and this line used to overwrite that
+        # with "now" — so a cleared (never-taken) snapshot read as "classified, exposes
+        # nothing", which the deployment half of the trust envelope hashes as a
+        # legitimate empty catalog and lets an owner ATTEST (found live, 2026-09-07: three
+        # attestations over nothing). A classification that reached a server and found
+        # no tools is the same case from the attestation's point of view: nothing to
+        # attest, so it keeps no timestamp either.
+        def _entries(section) -> int:
+            if isinstance(section, dict):
+                return sum(len(v) for v in section.values() if isinstance(v, list))
+            return len(section) if isinstance(section, list) else 0
+        if _entries(classification_results.get("tools")) or _entries(classification_results.get("prompts")):
+            classification_results["last_classified"] = datetime.now(timezone.utc).isoformat()
+            classification_results["classified_with_mode"] = profile.get("classification_mode", "full")
+        else:
+            classification_results["last_classified"] = None
+            classification_results["classified_with_mode"] = None
+        
+        profile["classification_results"] = classification_results
+        return self.save_profiles(profiles, user_uuid)
+    
+    def save_additional_classification(self, profile_id: str, server_id: str,
+                                       classification_results: Dict[str, Any],
+                                       user_uuid: Optional[str] = None) -> bool:
+        """PROP-006 phase 2 (CL1): the snapshot of ONE additional MCP server, kept apart from the
+        primary's ``classification_results`` in the deployment-local
+        ``additionalMcpClassification`` ({server id: snapshot}). Names are the SERVER's own (the
+        alias is applied when the snapshot is loaded, so renaming the alias never re-classifies).
+        Same rules as the primary's record: runtime-injected categories never enter it (CL8), and
+        only a snapshot that holds something carries a time. A snapshot of a server the agent no
+        longer lists is dropped on the way."""
+        from datetime import datetime, timezone
+        from trusted_data_agent.core.agent_mcp_servers import (
+            ADDITIONAL_CLASSIFICATION_KEY, additional_of)
+
+        results = self._without_runtime_injected(classification_results)
+        profiles = self.get_profiles(user_uuid)
+        profile = next((p for p in profiles if p.get("id") == profile_id), None)
+        if not profile:
+            app_logger.warning(f"Profile {profile_id} not found for additional classification save")
+            return False
+        listed = {s.server_id for s in additional_of(profile)}
+        if str(server_id) not in listed:
+            app_logger.warning(f"MCP server {server_id} is not one of profile {profile_id}'s additional servers")
+            return False
+
+        def _entries(section) -> int:
+            if isinstance(section, dict):
+                return sum(len(v) for v in section.values() if isinstance(v, list))
+            return len(section) if isinstance(section, list) else 0
+        if _entries(results.get("tools")) or _entries(results.get("prompts")):
+            results["last_classified"] = datetime.now(timezone.utc).isoformat()
+        else:
+            results["last_classified"] = None
+        store = profile.get(ADDITIONAL_CLASSIFICATION_KEY)
+        store = {k: v for k, v in (store or {}).items() if k in listed} if isinstance(store, dict) else {}
+        store[str(server_id)] = results
+        profile[ADDITIONAL_CLASSIFICATION_KEY] = store
+        return self.save_profiles(profiles, user_uuid)
+
+    def clear_profile_classification(self, profile_id: str, user_uuid: Optional[str] = None) -> bool:
+        """
+        Clear classification cache for a profile to force reclassification.
+        
+        Args:
+            profile_id: Profile ID
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        empty_results = {
+            "tools": {},
+            "prompts": {},
+            "resources": {},
+            "last_classified": None,
+            "classified_with_mode": None
+        }
+        return self.save_profile_classification(profile_id, empty_results, user_uuid)
+
+    # ========================================================================
+    # LLM CONFIGURATION METHODS
+    # ========================================================================
+
+    def get_llm_configurations(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get all LLM configurations.
+        
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            List of LLM configuration dictionaries
+        """
+        config = self.load_config(user_uuid)
+        return config.get("llm_configurations", [])
+
+    def save_llm_configurations(self, configurations: list, user_uuid: Optional[str] = None) -> bool:
+        """
+        Save LLM configurations.
+        
+        Args:
+            configurations: List of LLM configuration dictionaries
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["llm_configurations"] = configurations
+        return self.save_config(config, user_uuid)
+
+    def add_llm_configuration(self, configuration: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Add a new LLM configuration.
+        
+        Args:
+            configuration: LLM configuration dictionary
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        configurations = self.get_llm_configurations(user_uuid)
+        configurations.append(configuration)
+        return self.save_llm_configurations(configurations, user_uuid)
+
+    def update_llm_configuration(self, config_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Update an existing LLM configuration.
+        
+        Args:
+            config_id: Unique ID of the configuration to update
+            updates: Dictionary of fields to update
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        configurations = self.get_llm_configurations(user_uuid)
+        configuration = next((c for c in configurations if c.get("id") == config_id), None)
+        
+        if not configuration:
+            app_logger.warning(f"LLM configuration with ID {config_id} not found for update")
+            return False
+        
+        configuration.update(updates)
+        return self.save_llm_configurations(configurations, user_uuid)
+
+    def remove_llm_configuration(self, config_id: str, user_uuid: Optional[str] = None) -> tuple[bool, Optional[str]]:
+        """
+        Remove an LLM configuration.
+        Prevents deletion if any profiles are assigned to this configuration.
+        
+        Args:
+            config_id: Unique ID of the configuration to remove
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str])
+            If successful, error_message is None
+            If failed, error_message contains the reason
+        """
+        # Check if any profiles are assigned to this configuration
+        profiles = self.get_profiles(user_uuid)
+        assigned_profiles = [
+            p for p in profiles 
+            if p.get("llmConfigurationId") == config_id
+        ]
+        
+        if assigned_profiles:
+            profile_tags = [p.get("tag", "Unknown") for p in assigned_profiles]
+            tags_list = ", ".join(profile_tags)
+            error_msg = f"Cannot delete LLM configuration: {len(assigned_profiles)} profile(s) assigned: {tags_list}"
+            app_logger.warning(f"{error_msg} (Config ID: {config_id})")
+            return False, error_msg
+        
+        configurations = self.get_llm_configurations(user_uuid)
+        original_count = len(configurations)
+        configurations = [c for c in configurations if c.get("id") != config_id]
+        
+        if len(configurations) == original_count:
+            error_msg = "LLM configuration not found"
+            app_logger.warning(f"LLM configuration with ID {config_id} not found for removal")
+            return False, error_msg
+        
+        success = self.save_llm_configurations(configurations, user_uuid)
+        return success, None if success else "Failed to save configuration"
+
+    def get_active_llm_configuration_id(self, user_uuid: Optional[str] = None) -> Optional[str]:
+        """
+        Get the ID of the currently active LLM configuration.
+        
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+        
+        Returns:
+            Active LLM configuration ID or None
+        """
+        config = self.load_config(user_uuid)
+        return config.get("active_llm_configuration_id")
+
+    def set_active_llm_configuration_id(self, config_id: Optional[str], user_uuid: Optional[str] = None) -> bool:
+        """
+        Set the active LLM configuration ID.
+        
+        Args:
+            config_id: ID of the configuration to set as active, or None to clear
+            user_uuid: Optional user UUID for per-user configuration isolation
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["active_llm_configuration_id"] = config_id
+        return self.save_config(config, user_uuid)
+
+    # =========================================================================
+    # VECTOR STORE CONFIGURATION METHODS
+    # =========================================================================
+
+    def get_vector_store_configurations(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get all vector store configurations.
+
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of vector store configuration dictionaries
+        """
+        config = self.load_config(user_uuid)
+        return config.get("vector_store_configurations", [])
+
+    def save_vector_store_configurations(self, configurations: list, user_uuid: Optional[str] = None) -> bool:
+        """
+        Save vector store configurations.
+
+        Args:
+            configurations: List of vector store configuration dictionaries
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["vector_store_configurations"] = configurations
+        return self.save_config(config, user_uuid)
+
+    def add_vector_store_configuration(self, configuration: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Add a new vector store configuration.
+
+        Args:
+            configuration: Vector store configuration dictionary
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        configurations = self.get_vector_store_configurations(user_uuid)
+        configurations.append(configuration)
+        return self.save_vector_store_configurations(configurations, user_uuid)
+
+    def update_vector_store_configuration(self, config_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Update an existing vector store configuration.
+
+        Args:
+            config_id: Unique ID of the configuration to update
+            updates: Dictionary of fields to update
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        configurations = self.get_vector_store_configurations(user_uuid)
+        configuration = next((c for c in configurations if c.get("id") == config_id), None)
+
+        if not configuration:
+            app_logger.warning(f"Vector store configuration with ID {config_id} not found for update")
+            return False
+
+        configuration.update(updates)
+        return self.save_vector_store_configurations(configurations, user_uuid)
+
+    def remove_vector_store_configuration(self, config_id: str, user_uuid: Optional[str] = None) -> tuple:
+        """
+        Remove a vector store configuration.
+        Prevents deletion if any collections reference this config.
+
+        Args:
+            config_id: Unique ID of the configuration to remove
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str])
+        """
+        # Prevent deletion of default configs
+        if config_id in ("vs-default-chromadb", "vs-default-teradata", "vs-default-qdrant"):
+            return False, "Cannot delete default vector store configurations"
+
+        # Check if any collections reference this config
+        try:
+            from trusted_data_agent.core.collection_db import get_collection_db
+            collection_db = get_collection_db()
+            user_collections = collection_db.get_user_owned_collections(user_uuid) if user_uuid else []
+            dependent_collections = [
+                c for c in user_collections
+                if c.get("vector_store_config_id") == config_id
+            ]
+
+            if dependent_collections:
+                names = ", ".join(c.get("name", "Unknown") for c in dependent_collections[:3])
+                suffix = f" and {len(dependent_collections) - 3} more" if len(dependent_collections) > 3 else ""
+                error_msg = f"Cannot delete: {len(dependent_collections)} collection(s) use this vector store: {names}{suffix}"
+                app_logger.warning(f"{error_msg} (Config ID: {config_id})")
+                return False, error_msg
+        except Exception as e:
+            app_logger.error(f"Error checking collection dependencies: {e}", exc_info=True)
+
+        configurations = self.get_vector_store_configurations(user_uuid)
+        original_count = len(configurations)
+        configurations = [c for c in configurations if c.get("id") != config_id]
+
+        if len(configurations) == original_count:
+            return False, "Vector store configuration not found"
+
+        success = self.save_vector_store_configurations(configurations, user_uuid)
+        return success, None if success else "Failed to save configuration"
+
+    def ensure_default_vector_store_config(self, user_uuid: Optional[str] = None) -> None:
+        """
+        Ensure the default vector store configurations exist.
+        Creates Local ChromaDB, Teradata, and Qdrant Cloud (empty credentials) configs on first run.
+        Called during bootstrap and login.
+        """
+        if not user_uuid:
+            return
+
+        configs = self.get_vector_store_configurations(user_uuid)
+        changed = False
+
+        if not any(c.get("id") == "vs-default-chromadb" for c in configs):
+            from datetime import datetime, timezone
+            configs.append({
+                "id": "vs-default-chromadb",
+                "name": "Local ChromaDB",
+                "backend_type": "chromadb",
+                "backend_config": {},
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            changed = True
+            app_logger.info(f"Created default ChromaDB vector store configuration for user {user_uuid}")
+
+        if not any(c.get("id") == "vs-default-teradata" for c in configs):
+            from datetime import datetime, timezone
+            configs.append({
+                "id": "vs-default-teradata",
+                "name": "Teradata Vector Store",
+                "backend_type": "teradata",
+                "backend_config": {
+                    "host": "",
+                    "base_url": "",
+                    "database": "",
+                    "search_algorithm": "VECTORDISTANCE",
+                    "top_k": 10
+                },
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            changed = True
+            app_logger.info(f"Created default Teradata vector store configuration for user {user_uuid}")
+
+        if not any(c.get("id") == "vs-default-qdrant" for c in configs):
+            from datetime import datetime, timezone
+            configs.append({
+                "id": "vs-default-qdrant",
+                "name": "Qdrant Cloud",
+                "backend_type": "qdrant",
+                "backend_config": {
+                    "url": "",
+                    "prefer_grpc": False
+                },
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            changed = True
+            app_logger.info(f"Created default Qdrant Cloud vector store configuration for user {user_uuid}")
+
+        if changed:
+            self.save_vector_store_configurations(configs, user_uuid)
+
+    def migrate_inline_vector_store_configs(self, user_uuid: Optional[str] = None) -> None:
+        """
+        Auto-assign existing collections to centralized vector store configs.
+        Collections with inline backend_type/backend_config are matched to existing
+        centralized configs or have new configs created from their inline data.
+        """
+        if not user_uuid:
+            return
+
+        try:
+            import hashlib
+            from datetime import datetime, timezone
+
+            from trusted_data_agent.core.collection_db import get_collection_db
+            collection_db = get_collection_db()
+            collections = collection_db.get_user_owned_collections(user_uuid)
+            vs_configs = self.get_vector_store_configurations(user_uuid)
+
+            configs_changed = False
+
+            for coll in collections:
+                if coll.get("vector_store_config_id"):
+                    continue  # Already migrated
+
+                backend_type = coll.get("backend_type", "chromadb")
+                backend_config_str = coll.get("backend_config", "{}")
+                try:
+                    backend_config = json.loads(backend_config_str) if isinstance(backend_config_str, str) else backend_config_str
+                except (json.JSONDecodeError, TypeError):
+                    backend_config = {}
+
+                # ChromaDB with empty config → assign to default
+                if backend_type == "chromadb" and not backend_config:
+                    matching = next((c for c in vs_configs if c["id"] == "vs-default-chromadb"), None)
+                else:
+                    # Find matching config by fingerprint
+                    fingerprint = hashlib.md5(json.dumps({"type": backend_type, "config": backend_config}, sort_keys=True).encode()).hexdigest()
+                    matching = None
+                    for c in vs_configs:
+                        c_config = c.get("backend_config", {})
+                        c_fingerprint = hashlib.md5(json.dumps({"type": c["backend_type"], "config": c_config}, sort_keys=True).encode()).hexdigest()
+                        if c_fingerprint == fingerprint:
+                            matching = c
+                            break
+
+                if not matching and backend_type != "chromadb":
+                    # Create new centralized config from inline data
+                    import random, string
+                    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+                    credential_keys = {"username", "password", "pat_token"}
+
+                    new_config = {
+                        "id": f"vs-{int(datetime.now(timezone.utc).timestamp() * 1000)}-{suffix}",
+                        "name": f"Migrated {backend_type.title()} ({coll['name']})",
+                        "backend_type": backend_type,
+                        "backend_config": {k: v for k, v in backend_config.items() if k not in credential_keys},
+                        "credentials": {},
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+
+                    # Encrypt credentials if present
+                    cred_data = {k: backend_config[k] for k in credential_keys if k in backend_config}
+                    if cred_data:
+                        try:
+                            from trusted_data_agent.auth.encryption import encrypt_credentials
+                            encrypt_credentials(user_uuid, f"vectorstore_{new_config['id']}", cred_data)
+                            app_logger.info(f"Encrypted migrated credentials for vector store config {new_config['id']}")
+                        except Exception as e:
+                            app_logger.warning(f"Could not encrypt migrated credentials: {e}")
+
+                    vs_configs.append(new_config)
+                    configs_changed = True
+                    matching = new_config
+                    app_logger.info(f"Created vector store config '{new_config['name']}' from inline config of collection '{coll['name']}'")
+
+                if matching:
+                    collection_db.update_collection(coll["id"], {"vector_store_config_id": matching["id"]})
+                    app_logger.info(f"Migrated collection '{coll['name']}' → vector store config '{matching.get('name', matching['id'])}'")
+
+            if configs_changed:
+                self.save_vector_store_configurations(vs_configs, user_uuid)
+        except Exception as e:
+            app_logger.error(f"Error during vector store config migration: {e}", exc_info=True)
+
+    # =========================================================================
+    # Database Connection Management (centralized, user-centric)
+    # =========================================================================
+    # A single user-scoped store of named relational database connections that
+    # every participant draws from (Canvas execution, PDM deployment, future SQL
+    # consumers).  Non-secret metadata lives here; credentials are encrypted
+    # separately under the "dbconn_{id}" provider (mirrors the vector-store
+    # config pattern).
+
+    def get_database_connections(self, user_uuid: Optional[str] = None) -> list:
+        """Get all database connection records (metadata only) for a user."""
+        config = self.load_config(user_uuid)
+        return config.get("database_connections", [])
+
+    def save_database_connections(self, connections: list, user_uuid: Optional[str] = None) -> bool:
+        """Persist database connection records."""
+        config = self.load_config(user_uuid)
+        config["database_connections"] = connections
+        return self.save_config(config, user_uuid)
+
+    def add_database_connection(self, connection: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """Append a new database connection record."""
+        connections = self.get_database_connections(user_uuid)
+        connections.append(connection)
+        return self.save_database_connections(connections, user_uuid)
+
+    def update_database_connection(self, conn_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """Update an existing database connection record by id."""
+        connections = self.get_database_connections(user_uuid)
+        record = next((c for c in connections if c.get("id") == conn_id), None)
+        if not record:
+            app_logger.warning(f"Database connection {conn_id} not found for update")
+            return False
+        record.update(updates)
+        return self.save_database_connections(connections, user_uuid)
+
+    def remove_database_connection(self, conn_id: str, user_uuid: Optional[str] = None) -> bool:
+        """Remove a database connection record by id."""
+        connections = self.get_database_connections(user_uuid)
+        remaining = [c for c in connections if c.get("id") != conn_id]
+        if len(remaining) == len(connections):
+            return False
+        return self.save_database_connections(remaining, user_uuid)
+
+    # =========================================================================
+    # KG Backend Configuration Management
+    # =========================================================================
+
+    def get_kg_backend_configurations(self, user_uuid: Optional[str] = None) -> list:
+        """Get all KG backend configurations for a user."""
+        config = self.load_config(user_uuid)
+        return config.get("kg_backend_configurations", [])
+
+    def save_kg_backend_configurations(self, configurations: list, user_uuid: Optional[str] = None) -> bool:
+        """Persist KG backend configurations."""
+        config = self.load_config(user_uuid)
+        config["kg_backend_configurations"] = configurations
+        return self.save_config(config, user_uuid)
+
+    def add_kg_backend_configuration(self, configuration: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """Append a new KG backend configuration."""
+        configurations = self.get_kg_backend_configurations(user_uuid)
+        configurations.append(configuration)
+        return self.save_kg_backend_configurations(configurations, user_uuid)
+
+    def update_kg_backend_configuration(self, config_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """Update an existing KG backend configuration by ID."""
+        configurations = self.get_kg_backend_configurations(user_uuid)
+        cfg = next((c for c in configurations if c.get("id") == config_id), None)
+        if not cfg:
+            app_logger.warning(f"KG backend config {config_id} not found for update")
+            return False
+        cfg.update(updates)
+        return self.save_kg_backend_configurations(configurations, user_uuid)
+
+    def remove_kg_backend_configuration(self, config_id: str, user_uuid: Optional[str] = None) -> tuple:
+        """
+        Remove a KG backend configuration.
+        Prevents deletion of the built-in default SQLite config.
+        Returns (success: bool, error_message: Optional[str]).
+        """
+        if config_id == "kg-default-sqlite":
+            return False, "Cannot delete the default SQLite KG configuration"
+
+        configurations = self.get_kg_backend_configurations(user_uuid)
+        original_count = len(configurations)
+        configurations = [c for c in configurations if c.get("id") != config_id]
+
+        if len(configurations) == original_count:
+            return False, "KG backend configuration not found"
+
+        success = self.save_kg_backend_configurations(configurations, user_uuid)
+        return (success, None) if success else (False, "Failed to save configuration")
+
+    def ensure_default_kg_backend_config(self, user_uuid: Optional[str] = None) -> None:
+        """
+        Ensure the default SQLite KG backend configuration exists.
+        Called during bootstrap and login.
+        """
+        if not user_uuid:
+            return
+
+        configs = self.get_kg_backend_configurations(user_uuid)
+        if not any(c.get("id") == "kg-default-sqlite" for c in configs):
+            from datetime import datetime, timezone
+            configs.append({
+                "id": "kg-default-sqlite",
+                "name": "Local SQLite (Default)",
+                "backend_type": "sqlite",
+                "config": {},
+                "is_default": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            self.save_kg_backend_configurations(configs, user_uuid)
+            app_logger.info(f"Created default SQLite KG backend configuration for user {user_uuid}")
+
+    # =========================================================================
+    # Context Window Type Management
+    # =========================================================================
+
+    def get_context_window_types(self, user_uuid: Optional[str] = None) -> list:
+        """
+        Get all context window types.
+
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            List of context window type dictionaries
+        """
+        config = self.load_config(user_uuid)
+        return config.get("context_window_types", [])
+
+    def get_context_window_type(self, type_id: str, user_uuid: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Get a single context window type by ID.
+
+        Args:
+            type_id: Unique ID of the context window type
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Context window type dict, or None if not found
+        """
+        types = self.get_context_window_types(user_uuid)
+        return next((t for t in types if t.get("id") == type_id), None)
+
+    def get_default_context_window_type(self, user_uuid: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Get the default context window type (is_default=true, or first).
+
+        Args:
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Default context window type dict, or None if none defined
+        """
+        types = self.get_context_window_types(user_uuid)
+        default = next((t for t in types if t.get("is_default")), None)
+        return default or (types[0] if types else None)
+
+    def save_context_window_types(self, context_window_types: list, user_uuid: Optional[str] = None) -> bool:
+        """
+        Save context window types.
+
+        Args:
+            context_window_types: List of context window type dictionaries
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        config = self.load_config(user_uuid)
+        config["context_window_types"] = context_window_types
+        return self.save_config(config, user_uuid)
+
+    def add_context_window_type(self, context_window_type: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Add a new context window type.
+
+        Args:
+            context_window_type: Context window type dictionary
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        context_window_types = self.get_context_window_types(user_uuid)
+        context_window_types.append(context_window_type)
+        return self.save_context_window_types(context_window_types, user_uuid)
+
+    def update_context_window_type(self, type_id: str, updates: Dict[str, Any], user_uuid: Optional[str] = None) -> bool:
+        """
+        Update an existing context window type.
+
+        Args:
+            type_id: Unique ID of the context window type to update
+            updates: Dictionary of fields to update
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            True if successful, False otherwise
+        """
+        context_window_types = self.get_context_window_types(user_uuid)
+        cwt = next((t for t in context_window_types if t.get("id") == type_id), None)
+
+        if not cwt:
+            app_logger.warning(f"Context window type with ID {type_id} not found for update")
+            return False
+
+        cwt.update(updates)
+        return self.save_context_window_types(context_window_types, user_uuid)
+
+    def remove_context_window_type(self, type_id: str, user_uuid: Optional[str] = None) -> tuple:
+        """
+        Remove a context window type.
+        Prevents deletion if any profiles are assigned to this type.
+
+        Args:
+            type_id: Unique ID of the context window type to remove
+            user_uuid: Optional user UUID for per-user configuration isolation
+
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str])
+        """
+        # Check if any profiles are assigned to this context window type
+        profiles = self.get_profiles(user_uuid)
+        assigned_profiles = [
+            p for p in profiles
+            if p.get("contextWindowTypeId") == type_id
+        ]
+
+        if assigned_profiles:
+            profile_tags = [p.get("tag", "Unknown") for p in assigned_profiles]
+            tags_list = ", ".join(profile_tags)
+            error_msg = f"Cannot delete context window type: {len(assigned_profiles)} profile(s) assigned: {tags_list}"
+            app_logger.warning(f"{error_msg} (Type ID: {type_id})")
+            return False, error_msg
+
+        context_window_types = self.get_context_window_types(user_uuid)
+        original_count = len(context_window_types)
+        context_window_types = [t for t in context_window_types if t.get("id") != type_id]
+
+        if len(context_window_types) == original_count:
+            error_msg = "Context window type not found"
+            app_logger.warning(f"Context window type with ID {type_id} not found for removal")
+            return False, error_msg
+
+        success = self.save_context_window_types(context_window_types, user_uuid)
+        return success, None if success else "Failed to save context window types"
+
+    # =========================================================================
+    # Genie Global Settings Management
+    # =========================================================================
+
+    def get_genie_global_settings(self) -> Dict[str, Any]:
+        """
+        Get all global Genie coordination settings with lock status.
+
+        Returns:
+            Dict with setting keys and their values/lock status:
+            {
+                'temperature': {'value': 0.7, 'is_locked': False},
+                'queryTimeout': {'value': 300, 'is_locked': False},
+                'maxIterations': {'value': 10, 'is_locked': True}
+            }
+        """
+        from trusted_data_agent.auth.database import get_db_session
+
+        settings = {}
+        try:
+            with get_db_session() as session:
+                # Query genie_global_settings table
+                result = session.execute(
+                    text("SELECT setting_key, setting_value, is_locked FROM genie_global_settings")
+                )
+                rows = result.fetchall()
+
+                for row in rows:
+                    key, value, is_locked = row
+                    # Parse value to appropriate type based on key
+                    # Float values: temperature, knowledge_minRelevanceScore
+                    # Integer values: everything else
+                    if key in ('temperature', 'knowledge_minRelevanceScore'):
+                        parsed_value = float(value)
+                    else:
+                        parsed_value = int(value)
+
+                    settings[key] = {
+                        'value': parsed_value,
+                        'is_locked': bool(is_locked)
+                    }
+
+                # Ensure defaults if table is empty
+                defaults = {
+                    'temperature': {'value': 0.7, 'is_locked': False},
+                    'queryTimeout': {'value': 300, 'is_locked': False},
+                    'maxIterations': {'value': 10, 'is_locked': False},
+                    'maxNestingDepth': {'value': 3, 'is_locked': False},
+                    'knowledge_minRelevanceScore': {'value': 0.30, 'is_locked': False},
+                    'knowledge_maxDocs': {'value': 3, 'is_locked': False},
+                    'knowledge_maxTokens': {'value': 2000, 'is_locked': False},
+                    'knowledge_rerankingEnabled': {'value': 0, 'is_locked': False}
+                }
+                for key, default in defaults.items():
+                    if key not in settings:
+                        settings[key] = default
+
+        except Exception as e:
+            app_logger.error(f"Error loading genie global settings: {e}")
+            # Return defaults on error
+            settings = {
+                'temperature': {'value': 0.7, 'is_locked': False},
+                'queryTimeout': {'value': 300, 'is_locked': False},
+                'maxIterations': {'value': 10, 'is_locked': False}
+            }
+
+        return settings
+
+    def set_genie_global_setting(
+        self,
+        setting_key: str,
+        setting_value: Any,
+        is_locked: bool,
+        user_uuid: Optional[str] = None
+    ) -> bool:
+        """
+        Update a global Genie setting.
+
+        Args:
+            setting_key: Setting identifier (temperature, queryTimeout, maxIterations)
+            setting_value: New value for the setting
+            is_locked: Whether to lock this setting (prevent profile overrides)
+            user_uuid: Admin user who made the change (for audit)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        from trusted_data_agent.auth.database import get_db_session
+
+        try:
+            with get_db_session() as session:
+                session.execute(
+                    text("""
+                    INSERT OR REPLACE INTO genie_global_settings
+                    (setting_key, setting_value, is_locked, updated_at, updated_by)
+                    VALUES (:setting_key, :setting_value, :is_locked, datetime('now'), :updated_by)
+                    """),
+                    {"setting_key": setting_key, "setting_value": str(setting_value), "is_locked": int(is_locked), "updated_by": user_uuid}
+                )
+                session.commit()
+                app_logger.info(f"Updated genie global setting: {setting_key}={setting_value}, locked={is_locked}")
+                return True
+        except Exception as e:
+            app_logger.error(f"Error saving genie global setting: {e}")
+            return False
+
+    def save_genie_global_settings(
+        self,
+        settings: Dict[str, Dict[str, Any]],
+        user_uuid: Optional[str] = None
+    ) -> bool:
+        """
+        Save all global Genie settings at once.
+
+        Args:
+            settings: Dict of settings in format:
+                {
+                    'temperature': {'value': 0.7, 'is_locked': False},
+                    'queryTimeout': {'value': 300, 'is_locked': True},
+                    ...
+                }
+            user_uuid: Admin user who made the change (for audit)
+
+        Returns:
+            True if all settings saved successfully
+        """
+        success = True
+        for key, config in settings.items():
+            if not self.set_genie_global_setting(
+                key,
+                config.get('value'),
+                config.get('is_locked', False),
+                user_uuid
+            ):
+                success = False
+        return success
+
+    def get_effective_genie_config(self, profile_genie_config: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Get effective Genie configuration by merging global settings with profile overrides.
+
+        Resolution hierarchy:
+        1. If global setting is locked -> use global value
+        2. If profile has a non-null value -> use profile value
+        3. Otherwise -> use global default
+
+        Args:
+            profile_genie_config: Profile-level genieConfig dict (may contain temperature,
+                                 queryTimeout, maxIterations)
+
+        Returns:
+            Effective configuration dict with resolved values:
+            {
+                'temperature': 0.7,
+                'queryTimeout': 300,
+                'maxIterations': 10
+            }
+        """
+        global_settings = self.get_genie_global_settings()
+        profile_genie_config = profile_genie_config or {}
+
+        effective = {}
+
+        for key, global_config in global_settings.items():
+            global_value = global_config['value']
+            is_locked = global_config['is_locked']
+
+            if is_locked:
+                # Admin-locked: always use global value
+                effective[key] = global_value
+            else:
+                # Check for profile override
+                profile_value = profile_genie_config.get(key)
+                if profile_value is not None:
+                    effective[key] = profile_value
+                else:
+                    effective[key] = global_value
+
+        return effective
+
+    # =========================================================================
+    # Knowledge Global Settings Management
+    # =========================================================================
+
+    def get_knowledge_global_settings(self) -> Dict[str, Any]:
+        """
+        Get all global Knowledge repository settings with lock status.
+
+        Returns:
+            Dict with setting keys and their values/lock status:
+            {
+                'minRelevanceScore': {'value': 0.30, 'is_locked': False},
+                'maxDocs': {'value': 3, 'is_locked': False},
+                'maxTokens': {'value': 2000, 'is_locked': False},
+                'rerankingEnabled': {'value': False, 'is_locked': False}
+            }
+        """
+        from trusted_data_agent.auth.database import get_db_session
+
+        settings = {}
+        try:
+            with get_db_session() as session:
+                # Query genie_global_settings table for knowledge_ prefixed keys
+                result = session.execute(
+                    text("SELECT setting_key, setting_value, is_locked FROM genie_global_settings WHERE setting_key LIKE 'knowledge_%'")
+                )
+                rows = result.fetchall()
+
+                for row in rows:
+                    key, value, is_locked = row
+                    # Remove 'knowledge_' prefix for API response
+                    short_key = key.replace('knowledge_', '')
+
+                    # Parse value to appropriate type
+                    if short_key in ('minRelevanceScore', 'freshnessWeight', 'freshnessDecayRate'):
+                        parsed_value = float(value)
+                    elif short_key == 'rerankingEnabled':
+                        parsed_value = bool(int(value))
+                    elif short_key == 'synthesisPromptOverride':
+                        parsed_value = str(value)
+                    else:
+                        parsed_value = int(value)
+
+                    settings[short_key] = {
+                        'value': parsed_value,
+                        'is_locked': bool(is_locked)
+                    }
+
+                # Ensure defaults if table is empty
+                defaults = {
+                    'minRelevanceScore': {'value': 0.30, 'is_locked': False},
+                    'maxDocs': {'value': 3, 'is_locked': False},
+                    'maxTokens': {'value': 2000, 'is_locked': False},
+                    'rerankingEnabled': {'value': False, 'is_locked': False},
+                    'maxChunksPerDocument': {'value': 0, 'is_locked': False},
+                    'freshnessWeight': {'value': 0.0, 'is_locked': False},
+                    'freshnessDecayRate': {'value': 0.005, 'is_locked': False},
+                    'synthesisPromptOverride': {'value': '', 'is_locked': False}
+                }
+                for key, default in defaults.items():
+                    if key not in settings:
+                        settings[key] = default
+
+        except Exception as e:
+            app_logger.error(f"Error loading knowledge global settings: {e}")
+            # Return defaults on error
+            settings = {
+                'minRelevanceScore': {'value': 0.30, 'is_locked': False},
+                'maxDocs': {'value': 3, 'is_locked': False},
+                'maxTokens': {'value': 2000, 'is_locked': False},
+                'rerankingEnabled': {'value': False, 'is_locked': False},
+                'maxChunksPerDocument': {'value': 0, 'is_locked': False},
+                'freshnessWeight': {'value': 0.0, 'is_locked': False},
+                'freshnessDecayRate': {'value': 0.005, 'is_locked': False},
+                'synthesisPromptOverride': {'value': '', 'is_locked': False}
+            }
+
+        return settings
+
+    def set_knowledge_global_setting(
+        self,
+        setting_key: str,
+        setting_value: Any,
+        is_locked: bool,
+        user_uuid: Optional[str] = None
+    ) -> bool:
+        """
+        Update a global Knowledge setting.
+
+        Args:
+            setting_key: Setting identifier (minRelevanceScore, maxDocs, maxTokens, rerankingEnabled)
+            setting_value: New value for the setting
+            is_locked: Whether to lock this setting (prevent profile overrides)
+            user_uuid: Admin user who made the change (for audit)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        from trusted_data_agent.auth.database import get_db_session
+
+        # Add 'knowledge_' prefix for database storage
+        db_key = f"knowledge_{setting_key}"
+
+        # Convert boolean to int for storage
+        if setting_key == 'rerankingEnabled':
+            setting_value = 1 if setting_value else 0
+        elif setting_key == 'synthesisPromptOverride':
+            setting_value = str(setting_value) if setting_value else ''
+
+        try:
+            with get_db_session() as session:
+                session.execute(
+                    text("""
+                    INSERT OR REPLACE INTO genie_global_settings
+                    (setting_key, setting_value, is_locked, updated_at, updated_by)
+                    VALUES (:setting_key, :setting_value, :is_locked, datetime('now'), :updated_by)
+                    """),
+                    {"setting_key": db_key, "setting_value": str(setting_value), "is_locked": int(is_locked), "updated_by": user_uuid}
+                )
+                session.commit()
+                app_logger.info(f"Updated knowledge global setting: {setting_key}={setting_value}, locked={is_locked}")
+                return True
+        except Exception as e:
+            app_logger.error(f"Error saving knowledge global setting: {e}")
+            return False
+
+    def save_knowledge_global_settings(
+        self,
+        settings: Dict[str, Dict[str, Any]],
+        user_uuid: Optional[str] = None
+    ) -> bool:
+        """
+        Save all global Knowledge settings at once.
+
+        Args:
+            settings: Dict of settings in format:
+                {
+                    'minRelevanceScore': {'value': 0.30, 'is_locked': False},
+                    'maxDocs': {'value': 3, 'is_locked': True},
+                    ...
+                }
+            user_uuid: Admin user who made the change (for audit)
+
+        Returns:
+            True if all settings saved successfully
+        """
+        success = True
+        for key, config in settings.items():
+            if not self.set_knowledge_global_setting(
+                key,
+                config.get('value'),
+                config.get('is_locked', False),
+                user_uuid
+            ):
+                success = False
+        return success
+
+    def get_effective_knowledge_config(self, profile_knowledge_config: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Get effective Knowledge configuration by merging global settings with profile overrides.
+
+        Resolution hierarchy:
+        1. If global setting is locked -> use global value
+        2. If profile has a non-null value -> use profile value
+        3. Otherwise -> use global default
+
+        Args:
+            profile_knowledge_config: Profile-level knowledgeConfig dict (may contain
+                                     minRelevanceScore, maxDocs, maxTokens)
+
+        Returns:
+            Effective configuration dict with resolved values:
+            {
+                'minRelevanceScore': 0.30,
+                'maxDocs': 3,
+                'maxTokens': 2000,
+                'rerankingEnabled': False
+            }
+        """
+        global_settings = self.get_knowledge_global_settings()
+        profile_knowledge_config = profile_knowledge_config or {}
+
+        effective = {}
+
+        for key, global_config in global_settings.items():
+            global_value = global_config['value']
+            is_locked = global_config['is_locked']
+
+            if is_locked:
+                # Admin-locked: always use global value
+                effective[key] = global_value
+            else:
+                # Check for profile override
+                profile_value = profile_knowledge_config.get(key)
+                if profile_value is not None:
+                    effective[key] = profile_value
+                else:
+                    effective[key] = global_value
+
+        return effective
+
+    # ── RAG Offload Settings ───────────────────────────────────────────────
+
+    def get_rag_offload_settings(self) -> Dict[str, Any]:
+        """
+        Get the platform-level RAG offload condensation policy.
+
+        Returns:
+            {
+                'backend_policy': 'allow_internal' | 'require_external',
+                'default_max_store_mb': int
+            }
+        """
+        from trusted_data_agent.auth.database import get_db_session
+
+        defaults = {
+            "rag_offload_backend_policy": "allow_internal",
+            "rag_offload_default_max_store_mb": "10",
+        }
+        settings = dict(defaults)
+
+        try:
+            with get_db_session() as session:
+                result = session.execute(
+                    text(
+                        "SELECT setting_key, setting_value FROM genie_global_settings "
+                        "WHERE setting_key LIKE 'rag_offload_%'"
+                    )
+                )
+                for key, value in result.fetchall():
+                    settings[key] = value
+        except Exception as e:
+            app_logger.warning(f"Could not load RAG offload settings: {e}")
+
+        return {
+            "backend_policy": settings.get("rag_offload_backend_policy", "allow_internal"),
+            "default_max_store_mb": int(settings.get("rag_offload_default_max_store_mb", 10)),
+        }
+
+    def save_rag_offload_settings(
+        self,
+        backend_policy: str,
+        default_max_store_mb: int,
+        user_uuid: Optional[str] = None,
+    ) -> bool:
+        """Persist the RAG offload policy settings."""
+        from trusted_data_agent.auth.database import get_db_session
+
+        if backend_policy not in ("allow_internal", "require_external"):
+            app_logger.warning(f"Invalid RAG offload policy: {backend_policy}")
+            return False
+
+        try:
+            with get_db_session() as session:
+                for key, value in [
+                    ("rag_offload_backend_policy", backend_policy),
+                    ("rag_offload_default_max_store_mb", str(default_max_store_mb)),
+                ]:
+                    session.execute(
+                        text("""
+                        INSERT OR REPLACE INTO genie_global_settings
+                        (setting_key, setting_value, is_locked, updated_at, updated_by)
+                        VALUES (:k, :v, 0, datetime('now'), :u)
+                        """),
+                        {"k": key, "v": value, "u": user_uuid},
+                    )
+                session.commit()
+                app_logger.info(
+                    f"RAG offload policy saved: {backend_policy}, "
+                    f"max_store_mb={default_max_store_mb}"
+                )
+                return True
+        except Exception as e:
+            app_logger.error(f"Failed to save RAG offload settings: {e}")
+            return False
+
+
+# Singleton instance
+_config_manager_instance: Optional[ConfigManager] = None
+
+
+def get_config_manager() -> ConfigManager:
+    """
+    Get the singleton ConfigManager instance.
+    
+    Returns:
+        ConfigManager instance
+    """
+    global _config_manager_instance
+    if _config_manager_instance is None:
+        _config_manager_instance = ConfigManager()
+    return _config_manager_instance

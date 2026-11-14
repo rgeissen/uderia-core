@@ -1,0 +1,433 @@
+/* ============================================================================
+   polish.css — World-class craft layer
+   ----------------------------------------------------------------------------
+   A purely-additive refinement pass layered on top of the existing token system
+   (themes.css) and component styles (main.css, split-panels.css). It modernizes
+   *representation* only — it removes no functionality and changes no IDs.
+
+   Loaded LAST so it wins the cascade for the global primitives below.
+   Everything here is theme-aware (CSS variables) and icon-monochrome.
+   ============================================================================ */
+
+/* ── 1. Branded keyboard focus ──────────────────────────────────────────────
+   Replace the browser default outline with a calm branded ring, so keyboard
+   users feel designed-for. :focus-visible keeps it invisible for mouse users. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+.sp-action-btn:focus-visible,
+.sp-switcher:focus-visible,
+.rail-item:focus-visible,
+.status-item:focus-visible {
+    outline: 2px solid var(--border-focus-ring, var(--teradata-orange, #F15F22));
+    outline-offset: 2px;
+    border-radius: var(--radius-sm, 6px);
+}
+
+/* ── 2. Tactile press ───────────────────────────────────────────────────────
+   A momentary scale on press — the small luxury tell of a crafted UI.
+   Applied only on :active so it never affects resting layout. */
+button:not(:disabled):active {
+    transform: scale(0.97);
+}
+
+/* ── 3. Refined scrollbars ──────────────────────────────────────────────────
+   Thin, themed, quiet at rest — brighten on hover of the scrollable area. */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, rgba(148, 163, 184, 0.25)) transparent;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, rgba(148, 163, 184, 0.22));
+    border-radius: var(--radius-full, 9999px);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background var(--duration-fast, 0.2s) ease;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, rgba(148, 163, 184, 0.4));
+    background-clip: padding-box;
+}
+
+/* ── 4. Inline code chips ───────────────────────────────────────────────────
+   Inline `code` inside chat answers currently reads as plain text. Give it a
+   subtle chip so identifiers like `Sales` / `customer_count` stand apart. */
+.message-content :not(pre) > code,
+.message-content > code {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.88em;
+    padding: 0.1em 0.4em;
+    border-radius: var(--radius-xs, 4px);
+    background: var(--hover-bg, rgba(148, 163, 184, 0.1));
+    border: 1px solid var(--border-secondary, rgba(148, 163, 184, 0.12));
+    color: var(--text-primary, #f8fafc);
+    /* A chip breaks inside a long token rather than run past the message: nowrap let an identifier
+       or an inline statement (400 px) cut the conversation on the right. */
+    overflow-wrap: anywhere;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+/* ── 5. Reading comfort ─────────────────────────────────────────────────────
+   The prose column can afford air the dense tool panels cannot. */
+.message-content {
+    line-height: 1.65;
+}
+
+/* Tabular figures so counters/meta don't jitter as digits change. */
+.sp-switcher-item-meta,
+.status-label,
+time {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   6. Status bar — styled in ONE place: main.css "STATUS BAR — one quiet strip".
+   (This file used to re-tune the glow and spacing; the strip no longer has any.)
+   ============================================================================ */
+
+/* ============================================================================
+   7. Focus-follows-interaction (Phase 1)
+   ----------------------------------------------------------------------------
+   The surface you're working in earns a transient accent ring + lift; the rest
+   recede their chrome. Co-equal peers — emphasis, not ownership. The ring uses
+   each panel's own --sp-accent (chat falls back to brand orange), sharing the
+   language of the resize-handle accent. Driven by panelFocus.js (.sp-focused on
+   the active panel, .has-focused-panel on the #chat-canvas-split container).
+   ============================================================================ */
+#chat-canvas-split > .sp-panel {
+    /* Every workspace panel (conversation, dashboard, KG, flow, canvas, scheduler)
+       carries the same base frame so the whole row reads as one panel system.
+       The .sp-focused accent ring (box-shadow below) layers on top of this. */
+    border: 1px solid var(--border-primary, rgba(148, 163, 184, 0.18));
+    border-radius: var(--radius-md, 8px);
+    transition: box-shadow var(--duration-normal, 0.3s) var(--ease-out-expo, ease);
+}
+
+/* Focused split panel: inner accent hairline + faint outer accent halo + lift. */
+.sp-panel.sp-focused {
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--sp-accent) 38%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--sp-accent) 22%, transparent),
+        var(--shadow-lg, 0 10px 20px -5px rgba(0, 0, 0, 0.16));
+    z-index: 2;
+}
+/* The focused panel's header seam picks up the accent. */
+.sp-panel.sp-focused .sp-header {
+    border-bottom-color: color-mix(in srgb, var(--sp-accent) 32%, var(--border-secondary, rgba(148, 163, 184, 0.1)));
+}
+
+/* The conversation column is now a true .sp-panel (#conversation-panel), so the
+   shared .sp-panel.sp-focused accent ring above applies to it like any other panel. */
+
+/* Solo conversation (no side panels open): no neighbour to separate from, so drop
+   the base border AND the focus ring — a lone full-width canvas needs no frame.
+   The .cc-solo class is toggled on #chat-canvas-split by splitPanelResizer.js. */
+#chat-canvas-split.cc-solo > #conversation-panel {
+    border-color: transparent;
+}
+#chat-canvas-split.cc-solo > #conversation-panel.sp-focused {
+    box-shadow: none;
+}
+#chat-canvas-split.cc-solo > #conversation-panel.sp-focused .sp-header {
+    border-bottom-color: var(--border-secondary, rgba(148, 163, 184, 0.1));
+}
+
+/* Gentle recede — only the chrome of unfocused panels softens, never their
+   content (keeps the live flow canvas & charts untouched/perf-safe). */
+#chat-canvas-split.has-focused-panel > .sp-panel:not(.sp-focused) .sp-header {
+    opacity: 0.72;
+    transition: opacity var(--duration-normal, 0.3s) var(--ease-out-expo, ease);
+}
+
+/* ============================================================================
+   8. Error & recovery turns (Phase 2)
+   ----------------------------------------------------------------------------
+   A flow self-heal exchange was previously indistinguishable from normal chat.
+   The failure turn now carries a calm error rail + a structured card; the failed
+   node is a chip (data-flow-node = Phase-5 cross-panel highlight substrate).
+   Calm, not alarming — a contained signal, never a red wash.
+   ============================================================================ */
+.message-bubble .message--error {
+    /* Rounded-radius-safe left rail via inset shadow (the bubble has rounded-xl). */
+    box-shadow:
+        inset 3px 0 0 0 var(--status-error, #ef4444),
+        var(--shadow-lg, 0 10px 20px -5px rgba(0, 0, 0, 0.16));
+}
+
+.flow-error-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 4px;
+}
+.flow-error-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--status-error, #ef4444);
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+.flow-error-head svg { width: 18px; height: 18px; flex-shrink: 0; }
+.flow-error-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.flow-error-node-chip {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: var(--radius-sm, 6px);
+    background: color-mix(in srgb, var(--status-error, #ef4444) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-error, #ef4444) 32%, transparent);
+    color: var(--text-primary, #f8fafc);
+    cursor: default;
+    transition: background var(--duration-fast, 0.2s) ease;
+}
+.flow-error-node-chip:hover {
+    background: color-mix(in srgb, var(--status-error, #ef4444) 20%, transparent);
+}
+.flow-error-reason {
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 0.85rem;
+}
+.flow-error-foot {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.78rem;
+    font-style: italic;
+}
+
+/* ============================================================================
+   9. Accent discipline (Phase 4)
+   ----------------------------------------------------------------------------
+   Brand orange regains its punch by being reserved for commit / primary states.
+   IFOC profile colours and the chart palette are intentionally untouched (they
+   are semantic). This calms the always-on chrome instead.
+   ============================================================================ */
+
+/* Feedback pill — was hardcoded Tailwind grays (broke light mode) and loud at
+   rest. Now theme-aware, quiet by default, orange ONLY on hover/commit.
+   :has() targets the pill container without touching the JS that builds it. */
+div:has(> .feedback-btn) {
+    background: var(--glass-bg, rgba(148, 163, 184, 0.05)) !important;
+    border: 1px solid var(--border-secondary, rgba(148, 163, 184, 0.12)) !important;
+    border-radius: var(--radius-md, 8px) !important;
+}
+.feedback-btn {
+    color: var(--text-muted, #94a3b8) !important;
+    transition: color var(--duration-fast, 0.15s) ease, background var(--duration-fast, 0.15s) ease;
+}
+.feedback-btn .vote-label { color: var(--text-muted, #94a3b8) !important; }
+.feedback-btn:hover {
+    color: var(--text-primary, #f8fafc) !important;
+    background: var(--hover-bg, rgba(148, 163, 184, 0.08)) !important;
+}
+.feedback-btn:hover .vote-label { color: var(--text-secondary, #cbd5e1) !important; }
+/* Committed vote = the one place orange is earned here. */
+.feedback-btn.active {
+    color: var(--teradata-orange, #F15F22) !important;
+    background: color-mix(in srgb, var(--teradata-orange, #F15F22) 10%, transparent) !important;
+}
+.feedback-btn.active .vote-label { color: var(--teradata-orange, #F15F22) !important; }
+
+/* Profile chips in the thread: keep their semantic IFOC hue, but calm the
+   always-on saturation a touch and let them resolve to full strength on hover. */
+.message-profile-badge {
+    filter: saturate(0.92);
+    transition: filter var(--duration-fast, 0.2s) ease;
+}
+.message-profile-badge:hover {
+    filter: saturate(1.04) brightness(1.05);
+}
+
+/* ============================================================================
+   Unified panel-row backdrop
+   ----------------------------------------------------------------------------
+   The body gradient is viewport-FIXED, so transparent panels show different
+   SLICES of it by position (left/conversation lighter, right/components darker).
+   Instead, give EACH panel its OWN copy of the same gradient (NOT fixed, so it's
+   relative to the element): lighter at top-left → darker at bottom-right. Every
+   panel — conversation and all component canvases — then renders an identical
+   gradient regardless of where it sits. The opaque headers cover the top; the
+   transparent canvas/chat areas below show it.
+
+   To flip the direction, swap the two stops. To make it flat instead, set both
+   stops to the same token.
+   ============================================================================ */
+#chat-canvas-split > .sp-panel {
+    background: linear-gradient(135deg, var(--bg-secondary, #1f2126) 0%, var(--bg-primary, #141619) 100%);
+}
+
+/* ============================================================================
+   10. Conversation panel title bar
+   ----------------------------------------------------------------------------
+   The session header shares the .sp-header chrome with the component panels, so
+   the whole workspace reads as one coherent panel system. Its --sp-accent is set
+   per active profile (main.js updateSessionHeaderProfile), so the title bar
+   re-tints to the IFOC class colour driving the conversation.
+   ============================================================================ */
+/* The conversation column is a peer panel: chat body + the title bar on top, on
+   the same row as the component panels. Built at init by splitPanelResizer
+   (_relocateConversationHeader). --sp-accent (set per active profile in main.js)
+   lives on the panel so both the header and the focus ring pick it up. */
+#conversation-panel {
+    --sp-accent: var(--teradata-orange, #F15F22);
+    flex: 1 1 0%;
+    min-width: 300px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#conversation-panel > #chat-container {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+/* .sp-header/.sp-header-left are display:flex — make sure the `hidden` toggle
+   (header before a session is active) still wins regardless of cascade order. */
+.conversation-header.hidden,
+#active-session-title-wrapper.hidden { display: none !important; }
+/* Title is a touch more prominent than component titles — it's the spine panel. */
+.conversation-header .conversation-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-primary, #f8fafc);
+}
+.conversation-header #active-session-title-editing-hint { color: var(--text-muted, #94a3b8); }
+/* Rename-mode input inherits the title look. */
+.conversation-header input.conversation-title,
+.conversation-header #active-session-title-wrapper input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary, #f8fafc);
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+/* Profile badges sit inside the title bar — give them a little breathing room. */
+.conversation-header #header-default-profile,
+.conversation-header #header-override-profile { margin-left: 2px; }
+
+/* ============================================================================
+   11. Responsive conversation artifacts
+   ----------------------------------------------------------------------------
+   The conversation column narrows whenever side panels (KG / dashboard / flow /
+   canvas / scheduler) open. Every artifact rendered into a chat message — charts,
+   pinned dashboard cards, tables, code blocks — must adapt to that width instead
+   of overflowing the panel (which #conversation-panel's overflow:hidden clips).
+   The flex card already shrinks (flex-1 min-w-0); these rules make sure the inner
+   content shrinks with it, and wide content scrolls inside the card.
+   ============================================================================ */
+/* (a) The flex chain must allow shrinking. A flex item keeps min-width:auto
+   (= min-content) by default, which refuses to shrink below its widest child —
+   that was clipping the column when side panels opened. Force min-width:0 from
+   the chat body down to the card so it CAN shrink, but DON'T remove the Tailwind
+   readability caps (chat-log max-w-5xl, card max-w-3xl) — those keep the column
+   from stretching edge-to-edge when the conversation is the only panel. The cap
+   is a max, so min-width:0 still lets it shrink below the cap when narrow. */
+#conversation-panel > #chat-container { min-width: 0; }
+#chat-container { min-width: 0; }
+/* keep max-w-5xl cap (centred via mx-auto). width:100% is load-bearing: #chat-container is a flex
+   column, where mx-auto's auto margins turn stretching OFF — the log then took its content's width,
+   whose floor (a Sources fold, a row of chips) was ~670 px: below ~700 px wide (iPad Split View,
+   portrait with a side panel open) the conversation was cut on the right. */
+#chat-log { min-width: 0; width: 100%; }
+#chat-log .message-bubble { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }   /* the evidence + sources folds too, not only .message-content */
+#chat-log .message-bubble > * { min-width: 0; }
+/* (b) The card keeps its max-w-3xl cap for readability when wide; min-width:0
+   lets it shrink below that cap when the column narrows. */
+#chat-log .message-bubble > .glass-panel { min-width: 0; }
+#chat-log .message-content { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+/* (c) Every artifact inside a message fits the column; wide ones scale or scroll. */
+#chat-log .message-content > * { max-width: 100%; }
+#chat-log .message-content [data-component-id],
+#chat-log .message-content .kg-inline-compact,
+#chat-log .message-content .chart-render-target,
+#chat-log .message-content canvas,
+#chat-log .message-content svg,
+#chat-log .message-content img { max-width: 100% !important; }
+#chat-log .message-content [data-component-id="dashboard"] { overflow-x: auto; }
+#chat-log .message-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+#chat-log .message-content pre { max-width: 100%; overflow-x: auto; }
+
+/* ── Session primer — authored markdown, rendered as such ────────────────────
+   A primer is a .md file of standing rules: a numbered list, backticked
+   identifiers, the occasional emphasis. It used to arrive in the transcript as
+   one undifferentiated wall of source text.
+
+   Every rule here is scoped to `.message-content--primer`, a class carried ONLY
+   by a primer message. Tailwind's preflight strips list markers globally, so
+   these have to be restored explicitly — and scoping them this narrowly means
+   no other message in the chat log can change appearance. Theme-aware through
+   the same tokens the rest of the transcript uses. */
+.message-content--primer > ol,
+.message-content--primer > ul {
+    list-style: revert;
+    margin: 0.5rem 0;
+    padding-left: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.message-content--primer li { padding-left: 0.15rem; }
+.message-content--primer li::marker {
+    color: var(--text-muted, #94a3b8);
+    font-variant-numeric: tabular-nums;
+}
+.message-content--primer > p { margin: 0.5rem 0; }
+.message-content--primer > p:first-child { margin-top: 0; }
+.message-content--primer > :last-child { margin-bottom: 0; }
+/* Folded primer (session_primer.collapsed): the body hides, the author line becomes the
+   whole bubble, and a monochrome chevron is the only control. Scoped to
+   `.message--primer`, a class carried only by a primer bubble. */
+.message--primer .primer-author { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0; }
+.message--primer-collapsed .primer-author { margin-bottom: 0; }
+.message--primer-collapsed .message-content--primer { display: none; }
+.primer-toggle {
+    margin-left: auto;
+    width: 1.375rem; height: 1.375rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border-secondary, rgba(148, 163, 184, 0.25));
+    background: transparent;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.primer-toggle:hover { color: var(--text-primary, #f8fafc); background: var(--hover-bg-strong, rgba(148, 163, 184, 0.12)); }
+.primer-toggle:focus-visible { outline: 2px solid var(--teradata-orange, #F15F22); outline-offset: 1px; }
+.primer-toggle svg { transition: transform 160ms ease; transform: rotate(180deg); }
+.message--primer-collapsed .primer-toggle svg { transform: rotate(0deg); }
+@media (prefers-reduced-motion: reduce) { .primer-toggle, .primer-toggle svg { transition: none; } }
+.message-content--primer strong { color: var(--text-primary, #f8fafc); font-weight: 600; }
+.message-content--primer em { font-style: italic; }
+.message-content--primer h1,
+.message-content--primer h2,
+.message-content--primer h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0.75rem 0 0.35rem;
+    color: var(--text-primary, #f8fafc);
+}
+.message-content--primer pre {
+    margin: 0.5rem 0;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-xs, 4px);
+    background: var(--hover-bg, rgba(148, 163, 184, 0.1));
+    border: 1px solid var(--border-secondary, rgba(148, 163, 184, 0.12));
+    overflow-x: auto;
+}

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uderia — Agent Trust &amp; Assurance</title>
+<style>
+  :root {
+    --ground: #0e1621; --panel: #172230; --hair: #2c3c4e;
+    --text: #e9eff5; --muted: #93a4b6; --dim: #6b7d90;
+    --sage: #6cbf92; --blue: #6aa9e0; --accent: #F15F22;
+    --accent-line: rgba(241,95,34,0.45); --accent-soft: rgba(241,95,34,0.12);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--sans); color: var(--text); line-height: 1.62; font-size: 17px;
+    background: radial-gradient(1200px 720px at 50% -12%, #14212f 0%, var(--ground) 58%), var(--ground);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 80px 0 8px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin: 0 0 18px; }
+  h1 { font-weight: 800; letter-spacing: -0.02em; font-size: clamp(34px, 6vw, 58px); line-height: 1.02; margin: 0; }
+  h1 .thin { font-weight: 300; color: var(--muted); }
+  .epigraph { font-family: var(--serif); font-style: italic; font-size: clamp(18px, 2.3vw, 22px); color: #c6d3df; max-width: 60ch; margin: 26px 0 0; padding-left: 20px; border-left: 2px solid var(--accent-line); }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 46px 0 20px; }
+  @media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+  a.card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 16px; padding: 26px 26px;
+    transition: border-color .2s, box-shadow .2s, transform .2s;
+  }
+  a.card:hover { border-color: var(--accent-line); box-shadow: 0 8px 30px rgba(0,0,0,.28); transform: translateY(-2px); }
+  a.card .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  a.card h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 8px; }
+  a.card p { color: var(--muted); font-size: 15px; margin: 0; }
+  a.card .go { font-family: var(--mono); font-size: 12px; color: var(--sage); margin-top: 16px; display: inline-block; }
+  .seg { border-top: 1px solid var(--hair); margin-top: 44px; padding: 34px 0 6px; }
+  .seg-lab { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px; }
+  .seg-h { font-size: clamp(24px, 3.4vw, 32px); font-weight: 800; letter-spacing: -0.015em; margin: 0 0 10px; }
+  .seg-sub { color: var(--muted); font-size: 16px; max-width: 74ch; margin: 0 0 26px; }
+  a.card.example { margin: 0 0 20px; border-color: var(--accent-line); background:
+    linear-gradient(180deg, rgba(241,95,34,0.06) 0%, var(--panel) 62%); }
+  a.card.example h2 { font-size: 25px; }
+  a.card.example p { color: #c6d3df; max-width: 74ch; }
+  a.card.example .go { color: var(--accent); }
+  footer { padding: 40px 0 72px; color: var(--dim); font-size: 13px; font-family: var(--mono); }
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Agent Trust &amp; Assurance</p>
+    <h1>Uderia<br><span class="thin">the trust story, visualised</span></h1>
+    <p class="epigraph">Uderia is a framework for trusted data agents. Six visual stories and their companion architecture — how a Uderia agent is composed, signed, observed, enforced, proved, and kept in check; how the data it answers from becomes a signed, deterministic product; how every change it makes goes through a signed contract; how any single answer shows, to anyone, what produced it; and how an agent that cannot go on without a person stops and asks. Then the numbers that measure it, misses included.</p>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="agent-anatomy-of-trust.html">
+      <p class="k">Visual story · the model</p>
+      <h2>An Anatomy of Trust</h2>
+      <p>The agent as a five-faculty star on two foundations, inside a membrane that breathes — identity, assurance, access, audit.</p>
+      <span class="go">See the anatomy →</span>
+    </a>
+    <a class="card" href="the-life-of-a-uderia-agent.html">
+      <p class="k">Visual story · from the outside in</p>
+      <h2>The Life of a Uderia Agent</h2>
+      <p>Born → Composed → Signed → Runs → Observed → Enforced → Proved → Kept in check. The end-to-end trust lifecycle of a single agent, peel by peel.</p>
+      <span class="go">Read the story →</span>
+    </a>
+    <a class="card" href="the-anatomy-of-a-signed-data-product.html">
+      <p class="k" style="color:#eab308">Visual story · the data layer</p>
+      <h2>The Anatomy of a Signed Data Product</h2>
+      <p>Declared → Proven → Signed → Confined → Consumed → Receipted → Composed. Determinism you can verify: same request, same governed SQL, same rows.</p>
+      <span class="go">See the anatomy →</span>
+    </a>
+    <a class="card" href="the-anatomy-of-a-signed-action.html">
+      <p class="k" style="color:#3fb8c4">Visual story · acting on the business</p>
+      <h2>The Anatomy of a Signed Action</h2>
+      <p>Proposed → Landed → Contracted → Proven → Signed → Performed → Approved → Receipted. The write half: a model that grows beside its signed base, and rows that change only through a contract, a person, and a receipt.</p>
+      <span class="go">See the anatomy →</span>
+    </a>
+    <a class="card" href="the-anatomy-of-an-answers-evidence.html">
+      <p class="k" style="color:#b49cf0">Visual story · one answer, on the record</p>
+      <h2>The Anatomy of an Answer's Evidence</h2>
+      <p>Answered → Inventoried → Sealed → Kept → Compared → Exported → Verified → Anchored. For a real answer: what produced it, whether each part was signed and unchanged then — and a panel that verifies it in your browser.</p>
+      <span class="go">See the anatomy →</span>
+    </a>
+    <a class="card" href="the-anatomy-of-a-question.html">
+      <p class="k" style="color:#38bdf8">Visual story · a turn that stops to ask</p>
+      <h2>The Anatomy of a Question</h2>
+      <p>Stuck → Asked → Recorded → Held → Answered → Bound → Continued → Measured. When an agent cannot go on without a person it asks instead of guessing: found in code, held at the chokepoints, answered only by you, carried through chains and unattended runs, and measured when it was not asked.</p>
+      <span class="go">See the anatomy →</span>
+    </a>
+  </div>
+
+  <section class="seg">
+    <p class="seg-lab">Benchmarks</p>
+    <h2 class="seg-h">Measured, misses included</h2>
+    <p class="seg-sub">The stories above say what the controls do. These two benchmarks measure how well they do it — and publish what they miss.</p>
+
+  <a class="card example" href="benchmarks.html">
+    <p class="k">Anti-hallucination · corpus grounding · two benchmarks</p>
+    <h2>The Numbers</h2>
+    <p>One benchmark live and judge-labelled, one deterministic and reproducible offline at zero tokens. Recall, precision and cost, every miss named by case id — and the regression a rerun caught before anyone else did.</p>
+    <span class="go">Read the numbers →</span>
+  </a>
+  </section>
+
+
+  <footer>Uderia is a framework for trusted data agents. Served at /static/trust/ · a visual companion to the Agent Trust &amp; Assurance stack.</footer>
+</div>
+</html>

@@ -1,0 +1,89 @@
+{
+  "component_id": "platform",
+  "display_name": "Platform",
+  "icon_accent": "#64748b",
+  "answer_surface": {
+    "open": false
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"1\"/><path stroke-linecap=\"round\" d=\"M7 7h.01M7 17h.01M11 7h6M11 17h6\"/></svg>",
+  "description": "Uderia itself as a tool — the agent finds and calls the platform's own operations as the user, through the same routes and checks as any client. Its roles decide what it reaches; a change waits for a person where it must. Off until an owner turns it on.",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "none",
+  "roles": {
+    "grant": "componentConfig.platform.roles",
+    "default": [
+      "guide"
+    ],
+    "definitions": "roles/",
+    "playbooks": "platform-playbooks"
+  },
+  "signals": {
+    "emits": [],
+    "listens": [],
+    "announces": [],
+    "consumes_refs": false
+  },
+  "category": "General",
+  "tool_definition": {
+    "name": "TDA_Platform",
+    "description": "Uderia's own operations — the user's agents and their configuration, and more as the platform describes them. 'find' with a few words returns the operations that could do it, each with its arguments and whether you may call it; 'call' runs one by its op id with its arguments, as the user. Never invent an op id or an argument: 'find' first. An operation marked callable:false is a person's act or not offered to agents — tell the user what it is, never retry it. 'ask' puts a question to another of the user's agents and returns its answer — only an agent its owner lists, only where the deployment allows asking.",
+    "args": {
+      "action": {
+        "type": "string",
+        "description": "'find' | 'call' | 'ask'",
+        "required": true
+      },
+      "query": {
+        "type": "string",
+        "description": "find: what you want to see or do, in a few words (e.g. 'my agents', 'an agent's components')",
+        "required": false
+      },
+      "op": {
+        "type": "string",
+        "description": "call: the operation's id, exactly as 'find' returned it (e.g. 'profiles.list')",
+        "required": false
+      },
+      "args": {
+        "type": "dict",
+        "description": "call: the operation's arguments by name, as 'find' listed them (path, query and body alike)",
+        "required": false
+      },
+      "fields": {
+        "type": "list[str]",
+        "description": "call: keep only these keys of every record in the answer (e.g. ['tag', 'name']) — use it when an answer is long",
+        "required": false
+      },
+      "agent": {
+        "type": "string",
+        "description": "ask: the agent to ask, by its @TAG",
+        "required": false
+      },
+      "question": {
+        "type": "string",
+        "description": "ask: the question for that agent, complete in itself — it does not see this conversation",
+        "required": false
+      }
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "PlatformHandler"
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed",
+    "intensity_levels": [
+      "none",
+      "medium",
+      "heavy"
+    ],
+    "intensity_tooltips": {
+      "medium": "Use TDA_Platform when the user asks about their agents or the platform itself",
+      "heavy": "Check the platform's own state before answering questions about it"
+    }
+  },
+  "profile_defaults": {
+    "enabled_for": []
+  }
+}

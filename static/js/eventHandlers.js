@@ -1,0 +1,5255 @@
+/**
+ * eventHandlers.js
+ * * This module sets up all the event listeners for the application.
+ * It connects user interactions (clicks, form submissions, etc.) to the corresponding application logic.
+ */
+
+import * as DOM from './domElements.js';
+import { state, setCanvasSplitMode } from './state.js';
+import * as API from './api.js?v=1.2';
+import * as UI from './ui.js?v=1.287';
+import { handleViewSwitch, toggleSideNav } from './ui.js?v=1.287';
+import * as Utils from './utils.js';
+import { copyToClipboard, copyTableToClipboard, classifyConfirmation } from './utils.js';
+import { renameSession, deleteSession } from './api.js?v=1.2'; // Import the rename/delete API functions
+import { startRecognition, stopRecognition, startConfirmationRecognition } from './voice.js?v=1.189';
+import {
+    handleStartNewSession,
+    handleLoadSession,
+    handleDeleteSessionClick,
+    renameActiveSession
+} from './handlers/sessionManagement.js?v=3.209';
+import { handleGenieEvent } from './handlers/genieHandler.js?v=4.208';
+import { handleConversationAgentEvent } from './handlers/conversationAgentHandler.js?v=1.1';
+import { getPendingAttachments, clearPendingAttachments, renderAttachmentChips, isUploadInProgress } from './handlers/chatDocumentUpload.js?v=1.2';
+import { renderComponent, hasRenderer, loadRendererModule } from './componentRenderers.js?v=1.7';
+import { setSuggestions as setNextStepSuggestions, clearDock as clearNextStepDock } from './handlers/nextStepHandler.js?v=1.3';
+import { createSubWindow, updateSubWindow, closeSubWindow } from './subWindowManager.js?v=1.7';
+// The canvas renderer is a component's module: imported lazily and only where the component is
+// installed (a static import would 404 in a deployment without it and fail the whole page).
+let _getOpenCanvasState = () => null;
+loadRendererModule('canvas').then(m => { if (m && typeof m.getOpenCanvasState === 'function') _getOpenCanvasState = m.getOpenCanvasState; });
+import { loadKnowledgeGraphsPanel, handleKnowledgeGraphPanelClick, highlightKnowledgeGraphCard } from './handlers/knowledgeGraphPanelHandler.js?v=1.189';
+import { loadContextPanel, renderContextWindowSnapshot } from './handlers/contextPanelHandler.js?v=1.189';
+import { loadWorkspacePanel } from './handlers/workspacePanelHandler.js?v=1.115';
+import { loadSkillsPanel, highlightSkill } from './handlers/skillsPanelHandler.js?v=1.14';
+import { loadExtensionsPanel, highlightExtension } from './handlers/extensionsPanelHandler.js?v=1.8';
+import { highlightComponent } from './handlers/componentsPanelHandler.js?v=1.11';
+import { highlightCoordCard, highlightKnowledgeCard } from './handlers/capabilitiesManagement.js?v=1.189';
+import { openContextAnalyticsModal } from './handlers/contextAnalyticsModal.js?v=1.189';
+
+// ─── KG Live Animation Bridge (lazy-loaded) ────────────────────────────
+// S9: what the platform read from the attachments of the LAST submit (drawn on the user bubble's chips)
+let _lastSubmittedSources = null;
+let _kgAnimBridge = null;
+let _kgAnimLoadAttempted = false;
+async function _loadKGAnimBridge() {
+    if (_kgAnimLoadAttempted) return _kgAnimBridge;
+    _kgAnimLoadAttempted = true;
+    try {
+        _kgAnimBridge = await import('/api/v1/components/knowledge_graph/renderer');
+    } catch { _kgAnimBridge = null; }
+    return _kgAnimBridge;
+}
+function _tryKGAnimate(eventType, payload) {
+    if (!_kgAnimBridge) return;
+    try {
+        if (_kgAnimBridge.isKGPanelActive()) {
+            _kgAnimBridge.dispatchKGAnimation(eventType, payload);
+        }
+    } catch { /* KG component not available */ }
+}
+function _tryKGAnimateEnd() {
+    if (!_kgAnimBridge) return;
+    try {
+        if (_kgAnimBridge.isKGPanelActive()) {
+            _kgAnimBridge.endKGExecutionAnimations();
+        }
+    } catch { /* KG component not available */ }
+}
+import {
+    // handleCloseConfigModalRequest, // REMOVED
+    // handleConfigActionButtonClick, // REMOVED
+    finalizeConfiguration,
+    handleConfigFormSubmit,
+    loadCredentialsAndModels,
+    handleProviderChange,
+    handleModelChange,
+    handleRefreshModelsClick,
+    openPromptEditor,
+    closePromptEditor,
+    saveSystemPromptChanges,
+    resetSystemPrompt
+} from './handlers/configManagement.js?v=1.189';
+
+
+// --- Binary Extension Download Helpers ---
+
+/** MIME types that trigger file download instead of text rendering. */
+const _BINARY_CONTENT_TYPES = new Set([
+    'application/pdf',
+    'application/octet-stream',
+    'application/zip',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+
+/** SVG icons for download cards (industrial style, 28x28). */
+const _FILE_TYPE_SVGS = {
+    'application/pdf': `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="2" width="20" height="24" rx="2" stroke="#fbbf24" stroke-width="1.5" fill="rgba(251,191,36,0.08)"/>
+        <path d="M10 2V8H4" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="14" y="19" text-anchor="middle" fill="#fbbf24" font-size="7" font-weight="600" font-family="sans-serif">PDF</text>
+    </svg>`,
+    'application/zip': `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="2" width="20" height="24" rx="2" stroke="#fbbf24" stroke-width="1.5" fill="rgba(251,191,36,0.08)"/>
+        <text x="14" y="19" text-anchor="middle" fill="#fbbf24" font-size="7" font-weight="600" font-family="sans-serif">ZIP</text>
+    </svg>`,
+    'default': `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="2" width="20" height="24" rx="2" stroke="#fbbf24" stroke-width="1.5" fill="rgba(251,191,36,0.08)"/>
+        <path d="M10 2V8H4" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="9" y1="14" x2="19" y2="14" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
+        <line x1="9" y1="17" x2="19" y2="17" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
+        <line x1="9" y1="20" x2="15" y2="20" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
+    </svg>`,
+};
+
+/**
+ * Check if an extension result contains binary/file content
+ * that should trigger a download rather than text rendering.
+ */
+function _isExtensionBinaryContent(result) {
+    if (!result || !result.content_type) return false;
+    if (_BINARY_CONTENT_TYPES.has(result.content_type)) return true;
+    if (result.content_type.startsWith('application/vnd.')) return true;
+    if (result.content_type.startsWith('image/')) return true;
+    return false;
+}
+
+/**
+ * Build an HTML download card for binary extension output.
+ * Stores the base64 data in a global map and renders a download button.
+ */
+function _buildExtensionDownloadCard(extName, result) {
+    const content = result.content || {};
+    const filename = content.filename || `${extName}-output`;
+    const pages = content.pages;
+    const sizeBytes = content.size_bytes || 0;
+    const icon = _FILE_TYPE_SVGS[result.content_type] || _FILE_TYPE_SVGS['default'];
+
+    // Store binary data in global map for download handler
+    const dataKey = `${extName}_${Date.now()}`;
+    window._extensionBinaryData = window._extensionBinaryData || {};
+    window._extensionBinaryData[dataKey] = {
+        data: content.data,
+        contentType: result.content_type,
+        filename: filename,
+    };
+
+    // Format file size
+    let sizeLabel = '';
+    if (sizeBytes > 0) {
+        sizeLabel = sizeBytes < 1024
+            ? `${sizeBytes} B`
+            : sizeBytes < 1048576
+                ? `${(sizeBytes / 1024).toFixed(1)} KB`
+                : `${(sizeBytes / 1048576).toFixed(1)} MB`;
+    }
+
+    // Build meta line
+    const metaParts = [];
+    if (pages) metaParts.push(`${pages} page${pages > 1 ? 's' : ''}`);
+    if (sizeLabel) metaParts.push(sizeLabel);
+    const metaLine = metaParts.length > 0
+        ? `<span class="text-xs text-gray-500">${metaParts.join(' \u00B7 ')}</span>`
+        : '';
+
+    return `
+        <div class="extension-output mt-3 p-3 rounded-lg" data-ext-name="${extName}"
+             style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15);">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded"
+                      style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; font-family: 'JetBrains Mono', monospace;">
+                    !${extName}
+                </span>
+                <span class="text-xs text-gray-500">${result.content_type}</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1">
+                <div class="shrink-0 flex items-center justify-center" style="width:28px;height:28px;">${icon}</div>
+                <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+                    <span class="text-sm text-gray-200 truncate">${filename}</span>
+                    ${metaLine}
+                </div>
+                <button onclick="window._downloadExtensionFile('${dataKey}')"
+                        class="px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0"
+                        style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);"
+                        onmouseover="this.style.background='rgba(251, 191, 36, 0.25)'"
+                        onmouseout="this.style.background='rgba(251, 191, 36, 0.15)'">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:inline-block;vertical-align:middle;margin-right:2px;"><path d="M7 2v8m0 0l-3-3m3 3l3-3M3 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Download
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Expose helpers on window for cross-module access (notifications.js)
+window._isExtensionBinaryContent = _isExtensionBinaryContent;
+window._buildExtensionDownloadCard = _buildExtensionDownloadCard;
+
+// S8 — the ONE stream path the lineage acts use (turnLineage.js is a plain script; the stream
+// request is owned here). {regenerate_of, profile_override_id} | {edit_of, prompt}.
+window.__submitLineage = function (detail) {
+    const d = detail || {};
+    if (!state.currentSessionId) return;
+    if (DOM.submitButton && DOM.submitButton.dataset.mode === 'stop') return;   // a turn is running
+    if (Number.isInteger(d.regenerate_of)) {
+        return handleStreamRequest('/ask_stream', { message: '', session_id: state.currentSessionId, source: 'text',
+            regenerate_of: d.regenerate_of, profile_override_id: d.profile_override_id || undefined });
+    }
+    if (Number.isInteger(d.edit_of) && d.prompt) {
+        return handleStreamRequest('/ask_stream', { message: d.prompt, session_id: state.currentSessionId, source: 'text', edit_of: d.edit_of });
+    }
+};
+
+/**
+ * Global download handler — triggered by download buttons in extension cards.
+ * Decodes base64 data and triggers a browser file download.
+ */
+window._downloadExtensionFile = function(dataKey) {
+    const store = window._extensionBinaryData || {};
+    const entry = store[dataKey];
+    if (!entry || !entry.data) {
+        console.warn('[Extension] No binary data found for key:', dataKey);
+        return;
+    }
+    try {
+        const raw = atob(entry.data);
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        const blob = new Blob([bytes], { type: entry.contentType });
+        // the one way an export leaves a page: download, record, offer Save to Files
+        window.FilesKeep.deliver(blob, entry.filename, { what: 'extension output', sessionId: state.currentSessionId });
+    } catch (err) {
+        console.error('[Extension] Download failed:', err);
+    }
+};
+
+// --- Stream Processing ---
+
+/**
+ * Get human-readable step title for genie coordination events.
+ * @deprecated Use getGenieTitle() from harmonized functions instead
+ * This function now delegates to the harmonized implementation
+ */
+function _getGenieStepTitle(eventType, payload) {
+    // Delegate to harmonized function (defined below) for consistent terminology
+    return getGenieTitle(eventType, payload);
+}
+
+
+
+/**
+ * Get human-readable step title for conversation agent events.
+ * @deprecated Use profile-specific harmonized functions instead
+ * This function now delegates to the harmonized implementation
+ */
+function _getConversationAgentStepTitle(eventType, payload) {
+    // Route to appropriate harmonized function based on event type
+
+    // lifecycle events → getLifecycleTitle (execution_start, execution_complete, etc.)
+    if (eventType === 'execution_start' || eventType === 'execution_complete' ||
+        eventType === 'execution_error' || eventType === 'execution_cancelled') {
+        const profileType = payload?.profile_type || 'unknown';
+        return getLifecycleTitle(eventType, payload, profileType);
+    }
+
+    // conversation_* events → llm_only profile
+    if (eventType.startsWith('conversation_') || eventType.startsWith('llm_execution')) {
+        return getLlmOnlyTitle(eventType, payload);
+    }
+
+    // knowledge_* events → rag_focused profile (uses "Stage" terminology)
+    // This is used for rag_focused profiles and knowledge retrieval in other profiles
+    if (eventType.startsWith('knowledge_') || eventType === 'rag_llm_step' || eventType === 'tool_result') {
+        return getRagFocusedTitle(eventType, payload);
+    }
+
+    // Knowledge Graph enrichment event
+    if (eventType === 'kg_enrichment') {
+        return UI.kgEnrichmentTitle(payload);
+    }
+
+    // Component-internal LLM events (e.g., chart mapping resolution)
+    if (eventType === 'component_llm_resolution') {
+        return payload?.step || 'Component LLM Resolution';
+    }
+
+    // Fallback for unknown events
+    return eventType;
+}
+
+/**
+ * Extract total turn cost from all LLM calls in turnData for reload display.
+ * Sums up cost_usd from all event types that contain cost information.
+ *
+ * @param {Object} turnData - Turn data containing various event arrays
+ * @returns {number} Total cost in USD for the turn (0 if no cost data found)
+ */
+function _getTurnCost(turnData) {
+    let totalCost = 0;
+
+    // Helper to extract cost from event payload
+    const extractCost = (event) => {
+        if (!event || !event.payload) return 0;
+        const payload = event.payload;
+        // Handle nested details structure
+        const details = payload.details || payload;
+        return parseFloat(details.cost_usd || 0);
+    };
+
+    // CRITICAL FIX: Skip aggregate events that duplicate individual step costs
+    // Aggregate events to exclude (they sum individual steps, causing double-counting):
+    const aggregateEventTypes = [
+        'conversation_llm_complete',      // Duplicates last conversation_llm_step
+        'conversation_agent_complete',    // Sums all conversation_llm_step costs
+        'genie_coordinator_complete',     // Sums all genie_llm_step costs
+        'knowledge_retrieval_complete'    // Sums knowledge step costs
+    ];
+
+    // Individual step events to include (actual LLM calls):
+    const stepEventTypes = [
+        'conversation_llm_step',          // Conversation agent individual steps
+        'genie_llm_step',                 // Genie coordinator individual steps
+        'rag_llm_step',                   // RAG retrieval LLM calls
+        'llm_execution_complete',         // Knowledge repository LLM calls
+        'session_name_generation_complete', // Session naming LLM call (when present)
+        'next_step_generation_complete'   // Next-Step Recommender Tier C LLM call (when present)
+    ];
+
+    // Sum costs from all event types
+    const eventArrays = [
+        turnData.genie_events || [],
+        turnData.conversation_agent_events || [],
+        turnData.knowledge_events || [],
+        turnData.system_events || []
+    ];
+
+    eventArrays.forEach(events => {
+        if (Array.isArray(events)) {
+            events.forEach(event => {
+                const eventType = event.type;
+
+                // Skip aggregate events to avoid double-counting
+                if (aggregateEventTypes.includes(eventType)) {
+                    return; // Skip this event
+                }
+
+                // Only count individual step events (or any event with cost not in aggregate list)
+                const cost = extractCost(event);
+                if (cost > 0) {
+                    totalCost += cost;
+                }
+            });
+        }
+    });
+
+    // Also check execution_trace for tool_enabled profiles
+    if (turnData.execution_trace && Array.isArray(turnData.execution_trace)) {
+        turnData.execution_trace.forEach(step => {
+            if (step.action && step.action.cost_usd) {
+                totalCost += parseFloat(step.action.cost_usd);
+            }
+            // Check for cost in TDA_SystemLog event details (LLM call events)
+            if (step.action && step.action.tool_name === 'TDA_SystemLog' && step.action.arguments?.details?.cost_usd) {
+                totalCost += parseFloat(step.action.arguments.details.cost_usd);
+            }
+        });
+    }
+
+    // Compare with backend-provided cost if available (for verification)
+    if (turnData.turn_cost !== undefined) {
+        const backendCost = parseFloat(turnData.turn_cost);
+        const diff = Math.abs(totalCost - backendCost);
+
+        if (diff > 0.000001) {  // Allow for floating-point rounding
+            console.warn(`[Cost Verification] Discrepancy detected:
+                Backend turn_cost: $${backendCost.toFixed(6)}
+                Event sum: $${totalCost.toFixed(6)}
+                Difference: $${diff.toFixed(6)}`);
+        } else {
+            console.log(`[Cost Verification] Backend and event costs match: $${backendCost.toFixed(6)}`);
+        }
+    }
+
+    return totalCost;
+}
+
+/**
+ * Extract per-model (strategic vs tactical) token/cost breakdown from turn data.
+ * Used for dual-model tooltip display on historical reload.
+ *
+ * @param {Object} turnData - Turn data containing execution_trace and system_events
+ * @returns {Object} { strategicIn, strategicOut, strategicCost, tacticalIn, tacticalOut, tacticalCost }
+ */
+function _getPerModelBreakdown(turnData) {
+    const result = {
+        strategicIn: 0, strategicOut: 0, strategicCost: 0,
+        tacticalIn: 0, tacticalOut: 0, tacticalCost: 0
+    };
+
+    // Walk execution_trace for TDA_SystemLog entries with token/cost data
+    if (turnData.execution_trace && Array.isArray(turnData.execution_trace)) {
+        turnData.execution_trace.forEach(step => {
+            if (step.action && step.action.tool_name === 'TDA_SystemLog') {
+                const details = step.action.arguments?.details || {};
+                const inTk = details.input_tokens || 0;
+                const outTk = details.output_tokens || 0;
+                const cost = parseFloat(details.cost_usd || 0);
+                if (details.planning_phase === 'strategic') {
+                    result.strategicIn += inTk;
+                    result.strategicOut += outTk;
+                    result.strategicCost += cost;
+                } else if (inTk > 0 || cost > 0) {
+                    result.tacticalIn += inTk;
+                    result.tacticalOut += outTk;
+                    result.tacticalCost += cost;
+                }
+            }
+        });
+    }
+
+    // Also sum from system_events (session name gen, etc.)
+    const systemEvents = turnData.system_events || [];
+    if (Array.isArray(systemEvents)) {
+        systemEvents.forEach(evt => {
+            const payload = evt.payload || {};
+            const details = payload.details || payload;
+            const cost = parseFloat(details.cost_usd || 0);
+            const inTk = details.input_tokens || 0;
+            const outTk = details.output_tokens || 0;
+            if (cost > 0 || inTk > 0) {
+                result.tacticalIn += inTk;
+                result.tacticalOut += outTk;
+                result.tacticalCost += cost;
+            }
+        });
+    }
+
+    return result;
+}
+
+/**
+ * Extract the last statement token counts from turnData for reload display.
+ * The "Last Statement" should show the most recent individual LLM call, not turn totals.
+ *
+ * Priority (checked in order):
+ * 1. system_events: session_name_generation_complete (always last if present)
+ * 2. genie_events: genie_llm_step (genie profile)
+ * 3. conversation_agent_events: conversation_llm_complete or conversation_llm_step
+ * 4. knowledge_events: rag_llm_step, llm_execution_complete, or conversation_llm_step
+ * 5. Fallback: turn totals
+ */
+function _getLastStatementTokens(turnData) {
+    // Helper function to extract tokens from an event payload
+    const extractTokens = (event) => {
+        if (!event || !event.payload) return null;
+        const payload = event.payload;
+        // Handle nested details structure (session_name_generation_complete)
+        const details = payload.details || payload;
+        if (details.input_tokens !== undefined && details.output_tokens !== undefined) {
+            return { input: details.input_tokens, output: details.output_tokens };
+        }
+        return null;
+    };
+
+    // Helper function to find last matching event from array (reverse search)
+    const findLastEventWithTokens = (events, eventTypes) => {
+        if (!events || !Array.isArray(events)) return null;
+        for (let i = events.length - 1; i >= 0; i--) {
+            const event = events[i];
+            if (eventTypes.includes(event.type)) {
+                const tokens = extractTokens(event);
+                if (tokens) return tokens;
+            }
+        }
+        return null;
+    };
+
+    // PRIORITY 1: Post-turn LLM calls (chronologically last). The Next-Step
+    // Recommender's Tier C call runs AFTER session-name generation, so it is appended
+    // last in system_events — findLastEventWithTokens reverse-scans and returns the
+    // chronologically last of either type, so Tier C correctly wins when present.
+    const systemEvents = turnData.system_events || [];
+    const postTurnTokens = findLastEventWithTokens(
+        systemEvents, ['session_name_generation_complete', 'next_step_generation_complete',
+                       // the post-turn calls booked through core/post_turn_usage (after the turn)
+                       'proposal_suggestion_complete', 'proposal_suggestion', 'memory_write']);
+    if (postTurnTokens) return postTurnTokens;
+
+    // PRIORITY 2: Genie profile - genie_llm_step (routing + synthesis calls)
+    const genieEvents = turnData.genie_events || [];
+    if (genieEvents.length > 0) {
+        const genieTokens = findLastEventWithTokens(genieEvents, ['genie_llm_step']);
+        if (genieTokens) return genieTokens;
+    }
+
+    // PRIORITY 3: Conversation profile - conversation_agent_events
+    const agentEvents = turnData.conversation_agent_events || [];
+    if (agentEvents.length > 0) {
+        // First try conversation_llm_complete (final response)
+        const completeTokens = findLastEventWithTokens(agentEvents, ['conversation_llm_complete']);
+        if (completeTokens) return completeTokens;
+        // Fallback to conversation_llm_step
+        const stepTokens = findLastEventWithTokens(agentEvents, ['conversation_llm_step']);
+        if (stepTokens) return stepTokens;
+    }
+
+    // PRIORITY 4: RAG/LLM-only profile - knowledge_events
+    const knowledgeEvents = turnData.knowledge_events || [];
+    if (knowledgeEvents.length > 0) {
+        // RAG focused: rag_llm_step
+        const ragTokens = findLastEventWithTokens(knowledgeEvents, ['rag_llm_step']);
+        if (ragTokens) return ragTokens;
+        // LLM-only: llm_execution_complete
+        const llmCompleteTokens = findLastEventWithTokens(knowledgeEvents, ['llm_execution_complete']);
+        if (llmCompleteTokens) return llmCompleteTokens;
+        // LLM-only variant: conversation_llm_step
+        const conversationTokens = findLastEventWithTokens(knowledgeEvents, ['conversation_llm_step']);
+        if (conversationTokens) return conversationTokens;
+    }
+
+    // PRIORITY 5: Fallback to turn totals (tool_enabled or missing data)
+    return {
+        input: turnData.turn_input_tokens || turnData.input_tokens || 0,
+        output: turnData.turn_output_tokens || turnData.output_tokens || 0
+    };
+}
+
+/**
+ * Merge conversation_tool_invoked events with their corresponding conversation_tool_completed events.
+ * This prevents duplicate rows in historical replay - we only show the final state.
+ *
+ * For 5 parallel base_tableDDL calls, we want to show 5 completed rows, not 10 (5 invoked + 5 completed).
+ *
+ * @param {Array} events - Array of conversation agent events
+ * @returns {Array} Processed events with tool invokes merged into completions
+ */
+function _mergeToolEvents(events) {
+    const result = [];
+    const pendingInvokes = new Map(); // tool_name -> array of events
+
+    for (const event of events) {
+        const type = event.type;
+        const toolName = event.payload?.tool_name;
+
+        if (type === 'conversation_tool_invoked' && toolName) {
+            // Queue invoked events by tool name
+            if (!pendingInvokes.has(toolName)) {
+                pendingInvokes.set(toolName, []);
+            }
+            pendingInvokes.get(toolName).push(event);
+        } else if (type === 'conversation_tool_completed' && toolName) {
+            // Match with oldest pending invoke for this tool
+            const pending = pendingInvokes.get(toolName);
+            if (pending && pending.length > 0) {
+                // Remove the matched invoke (don't render it separately)
+                pending.shift();
+            }
+            // Always render the completed event (it has the final state)
+            result.push(event);
+        } else {
+            // Keep all other events (start, llm_step, agent_complete)
+            result.push(event);
+        }
+    }
+
+    // Any unmatched invokes (tool started but didn't complete - error case) get added as-is
+    for (const pending of pendingInvokes.values()) {
+        for (const event of pending) {
+            result.push(event);
+        }
+    }
+
+    return result;
+}
+
+// ============================================================================
+// PROFILE TYPE BRANDING (IFOC Methodology)
+// ============================================================================
+
+/**
+ * Map profile types to branded agent names (IFOC methodology)
+ * @param {string} profileType - Backend profile type
+ * @returns {string} Branded agent name
+ */
+function getBrandedAgentName(profileType) {
+    switch (profileType) {
+        case 'conversation_with_tools':
+        case 'llm_only':
+            return 'Ideate Engine';
+        case 'rag_focused':
+            return 'Focus Engine';
+        case 'tool_enabled':
+            return 'Optimize Engine';
+        case 'genie':
+            return 'Coordinate Engine';
+        default:
+            return 'Engine';
+    }
+}
+
+// ============================================================================
+// HARMONIZED EVENT TITLE GENERATION (Phase 1: Terminology Harmonization)
+// ============================================================================
+
+/**
+ * Build a compact suffix showing the active search mode(s).
+ * Returns "" when all collections use the default "semantic" mode,
+ * " [hybrid]" when all use hybrid, or " [mixed]" when modes differ.
+ * @param {object|undefined} searchModes - Map of collection name → search mode
+ * @returns {string} Suffix string (empty for semantic-only)
+ */
+function _searchModeSuffix(searchModes) {
+    if (!searchModes || typeof searchModes !== 'object') return '';
+    const modes = [...new Set(Object.values(searchModes))];
+    if (modes.length === 0) return '';
+    if (modes.length === 1 && modes[0] === 'semantic') return '';
+    const label = modes.length === 1 ? modes[0] : 'mixed';
+    return ` [${label}]`;
+}
+
+/**
+ * Reload titles for the assurance steps every engine shares (S3 Number Lineage, S4 the
+ * recovery steps). ONE helper consulted by all four per-class title functions' defaults, so
+ * a step is titled identically live and on a plan reload for every profile class — a card
+ * headed by its wire type (`llm_recovery`) was the defect this closes.
+ */
+function _assuranceStepTitle(eventType, payload) {
+    if (eventType === 'compute_lineage') {
+        // mirrors compute_lineage.step_title (PROP-006): the title names a combine / several sources
+        const src = ((payload && (payload.details || payload)) || {}).sources;
+        if (src && Array.isArray(src.combines) && src.combines.length) return 'Number Lineage — Combined Results';
+        if (src && Array.isArray(src.sources) && src.sources.length > 1) return 'Number Lineage — Several Sources';
+        return 'Number Lineage';
+    }
+    if (eventType === 'tool_surface') return 'Tool Surface';
+    if (eventType === 'action_record') {
+        const d = (payload && (payload.details || payload)) || {};
+        return { prepared: 'Action Prepared', performed: 'Action Performed', parked: 'Action Parked for Review',
+                 observed: 'Action Observed', refused: 'Action Refused' }[d.outcome] || 'Action';
+    }
+    if (eventType === 'mcp_server_unavailable') return 'MCP Server Unavailable';
+    if (eventType === 'outcome_revision') return 'Outcome Revision';
+    if (eventType === 'attachment_sources') return 'Attachments Read as Sources';
+    if (eventType === 'steer_consumed') { const d = (payload && (payload.details || payload)) || {}; return d.carried ? 'Steer Carried to the Next Turn' : 'Steer Considered'; }
+    if (eventType === 'turn_budget') {
+        const d = (payload && (payload.details || payload)) || {};
+        if (d.skipped_phases) return 'Budget Exhausted — Phase Skipped';
+        return d.killed ? 'Budget Exhausted — Turn Stopped' : 'Budget Exhausted — Finished Gracefully';
+    }
+    if (eventType === 'llm_recovery') {
+        const d = (payload && (payload.details || payload)) || {};
+        return { retry: 'Provider Retry', continuation: 'Answer Continued', fallback: 'Served by Fallback', refusal: 'Provider Refusal' }[d.kind] || 'LLM Recovery';
+    }
+    return null;
+}
+
+/**
+ * Generate harmonized display title for tool_enabled profile events
+ * @param {string} eventType - Backend event type
+ * @param {object} payload - Event payload data
+ * @returns {string} Harmonized display title
+ */
+function getToolEnabledTitle(eventType, payload) {
+    switch (eventType) {
+        case 'phase_start':
+            return `Phase ${payload.phase_num}/${payload.total_phases}: ${payload.goal}`;
+        case 'phase_end':
+            return `Phase ${payload.phase_num}/${payload.total_phases} Completed`;
+        case 'system_message':
+            if (payload.message?.includes('LLM')) {
+                return `Calling LLM: ${payload.purpose || 'Planning'}`;
+            }
+            return payload.message;
+        case 'plan_generated':
+            return 'Strategic Plan Generated';
+        case 'plan_optimization':
+            return 'Optimizing Plan';
+        case 'knowledge_retrieval_start': {
+            const collections = payload.collections || [];
+            const modeSuffix = _searchModeSuffix(payload.search_modes);
+            return `Searching Knowledge (${collections.length} ${collections.length === 1 ? 'collection' : 'collections'})${modeSuffix}`;
+        }
+        case 'knowledge_reranking_start': {
+            const collection = payload.collection || 'Unknown';
+            return `Reranking Documents (${collection})`;
+        }
+        case 'knowledge_reranking_complete': {
+            const collection = payload.collection || 'Unknown';
+            const count = payload.reranked_count || 0;
+            return `Reranked ${count} documents (${collection})`;
+        }
+        case 'knowledge_retrieval_complete': {
+            const docCount = payload.document_count || 0;
+            const duration = payload.duration_ms || 0;
+            const modeSuffix = _searchModeSuffix(payload.search_modes);
+            const fromAtt = payload.answered_from_attachments ? ' — answered from the attachment' : '';
+            return `Knowledge Retrieved (${docCount} ${docCount === 1 ? 'chunk' : 'chunks'} in ${duration}ms)${modeSuffix}${fromAtt}`;
+        }
+        case 'rag_llm_step': {
+            // Token counts are shown in the Tool Execution Result step, so don't duplicate them here
+            return `Calling LLM: Knowledge Synthesis`;
+        }
+        case 'knowledge_search_complete': {
+            const collections = payload.collections_searched || 0;
+            const docs = payload.documents_retrieved || 0;
+            const totalTime = payload.total_time_ms || 0;
+            const timeSeconds = (totalTime / 1000).toFixed(1);
+            return `Knowledge Search Complete (${collections} ${collections === 1 ? 'collection' : 'collections'}, ${docs} ${docs === 1 ? 'document' : 'documents'} in ${timeSeconds}s)`;
+        }
+        case 'workaround':
+            return 'System Correction';
+        case 'error':
+            return payload.error_message || 'Error';
+        case 'cancelled':
+            return 'Planner Execution Stopped';
+        case 'session_name_generation_start':
+            return 'Generating Session Name';
+        case 'session_name_generation_complete':
+            return payload.name ? `Session Named: ${payload.name}` : 'Session Name Generated';
+        case 'next_step_generation_start':
+            return 'Generating Smart Next Steps';
+        case 'next_step_generation_complete':
+            return 'Smart Next Steps Generated';
+        case 'proposal_suggestion_complete':
+        case 'proposal_suggestion':
+            return 'Proposal Suggested';
+        case 'memory_write':
+            return 'Memory Updated';
+        case 'judge_evaluation_complete':
+            // Two judge layers ride ONE event type, and only one of them could change
+            // what the user received — so the reload title must distinguish them the
+            // same way the live step name does, or the distinction survives only until
+            // the page is reloaded.
+            return (((payload || {}).details || payload || {}).layer === 'in_flight')
+                ? 'Gate Consulted a Judge' : 'Agent Quality Judged';
+        default:
+            return _assuranceStepTitle(eventType, payload) || eventType;
+    }
+}
+
+/**
+ * Generate harmonized display title for llm_only profile events
+ * Uses "Action" terminology instead of "LLM Step"
+ * @param {string} eventType - Backend event type
+ * @param {object} payload - Event payload data
+ * @returns {string} Harmonized display title
+ */
+function getLlmOnlyTitle(eventType, payload) {
+    switch (eventType) {
+        case 'conversation_agent_start': {
+            const toolCount = payload.available_tools?.length || 0;
+            const agentName = getBrandedAgentName(payload.profile_type || 'conversation_with_tools');
+            return `${agentName} Started (${toolCount} tools available)`;
+        }
+        case 'conversation_llm_step': {
+            // Harmonized naming across profile types
+            return 'LLM Synthesis Execution';
+        }
+        case 'conversation_llm_complete': {
+            // LLM synthesis results event for Conversation profile
+            const inputTokens = payload.input_tokens || 0;
+            const outputTokens = payload.output_tokens || 0;
+            return `LLM Synthesis Results (${inputTokens} in / ${outputTokens} out)`;
+        }
+        case 'conversation_tool_invoked':
+            return `Executing Tool: ${payload.tool_name || 'tool'}`;
+        case 'conversation_tool_completed': {
+            const status = payload.success ? 'Completed' : 'Failed';
+            const duration = payload.duration_ms ? ` (${(payload.duration_ms / 1000).toFixed(1)}s)` : '';
+            return `Tool Completed: ${payload.tool_name || 'Tool'}${duration}`;
+        }
+        case 'conversation_tool_rewrite':
+            // a deterministic rewrite the tool wrapper applied before the statement ran (0 LLM)
+            return `System Self-Correction: ${payload.label || payload.kind || 'statement rewritten'}`;
+        case 'conversation_agent_complete': {
+            const toolCount = payload.tools_used?.length || 0;
+            const duration = payload.total_duration_ms ? ` in ${(payload.total_duration_ms / 1000).toFixed(1)}s` : '';
+            const completeAgentName = getBrandedAgentName(payload.profile_type || 'conversation_with_tools');
+            return payload.success
+                ? `${completeAgentName} Complete (${toolCount} tools executed${duration})`
+                : `${completeAgentName} Failed`;
+        }
+        case 'llm_execution':
+            return 'Calling LLM: Execution';
+        case 'llm_execution_complete': {
+            const inputTokens = payload.input_tokens || 0;
+            const outputTokens = payload.output_tokens || 0;
+            return `LLM Execution Complete (${inputTokens} in / ${outputTokens} out)`;
+        }
+        case 'session_name_generation_start':
+            return 'Generating Session Name';
+        case 'session_name_generation_complete':
+            return payload.name ? `Session Named: ${payload.name}` : 'Session Name Generated';
+        case 'next_step_generation_start':
+            return 'Generating Smart Next Steps';
+        case 'next_step_generation_complete':
+            return 'Smart Next Steps Generated';
+        case 'proposal_suggestion_complete':
+        case 'proposal_suggestion':
+            return 'Proposal Suggested';
+        case 'memory_write':
+            return 'Memory Updated';
+        case 'judge_evaluation_complete':
+            // Two judge layers ride ONE event type, and only one of them could change
+            // what the user received — so the reload title must distinguish them the
+            // same way the live step name does, or the distinction survives only until
+            // the page is reloaded.
+            return (((payload || {}).details || payload || {}).layer === 'in_flight')
+                ? 'Gate Consulted a Judge' : 'Agent Quality Judged';
+        default:
+            return _assuranceStepTitle(eventType, payload) || eventType;
+    }
+}
+
+/**
+ * Generate harmonized display title for rag_focused profile events
+ * Uses "Stage" terminology to reflect pipeline stages
+ * @param {string} eventType - Backend event type
+ * @param {object} payload - Event payload data
+ * @returns {string} Harmonized display title
+ */
+function getRagFocusedTitle(eventType, payload) {
+    switch (eventType) {
+        case 'knowledge_retrieval_start': {
+            const collections = payload.collections || [];
+            const modeSuffix = _searchModeSuffix(payload.search_modes);
+            return `Stage: Retrieval - Searching Knowledge (${collections.length} ${collections.length === 1 ? 'collection' : 'collections'})${modeSuffix}`;
+        }
+        case 'knowledge_reranking_start': {
+            const collection = payload.collection || 'Unknown';
+            return `Stage: Reranking - Optimizing Results (${collection})`;
+        }
+        case 'knowledge_reranking_complete': {
+            const collection = payload.collection || 'Unknown';
+            const count = payload.reranked_count || 0;
+            return `Stage: Reranking - ${count} documents processed (${collection})`;
+        }
+        case 'knowledge_retrieval_complete': {
+            const docCount = payload.document_count || 0;
+            const duration = payload.duration_ms || 0;
+            const modeSuffix = _searchModeSuffix(payload.search_modes);
+            const fromAtt = payload.answered_from_attachments ? ' — answered from the attachment' : '';
+            return `Stage: Retrieval - ${docCount} ${docCount === 1 ? 'chunk' : 'chunks'} retrieved in ${duration}ms${modeSuffix}${fromAtt}`;
+        }
+        case 'rag_llm_step': {
+            // Token counts are shown in the LLM Synthesis Results step, so don't duplicate them here
+            return 'LLM Synthesis Execution';
+        }
+        case 'knowledge_search_complete': {
+            const collections = payload.collections_searched || 0;
+            const docs = payload.documents_retrieved || 0;
+            const totalTime = payload.total_time_ms || 0;
+            const timeSeconds = (totalTime / 1000).toFixed(1);
+            return `Stage: Complete - ${collections} ${collections === 1 ? 'collection' : 'collections'}, ${docs} ${docs === 1 ? 'document' : 'documents'} in ${timeSeconds}s`;
+        }
+        case 'knowledge_retrieval': {
+            const docCount = payload.document_count || 0;
+            return `Knowledge Retrieved (${docCount} chunks)`;
+        }
+        case 'tool_result': {
+            // LLM synthesis results event for RAG profile
+            return 'LLM Synthesis Results';
+        }
+        case 'session_name_generation_start':
+            return 'Generating Session Name';
+        case 'session_name_generation_complete':
+            return payload.name ? `Session Named: ${payload.name}` : 'Session Name Generated';
+        case 'next_step_generation_start':
+            return 'Generating Smart Next Steps';
+        case 'next_step_generation_complete':
+            return 'Smart Next Steps Generated';
+        case 'proposal_suggestion_complete':
+        case 'proposal_suggestion':
+            return 'Proposal Suggested';
+        case 'memory_write':
+            return 'Memory Updated';
+        case 'judge_evaluation_complete':
+            // Two judge layers ride ONE event type, and only one of them could change
+            // what the user received — so the reload title must distinguish them the
+            // same way the live step name does, or the distinction survives only until
+            // the page is reloaded.
+            return (((payload || {}).details || payload || {}).layer === 'in_flight')
+                ? 'Gate Consulted a Judge' : 'Agent Quality Judged';
+        default:
+            return _assuranceStepTitle(eventType, payload) || eventType;
+    }
+}
+
+/**
+ * Generate harmonized display title for genie profile events
+ * Uses "Coordination Step" terminology for coordinator steps
+ * @param {string} eventType - Backend event type
+ * @param {object} payload - Event payload data
+ * @returns {string} Harmonized display title
+ */
+function getGenieTitle(eventType, payload) {
+    switch (eventType) {
+        case 'genie_start':
+            return 'Coordinator Activated';
+        case 'genie_routing': {
+            const slaveCount = payload.slave_profiles?.length || 0;
+            return `Consulting ${slaveCount} expert${slaveCount > 1 ? 's' : ''}`;
+        }
+        case 'genie_coordination_start':
+            return 'Coordinator Started';
+        case 'genie_llm_step': {
+            const stepName = payload.step_name || 'Processing';
+            // Harmonize with other profile naming: "LLM X Execution"
+            if (stepName.toLowerCase().includes('routing')) {
+                return 'LLM Routing Execution';
+            } else if (stepName.toLowerCase().includes('synthesis')) {
+                return 'LLM Synthesis Execution';
+            }
+            return `LLM ${stepName} Execution`;
+        }
+        case 'genie_routing_decision': {
+            const profileCount = payload.selected_profiles?.length || 0;
+            return `Routing to ${profileCount} expert${profileCount > 1 ? 's' : ''}`;
+        }
+        case 'genie_slave_invoked':
+            return `Invoking Expert: @${payload.profile_tag || 'PROFILE'}`;
+        case 'genie_slave_progress':
+            return `Expert @${payload.profile_tag || 'PROFILE'}: ${payload.message || 'Processing'}`;
+        case 'genie_slave_completed': {
+            const status = payload.success ? 'Completed' : 'Failed';
+            const duration = payload.duration_ms ? ` (${(payload.duration_ms / 1000).toFixed(1)}s)` : '';
+            return `Expert @${payload.profile_tag || 'PROFILE'} ${status}${duration}`;
+        }
+        case 'genie_synthesis_start':
+            return 'LLM Synthesis Started';
+        case 'genie_synthesis_complete':
+            return 'LLM Synthesis Results';
+        case 'genie_synthesis_skipped':
+            return 'Synthesis Skipped';
+        case 'genie_coordination_complete':
+            return payload.success ? 'Coordinator Complete' : 'Coordinator Failed';
+        case 'genie_component_invoked':
+            return `Component: ${payload.tool_name || 'Tool'}`;
+        case 'genie_component_completed':
+            return `Component Complete: ${payload.component_id || payload.tool_name || 'Tool'}`;
+        case 'kg_enrichment':
+            return UI.kgEnrichmentTitle(payload);
+        case 'session_name_generation_start':
+            return 'Generating Session Name';
+        case 'session_name_generation_complete':
+            return payload.name ? `Session Named: ${payload.name}` : 'Session Name Generated';
+        case 'next_step_generation_start':
+            return 'Generating Smart Next Steps';
+        case 'next_step_generation_complete':
+            return 'Smart Next Steps Generated';
+        case 'proposal_suggestion_complete':
+        case 'proposal_suggestion':
+            return 'Proposal Suggested';
+        case 'memory_write':
+            return 'Memory Updated';
+        case 'judge_evaluation_complete':
+            // Two judge layers ride ONE event type, and only one of them could change
+            // what the user received — so the reload title must distinguish them the
+            // same way the live step name does, or the distinction survives only until
+            // the page is reloaded.
+            return (((payload || {}).details || payload || {}).layer === 'in_flight')
+                ? 'Gate Consulted a Judge' : 'Agent Quality Judged';
+        default:
+            return _assuranceStepTitle(eventType, payload) || eventType;
+    }
+}
+
+/**
+ * Generate harmonized display title for lifecycle events (Phase 2)
+ * @param {string} eventType - Lifecycle event type ('execution_start', 'execution_complete', etc.)
+ * @param {object} payload - Event payload data
+ * @param {string} profileType - Profile type ('tool_enabled', 'llm_only', 'rag_focused', 'genie')
+ * @returns {string} Harmonized display title
+ */
+function getLifecycleTitle(eventType, payload, profileType) {
+    const profileLabels = {
+        'tool_enabled': 'Efficiency Focused',
+        'llm_only': 'Conversation Focused',
+        'rag_focused': 'Knowledge Focused',
+        'genie': 'Genie Coordinator'
+    };
+    const profileLabel = profileLabels[profileType] || profileType;
+
+    switch (eventType) {
+        case 'execution_start':
+            return `${profileLabel} Started`;
+        case 'execution_complete':
+            // Duration is shown in metrics section, not header (Issue #15 - harmonization)
+            return `${profileLabel} Complete`;
+        case 'execution_error': {
+            const errorType = payload.error_type || 'error';
+            return `${profileLabel} Error: ${errorType}`;
+        }
+        case 'execution_cancelled':
+            return `${profileLabel} Cancelled`;
+        default:
+            return eventType;
+    }
+}
+
+/**
+ * Main harmonized event title generator - routes to profile-specific functions
+ * @param {string} profileType - 'tool_enabled', 'llm_only', 'rag_focused', 'genie'
+ * @param {string} eventType - Backend event type (e.g., 'phase_start', 'conversation_tool_invoked')
+ * @param {object} payload - Event payload data
+ * @returns {string} Harmonized display title
+ */
+function getHarmonizedEventTitle(profileType, eventType, payload) {
+    // Handle universal lifecycle events (Phase 2 - not implemented yet)
+    if (eventType === 'execution_start') {
+        return `${getProfileDisplayName(profileType)} Execution Started`;
+    }
+    if (eventType === 'execution_complete') {
+        return `${getProfileDisplayName(profileType)} Execution Complete`;
+    }
+    if (eventType === 'execution_error') {
+        return `${getProfileDisplayName(profileType)} Execution Failed: ${payload.error_message || 'Unknown error'}`;
+    }
+    if (eventType === 'execution_cancelled') {
+        return `${getProfileDisplayName(profileType)} Execution Stopped`;
+    }
+
+    // Route to profile-specific title functions
+    switch (profileType) {
+        case 'tool_enabled':
+            return getToolEnabledTitle(eventType, payload);
+        case 'llm_only':
+            return getLlmOnlyTitle(eventType, payload);
+        case 'rag_focused':
+            return getRagFocusedTitle(eventType, payload);
+        case 'genie':
+            return getGenieTitle(eventType, payload);
+        default:
+            // Fallback to old functions if profile type unknown
+            return eventType;
+    }
+}
+
+/**
+ * Helper function to get human-readable profile display name
+ * @param {string} profileType - Profile type identifier
+ * @returns {string} Display name
+ */
+function getProfileDisplayName(profileType) {
+    const names = {
+        'tool_enabled': 'Planner',
+        'llm_only': 'Conversation',
+        'rag_focused': 'Knowledge',
+        'genie': 'Coordinator'
+    };
+    return names[profileType] || 'Agent';
+}
+
+// ============================================================================
+// END: Harmonized Event Title Generation
+// ============================================================================
+
+async function processStream(responseBody, originSessionId) {
+    // The turn this stream DELIVERED (from `final_answer`), returned to the caller so
+    // the stream's own end can settle the assurance dial on the persisted turn.
+    let deliveredTurnId = null;
+    // S1: a stopped turn whose partial answer was delivered as final_answer{partial}
+    let partialDelivered = false;
+    // S1.1: a `cancelled` frame ARRIVES BEFORE the partial final_answer (the endpoint queues one
+    // the instant it cancels; the executor yields its own while unwinding; the partial is
+    // emitted last) — so the CANCELLED line and the bubble teardown wait for the stream's end
+    // and happen only when no partial arrived.
+    let cancelPending = null;
+    // Lazy-load KG animation bridge on first stream (non-blocking)
+    if (!_kgAnimLoadAttempted) _loadKGAnimBridge();
+
+    const reader = responseBody.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    // One assurance-dial mount per stream — see the begin() call below for why
+    // re-mounting per message destroyed the settled reading.
+    let dialBegun = false;
+
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const messages = buffer.split('\n\n');
+        buffer = messages.pop();
+
+        for (const message of messages) {
+            if (!message) continue;
+
+            // Session guard: skip all DOM writes if the user has switched
+            // to a different session. The stream stays alive so that when
+            // they switch back, new events resume rendering immediately.
+            if (state.currentSessionId !== originSessionId) continue;
+
+            // Mount the assurance dial as soon as the turn STARTS, with every station
+            // pending — otherwise pinning it pins an empty space until the turn is over,
+            // which is what it did before. The turn id is not known yet and is not
+            // needed: the dial identifies itself by session and is superseded wholesale
+            // by the authoritative payload at completion.
+            //
+            // ONCE PER STREAM — this used to run for EVERY message, relying on the
+            // dial's `_live` guard. But the authoritative inject() clears `_live`, so
+            // when scoring settled the dial while late messages were still trickling
+            // (session name, next-step chips…), the very next message's begin() NUKED
+            // the settled band — results, Quality card, adopted controls — and mounted
+            // a fresh all-pending "still running" dial that nothing ever replaced
+            // (the user's stuck-circle: a refresh, using the reload path, "fixed" it).
+            try {
+                if (!dialBegun && window.AssuranceDial && window.AssuranceDial.enabled()
+                    && window.AssuranceDial.begin) {
+                    dialBegun = true;
+                    window.AssuranceDial.begin(originSessionId, 'live');
+                    // S5 — a new turn: the previous turn's budget bar must not linger
+                    if (window.BudgetBar && window.BudgetBar.reset) window.BudgetBar.reset();
+                    // S4 — a served-by chip pending from an abandoned turn must not land on this one
+                    try { if (state.pendingServedBy) delete state.pendingServedBy[originSessionId]; } catch (_) { /* no-op */ }
+                }
+            } catch (_) { /* a live instrument must never break the stream */ }
+
+            let eventName = 'message';
+            let dataLine = '';
+            let cursorSeq = null;   // S10 — the frame's cursor (`id:`), the point a reattach resumes from
+
+            const lines = message.split('\n');
+            for(const line of lines) {
+                if (line.startsWith('data:')) {
+                    dataLine = line.substring(5).trim();
+                } else if (line.startsWith('event:')) {
+                    eventName = line.substring(6).trim();
+                } else if (line.startsWith('id:')) {
+                    const n = parseInt(line.substring(3).trim(), 10);
+                    if (Number.isInteger(n)) cursorSeq = n;
+                }
+            }
+
+            if (dataLine) {
+                try {
+                    const eventData = JSON.parse(dataLine);
+                    // S10 — keep the session's cursor; the reattach control frames are not turn events
+                    try {
+                        if (window.SteerReattach) {
+                            if (cursorSeq != null) window.SteerReattach.cursor(originSessionId, cursorSeq);
+                            if (eventName === 'reattach_gap') { window.SteerReattach.markGap(originSessionId); continue; }
+                            if (eventName === 'reattach_end') { if (eventData && eventData.done) window.SteerReattach.markEnded(originSessionId); continue; }
+                        }
+                    } catch (_) { /* a cursor must never break the stream */ }
+
+                    if (eventData.task_id && state.currentTaskId !== eventData.task_id) {
+                        state.currentTaskId = eventData.task_id;
+                        UI.updateTaskIdDisplay(eventData.task_id);
+                    }
+
+                    // Live PHASE cue on the assurance dial — what the agent is doing right
+                    // now, driven by execution events EVERY engine already emits. The trust
+                    // stations report post-answer (grounding, scoring), so a fast turn — a
+                    // bare Ideate turn above all — had nothing to fill the ring while the
+                    // model reasoned; this shows the truth ("Reasoning…"), never a verdict.
+                    try {
+                        if (window.AssuranceDial && window.AssuranceDial.phase
+                            && window.AssuranceDial.enabled && window.AssuranceDial.enabled()) {
+                            const _ph = eventName === 'context_window_snapshot' ? 'context'
+                                : (eventName === 'knowledge_retrieval' ? 'retrieving'
+                                : ((eventName === 'status_indicator_update'
+                                    && eventData.target === 'llm' && eventData.state === 'busy') ? 'reasoning'
+                                : ((eventName === 'llm_execution_complete'
+                                    || eventName === 'conversation_llm_complete'
+                                    || eventName === 'genie_synthesis_complete') ? 'screening' : null)));
+                            if (_ph) window.AssuranceDial.phase(originSessionId, _ph);
+                        }
+                    } catch (_) { /* a live cue must never break the stream */ }
+
+                    // S1.1 — the Living Answer reads every frame BEFORE its dispatch (one clock:
+                    // a chip lands the instant its Live Status card does; never a timer)
+                    try { if (window.LivingAnswer) window.LivingAnswer.onEvent(originSessionId, eventName, eventData); } catch (_) { /* never breaks the stream */ }
+
+                    // --- Event Handling Logic ---
+                    // WS3: after execution, render the SAME Quality card the reload
+                    // path shows — populated from the auto-score event (verdicts +
+                    // judge cost). Token cost already flowed via the token_update.
+                    if (eventName === 'turn_score_complete') {
+                        const d = (eventData && eventData.details) || {};
+                        try { UderiaBus.emit('uderia:turn-scored', { session_id: originSessionId, turn: d.turn_id }); } catch (_) { /* no-op */ }
+                        if (UI.injectTrajectoryEvalOverlay && d.turn_id != null) {
+                            UI.injectTrajectoryEvalOverlay(originSessionId, d.turn_id,
+                                { profile_type: d.profile_class, status: 'success' },
+                                { verdicts: d.verdicts || [], source: 'online', judged: d.judged,
+                                  input_tokens: d.input_tokens, output_tokens: d.output_tokens,
+                                  cost_usd: d.cost_usd });
+                            // The overlay call above EARLY-RETURNS when the Quality card
+                            // already exists — and its dial-settle ran only at its end,
+                            // so a duplicate delivery (stream + notification both carry
+                            // this event) could leave the dial live forever. The settle
+                            // is idempotent (`_isOnScreen`) and must not depend on the
+                            // overlay's creation path.
+                            try {
+                                if (window.AssuranceDial && window.AssuranceDial.enabled()) {
+                                    window.AssuranceDial.inject(originSessionId, d.turn_id,
+                                        { profile_type: d.profile_class, status: 'success' },
+                                        { force: true, scored: true });   // the score supersedes a stream-end settle
+                                }
+                            } catch (_) { /* dial settle is best-effort */ }
+                        }
+                        continue;
+                    }
+
+                    // S1 The Governed Stream: provisional answer text. Cheap path, first in
+                    // the chain — it never touches Live Status. The bubble is replaced,
+                    // wholesale, by the authoritative final_answer below.
+                    if (eventName === 'answer_delta') {
+                        if (!eventData.session_id || eventData.session_id === state.currentSessionId) {
+                            UI.provisionalAnswerDelta(eventData, originSessionId);
+                        }
+                        continue;
+                    }
+
+                    if (eventName === 'status_indicator_update') {
+                        const { target, state: statusState } = eventData;
+                        let dot;
+                        if (target === 'db') dot = DOM.mcpStatusDot;
+                        else if (target === 'llm') dot = DOM.llmStatusDot;
+                        // Handle LLM thinking indicator separately
+                        if (target === 'llm') UI.setThinkingIndicator(statusState === 'busy');
+
+                        if (dot) {
+                            if (statusState === 'busy') {
+                                dot.classList.replace('idle', 'busy') || dot.classList.replace('connected', 'busy');
+                                dot.classList.add('pulsing');
+                            } else {
+                                dot.classList.remove('pulsing');
+                                dot.classList.replace('busy', target === 'db' ? 'connected' : 'idle');
+                            }
+                        }
+                    } else if (eventName === 'context_state_update') {
+                         // Currently no specific UI update needed, but could add visual feedback here
+                    } else if (eventName === 'token_update') {
+                        UI.updateTokenDisplay(eventData);
+                        if (eventData.call_id && state.currentProvider !== 'Amazon') {
+                            const metricsEl = document.querySelector(`.per-call-metrics[data-call-id="${eventData.call_id}"]`);
+                            if (metricsEl) {
+                                let metricsText = `(LLM Call: ${eventData.statement_input.toLocaleString()} in / ${eventData.statement_output.toLocaleString()} out`;
+                                if (eventData.cost_usd !== undefined && eventData.cost_usd !== null) {
+                                    metricsText += ` · $${parseFloat(eventData.cost_usd).toFixed(6)}`;
+                                }
+                                metricsText += ')';
+                                metricsEl.innerHTML = metricsText;
+                                metricsEl.classList.remove('hidden');
+                            }
+                        }
+                    } else if (eventName === 'notification') {
+                        // Handle notifications sent during execution stream
+                        if (eventData.type === 'next_step_suggestions') {
+                            // Ephemeral next-step recommender chips. Session-guarded:
+                            // render only for the viewed session; otherwise stash so it
+                            // appears on switch-back (no cross-session leakage).
+                            const nsPayload = eventData.payload || {};
+                            const nsSession = nsPayload.session_id || state.currentSessionId;
+                            if (nsSession === state.currentSessionId) {
+                                setNextStepSuggestions(nsSession, nsPayload.turn_id, nsPayload.items || [],
+                                                       nsPayload.profile_id, nsPayload.rebindable);
+                            } else if (nsPayload.session_id) {
+                                const sid = nsPayload.session_id;
+                                state.nextStepSuggestions[sid] = {
+                                    turnId: nsPayload.turn_id,
+                                    items: nsPayload.items || [],
+                                    profileId: nsPayload.profile_id || null
+                                };
+                                // Preserve rebindability for switch-back (mirrors setSuggestions).
+                                if (nsPayload.rebindable) {
+                                    state.nextStepRebind[sid] = {
+                                        turnId: nsPayload.turn_id,
+                                        baseProfileId: nsPayload.profile_id || null
+                                    };
+                                    if (nsPayload.profile_id) {
+                                        if (!state.nextStepCache[sid]) state.nextStepCache[sid] = {};
+                                        state.nextStepCache[sid][nsPayload.profile_id] = nsPayload.items || [];
+                                    }
+                                }
+                            }
+                        } else if (eventData.type === 'input_required') {
+                            // PROP-011 — the turn stopped to ask. The finish seam raises this notice
+                            // AFTER the final answer was forwarded (the stream's final_answer event
+                            // carries no `input_request`), so the card rides the notice, under the
+                            // answer just rendered. attach() is idempotent by request id.
+                            try {
+                                const q = eventData.payload || {};
+                                if ((!q.session_id || q.session_id === state.currentSessionId) && window.NeedsInput && DOM.chatLog.lastElementChild) {
+                                    window.NeedsInput.attach(DOM.chatLog.lastElementChild, q);
+                                }
+                            } catch (_) { /* the question's text is in the answer */ }
+                        } else if (eventData.type === 'profile_override_failed') {
+                            const { override_profile_name, override_profile_tag, default_profile_tag, error_message } = eventData.payload;
+                            // Show banner - import the function from notifications.js
+                            const banner = document.getElementById('profile-override-warning-banner');
+                            const message = document.getElementById('profile-override-warning-message');
+                            if (banner && message) {
+                                const displayMessage = `Profile @${override_profile_tag}: Missing credentials. Using @${default_profile_tag} instead.`;
+                                message.textContent = displayMessage;
+                                banner.classList.remove('hidden');
+                                
+                                // Auto-dismiss after 5 seconds
+                                setTimeout(() => {
+                                    banner.classList.add('hidden');
+                                }, 5000);
+                                
+                                // Manual dismiss button still works
+                                const dismissBtn = document.getElementById('dismiss-profile-warning');
+                                if (dismissBtn) {
+                                    dismissBtn.onclick = () => banner.classList.add('hidden');
+                                }
+                            }
+                        } else if (eventData.type === 'session_model_update') {
+                            // Handle session metadata updates during execution
+                            const { session_id, models_used, profile_tags_used, last_updated, provider, model, name, dual_model_info } = eventData.payload;
+                            UI.updateSessionModels(session_id, models_used, profile_tags_used);
+                            UI.updateSessionTimestamp(session_id, last_updated);
+                            if (name) UI.updateSessionListItemName(session_id, name);
+                            UI.moveSessionToTop(session_id);
+                            if (session_id === state.currentSessionId) {
+                                state.currentProvider = provider;
+                                state.currentModel = model;
+                                state.currentDualModelInfo = dual_model_info;  // Store in state
+                                UI.updateStatusPromptName(provider, model, false, dual_model_info);
+                            }
+                        } else if (eventData.type === 'user_message_profile_tag') {
+                            // Update the last user message's profile badge with the backend-resolved tag
+                            // This is especially important for session primers where the frontend may not know the correct tag
+                            const payload = eventData.payload || eventData;
+                            const { profile_tag, origin } = payload;
+                            if (profile_tag) {
+                                UI.updateLastUserMessageProfileTag(profile_tag);
+                            }
+                            // Stamp the orchestration tag (Flow / Genie) onto the live user
+                            // bubble from the same server-sent fact — keeps live and persisted consistent.
+                            if (origin) {
+                                UI.updateLastUserMessageOrigin(origin);
+                            }
+                        } else if (eventData.type === 'conversation_agent_start' ||
+                                   eventData.type === 'conversation_llm_step' ||
+                                   eventData.type === 'conversation_llm_complete' ||
+                                   eventData.type === 'conversation_tool_invoked' ||
+                                   eventData.type === 'conversation_tool_completed' ||
+                                   eventData.type === 'conversation_tool_rewrite' ||
+                                   eventData.type === 'conversation_agent_complete' ||
+                                   eventData.type === 'component_llm_resolution') {
+                            // Handle conversation agent events during execution stream
+                            const payload = eventData.payload || {};
+                            // Only handle events for current session
+                            if (payload.session_id && payload.session_id !== state.currentSessionId) {
+                                console.log('[ConversationAgent] Ignoring event for different session:', payload.session_id);
+                            } else {
+                                // IMPORTANT: Update status window BEFORE calling handler for completion event
+                                // because handler sets isConversationAgentActive=false which would trigger a reset
+                                const stepTitle = _getConversationAgentStepTitle(eventData.type, payload);
+                                UI.updateStatusWindow({
+                                    step: stepTitle,
+                                    details: payload,
+                                    type: eventData.type
+                                }, eventData.type === 'conversation_agent_complete', 'conversation_agent');
+
+                                // Update token display for cost tracking (llm_only and conversation_with_tools profiles)
+                                // CRITICAL: Skip aggregate events to avoid double/triple-counting costs
+                                if (payload.cost_usd) {
+                                    // Define aggregate event types that sum individual step costs
+                                    const aggregateEventTypes = [
+                                        'conversation_llm_complete',      // Duplicates last conversation_llm_step
+                                        'conversation_agent_complete',    // Sums all conversation_llm_step costs
+                                        'genie_coordinator_complete',     // Sums all genie_llm_step costs
+                                        'knowledge_retrieval_complete'    // Sums knowledge step costs
+                                    ];
+
+                                    // DEBUG: Log event type and cost
+                                    console.log('[COST DEBUG]', {
+                                        type: eventData.type,
+                                        cost: payload.cost_usd,
+                                        isAggregate: aggregateEventTypes.includes(eventData.type),
+                                        willAccumulate: !aggregateEventTypes.includes(eventData.type)
+                                    });
+
+                                    // Only accumulate costs from individual step events, not aggregates
+                                    if (!aggregateEventTypes.includes(eventData.type)) {
+                                        console.log('[COST DEBUG] ✓ Accumulating cost for:', eventData.type, '$' + payload.cost_usd);
+                                        UI.updateTokenDisplay(payload);
+                                    } else {
+                                        console.log('[COST DEBUG] ✗ Skipping aggregate event:', eventData.type, '$' + payload.cost_usd);
+                                    }
+                                }
+
+                                // Delegate to conversation agent handler for state tracking (after UI update)
+                                handleConversationAgentEvent(eventData.type, payload);
+
+                                // KG Live Animation: dispatch tool invoked/completed events
+                                if (eventData.type === 'conversation_tool_invoked' ||
+                                    eventData.type === 'conversation_tool_completed' ||
+                                    eventData.type === 'conversation_tool_rewrite') {
+                                    _tryKGAnimate(eventData.type, payload);
+                                }
+
+                                // Resource Panel: highlight the tool being invoked (llm_only with MCP tools)
+                                if (eventData.type === 'conversation_tool_invoked' && payload.tool_name) {
+                                    const n = payload.tool_name;
+                                    if (n.startsWith('generate_')) {
+                                        UI.highlightResource(n, 'charts');
+                                    } else {
+                                        // Bug 3 fix: connector tools use '__' namespace separator and live
+                                        // in state.resourceData.connectors, not state.resourceData.tools
+                                        const panelType = n.includes('__') ? 'connectors' : 'tools';
+                                        UI.highlightResource(n, panelType);
+                                    }
+                                    window.resourcePanelHandler?.onSSEEvent('notification', { type: 'conversation_tool_invoked', payload: { tool_name: n } });
+                                }
+                                // Bug 2 fix: forward completion events so the pulse-strip spinner stops
+                                if (eventData.type === 'conversation_tool_completed' && payload.tool_name) {
+                                    window.resourcePanelHandler?.onSSEEvent('notification', { type: 'conversation_tool_completed', payload: { tool_name: payload.tool_name, success: payload.success } });
+                                }
+                                if (eventData.type === 'conversation_agent_complete') {
+                                    window.resourcePanelHandler?.onSSEEvent('notification', { type: 'conversation_agent_complete', payload: {} });
+                                }
+                            }
+                        } else if (eventData.type === 'llm_execution' ||
+                                   eventData.type === 'llm_execution_complete' ||
+                                   eventData.type === 'knowledge_retrieval' ||
+                                   eventData.type === 'knowledge_retrieval_start' ||
+                                   eventData.type === 'knowledge_reranking_start' ||
+                                   eventData.type === 'knowledge_reranking_complete' ||
+                                   eventData.type === 'knowledge_retrieval_complete' ||
+                                   eventData.type === 'rag_llm_step') {
+                            // Handle all LLM execution and knowledge retrieval events during execution
+                            const payload = eventData.payload || {};
+
+                            // HARMONIZE rag_llm_step title
+                            const stepTitle = eventData.type === 'rag_llm_step'
+                                ? getRagFocusedTitle('rag_llm_step', payload)
+                                : _getConversationAgentStepTitle(eventData.type, payload);
+
+                            console.log(`[${eventData.type}] Received during execution:`, payload);
+
+                            // Update knowledge indicator for completion events
+                            if (eventData.type === 'knowledge_retrieval_complete' || eventData.type === 'knowledge_retrieval' ||
+                                eventData.type === 'knowledge_retrieval_start') {
+                                const collections = payload.collections || payload.collection_names || [];
+                                const documentCount = payload.document_count || 0;
+                                // Only blink during live execution, not when viewing historical turns
+                                if (!state.isViewingHistoricalTurn) {
+                                    UI.blinkKnowledgeDot();
+                                }
+                                UI.updateKnowledgeIndicator(collections, documentCount);
+                                // Store the knowledge event for potential replay
+                                state.pendingKnowledgeRetrievalEvent = payload;
+                                // Highlight the collection card(s) in the Knowledge/Tools tab for rag_focused profiles
+                                if (state.activeRagProfile && collections.length > 0) {
+                                    highlightKnowledgeCard(collections[0]);
+                                }
+                            }
+
+                            // Update token display for cost tracking (rag_focused profiles)
+                            if (eventData.type === 'rag_llm_step' && payload.cost_usd) {
+                                UI.updateTokenDisplay(payload);
+                            }
+
+                            // Always update status window for these events
+                            // For conversation_with_tools, these arrive BEFORE conversation_agent_start
+                            // so we render them directly without checking isConversationAgentActive
+                            UI.updateStatusWindow({
+                                step: stepTitle,
+                                details: payload,
+                                type: eventData.type
+                            }, false, 'knowledge_retrieval');  // Use existing knowledge_retrieval rendering for all
+                        } else if (eventData.type === 'execution_start' ||
+                                   eventData.type === 'execution_complete' ||
+                                   eventData.type === 'execution_error' ||
+                                   eventData.type === 'execution_cancelled') {
+                            // --- PHASE 2: Handle lifecycle events for all profiles ---
+                            const payload = eventData.payload || {};
+                            const profile_type = payload.profile_type || 'unknown';
+
+                            // Capture turn number from execution_start for title display
+                            if (eventData.type === 'execution_start' && payload.turn_id) {
+                                state.currentTurnNumber = payload.turn_id;
+                            }
+
+                            // Pulse strip lifecycle
+                            window.resourcePanelHandler?.onSSEEvent(eventData.type, eventData);
+
+                            console.log(`[${eventData.type}] Received for ${profile_type} profile:`, payload);
+
+                            // Generate harmonized title
+                            const stepTitle = getLifecycleTitle(eventData.type, payload, profile_type);
+
+                            // Update status window
+                            // Mark as final for completion/error/cancelled events
+                            const isFinal = ['execution_complete', 'execution_error', 'execution_cancelled'].includes(eventData.type);
+
+                            UI.updateStatusWindow({
+                                step: stepTitle,
+                                details: payload,
+                                type: eventData.type,
+                                metadata: eventData.metadata
+                            }, isFinal, 'lifecycle');
+
+                            // KG Live Animation: end animations on execution complete/error/cancelled
+                            if (isFinal) _tryKGAnimateEnd();
+
+                            // Pulse strip: collapse on final lifecycle events
+                            if (isFinal) window.resourcePanelHandler?.onSSEEvent('conversation_agent_complete', eventData);
+                        } else if (eventData.type === 'skills_applied') {
+                            // Skill pre-processing transparency — emerald green
+                            const skillsPayload = eventData.payload || {};
+                            UI.updateStatusWindow({
+                                step: 'Skills applied',
+                                details: skillsPayload,
+                                type: 'skills_applied'
+                            }, false, 'skills');
+                            // Focus the first applied skill in the Skills panel
+                            const appliedSkills = (skillsPayload.skills || []);
+                            if (appliedSkills.length > 0) highlightSkill(appliedSkills[0].name);
+                        } else if (eventData.type === 'extension_start') {
+                            const extPayload = eventData.payload || {};
+                            UI.updateStatusWindow({
+                                step: `Running extension !${extPayload.name}${extPayload.param ? ':' + extPayload.param : ''}`,
+                                details: 'Processing...',
+                                type: 'extension_running'
+                            }, false, 'extension');
+                            if (extPayload.name) highlightExtension(extPayload.name);
+                        } else if (eventData.type === 'extension_complete') {
+                            const extPayload = eventData.payload || {};
+                            UI.updateStatusWindow({
+                                step: `Extension !${extPayload.name}`,
+                                details: extPayload,
+                                type: 'extension_complete'
+                            }, false, 'extension');
+                            if (extPayload.name) highlightExtension(extPayload.name);
+                        } else if (eventData.type === 'context_window_snapshot') {
+                            // Context Window Manager snapshot — render budget visualization
+                            const snapshotPayload = eventData.payload || {};
+                            if (snapshotPayload.condensations?.some(c => c.strategy === 'rag_offload')) {
+                                UI.pulseContextDotRagBusy();
+                            }
+                            const snapshotHtml = renderContextWindowSnapshot(snapshotPayload);
+                            UI.updateStatusWindow({
+                                step: eventData.step || 'Context Window Assembly',
+                                details: snapshotHtml,
+                                type: 'context_window_snapshot',
+                                _la: snapshotPayload.__la || null   // the receipt's key rides the payload; the card is built from HTML
+                            }, true, 'context_window');
+                        } else if (eventData.type === 'kg_enrichment') {
+                            // KG panel: highlight the card whose KG was applied (notification path for all non-genie profiles)
+                            const enrichments = (eventData.details || eventData).enrichments || [];
+                            if (enrichments[0]?.kg_owner_profile_id) {
+                                highlightKnowledgeGraphCard(enrichments[0].kg_owner_profile_id);
+                            }
+                        }
+                    } else if (eventName === 'rag_retrieval') {
+                        state.lastRagCaseData = eventData; // Store the full CCR (Champion Case Retrieval) data
+                        UI.blinkCcrDot();
+                    } else if (eventName === 'llm_execution') {
+                        // LLM execution event for llm_only profile (emitted with specific event name like genie)
+                        const { details, step, type } = eventData;
+                        console.log(`[${eventName}] Received:`, details);
+
+                        UI.updateStatusWindow({
+                            step: getLlmOnlyTitle(type || eventName, details || {}),
+                            details: details || {},
+                            type: type || eventName
+                        }, false, 'knowledge_retrieval');  // Reuse knowledge_retrieval rendering
+                    } else if (eventName === 'llm_execution_complete') {
+                        // LLM execution complete event (shows token counts like RAG's rag_llm_step)
+                        const { details, step, type } = eventData;
+                        console.log(`[${eventName}] Received:`, details);
+
+                        UI.updateStatusWindow({
+                            step: step || _getConversationAgentStepTitle('llm_execution_complete', details),
+                            details: details || {},
+                            type: type || eventName
+                        }, false, 'knowledge_retrieval');  // Reuse knowledge_retrieval rendering
+                    } else if (eventName === 'knowledge_retrieval') {
+                        // Knowledge retrieval event (emitted with specific event name like genie)
+                        const { details, step, type } = eventData;
+                        console.log(`[${eventName}] Received:`, details);
+
+                        // Update knowledge indicator if we have collection info
+                        if (details && details.collections) {
+                            const collections = details.collections || [];
+                            const documentCount = details.document_count || 0;
+                            // Only blink during live execution, not when viewing historical turns
+                            if (!state.isViewingHistoricalTurn) {
+                                UI.blinkKnowledgeDot();
+                            }
+                            UI.updateKnowledgeIndicator(collections, documentCount);
+                        }
+
+                        UI.updateStatusWindow({
+                            step: step || 'Knowledge Retrieved',
+                            details: details || {},
+                            type: type || eventName
+                        }, false, 'knowledge_retrieval');  // Reuse knowledge_retrieval rendering
+                    } else if (eventName === 'session_name_generation_start' ||
+                               eventName === 'session_name_generation_complete') {
+                        // Route session name generation events to status window with proper rendering
+                        const { details, step, type } = eventData;
+
+                        console.log(`[${eventName}] Received:`, details);
+
+                        // Accumulate cost for session name generation (if available)
+                        if (eventName === 'session_name_generation_complete' && details?.cost_usd) {
+                            console.log('[COST DEBUG] Session name generation:', {
+                                cost: details.cost_usd,
+                                input: details.input_tokens,
+                                output: details.output_tokens
+                            });
+                            // Map session_name event field names to updateTokenDisplay contract
+                            // (event has input_tokens/output_tokens, display expects statement_input/statement_output)
+                            UI.updateTokenDisplay({
+                                statement_input: details.input_tokens,
+                                statement_output: details.output_tokens,
+                                cost_usd: details.cost_usd
+                            });
+                        }
+
+                        // Update status window with formatted rendering (existing renderers in ui.js will be called)
+                        UI.updateStatusWindow({
+                            step: step || (eventName === 'session_name_generation_start'
+                                            ? 'Generating Session Name'
+                                            : 'Session Name Generated'),
+                            details: details || {},
+                            type: type || eventName
+                        }, eventName === 'session_name_generation_complete', 'session_name');
+                    } else if (eventName === 'next_step_generation_start' ||
+                               eventName === 'next_step_generation_complete') {
+                        // Next-Step Recommender Tier C LLM call — visible in Live Status,
+                        // mirrors session name generation. Cost/tokens are rolled into the
+                        // counters by the separate `token_update` event (call_id
+                        // "next_step_recommender"); this branch is display-only so the
+                        // idempotent per-call cost ledger never double-counts.
+                        const { details, step, type } = eventData;
+                        UI.updateStatusWindow({
+                            step: step || (eventName === 'next_step_generation_start'
+                                            ? 'Generating Smart Next Steps'
+                                            : 'Smart Next Steps Generated'),
+                            details: details || {},
+                            type: type || eventName
+                        }, eventName === 'next_step_generation_complete', 'session_name');
+                    } else if (eventName === 'session_name_update') {
+                        const { session_id, newName } = eventData;
+                        UI.updateSessionListItemName(session_id, newName);
+                    } else if (eventName === 'session_model_update') {
+                        const { session_id, models_used, profile_tags_used, last_updated } = eventData;
+                        UI.updateSessionModels(session_id, models_used, profile_tags_used);
+                        UI.updateSessionTimestamp(session_id, last_updated);
+                    } else if (eventName === 'request_user_input') {
+                        UI.updateStatusWindow({ step: "Action Required", details: "Waiting for user to correct parameters.", type: 'workaround' });
+                        UI.setExecutionState(false);
+                        openCorrectionModal(eventData.details);
+                    } else if (eventName === 'session_update') {
+                        // Logic to potentially update session list if needed
+                    } else if (eventName === 'llm_thought') {
+                        UI.updateStatusWindow({ step: "Parser has generated the final answer", ...eventData });
+                    } else if (eventName === 'prompt_selected') {
+                        UI.updateStatusWindow(eventData);
+                        if (eventData.prompt_name) UI.highlightResource(eventData.prompt_name, 'prompts');
+                    } else if (eventName === 'tool_result' || eventName === 'tool_error' || eventName === 'tool_intent') {
+                        UI.updateStatusWindow(eventData);
+                        // KG execution theatre: a tool RESULT is where "executed" and "stopped before the
+                        // database" are decided; the catch-all below never sees a NAMED frame.
+                        _tryKGAnimate(eventName === 'tool_intent' ? 'tool_intent' : 'tool_result',
+                                      eventName === 'tool_intent' ? (eventData.details || eventData) : eventData);
+                        if (eventData.tool_name) {
+                            const n = eventData.tool_name;
+                            if (n.startsWith('generate_')) {
+                                UI.highlightResource(n, 'charts');
+                            } else if (n.includes('__')) {
+                                UI.highlightResource(n, 'connectors');
+                            } else {
+                                UI.highlightResource(n, 'tools');
+                            }
+                            const evtType = eventName === 'tool_result' ? 'tool_result' : eventName === 'tool_error' ? 'tool_result' : 'tool_call';
+                            window.resourcePanelHandler?.onSSEEvent(evtType, { type: evtType, payload: { tool_name: n, is_error: eventName === 'tool_error' } });
+                        }
+                    // --- Extension Results (combined event, own SSE type) ---
+                    } else if (eventName === 'extension_results') {
+                        const payload = eventData.payload || {};
+                        console.log('[SSE] Extension results received:', Object.keys(payload));
+
+                        // Display results based on each extension's output_target
+                        for (const [extName, result] of Object.entries(payload)) {
+                            if (!result.success) {
+                                console.warn(`[Extension] ${extName} failed:`, result.error);
+                                continue;
+                            }
+
+                            const outputTarget = result.output_target || 'silent';
+
+                            if (outputTarget === 'chat_append' && result.content) {
+                                // Check if this is a binary/file download (e.g. PDF)
+                                const isBinaryContent = _isExtensionBinaryContent(result);
+
+                                let extHtml;
+                                if (isBinaryContent) {
+                                    extHtml = _buildExtensionDownloadCard(extName, result);
+                                } else {
+                                    extHtml = `
+                                    <div class="extension-output mt-3 p-3 rounded-lg" data-ext-name="${extName}" style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15);">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-xs font-semibold px-2 py-0.5 rounded" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; font-family: 'JetBrains Mono', monospace;">!${extName}</span>
+                                            <span class="text-xs text-gray-500">${result.content_type}</span>
+                                        </div>
+                                        <pre class="text-xs text-gray-300 whitespace-pre-wrap overflow-auto max-h-48" style="font-family: 'JetBrains Mono', monospace;">${
+                                            typeof result.content === 'object' ? JSON.stringify(result.content, null, 2) : result.content
+                                        }</pre>
+                                    </div>
+                                    `;
+                                }
+                                // Append to the last chat message
+                                const chatLog = document.getElementById('chat-log');
+                                if (chatLog) {
+                                    const lastMsg = chatLog.querySelector('.message-bubble:last-child .message-content');
+                                    if (lastMsg) {
+                                        lastMsg.insertAdjacentHTML('beforeend', extHtml);
+                                    }
+                                }
+                            } else if (outputTarget === 'status_panel' && result.content) {
+                                UI.updateStatusWindow({
+                                    step: `Extension: !${extName}`,
+                                    details: typeof result.content === 'object' ? JSON.stringify(result.content, null, 2) : result.content,
+                                    type: 'extension_result'
+                                }, false, 'extension');
+                            }
+                            // 'silent' — show output preview in Live Status (collapsible)
+                        }
+
+                        // Also render silent extension output previews in Live Status
+                        UI.updateStatusWindow({
+                            step: 'Extension results',
+                            details: payload,
+                            type: 'extension_results'
+                        }, false, 'extension');
+
+                    // --- Component Render Events (Generative UI) ---
+                    } else if (eventName === 'component_render') {
+                        const { component_id, window_id, action, spec, title, render_target } = eventData;
+                        console.log('[SSE] Component render event:', component_id, action, render_target);
+
+                        if (render_target === 'sub_window') {
+                            // Sub-window component: create, update, or close a persistent panel
+                            if (action === 'close' && window_id) {
+                                closeSubWindow(window_id);
+                            } else if (action === 'update' && window_id) {
+                                updateSubWindow(window_id, spec);
+                            } else {
+                                // 'create' or default
+                                const swEl = createSubWindow(window_id || `sw-${Date.now()}`, component_id, {
+                                    title: title || component_id,
+                                    spec,
+                                    interactive: !!eventData.interactive
+                                });
+                                if (swEl && spec && hasRenderer(component_id)) {
+                                    const bodyEl = swEl.querySelector('.sub-window-body');
+                                    if (bodyEl) {
+                                        bodyEl.id = bodyEl.id || `sw-body-${Date.now()}`;
+                                        renderComponent(component_id, bodyEl.id, spec);
+                                    }
+                                }
+                            }
+                        } else {
+                            // Inline component: rendered via [data-component-id] in the chat message
+                            // (already handled by ui.js appendMessage). Log for debugging.
+                            console.log('[SSE] Inline component_render — will be rendered by appendMessage().');
+                        }
+
+                        UI.updateStatusWindow({
+                            step: `Component: ${title || component_id}`,
+                            details: { component_id, render_target: render_target || 'inline', action: action || 'render' },
+                            type: 'component_render'
+                        }, false, 'interactive');
+
+                    // --- Genie Coordination Events ---
+                    } else if (eventName === 'genie_start' || eventName === 'genie_routing' ||
+                               eventName === 'genie_coordination_start' || eventName === 'genie_llm_step' ||
+                               eventName === 'genie_routing_decision' ||
+                               eventName === 'genie_slave_invoked' || eventName === 'genie_slave_progress' ||
+                               eventName === 'genie_slave_completed' || eventName === 'genie_synthesis_start' ||
+                               eventName === 'genie_synthesis_complete' || eventName === 'genie_synthesis_skipped' ||
+                               eventName === 'genie_coordination_complete' ||
+                               eventName === 'genie_component_invoked' ||
+                               eventName === 'genie_component_completed') {
+                        // Handle genie coordination events - delegate to genieHandler
+                        console.log('[SSE] Genie event received:', eventName, eventData);
+                        handleGenieEvent(eventName, eventData);
+
+                        // Update token display for cost tracking (genie coordinator LLM calls)
+                        if (eventName === 'genie_llm_step' && eventData.cost_usd) {
+                            UI.updateTokenDisplay(eventData);
+                        }
+
+                        // Also update status window
+                        const genieStepTitle = _getGenieStepTitle(eventName, eventData);
+                        UI.updateStatusWindow({
+                            step: genieStepTitle,
+                            details: eventData,
+                            type: eventName
+                        }, eventName === 'genie_coordination_complete', 'genie');
+
+                        // KG Live Animation: dispatch genie tool events
+                        if (eventName === 'genie_slave_invoked' || eventName === 'genie_slave_completed' ||
+                            eventName === 'genie_component_invoked' || eventName === 'genie_component_completed') {
+                            _tryKGAnimate(eventName, eventData);
+                        }
+
+                        // Resource Panel: highlight slave profile card when a slave is invoked
+                        if (eventName === 'genie_slave_invoked' && eventData.profile_tag) {
+                            highlightCoordCard(eventData.profile_tag);
+                        }
+                        // Resource Panel: highlight component card when coordinator invokes a component tool
+                        if (eventName === 'genie_component_invoked' && eventData.tool_name) {
+                            highlightComponent(eventData.tool_name);
+                        }
+                        // Resource Panel: highlight KG card when KG enrichment is applied by the coordinator
+                        if (eventName === 'kg_enrichment') {
+                            const enrichments = eventData.enrichments || [];
+                            if (enrichments[0]?.kg_owner_profile_id) {
+                                highlightKnowledgeGraphCard(enrichments[0].kg_owner_profile_id);
+                            }
+                        }
+                        // KG Live Animation: end animations on genie coordination complete
+                        if (eventName === 'genie_coordination_complete') _tryKGAnimateEnd();
+                    } else if (eventName === 'cancelled') {
+                        const lastStep = document.getElementById(`status-step-${state.currentStatusId}`);
+                        if (lastStep) {
+                            lastStep.classList.remove('active');
+                            lastStep.classList.add('cancelled');
+                        }
+                        UI.updateStatusWindow({ step: "Execution Stopped", details: eventData.message || "Process cancelled by user.", type: 'cancelled'}, true);
+                        try { if (window.LivingAnswer) window.LivingAnswer.stopping(originSessionId); } catch (_) { /* no-op */ }
+
+                        // The cancelled message (so the turn badge is clickable) is DEFERRED to the
+                        // stream's end: the partial final_answer, when the stopped answer was kept
+                        // (S1), arrives AFTER this frame and already carries the badge and the
+                        // stopped note — drawing CANCELLED here put a line over an answer that was
+                        // about to land, and dropped the bubble it was landing in.
+                        if (eventData.turn_id && !partialDelivered) {
+                            cancelPending = { turn_id: eventData.turn_id, session_id: eventData.session_id || null };
+                        }
+
+                        UI.setExecutionState(false);
+                    } else if (eventName === 'final_answer') {
+                        // Check if this event is for the current session (prevents cross-session message leakage during Genie execution)
+                        if (eventData.session_id && eventData.session_id !== state.currentSessionId) {
+                            console.log('[final_answer] Ignoring event for different session:', eventData.session_id, 'current:', state.currentSessionId);
+                            // Don't add message to UI, but still reset execution state
+                            UI.setExecutionState(false);
+                            continue; // Skip to next event
+                        }
+                        // All new messages are valid by default, so we don't need to pass `true`
+                        // Pass is_session_primer flag for Primer badge display
+                        // Enable live coding animation for canvas components in this response
+                        window.__canvasLiveMode = true;
+                        if (eventData.turn_id != null) deliveredTurnId = eventData.turn_id;
+                        try { if (window.SteerReattach) window.SteerReattach.delivered(originSessionId); } catch (_) { /* no-op */ }
+                        // S1: the authoritative answer replaces the provisional bubble in place
+                        // (a stopped turn arrives here too, marked `partial` — kept, never
+                        // replaced by a bare CANCELLED line).
+                        const _readAnchor = UI.provisionalAnswerActive() ? UI.captureReadingAnchor() : null;
+                        const _streamedHere = UI.provisionalAnswerActive();
+                        UI.finishProvisionalAnswer(eventData.partial ? 'partial' : 'complete');
+                        if (eventData.partial) partialDelivered = true;
+                        // S4 — a fallback served this turn (the live recovery notice stashed it per
+                        // session); key it by the turn the answer now names, so the chip renders.
+                        try {
+                            const _sb = state.pendingServedBy && state.pendingServedBy[eventData.session_id || state.currentSessionId];
+                            if (_sb && eventData.turn_id != null) {
+                                state.servedByTurn[eventData.turn_id] = _sb;
+                                delete state.pendingServedBy[eventData.session_id || state.currentSessionId];
+                            }
+                        } catch (_) { /* never break the answer */ }
+                        UI.addMessage('assistant', eventData.final_answer, eventData.turn_id, true, null, null, eventData.is_session_primer || false);
+                        // S1.1 — the settle: the Living Answer's rail, summary and steps move onto the
+                        // authoritative message and the gates' marks land on the text in place
+                        const _finalBubble = DOM.chatLog.lastElementChild;
+                        try { if (window.LivingAnswer) window.LivingAnswer.settle(originSessionId, _finalBubble, { partial: !!eventData.partial, turnId: eventData.turn_id, checks: eventData.checks || null, durationMs: eventData.duration_ms, inPlace: _streamedHere }); } catch (_) { /* no-op */ }
+                        // the streamed answer becomes the final one where the reader is reading it —
+                        // never a new message flying in over the text they were following
+                        if (_streamedHere) UI.landInPlace(_finalBubble, _readAnchor);
+                        // the composer's receipt row: the turn's verdict, time, tokens and cost until the next keystroke
+                        try { if (window.Composer) window.Composer.showReceipt(originSessionId, { turnId: eventData.turn_id, durationMs: eventData.duration_ms, partial: !!eventData.partial, bubble: _finalBubble }); } catch (_) { /* decoration only */ }
+                        // Clear fallback in case no canvas was in this response
+                        setTimeout(() => { window.__canvasLiveMode = false; }, 100);
+                        // Signal turn completion so open side panels (e.g. Agent Memory) can live-refresh.
+                        try { UderiaBus.emit('uderia:turn-complete', { session_id: eventData.session_id }); } catch (_) {}
+                        // PROP-011 — a turn that stopped to ask: the question card under the answer
+                        try { if (eventData.input_request && window.NeedsInput) window.NeedsInput.attach(_finalBubble, eventData.input_request); } catch (_) { /* the static question is in the HTML */ }
+                        // Note: "Finished" status step removed - redundant with execution_complete events
+                        // All profile types now emit execution_complete with profile-specific KPIs
+                        UI.setExecutionState(false);
+
+                        // KG Live Animation: end animations on final answer
+                        _tryKGAnimateEnd();
+
+                        // Auto-focus input field so user can immediately type next question
+                        if (DOM.userInput) {
+                            DOM.userInput.focus();
+                        }
+
+                        if (eventData.source === 'voice' && eventData.tts_payload) {
+                            state.ttsCancelled = false;
+                            const { direct_answer, key_observations } = eventData.tts_payload;
+
+                            if (direct_answer) {
+                                await playTTSAudio(truncateForTTS(direct_answer));
+                            }
+
+                            if (key_observations && !state.ttsCancelled) {
+                                switch (state.keyObservationsMode) {
+                                    case 'autoplay-off':
+                                        state.ttsState = 'AWAITING_OBSERVATION_CONFIRMATION';
+                                        state.ttsObservationBuffer = key_observations;
+                                        UI.updateVoiceModeUI();
+
+                                        await playTTSAudio("Do you want to hear the key observations?");
+
+                                        if (!state.ttsCancelled) {
+                                            startConfirmationRecognition(handleObservationConfirmation);
+                                        } else {
+                                            state.ttsState = 'IDLE';
+                                            state.ttsObservationBuffer = '';
+                                            UI.updateVoiceModeUI();
+                                        }
+                                        break;
+
+                                    case 'autoplay-on':
+                                        await playTTSAudio(key_observations);
+                                        // fall through to 'off' for voice restart
+                                    case 'off':
+                                        if (state.isVoiceModeLocked && !state.ttsCancelled) {
+                                            setTimeout(() => startRecognition(), 100);
+                                        }
+                                        break;
+                                }
+                            } else if (state.isVoiceModeLocked && !state.ttsCancelled) {
+                                setTimeout(() => startRecognition(), 100);
+                            }
+                        }
+
+
+                    } else if (eventName === 'error') {
+                        UI.finishProvisionalAnswer();
+                        // Include turn_id so badge is created and clickable
+                        const errorTurnId = eventData.turn_id || null;
+                        // Only add if this is for the current session
+                        if (!eventData.session_id || eventData.session_id === state.currentSessionId) {
+                            const errorMessage = `<span class="error-tag">ERROR</span> ${eventData.error || 'Unknown error'}`;
+                            UI.addMessage('assistant', errorMessage, errorTurnId, true);
+                        }
+                        UI.updateStatusWindow({ step: "Error", details: eventData.details || eventData.error, type: 'error' }, true);
+                        UI.setExecutionState(false);
+                    } else if (eventName === 'rest_task_update') {
+                        const { task_id, session_id, event } = eventData.payload; // eslint-disable-line no-unused-vars
+                        UI.updateStatusWindow(event, false, 'rest', task_id);
+                    } else if (eventName === 'task_start') { // Handle the new task_start event
+                        UI.updateTaskIdDisplay(eventData.task_id);
+                        // S10 — a reattachable turn: keep its task + cursor, put the composer in steer mode
+                        try { if (window.SteerReattach) window.SteerReattach.onTaskStart(originSessionId, eventData); } catch (_) { /* no-op */ }
+                        // S1.1 — the Living Answer is BORN here (task_start.stream), not at the first token
+                        try { if (window.LivingAnswer) window.LivingAnswer.onTaskStart(originSessionId, eventData); } catch (_) { /* no-op */ }
+                    } else if (eventData.type === 'system_message' && eventData.details?.summary === 'Synthesizing answer from retrieved knowledge') {
+                        // SKIP this event - it's redundant and fires BEFORE the LLM call (no data)
+                        // The actual rag_llm_step event will follow with correct token/model data
+                        console.log('[RAG Synthesis] Skipping redundant system_message preview event - waiting for rag_llm_step with data');
+                        // Don't call updateStatusWindow - skip this event entirely
+                    } else if (eventData.type === 'context_window_snapshot') {
+                        // Context Window Assembly from executor.py path (arrives as eventName='message')
+                        // Use same rich rendering as the notification handler
+                        const snapshotPayload = eventData.payload || {};
+                        if (snapshotPayload.condensations?.some(c => c.strategy === 'rag_offload')) {
+                            UI.pulseContextDotRagBusy();
+                        }
+                        const snapshotHtml = renderContextWindowSnapshot(snapshotPayload);
+                        UI.updateStatusWindow({
+                            step: eventData.step || 'Context Window Assembly',
+                            details: snapshotHtml,
+                            type: 'context_window_snapshot',
+                            _la: snapshotPayload.__la || null
+                        }, true, 'context_window');
+                    } else {
+                        UI.updateStatusWindow(eventData);
+
+                        // Resource Panel highlighting: most tool events arrive as SSE 'message' type
+                        // (no named event), so we handle them here by checking eventData.type.
+                        // tool_intent always carries eventData.details.tool_name (= the action dict).
+                        if (eventData.type === 'tool_intent' && eventData.details?.tool_name) {
+                            const n = eventData.details.tool_name;
+                            if (n.startsWith('generate_')) {
+                                UI.highlightResource(n, 'charts');
+                            } else if (n.includes('__')) {
+                                UI.highlightResource(n, 'connectors');
+                            } else {
+                                UI.highlightResource(n, 'tools');
+                            }
+                            window.resourcePanelHandler?.onSSEEvent('tool_call', { type: 'tool_call', payload: { tool_name: n } });
+                        }
+
+                        // KG panel: highlight the card whose KG was applied during this turn
+                        if (eventData.type === 'kg_enrichment') {
+                            const enrichments = (eventData.details || eventData).enrichments || [];
+                            if (enrichments[0]?.kg_owner_profile_id) {
+                                highlightKnowledgeGraphCard(enrichments[0].kg_owner_profile_id);
+                            }
+                        }
+
+                        // KG Live Animation: dispatch tool_enabled events (phase_start, plan_generated, kg_enrichment)
+                        if (eventData.type) {
+                            _tryKGAnimate(eventData.type, eventData.details || eventData.payload || eventData);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing SSE data line:", dataLine, e);
+                }
+            }
+        }
+    }
+    if (buffer.trim()) {
+    }
+    // S1.1 — the stream ended: a cancel with no partial answer gets its CANCELLED line now
+    // (the badge stays clickable); a cancel whose partial DID arrive already has its bubble.
+    if (cancelPending && !partialDelivered && state.currentSessionId === originSessionId
+        && (!cancelPending.session_id || cancelPending.session_id === state.currentSessionId)) {
+        UI.finishProvisionalAnswer();
+        UI.addMessage('assistant', `<span class="cancelled-tag">CANCELLED</span> Execution was stopped by user.`, cancelPending.turn_id, true);
+    }
+    return deliveredTurnId;
+}
+
+
+/**
+ * Truncates text to a TTS-safe length (Google Cloud TTS limit is ~5000 bytes).
+ * Cuts at the last sentence boundary before the limit.
+ */
+function truncateForTTS(text, maxLength = 4500) {
+    if (!text || text.length <= maxLength) return text;
+    const truncated = text.substring(0, maxLength);
+    const lastSentenceEnd = Math.max(
+        truncated.lastIndexOf('. '),
+        truncated.lastIndexOf('! '),
+        truncated.lastIndexOf('? '),
+        truncated.lastIndexOf('.\n')
+    );
+    if (lastSentenceEnd > maxLength * 0.5) {
+        return truncated.substring(0, lastSentenceEnd + 1);
+    }
+    return truncated + '...';
+}
+
+/**
+ * Synthesizes and plays TTS audio, storing the Audio reference in state for cancellation.
+ * Resolves when audio finishes, errors, or is paused (cancelled).
+ */
+async function playTTSAudio(text) {
+    const audioBlob = await API.synthesizeText(text);
+    if (!audioBlob || state.ttsCancelled) return;
+
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    state.currentTTSAudio = audio;
+
+    await new Promise(resolve => {
+        const cleanup = () => { URL.revokeObjectURL(audioUrl); resolve(); };
+        audio.onended = cleanup;
+        audio.onerror = cleanup;
+        audio.onpause = cleanup;
+        audio.play().catch(cleanup);
+    });
+
+    state.currentTTSAudio = null;
+}
+
+/**
+ * Cancels any in-progress TTS playback and resets TTS state.
+ * Called when user presses Escape during TTS playback.
+ */
+export function cancelTTS() {
+    state.ttsCancelled = true;
+    if (state.currentTTSAudio) {
+        state.currentTTSAudio.pause();
+        state.currentTTSAudio = null;
+    }
+    state.ttsState = 'IDLE';
+    state.ttsObservationBuffer = '';
+    UI.updateVoiceModeUI();
+    if (state.isVoiceModeLocked) {
+        setTimeout(() => startRecognition(), 100);
+    }
+}
+
+async function handleObservationConfirmation(transcribedText) {
+    const classification = Utils.classifyConfirmation(transcribedText);
+
+    if (classification === 'yes' && state.ttsObservationBuffer) {
+        await playTTSAudio(state.ttsObservationBuffer);
+    }
+    state.ttsState = 'IDLE';
+    state.ttsObservationBuffer = '';
+    UI.updateVoiceModeUI();
+    if (state.isVoiceModeLocked && !state.ttsCancelled) {
+        setTimeout(() => startRecognition(), 100);
+    }
+}
+
+
+/**
+ * S10 — resume a turn whose stream ended before its final answer: the server's cursor-stamped
+ * log is replayed from the cursor this client last saw and tailed until the turn ends (the
+ * same reader, the same rendering). Returns the delivered turn id, or the id already known
+ * when nothing needed resuming, or null when the turn could not be reached again.
+ */
+async function _maybeReattach(sid, deliveredTurnId) {
+    const SR = window.SteerReattach;
+    if (!SR) return deliveredTurnId;
+    const live = SR.liveTask(sid);
+    if (!live || live.delivered || deliveredTurnId != null) return deliveredTurnId;
+    const res = await SR.reattach(sid, live.taskId, live.seq, processStream);
+    if (res && res.status === 'delivered') return res.turn != null ? res.turn : deliveredTurnId;
+    if (res && res.status === 'gap' && typeof window.__reloadSession === 'function') {
+        // frames dropped below the retained floor — the session record is the source now
+        try { await window.__reloadSession(sid); } catch (_) { /* the log keeps what it has */ }
+    }
+    return null;
+}
+
+/**
+ * S10 — a session opened while its turn still runs (a closed tab, a refresh): find the running
+ * task and backfill its frames from cursor 0, then follow it live. Called by the session
+ * loader after the history rendered; a no-op when nothing runs or the switch is off.
+ */
+export async function reattachRunningTurn(sid) {
+    const SR = window.SteerReattach;
+    if (!SR || !sid) return false;
+    const active = await SR.activeTask(sid);
+    if (!active) return false;
+    if (state.activeStreamSessions.has(sid)) return false;   // this tab already reads it
+    state.activeStreamSessions.add(sid);
+    let delivered = null;
+    try {
+        UI.setExecutionState(true);
+        UI.resetStatusWindowForNewTask();
+        SR.onTaskStart(sid, { task_id: active.taskId, reattach: true });
+        const res = await SR.reattach(sid, active.taskId, 0, processStream, { silent: true });
+        if (res && res.status === 'delivered') delivered = res.turn;
+    } finally {
+        try { SR.ended(sid); } catch (_) { /* no-op */ }
+        try { if (window.LivingAnswer && window.LivingAnswer.ended) window.LivingAnswer.ended(sid); } catch (_) { /* no-op */ }
+        try {
+            if (window.AssuranceDial) {
+                if (delivered != null && window.AssuranceDial.complete) window.AssuranceDial.complete(sid, delivered);
+                else if (window.AssuranceDial.settle) window.AssuranceDial.settle(sid);
+            }
+        } catch (_) { /* a live instrument must never break the reattach */ }
+        state.activeStreamSessions.delete(sid);
+        delete state.sessionUiCache[sid];
+        if (state.currentSessionId === sid) {
+            UI.finishProvisionalAnswer();
+            UI.setExecutionState(false);
+            UI.updateHintAndIndicatorState();
+        }
+    }
+    return true;
+}
+window.__reattachRunningTurn = reattachRunningTurn;
+
+export async function handleStreamRequest(endpoint, body) {
+    // S8 — a regenerate runs the SAME question again: no second user bubble (the server adds no
+    // second user message either); an edit is a new question and renders like one. The stream's
+    // end re-reads the session, which is the one source of lineage (siblings, branches).
+    const lineageTurn = (Number.isInteger(body.regenerate_of) || Number.isInteger(body.edit_of));
+    if (Number.isInteger(body.regenerate_of)) {
+        // nothing to add to the log — the answer lands beside its question on the reload
+    } else if (body.message) {
+        // KG execution theatre: the question is the first actor on the stage
+        try { if (!body.is_replay) { await _loadKGAnimBridge(); _tryKGAnimate('user_query', { query: String(body.message).replace(/^@\S+\s*/, ''), is_session_primer: !!body.is_session_primer }); } } catch (e) { console.warn('[kg-theatre] user_query failed', e); }
+        // Only add user message if it's NOT a replay initiated by the replay button
+        if (!body.is_replay) {
+            // Extract profile tag - parse the actual message to detect @TAG (same pattern as handleChatSubmit)
+            let profileTag = null;
+
+            // Parse the actual message to detect @TAG
+            if (body.message) {
+                const tagMatch = body.message.match(/^@([\w-]+)\s/);
+                if (tagMatch && window.configState?.profiles) {
+                    const tag = tagMatch[1].toUpperCase();
+                    const profile = window.configState.profiles.find(p => p.tag === tag);
+                    if (profile && profile.id !== window.configState?.defaultProfileId) {
+                        profileTag = tag;
+                    }
+                }
+            }
+
+            // A session primer names its profile by id (profile_override_id), never by an
+            // @TAG in the text — resolve it so the primer bubble carries the tag it RAN under.
+            if (!profileTag && body.profile_override_id && window.configState?.profiles) {
+                const overridden = window.configState.profiles.find(p => p.id === body.profile_override_id);
+                if (overridden?.tag) profileTag = overridden.tag;
+            }
+
+            // Fall back to default profile if no tag detected
+            if (!profileTag && window.configState?.defaultProfileId && window.configState?.profiles) {
+                const defaultProfile = window.configState.profiles.find(p => p.id === window.configState.defaultProfileId);
+                profileTag = defaultProfile?.tag || null;
+            }
+            // Build message with attachment chips if files are attached
+            let displayMessage = body.message;
+            if (body.attachments && body.attachments.length > 0) {
+                const chipHtml = renderAttachmentChips(body.attachments, _lastSubmittedSources, false);
+                displayMessage = body.message + chipHtml;
+            }
+            UI.addMessage('user', displayMessage, null, true, 'text', profileTag, body.is_session_primer || false, body.extensions || null, body.skills || null);
+            if (body.attachments && body.attachments.length > 0 && window.AttachmentSources) {
+                // S9: thumbnails for the user bubble's image chips (session-scoped content)
+                try { window.AttachmentSources.hydrate(DOM.chatLog.lastElementChild, state.currentSessionId); } catch (_) { /* no thumbnail */ }
+            }
+        } else {
+        }
+    } else {
+        // For MCP prompt execution, always use default profile (no message to parse for @TAG)
+        let profileTag = null;
+        if (window.configState?.defaultProfileId && window.configState?.profiles) {
+            const defaultProfile = window.configState.profiles.find(p => p.id === window.configState.defaultProfileId);
+            profileTag = defaultProfile?.tag || null;
+        }
+        UI.addMessage('user', `Executing prompt: ${body.prompt_name}`, null, true, 'text', profileTag);
+    }
+    if (window.cancelRagSuggestions) window.cancelRagSuggestions();
+    DOM.userInput.value = '';
+    UI.autoResizeChatInput();
+
+    const profileTagSelector = document.getElementById('profile-tag-selector');
+    if (profileTagSelector) {
+        profileTagSelector.innerHTML = '';
+        profileTagSelector.classList.add('hidden');
+    }
+
+    UI.setExecutionState(true);
+    UI.resetStatusWindowForNewTask();
+    // Set default title for the brief window before execution_start arrives with branding
+    const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+    if (statusTitle) statusTitle.textContent = 'Live Status';
+
+    // This call remains to set the prompt name specifically for the new execution
+    UI.updateStatusPromptName();
+
+    const useLastTurnMode = state.isLastTurnModeLocked || state.isTempLastTurnMode;
+    body.disabled_history = useLastTurnMode || body.is_replay; // Disable if last turn mode OR replay
+
+
+    DOM.contextStatusDot.classList.remove('history-disabled-preview');
+
+    const originSessionId = state.currentSessionId;
+    state.activeStreamSessions.add(originSessionId);
+
+    let deliveredTurnId = null;
+    try {
+        const response = await API.startStream(endpoint, body);
+        if (response && response.ok && response.body) {
+            deliveredTurnId = await processStream(response.body, originSessionId);
+        }
+        // S10 — the stream ended without a final answer while the turn still runs (a proxy
+        // closed it, the network blinked): resume from the cursor instead of reporting an error
+        deliveredTurnId = await _maybeReattach(originSessionId, deliveredTurnId);
+    } catch (error) {
+        // S10 — a broken connection is not an error of the turn: reattach from the cursor first
+        let recovered = null;
+        try { recovered = await _maybeReattach(originSessionId, null); } catch (_) { recovered = null; }
+        if (recovered != null) {
+            deliveredTurnId = recovered;
+        } else if (state.currentSessionId === originSessionId) {
+            // Only show error if the user is still on the originating session
+            UI.addMessage('assistant', `Sorry, a stream processing error occurred: ${error.message}`);
+            UI.updateStatusWindow({ step: "Error", details: error.stack, type: 'error' }, true);
+        } else {
+            console.warn('[handleStreamRequest] Stream error for previous session, suppressing:', error.message);
+        }
+    } finally {
+        try { if (window.SteerReattach) window.SteerReattach.ended(originSessionId); } catch (_) { /* no-op */ }
+        try { if (window.LivingAnswer) window.LivingAnswer.ended(originSessionId); } catch (_) { /* no-op */ }   // S1.1: seal a settled turn, drop an unfinished one
+        // The stream is OVER — the assurance dial's live model must end with it, here,
+        // at the stream's own end. Until now only Stop settled it; a normal completion
+        // waited on `turn_score_complete` alone, and once the stream has closed that
+        // event rides the notification channel — one lost delivery and the pending
+        // reading ("not in yet", pulsing) stayed until a page refresh. Delivered turn
+        // → render the persisted, authoritative reading (JUDGED honestly pending until
+        // scored); no delivered turn (error, cancel) → "not recorded", never a pass.
+        try {
+            if (window.AssuranceDial) {
+                if (deliveredTurnId != null && window.AssuranceDial.complete) {
+                    window.AssuranceDial.complete(originSessionId, deliveredTurnId);
+                } else if (window.AssuranceDial.settle) {
+                    window.AssuranceDial.settle(originSessionId);
+                }
+            }
+        } catch (_) { /* a live instrument must never break the stream */ }
+        state.activeStreamSessions.delete(originSessionId);
+        delete state.sessionUiCache[originSessionId];
+
+        if (state.currentSessionId === originSessionId) {
+            // User is viewing this session - clean up normally
+            UI.finishProvisionalAnswer();   // S1: a stream that ended without a final leaves no caret behind
+            UI.setExecutionState(false);
+            UI.updateHintAndIndicatorState();
+            // S8 — a regenerate / an edit changed the session's SHAPE (a sibling beside its
+            // question, a branch); the server's lineage is the one source, so re-read it rather
+            // than patching bubbles by hand.
+            if (lineageTurn && typeof window.__reloadSession === 'function') {
+                try { await window.__reloadSession(originSessionId); } catch (_) { /* the log keeps what it has */ }
+            }
+        }
+        // When user is viewing a DIFFERENT session, we intentionally do NOT
+        // reset execution state or global flags - those belong to the viewed session.
+        // The stale cache is deleted so the next load of this completed session
+        // goes through the normal server path with fresh data.
+    }
+}
+
+
+// --- Event Handlers ---
+
+export async function handleChatSubmit(e, source = 'text') {
+    e.preventDefault();
+
+    // S1 — Stop is where Send was: while a turn runs, the composer's control stops it
+    // (keeps what has arrived). The button's mode is set by UI.setExecutionState.
+    if (DOM.submitButton && DOM.submitButton.dataset.mode === 'stop') {
+        // S10 — Enter with text while a turn runs is a STEER (the composer stays live in steer
+        // mode); the Stop button itself — with or without text — still stops.
+        const viaButton = !!(e && e.submitter);
+        const steerText = DOM.userInput ? String(DOM.userInput.value || '').trim() : '';
+        if (!viaButton && steerText && window.SteerReattach && window.SteerReattach.shouldSteer(state.currentSessionId)) {
+            const sid = state.currentSessionId;
+            try {
+                await window.SteerReattach.sendSteer(sid, steerText);
+                DOM.userInput.value = '';
+                DOM.userInput.style.height = 'auto';
+                DOM.userInput.focus();   // accessibility: the steer input keeps focus
+            } catch (err) {
+                if (typeof window.showAppBanner === 'function') window.showAppBanner(`The steer was not queued: ${err.message}`, 'warning', 6000);
+            }
+            return;
+        }
+        DOM.submitButton.classList.add('is-stopping');
+        DOM.submitButton.setAttribute('aria-label', 'Stopping…');
+        await handleStopExecutionClick();
+        return;
+    }
+
+    // Block submit while files are still uploading
+    if (isUploadInProgress()) return;
+
+    // Get the active tag prefix from main.js if badge is showing
+    const rawMessage = DOM.userInput.value.trim();
+
+    // Only use activeTagPrefix if the raw message doesn't have its own @TAG
+    // This prevents stale @TAG from previous queries being automatically prepended
+    const hasExplicitTag = /^@[\w-]+\s/.test(rawMessage);
+    const activeTagPrefix = hasExplicitTag ? '' : (window.activeTagPrefix || '');
+
+    // Reconstruct full message with tag if badge was active
+    const message = activeTagPrefix ? activeTagPrefix + rawMessage : rawMessage;
+    
+    if (!message || !state.currentSessionId) return;
+
+    // A new turn supersedes any prior next-step suggestions for this session.
+    clearNextStepDock(state.currentSessionId);
+
+    // Check for @TAG profile override
+    let profileOverrideId = null;
+    let cleanedMessage = message;
+    // NOTE: [\s\S] (not `.`) — a pasted MULTI-LINE message must keep every line.
+    // `.` stops at the first newline, so tagMatch[2] was the first line ONLY and the
+    // rest of a pasted message was silently dropped whenever an @TAG was present
+    // (typed, or prepended from the active profile badge via activeTagPrefix).
+    const tagMatch = message.match(/^@([\w-]+)\s+([\s\S]+)/);
+    
+    if (tagMatch && window.configState?.profiles) {
+        const tag = tagMatch[1].toUpperCase();
+        console.log('🔍 Tag detected:', tag);
+        const overrideProfile = window.configState.profiles.find(p => p.tag === tag);
+        if (overrideProfile) {
+            // Don't treat default profile as an override
+            if (overrideProfile.id !== window.configState?.defaultProfileId) {
+                profileOverrideId = overrideProfile.id;
+                cleanedMessage = tagMatch[2]; // Strip @TAG from message
+                console.log(`✅ Profile override found: ${overrideProfile.name} (${profileOverrideId})`);
+                console.log(`📝 Cleaned message: "${cleanedMessage}"`);
+                // Store the active profile override for autocomplete to use
+                window.activeProfileOverrideId = profileOverrideId;
+            } else {
+                // Default profile tag typed — strip the tag but don't set override
+                cleanedMessage = tagMatch[2];
+                console.log(`ℹ️  @${tag} is the default profile, not treating as override`);
+            }
+        } else {
+            console.log(`❌ No profile found with tag: ${tag}`);
+        }
+    } else {
+        console.log('ℹ️  No @TAG detected or profiles not loaded');
+    }
+    
+    // Check for #skill:param directives in text (manual typing)
+    let skillSpecs = [];
+    const skillRegex = /#(\w[\w-]*)(?::(\S+))?/g;
+    let skillMatch;
+    while ((skillMatch = skillRegex.exec(cleanedMessage)) !== null) {
+        skillSpecs.push({
+            name: skillMatch[1].toLowerCase(),
+            param: skillMatch[2] || null
+        });
+    }
+    // Strip #skill tags from message sent to LLM
+    if (skillSpecs.length > 0) {
+        cleanedMessage = cleanedMessage.replace(/#\w[\w-]*(?::\S+)?/g, '').trim();
+    }
+
+    // Merge badge-based skills (from autocomplete selection)
+    const badgeSkills = window.activeSkills || [];
+    for (const skill of badgeSkills) {
+        if (!skillSpecs.find(s => s.name === skill.name)) {
+            skillSpecs.push({ name: skill.name, param: skill.param || null });
+        }
+    }
+
+    if (skillSpecs.length > 0) {
+        console.log(`✦ Skills: ${skillSpecs.map(s => '#' + s.name + (s.param ? ':' + s.param : '')).join(' ')}`);
+    }
+
+    // Check for !extension:param directives in text (manual typing)
+    let extensionSpecs = [];
+    const extensionRegex = /!(\w+)(?::(\S+))?/g;
+    let extMatch;
+    while ((extMatch = extensionRegex.exec(cleanedMessage)) !== null) {
+        extensionSpecs.push({
+            name: extMatch[1].toLowerCase(),
+            param: extMatch[2] || null
+        });
+    }
+    // Strip !extension tags from message sent to LLM
+    if (extensionSpecs.length > 0) {
+        cleanedMessage = cleanedMessage.replace(/!\w+(?::\S+)?/g, '').trim();
+    }
+
+    // Merge badge-based extensions (from autocomplete selection)
+    const badgeExtensions = window.activeExtensions || [];
+    for (const ext of badgeExtensions) {
+        if (!extensionSpecs.find(e => e.name === ext.name)) {
+            extensionSpecs.push({ name: ext.name, param: ext.param || null });
+        }
+    }
+
+    if (extensionSpecs.length > 0) {
+        console.log(`🧩 Extensions: ${extensionSpecs.map(e => '!' + e.name + (e.param ? ':' + e.param : '')).join(' ')}`);
+    }
+
+    // Collect pending file attachments
+    const pendingAtts = getPendingAttachments();
+    // S9: the composer's own reads (`_source`) and local thumbnails (`_objectUrl`) stay on the
+    // client — the wire carries the attachment identity only; the chips are drawn from them.
+    const attachments = pendingAtts.map(({ _source, _objectUrl, ...a }) => a);
+    _lastSubmittedSources = pendingAtts.some(a => a._source) ? pendingAtts.filter(a => a._source).map(a => ({ ...a._source, file_id: a.file_id, filename: a.filename })) : null;
+
+    // Collect open canvas state for bidirectional context
+    const canvasState = _getOpenCanvasState();
+    let canvasContext = undefined;
+    if (canvasState) {
+        canvasContext = {
+            title: canvasState.title,
+            language: canvasState.language,
+            content: canvasState.content,
+            modified: canvasState.modified,
+        };
+    }
+
+    // PROP-011 — answering a pending question: the card put its binding here, or the typed
+    // text matches the question (the composer rule); anything else is a new prompt and the
+    // server marks the question superseded (the card says so).
+    let inputAnswer = null;
+    try {
+        if (window.NeedsInput) {
+            inputAnswer = window.NeedsInput.pendingAnswer || window.NeedsInput.bindComposerText(state.currentSessionId, cleanedMessage);
+            window.NeedsInput.pendingAnswer = null;
+            if (inputAnswer && inputAnswer.session_id && inputAnswer.session_id !== state.currentSessionId) inputAnswer = null;
+            if (!inputAnswer && window.NeedsInput.pendingFor(state.currentSessionId)) window.NeedsInput.supersede(state.currentSessionId);
+        }
+    } catch (_) { inputAnswer = null; }
+
+    handleStreamRequest('/ask_stream', {
+        message: cleanedMessage,
+        session_id: state.currentSessionId,
+        source: source,
+        profile_override_id: profileOverrideId,
+        input_answer: inputAnswer || undefined,
+        skills: skillSpecs.length > 0 ? skillSpecs : undefined,
+        extensions: extensionSpecs.length > 0 ? extensionSpecs : undefined,
+        attachments: attachments.length > 0 ? attachments : undefined,
+        canvas_context: canvasContext
+        // is_replay is implicitly false here
+    });
+
+    // Keep skill badges active (sticky) — user must click × to remove
+    // Clear extension badges after sending
+    if (window.clearExtensionBadges) {
+        window.clearExtensionBadges();
+    }
+
+    // Clear attachments after sending
+    if (attachments.length > 0) {
+        clearPendingAttachments();
+    }
+}
+
+async function handleStopExecutionClick() {
+    if (!state.currentSessionId) {
+        return;
+    }
+    // S1.1 — the runner stalls and the status says so the moment Stop is pressed
+    try { if (window.LivingAnswer) window.LivingAnswer.stopping(state.currentSessionId); } catch (_) { /* no-op */ }
+
+    // CRITICAL: Keep button enabled but show visual feedback
+    if(DOM.stopExecutionButton) {
+        const originalText = DOM.stopExecutionButton.textContent;
+        DOM.stopExecutionButton.textContent = 'Stopping...';
+        DOM.stopExecutionButton.classList.add('opacity-75', 'cursor-wait');
+
+        // Store original text for restoration
+        DOM.stopExecutionButton.dataset.originalText = originalText;
+    }
+
+    // Set a failsafe timeout - button MUST re-enable after 10 seconds
+    const failsafeTimer = setTimeout(() => {
+        console.warn('[FAILSAFE] Stop button timeout - forcing UI reset');
+        forceResetExecutionState();
+    }, 10000);
+
+    try {
+        const result = await API.cancelStream(state.currentSessionId);
+        console.log('[StopButton] Cancellation API response:', result);
+
+        // Success - wait for backend to emit 'cancelled' event
+        // But also set a backup timer in case event never arrives
+        setTimeout(() => {
+            if (DOM.stopExecutionButton && !DOM.stopExecutionButton.classList.contains('hidden')) {
+                console.warn('[FAILSAFE] Backend cancelled event never arrived - forcing reset');
+                forceResetExecutionState();
+            }
+        }, 5000);
+
+    } catch (error) {
+        console.error("Error sending cancellation request:", error);
+        UI.addMessage('assistant', `Error trying to stop execution: ${error.message}`);
+        // Force reset immediately on error
+        forceResetExecutionState();
+    } finally {
+        clearTimeout(failsafeTimer);
+        // The stream ended. Anything still pending becomes "not recorded" — never a
+        // pass. A turn that errored or was cancelled would otherwise leave stations
+        // claiming a reading is still on its way when nothing is coming.
+        try {
+            if (window.AssuranceDial && window.AssuranceDial.settle) {
+                window.AssuranceDial.settle(originSessionId);
+            }
+        } catch (_) { /* noop */ }
+    }
+}
+
+/**
+ * Force reset execution state - ensures UI is always recoverable.
+ * This is a failsafe function that guarantees the stop button never stays disabled.
+ */
+function forceResetExecutionState() {
+    console.log('[FORCE RESET] Resetting execution state');
+
+    // Reset button state
+    if(DOM.stopExecutionButton) {
+        const originalText = DOM.stopExecutionButton.dataset.originalText || 'Stop';
+        DOM.stopExecutionButton.textContent = originalText;
+        DOM.stopExecutionButton.classList.remove('opacity-75', 'cursor-wait');
+        DOM.stopExecutionButton.disabled = false;
+        DOM.stopExecutionButton.classList.add('hidden');
+        delete DOM.stopExecutionButton.dataset.originalText;
+    }
+
+    // Reset execution state
+    UI.setExecutionState(false);
+
+    // Reset status window with error message
+    UI.updateStatusWindow({
+        step: "Execution Stopped (Forced)",
+        details: "Process forcibly terminated after timeout.",
+        type: 'error'
+    }, true);
+}
+
+/**
+ * Render extension lifecycle events and results into the status panel for historical turn recall.
+ * Called after each profile-type block renders its own events — appends an "Extensions" section.
+ *
+ * @param {Object} turnData - The turn data from the API (contains extension_events + extension_results)
+ * @param {HTMLElement} container - The DOM container to append extension rendering to
+ */
+function _renderSkillEventsForReload(turnData, container) {
+    const skills = turnData.skills_applied || [];
+    if (skills.length === 0) return;
+
+    // --- Emerald divider ---
+    const divider = document.createElement('div');
+    divider.className = 'px-4 py-2 mt-2 border-t';
+    divider.dataset.filterCategory = 'system';
+    divider.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+    divider.innerHTML = `<span class="text-xs font-semibold uppercase tracking-wider" style="color: #34d399;">Skills</span>`;
+    container.appendChild(divider);
+
+    // --- Render each skill ---
+    let totalTokens = 0;
+    skills.forEach(skill => {
+        const nameDisplay = skill.param ? `#${skill.name}:${skill.param}` : `#${skill.name}`;
+        const target = skill.injection_target === 'user_context' ? 'user context' : 'system prompt';
+        const tokens = skill.estimated_tokens || 0;
+        totalTokens += tokens;
+
+        const stepEl = document.createElement('div');
+        stepEl.className = 'px-4 py-2 status-step';
+        stepEl.dataset.filterCategory = 'system';
+        stepEl.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="text-xs" style="color: #34d399;">&#10038;</span>
+                <span class="text-xs text-gray-300"><span class="font-medium" style="color: #34d399;">${nameDisplay}</span> &rarr; ${target}</span>
+                <span class="text-xs text-gray-500 ml-auto">~${tokens.toLocaleString()} tokens</span>
+            </div>`;
+        container.appendChild(stepEl);
+    });
+
+    // Total overhead summary (only if multiple skills)
+    if (skills.length > 1) {
+        const totalEl = document.createElement('div');
+        totalEl.className = 'px-4 py-1';
+        totalEl.innerHTML = `<span class="text-xs text-gray-500">Skill context: ~${totalTokens.toLocaleString()} tokens added to prompt</span>`;
+        container.appendChild(totalEl);
+    }
+}
+
+function _renderExtensionEventsForReload(turnData, container) {
+    const extEvents = turnData.extension_events || [];
+    const extResults = turnData.extension_results || {};
+
+    if (extEvents.length === 0 && Object.keys(extResults).length === 0) {
+        return; // No extension data to render
+    }
+
+    // --- Divider ---
+    const divider = document.createElement('div');
+    divider.className = 'px-4 py-2 mt-2 border-t border-amber-500/30';
+    divider.dataset.filterCategory = 'system';
+    divider.innerHTML = `<span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Extensions</span>`;
+    container.appendChild(divider);
+
+    // --- Replay lifecycle events (extension_start / extension_complete) ---
+    extEvents.forEach(event => {
+        const eventType = event.type;
+        const payload = event.payload || {};
+
+        if (eventType === 'extension_start') {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'px-4 py-2 status-step';
+            stepEl.dataset.filterCategory = 'system';
+            stepEl.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400 text-xs">&#9654;</span>
+                    <span class="text-xs text-gray-300">Running <span class="text-amber-300 font-medium">!${payload.name || '?'}${payload.param ? ':' + payload.param : ''}</span></span>
+                </div>`;
+            container.appendChild(stepEl);
+        } else if (eventType === 'extension_complete') {
+            const success = payload.success !== false;
+            const icon = success ? '&#10003;' : '&#10007;';
+            const color = success ? 'text-green-400' : 'text-red-400';
+
+            // Build metrics string (tokens, cost, time) — same as live renderer
+            let metricsHtml = '';
+            const inputTokens = payload.input_tokens;
+            const outputTokens = payload.output_tokens;
+            const costUsd = payload.cost_usd;
+            const execTimeMs = payload.execution_time_ms;
+
+            if (inputTokens || outputTokens) {
+                const parts = [];
+                parts.push(`${(inputTokens || 0).toLocaleString()} in / ${(outputTokens || 0).toLocaleString()} out`);
+                if (costUsd !== undefined && costUsd > 0) {
+                    parts.push(`$${parseFloat(costUsd).toFixed(6)}`);
+                }
+                if (execTimeMs) {
+                    parts.push(`${execTimeMs}ms`);
+                }
+                metricsHtml = `<span class="text-xs text-gray-500 ml-auto">${parts.join(' &middot; ')}</span>`;
+            } else if (execTimeMs) {
+                metricsHtml = `<span class="text-xs text-gray-500 ml-auto">${execTimeMs}ms</span>`;
+            }
+
+            const stepEl = document.createElement('div');
+            stepEl.className = 'px-4 py-2 status-step';
+            stepEl.dataset.filterCategory = 'system';
+            stepEl.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="${color} text-xs">${icon}</span>
+                    <span class="text-xs text-gray-300"><span class="text-amber-300 font-medium">!${payload.name || '?'}</span> ${success ? 'completed' : 'failed'}</span>
+                    ${metricsHtml}
+                </div>`;
+            container.appendChild(stepEl);
+        }
+    });
+
+    // --- Show result summaries for silent/status_panel extensions ---
+    for (const [name, result] of Object.entries(extResults)) {
+        const target = result.output_target || 'silent';
+        if (target === 'chat_append') continue; // Handled separately below (rendered into chat pane)
+
+        if (result.success && result.content) {
+            const contentPreview = typeof result.content === 'object'
+                ? JSON.stringify(result.content, null, 2).substring(0, 300)
+                : String(result.content).substring(0, 300);
+
+            const resultEl = document.createElement('div');
+            resultEl.className = 'px-4 py-2';
+            resultEl.innerHTML = `
+                <details class="group">
+                    <summary class="text-xs text-amber-300 cursor-pointer hover:text-amber-200">
+                        !${name} output <span class="text-gray-500">(${result.content_type || 'json'})</span>
+                    </summary>
+                    <pre class="mt-1 text-xs text-gray-400 bg-gray-800/50 rounded p-2 overflow-auto max-h-48 whitespace-pre-wrap">${contentPreview.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                </details>`;
+            container.appendChild(resultEl);
+        }
+    }
+
+    // --- Re-render chat_append extension cards into the chat message bubble ---
+    // After a reload, chat_append cards are NOT in the chat log (they were only
+    // inserted into the DOM during live execution). Re-render them here from
+    // persisted extension_results so download buttons survive page reloads.
+    const reloadTurnId = turnData.turn || turnData.turn_id;
+    if (reloadTurnId) {
+        for (const [name, result] of Object.entries(extResults)) {
+            const target = result.output_target || 'silent';
+            if (target !== 'chat_append' || !result.success || !result.content) continue;
+
+            // Use .assistant-badge (not .clickable-avatar) to find the assistant bubble.
+            // .clickable-avatar[data-turn-id] matches the USER avatar, not the assistant's.
+            const chatLog = document.getElementById('chat-log');
+            const badge = chatLog?.querySelector(`.assistant-badge[data-turn-id="${reloadTurnId}"]`);
+            if (!badge) continue;
+            const msgContent = badge.closest('.message-bubble')?.querySelector('.message-content');
+            if (!msgContent) continue;
+
+            // Skip if card already rendered (avoid duplicates on repeated clicks)
+            if (msgContent.querySelector(`.extension-output[data-ext-name="${name}"]`)) continue;
+
+            if (window._isExtensionBinaryContent && window._isExtensionBinaryContent(result)) {
+                msgContent.insertAdjacentHTML('beforeend', window._buildExtensionDownloadCard(name, result));
+            } else {
+                // Non-binary chat_append (e.g., JSON text output)
+                const cardHtml = `
+                    <div class="extension-output mt-3 p-3 rounded-lg" data-ext-name="${name}"
+                         style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15);">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded"
+                                  style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; font-family: 'JetBrains Mono', monospace;">!${name}</span>
+                            <span class="text-xs text-gray-500">${result.content_type}</span>
+                        </div>
+                        <pre class="text-xs text-gray-300 whitespace-pre-wrap overflow-auto max-h-48"
+                             style="font-family: 'JetBrains Mono', monospace;">${
+                            typeof result.content === 'object' ? JSON.stringify(result.content, null, 2) : result.content
+                        }</pre>
+                    </div>`;
+                msgContent.insertAdjacentHTML('beforeend', cardHtml);
+            }
+        }
+    }
+}
+
+/**
+ * Render context window snapshot during historical turn reload.
+ * Appends the snapshot visualization to the Live Status panel if available.
+ */
+function _renderContextWindowSnapshotForReload(turnData) {
+    const snapshotEvent = turnData?.context_window_snapshot_event;
+    if (!snapshotEvent) return;
+    const snapshotHtml = renderContextWindowSnapshot(snapshotEvent);
+    UI.updateStatusWindow({
+        step: 'Context Window Assembly',
+        details: snapshotHtml,
+        type: 'context_window_snapshot',
+        _la: snapshotEvent.__la || null   // stamped by LivingAnswer.stampTurn on the reload's turn
+    }, true, 'context_window');
+}
+
+/**
+ * Handles clicks on the "Reload Plan" button or user avatar. Fetches and displays the full turn details.
+ * @param {HTMLElement} element - The element that was clicked (button or avatar div).
+ */
+// Every event list a turn replays carries `{type, payload: {type, step, details}}`. An event an
+// older post-turn booking stored bare (`{type, step, details}`) is lifted into that shape once,
+// here, so every engine's replay (titles, details, the last-statement and cost readers) reads it.
+function _normalizeTurnEventLists(turnData) {
+    if (!turnData || typeof turnData !== 'object') return;
+    ['system_events', 'genie_events', 'conversation_agent_events', 'knowledge_events'].forEach((k) => {
+        const list = turnData[k];
+        if (!Array.isArray(list)) return;
+        turnData[k] = list.map((e) => (e && typeof e === 'object' && !e.payload && (e.step || e.details))
+            ? { type: e.type, payload: { type: e.type, step: e.step, details: e.details || {} } } : e);
+    });
+}
+
+// The steps booked to a turn after it ran (turn.system_events) on a reload path that has no
+// detailed event list of its own — an older Ideate/Focus/agent turn rendered as a summary card.
+function _replayAppendedSteps(turnData) {
+    const steps = (turnData && turnData.system_events || []).filter(e =>
+        e && e.payload && e.type !== 'context_window_snapshot' && e.type !== 'token_update');
+    steps.forEach((event) => {
+        const p = event.payload;
+        UI.renderConversationAgentStepForReload({ ...p, type: p.type || event.type,
+            step: p.step || _getConversationAgentStepTitle(event.type, p) }, DOM.statusWindowContent, true, 'system');
+    });
+}
+
+export async function handleReloadPlanClick(element) {
+    const turnId = element.dataset.turnId; // Get turnId from data attribute
+    const sessionId = state.currentSessionId;
+    if (!turnId || !sessionId) {
+        console.error("Missing turnId or sessionId for reloading plan details.");
+        return;
+    }
+
+    // Set flag to prevent status indicator blinks during historical viewing
+    state.isViewingHistoricalTurn = true;
+
+    // Indicate loading in the status window
+    DOM.statusWindowContent.innerHTML = `<p class="p-4 text-gray-400">Loading details for Turn ${turnId}...</p>`;
+    // Scroll to top of status window
+    DOM.statusWindowContent.scrollTop = 0;
+    // Ensure status panel is open
+    const statusCheckbox = document.getElementById('toggle-status-checkbox');
+    if (statusCheckbox && !statusCheckbox.checked) {
+        statusCheckbox.checked = true;
+        // Manually trigger the toggle logic if checkbox change doesn't automatically do it
+        const event = new Event('change');
+        statusCheckbox.dispatchEvent(event);
+    }
+
+
+    let _evalOverlayTurnData = null;
+    try {
+        // Fetch the full turn details (plan + trace)
+        const turnData = await API.fetchTurnDetails(sessionId, turnId);
+        _evalOverlayTurnData = turnData;  // hoisted for the finally-block eval overlay
+        _normalizeTurnEventLists(turnData);
+
+        // S1.1 depth 3: the Living Answer writes its row keys onto THIS turn's records through
+        // the ONE reducer its receipt was built with, so every card rendered below from those
+        // same records wears the key its row will look for (`data-la`) — a reloaded turn lands
+        // on the same card the live turn did, by identity, never by words.
+        try { if (window.LivingAnswer && window.LivingAnswer.stampTurn) { window.LivingAnswer.stampTurn(turnData); window.LivingAnswer.panelTurn(window.LivingAnswer.turnStamp(sessionId, turnId)); } } catch (_) { /* a link must never break a reload */ }
+
+        // KG execution theatre (reload): the persisted turn replays through the same reducer
+        // the live stream fed, so the stage tells the same story on reload as it did live.
+        try { await _loadKGAnimBridge(); if (_kgAnimBridge && _kgAnimBridge.replayKGTheatre) _kgAnimBridge.replayKGTheatre(turnData); } catch (_) {}
+
+        // Reload-harden the grounding gate card (Tier 1.1, charter #14 — ALL engines): the
+        // verdict is persisted as turnData.grounding (a turn_summary key), NOT in the event
+        // list the historical renderer replays — so on reload the card is never re-shown.
+        // Synthesize a grounding_gate event (the {type, payload:{type, step, details}} shape
+        // the loops expect) into whichever list THIS turn's reload renderer iterates: genie
+        // turns replay turnData.genie_events (via _renderGenieStep), everything else replays
+        // turnData.system_events (via _renderStandardStep). Both already dispatch
+        // 'grounding_gate', so the card re-renders on reload exactly as it does live.
+        // Grounding is the exception: it emitted on a CLEAN verdict before P1 too, so
+        // its card is not new and must not disappear. Key on `decision` — the P1 audit
+        // stamps deliberately carry none, so they add nothing while a real verdict
+        // renders exactly as it always did.
+        if (turnData && turnData.grounding && typeof turnData.grounding === 'object'
+            && turnData.grounding.decision) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'grounding_gate' || e.payload?.type === 'grounding_gate'));
+            if (!present) {
+                turnData[listKey].push({
+                    type: 'grounding_gate',
+                    payload: { type: 'grounding_gate', step: 'Grounding Gate', details: turnData.grounding }
+                });
+            }
+        }
+
+        // Reload-harden the Tier 1.3 guardrail card — identical mechanism to the grounding
+        // card above: the verdict is persisted as turnData.guardrail; synthesize a `guardrail`
+        // event into the same list this turn's reload renderer iterates (genie_events for genie,
+        // else system_events) — both already dispatch 'guardrail'.
+        // Gate on `acted`, exactly as the live sites do. The P1 stamp is for the
+        // TRACE — it records that a guard ran and passed — not for the panel: a card
+        // saying "Clean" on every turn is noise that trains people to stop reading
+        // the cards that matter.
+        if (turnData && turnData.guardrail && typeof turnData.guardrail === 'object'
+            && turnData.guardrail.acted) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            // Scope the dedup to the OUTBOUND card only — an inbound guardrail event (step
+            // 'Guardrail (input)') on the same turn must not suppress synthesizing the outbound one.
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'guardrail' || e.payload?.type === 'guardrail')
+                    && (e.payload?.step || e.step) !== 'Guardrail (input)');
+            if (!present) {
+                turnData[listKey].push({
+                    type: 'guardrail',
+                    payload: { type: 'guardrail', step: 'Guardrail', details: turnData.guardrail }
+                });
+            }
+        }
+
+        // Reload-harden the OBDA-READ governed-data card (OBDA_VISION.md §5) — identical mechanism:
+        // the lane summary is persisted as turnData.obda; synthesize an `obda` event into the same
+        // list this turn's reload renderer iterates (both already dispatch 'obda').
+        if (turnData && turnData.obda && typeof turnData.obda === 'object') {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'obda' || e.payload?.type === 'obda'));
+            if (!present) {
+                turnData[listKey].push({
+                    type: 'obda',
+                    payload: { type: 'obda', step: 'Governed Data Operations', details: turnData.obda }
+                });
+            }
+        }
+
+        // Reload-harden the S3 Number Lineage card — identical mechanism: the assessment is
+        // persisted as turnData.compute_lineage; synthesize the event into the list this turn's
+        // reload renderer iterates.
+        if (turnData && turnData.compute_lineage && typeof turnData.compute_lineage === 'object') {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'compute_lineage' || e.payload?.type === 'compute_lineage'));
+            if (!present) {
+                turnData[listKey].push({
+                    type: 'compute_lineage',
+                    payload: { type: 'compute_lineage', step: 'Number Lineage', details: turnData.compute_lineage }
+                });
+            }
+        }
+
+        // Reload-harden the S5 budget — the state is persisted as turnData.budget: restore the
+        // header bar (with its finish line) and, when a unit ran out, make sure the Live Status
+        // list carries the `turn_budget` step (the Optimize lane logs it itself when it skips a
+        // phase; the ReAct lane refuses at the tool boundary and logs nothing, so synthesize it).
+        try {
+            if (window.BudgetBar && window.BudgetBar.update) {
+                if (turnData && turnData.budget && Array.isArray(turnData.budget.units)) {
+                    window.BudgetBar.update(turnData.budget, state.currentSessionId);
+                } else if (window.BudgetBar.reset) {
+                    window.BudgetBar.reset();
+                }
+            }
+        } catch (_) { /* an instrument must never break a reload */ }
+        if (turnData && turnData.budget && turnData.budget.exhausted) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            // present already if the Optimize lane logged its skip (a TDA_SystemLog trace entry
+            // carrying the type in its metadata) or a list event of the type exists
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'turn_budget' || e.payload?.type === 'turn_budget'))
+                || (Array.isArray(turnData.execution_trace) && turnData.execution_trace.some(
+                    s => s && s.action && s.action.tool_name === 'TDA_SystemLog' && s.action.metadata?.type === 'turn_budget'));
+            if (!present) {
+                const b = turnData.budget;
+                turnData[listKey].push({
+                    type: 'turn_budget',
+                    payload: { type: 'turn_budget', step: b.killed ? 'Budget Exhausted — Turn Stopped' : 'Budget Exhausted — Finished Gracefully',
+                               details: { exhausted: b.exhausted, killed: b.killed || null, refusals: b.refusals || 0, units: b.units,
+                                          summary: b.finish || '' } }
+                });
+            }
+        }
+
+        // Reload-harden the OBDA-ACT action records — the acts are persisted as turnData.actions (+ the
+        // confirmations a person gave afterwards, turnData.action_confirmations); the live step
+        // came over the notification channel (never in the trace), so synthesize it from the
+        // stamps, folded exactly as the BOUNDED reading folds them (one card per act).
+        // A reload lists every act once, from the fold — so the live cards and the reloaded
+        // ones can never disagree about whether a prepared act was confirmed.
+        try {
+            // folded server-side by the ONE action_perform.summarize (turn details route)
+            const acts = Array.isArray(turnData && turnData.action_acts) ? turnData.action_acts : [];
+            if (acts.length) {
+                const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+                const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+                if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+                const present = turnData[listKey].some(e => e && (e.type === 'action_record' || e.payload?.type === 'action_record'));
+                if (!present) {
+                    acts.forEach(a => turnData[listKey].push({
+                        type: 'action_record',
+                        payload: { type: 'action_record', step: _assuranceStepTitle('action_record', { details: a }), details: a }
+                    }));
+                }
+            }
+        } catch (_) { /* an instrument must never break a reload */ }
+
+        // Reload-harden the S10 steers — the record is persisted as turnData.steers; the step
+        // was a live notification (never in the trace), so synthesize it from the stamp.
+        if (turnData && turnData.steers && Array.isArray(turnData.steers.steers) && turnData.steers.steers.length) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(e => e && (e.type === 'steer_consumed' || e.payload?.type === 'steer_consumed'));
+            if (!present) {
+                const groups = new Map();
+                turnData.steers.steers.forEach(st => { const k = st.consumed ? String(st.at || 'the next step') : '__carried'; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(st); });
+                for (const [at, list] of groups) {
+                    const carried = at === '__carried';
+                    turnData[listKey].push({
+                        type: 'steer_consumed',
+                        payload: { type: 'steer_consumed', step: carried ? 'Steer Carried to the Next Turn' : 'Steer Considered',
+                                   details: { at: carried ? null : at, carried, steers: list.map(x => ({ id: x.id, text: x.text })),
+                                              summary: carried ? `${list.length} steer${list.length === 1 ? '' : 's'} arrived after the last step — delivered at the start of the next turn`
+                                                  : `${list.length} steer${list.length === 1 ? '' : 's'} considered ${at === 'turn_start' ? 'at the start of this turn' : 'with the result of ' + at}` } }
+                    });
+                }
+            }
+        }
+
+        // Reload-harden the S9 attachment sources — the record is persisted as
+        // turnData.attachment_sources on every engine; the Optimize lane logs the step into its
+        // trace when the sources load, the others carry only the stamp, so synthesize when absent.
+        if (turnData && turnData.attachment_sources && Array.isArray(turnData.attachment_sources.sources) && turnData.attachment_sources.sources.length) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'attachment_sources' || e.payload?.type === 'attachment_sources'))
+                || (Array.isArray(turnData.execution_trace) && turnData.execution_trace.some(
+                    s => s && s.action && s.action.tool_name === 'TDA_SystemLog' && s.action.metadata?.type === 'attachment_sources'));
+            if (!present) {
+                const a = turnData.attachment_sources;
+                // the card reads everything but the evidence text (that is the gate's, not the reader's)
+                turnData[listKey].unshift({
+                    type: 'attachment_sources',
+                    payload: { type: 'attachment_sources', step: 'Attachments Read as Sources',
+                               details: { sources: a.sources.map(x => { const { text, ...rest } = x; return rest; }), verified: a.verified, unverified: a.unverified, none: a.none } }
+                });
+            }
+        }
+
+        // Reload-harden the S7 outcome loop — the record is persisted as turnData.outcome; the
+        // revision step is logged into the trace when it happens, so synthesize only when absent.
+        if (turnData && turnData.outcome && Number(turnData.outcome.revisions) > 0) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'outcome_revision' || e.payload?.type === 'outcome_revision'))
+                || (Array.isArray(turnData.execution_trace) && turnData.execution_trace.some(
+                    s => s && s.action && s.action.tool_name === 'TDA_SystemLog' && s.action.metadata?.type === 'outcome_revision'));
+            if (!present) {
+                const o = turnData.outcome;
+                turnData[listKey].push({
+                    type: 'outcome_revision',
+                    payload: { type: 'outcome_revision', step: 'Outcome Revision',
+                               details: { revision: o.revisions, cleared: !!o.cleared, findings_before: o.findings_before || [], findings_after: o.findings_after || [],
+                                          tokens_in: o.tokens_in, tokens_out: o.tokens_out, cost_usd: o.cost_usd, summary: o.summary || '' } }
+                });
+            }
+        }
+
+        // Reload-harden the S6 tool surface — the split is persisted as turnData.tool_surface; both
+        // lanes log the step into the trace when they arm it, so synthesize only when absent.
+        if (turnData && turnData.tool_surface && turnData.tool_surface.counts) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'tool_surface' || e.payload?.type === 'tool_surface'))
+                || (Array.isArray(turnData.execution_trace) && turnData.execution_trace.some(
+                    s => s && s.action && s.action.tool_name === 'TDA_SystemLog' && s.action.metadata?.type === 'tool_surface'));
+            if (!present) {
+                const t = turnData.tool_surface; const c = t.counts || {};
+                turnData[listKey].push({
+                    type: 'tool_surface',
+                    payload: { type: 'tool_surface', step: 'Tool Surface',
+                               details: { ...t, summary: `offered ${c.offered || 0} of ${c.total || 0} tools`
+                                          + (c.denied ? `; ${c.denied} denied by authority` : '') + (c.widened ? `; ${c.widened} found by the model` : '') } }
+                });
+            }
+        }
+
+        // Reload-harden the S4 recovery steps — identical mechanism: the acts are persisted as
+        // turnData.resilience.steps; synthesize one `llm_recovery` event per step (each its own
+        // Live Status step, exactly as it was broadcast live).
+        if (turnData && turnData.resilience && Array.isArray(turnData.resilience.steps) && turnData.resilience.steps.length) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'llm_recovery' || e.payload?.type === 'llm_recovery'));
+            if (!present) {
+                const TITLE = { retry: 'Provider Retry', continuation: 'Answer Continued', fallback: 'Served by Fallback', refusal: 'Provider Refusal' };
+                turnData.resilience.steps.forEach((st) => {
+                    turnData[listKey].push({
+                        type: 'llm_recovery',
+                        payload: { type: 'llm_recovery', step: TITLE[st.kind] || 'LLM Recovery', details: { ...st, summary: st.summary || _describeRecovery(st) } }
+                    });
+                });
+            }
+        }
+
+        // Reload-harden the Honesty post-condition card — identical mechanism: the verdict is
+        // persisted as turnData.honesty; synthesize a `honesty` event into the same list this
+        // turn's reload renderer iterates (both already dispatch 'honesty').
+        if (turnData && turnData.honesty && typeof turnData.honesty === 'object'
+            && turnData.honesty.acted) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && (e.type === 'honesty' || e.payload?.type === 'honesty'));
+            if (!present) {
+                turnData[listKey].push({
+                    type: 'honesty',
+                    payload: { type: 'honesty', step: 'Honesty Check', details: turnData.honesty }
+                });
+            }
+        }
+
+        // Reload-harden the Tier 1.3 INBOUND guardrail card (prompt-injection) — same mechanism;
+        // the inbound verdict is persisted as turnData.guardrail_inbound (a blocked turn carries
+        // it in system_events already, but observe/annotate turns stamp it here).
+        if (turnData && turnData.guardrail_inbound
+            && typeof turnData.guardrail_inbound === 'object'
+            && turnData.guardrail_inbound.acted) {
+            const isGenieTurn = !!(turnData.genie_coordination || turnData.profile_type === 'genie');
+            const listKey = isGenieTurn ? 'genie_events' : 'system_events';
+            if (!Array.isArray(turnData[listKey])) turnData[listKey] = [];
+            const present = turnData[listKey].some(
+                e => e && ((e.type === 'guardrail' || e.payload?.type === 'guardrail') &&
+                           (e.payload?.step === 'Guardrail (input)' || e.payload?.details?.direction === 'inbound')));
+            if (!present) {
+                turnData[listKey].push({
+                    type: 'guardrail',
+                    payload: { type: 'guardrail', step: 'Guardrail (input)', details: turnData.guardrail_inbound }
+                });
+            }
+        }
+
+        console.log('[ReloadPlan] Turn data received:', turnData);
+        console.log('[ReloadPlan] System events in turn data:', turnData?.system_events);
+
+        // Flow-run turns render their own node-by-node trace (a DAG run, not a plan or
+        // agent trace). Catch them BEFORE the generic cancelled/error + profile handling
+        // so an errored flow run still shows its node trace, not a partial plan view.
+        if (turnData && (turnData.profile_type === 'flow' || turnData.flow_run_id)) {
+            const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+            if (statusTitle) statusTitle.textContent = `Flow Run - Turn ${turnId}`;
+
+            // Pull the authoritative run + node trace from the flow run ledger.
+            let run = null, nodeRuns = [], runMissing = false;
+            try {
+                const token = localStorage.getItem('tda_auth_token');
+                const resp = await fetch(`/api/v1/flows/runs/${turnData.flow_run_id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (resp.ok) { run = await resp.json(); nodeRuns = run.node_runs || []; }
+                else if (resp.status === 404) runMissing = true;
+            } catch (_) { /* fall back to the turn's stored summary */ }
+
+            UI.renderFlowRunTrace({
+                container: DOM.statusWindowContent,
+                run: run || turnData,
+                nodeRuns,
+                flowId: turnData.flow_id,
+                turnId,
+                runMissing,
+            });
+
+            // Flow runs are not re-runnable via the planned/optimized replay buttons.
+            if (DOM.headerReplayPlannedButton) DOM.headerReplayPlannedButton.classList.add('hidden');
+            if (DOM.headerReplayOptimizedButton) DOM.headerReplayOptimizedButton.classList.add('hidden');
+            return;
+        }
+
+        // Handle cancelled or error turns FIRST (before profile-specific handling)
+        // These turns have partial data and need special display regardless of profile type
+        if (turnData && (turnData.status === 'cancelled' || turnData.status === 'error')) {
+            DOM.statusWindowContent.innerHTML = '';
+
+            // Update status title
+            const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+            if (statusTitle) {
+                const statusLabel = turnData.status === 'cancelled' ? 'Cancelled' : 'Error';
+                statusTitle.textContent = `${statusLabel} Turn ${turnId} (Partial)`;
+            }
+
+            // Create header with status indicator
+            const headerEl = document.createElement('div');
+            headerEl.className = `p-4 status-step ${turnData.status}`;
+
+            const statusIcon = turnData.status === 'cancelled' ?
+                '<svg class="w-5 h-5 text-yellow-400 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' :
+                '<svg class="w-5 h-5 text-red-400 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+            const title = turnData.status === 'cancelled' ? 'Execution Cancelled' : 'Execution Error';
+
+            headerEl.innerHTML = `
+                <h4 class="font-bold text-sm text-white mb-2">${statusIcon}${title}</h4>
+                <p class="text-xs text-gray-300 mb-2">${turnData.error_message || 'Turn did not complete.'}</p>
+                ${turnData.error_details ? `<p class="text-xs text-gray-500 mt-1"><em>${turnData.error_details}</em></p>` : ''}
+                <div class="mt-3 p-3 bg-gray-800/30 rounded border border-white/10">
+                    <p class="text-xs text-gray-400"><strong>Provider:</strong> ${turnData.provider || 'N/A'}</p>
+                    <p class="text-xs text-gray-400"><strong>Model:</strong> ${turnData.model || 'N/A'}</p>
+                    <p class="text-xs text-gray-400"><strong>Input Tokens:</strong> ${(turnData.turn_input_tokens || 0).toLocaleString()}</p>
+                    <p class="text-xs text-gray-400"><strong>Output Tokens:</strong> ${(turnData.turn_output_tokens || 0).toLocaleString()}</p>
+                </div>
+            `;
+            DOM.statusWindowContent.appendChild(headerEl);
+
+            // Render the plan and partial execution trace using the standard historical trace renderer
+            // This properly shows Plan Steps and execution progress
+            if (turnData.original_plan || turnData.execution_trace) {
+                UI.renderHistoricalTrace(
+                    turnData.original_plan || [],
+                    turnData.execution_trace || [],
+                    turnId,
+                    turnData.user_query,
+                    turnData.knowledge_retrieval_event || null,
+                    turnData.kg_enrichment_event || null,
+                    {
+                        turn_input_tokens: turnData.turn_input_tokens || 0,
+                        turn_output_tokens: turnData.turn_output_tokens || 0
+                    },
+                    turnData.system_events || [],  // Pass system events (session name generation, etc.)
+                    turnData.duration_ms || 0  // Pass duration for execution summary card
+                );
+            }
+
+            // Update token display with partial data (isHistorical = true for plan reloads)
+            const lastStatement = _getLastStatementTokens(turnData);
+
+            // Get turn cost from backend (preferred) or calculate from events (fallback)
+            let turnCost = 0;
+            if (turnData.turn_cost !== undefined) {
+                turnCost = parseFloat(turnData.turn_cost);
+                console.log(`[Reload] Using backend turn_cost: $${turnCost.toFixed(6)}`);
+            } else {
+                turnCost = _getTurnCost(turnData);
+                console.warn(`[Reload] Backend turn_cost missing, calculated from events: $${turnCost.toFixed(6)}`);
+            }
+
+            // Get session cost from backend (preferred)
+            let sessionCost = 0;
+            if (turnData.session_cost_usd !== undefined) {
+                sessionCost = parseFloat(turnData.session_cost_usd);
+                console.log(`[Reload] Using backend session_cost_usd: $${sessionCost.toFixed(6)}`);
+            } else {
+                console.warn('[Reload] Backend session_cost_usd missing');
+            }
+
+            UI.updateTokenDisplay({
+                statement_input: lastStatement.input,
+                statement_output: lastStatement.output,
+                turn_input: turnData.turn_input_tokens || turnData.input_tokens || 0,
+                turn_output: turnData.turn_output_tokens || turnData.output_tokens || 0,
+                total_input: turnData.session_input_tokens || 0,
+                total_output: turnData.session_output_tokens || 0,
+                turn_cost: turnCost,           // NEW - authoritative turn cost
+                session_cost_usd: sessionCost  // NEW - authoritative session cost
+            }, true);
+
+            // Hide replay buttons for partial turns
+            if (DOM.headerReplayPlannedButton) DOM.headerReplayPlannedButton.classList.add('hidden');
+            if (DOM.headerReplayOptimizedButton) DOM.headerReplayOptimizedButton.classList.add('hidden');
+
+            return;
+        }
+
+        // Check if this is a genie profile (coordination profile)
+        if (turnData && (turnData.genie_coordination || turnData.profile_type === 'genie')) {
+            DOM.statusWindowContent.innerHTML = '';
+
+            // Render skill events at the top (pre-processing, before main execution)
+            _renderSkillEventsForReload(turnData, DOM.statusWindowContent);
+
+            // Render context window snapshot early (matches live execution order)
+            _renderContextWindowSnapshotForReload(turnData);
+
+            // If we have detailed genie_events, replay them for full UI experience
+            const genieEvents = turnData.genie_events || [];
+            if (genieEvents.length > 0) {
+                // Update status title to indicate historical view
+                const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+                if (statusTitle) {
+                    const brandedName = getBrandedAgentName('genie');
+                    statusTitle.textContent = `${brandedName} - Turn ${turnId}`;
+                }
+
+                // Filter out obsolete and transient events:
+                // - genie_start, genie_routing: redundant with genie_coordination_start
+                // - status_indicator_update, token_update: transient UI-only events (no replay value)
+                const filteredGenieEvents = genieEvents.filter(e =>
+                    e.type !== 'genie_start' && e.type !== 'genie_routing' &&
+                    e.type !== 'status_indicator_update' && e.type !== 'token_update'
+                );
+
+                // The steps appended to the turn AFTER it ran (Smart Next Steps, memory, the judge,
+                // a proposal suggestion — booked to turn.system_events for every engine) replay
+                // after the coordinator's own; a type the coordinator already recorded is not repeated.
+                const genieTypes = new Set(filteredGenieEvents.map(e => e.type));
+                const appendedSteps = (turnData.system_events || []).filter(e =>
+                    e && e.type && e.payload && !genieTypes.has(e.type) &&
+                    e.type !== 'context_window_snapshot' && e.type !== 'token_update' &&
+                    e.type !== 'status_indicator_update');
+
+                // Replay each event using the same renderer as live execution
+                filteredGenieEvents.forEach((event, index) => {
+                    const isFinal = index === filteredGenieEvents.length - 1 && appendedSteps.length === 0;
+                    // Check if payload is already a complete event (has 'step' field)
+                    // or if it's just details that need to be wrapped
+                    let eventData;
+                    if (event.payload && typeof event.payload === 'object' && 'step' in event.payload) {
+                        // Payload is complete event_dict (session name events)
+                        eventData = event.payload;
+                    } else {
+                        // Payload is just details (coordinator events) - reconstruct eventData
+                        eventData = {
+                            step: _getGenieStepTitle(event.type, event.payload),
+                            details: event.payload,
+                            type: event.type
+                        };
+                    }
+                    UI.renderGenieStepForReload(eventData, DOM.statusWindowContent, isFinal);
+                });
+                appendedSteps.forEach((event, index) => {
+                    const p = event.payload;
+                    UI.renderGenieStepForReload({ ...p, type: p.type || event.type,
+                        step: p.step || _getGenieStepTitle(event.type, p) },
+                        DOM.statusWindowContent, index === appendedSteps.length - 1);
+                });
+
+                // Scroll to top after replaying all events
+                DOM.statusWindowContent.scrollTop = 0;
+
+                // Update token counts from historical turn data (isHistorical = true)
+                const inputTokens = turnData.turn_input_tokens || turnData.input_tokens || 0;
+                const outputTokens = turnData.turn_output_tokens || turnData.output_tokens || 0;
+                const lastStatement = _getLastStatementTokens(turnData);
+
+                // Get turn cost from backend (preferred) or calculate from events (fallback)
+                let turnCost = 0;
+                if (turnData.turn_cost !== undefined) {
+                    turnCost = parseFloat(turnData.turn_cost);
+                    console.log(`[Reload] Using backend turn_cost: $${turnCost.toFixed(6)}`);
+                } else {
+                    turnCost = _getTurnCost(turnData);
+                    console.warn(`[Reload] Backend turn_cost missing, calculated from events: $${turnCost.toFixed(6)}`);
+                }
+
+                // Get session cost from backend (preferred)
+                let sessionCost = 0;
+                if (turnData.session_cost_usd !== undefined) {
+                    sessionCost = parseFloat(turnData.session_cost_usd);
+                    console.log(`[Reload] Using backend session_cost_usd: $${sessionCost.toFixed(6)}`);
+                } else {
+                    console.warn('[Reload] Backend session_cost_usd missing');
+                }
+
+                UI.updateTokenDisplay({
+                    statement_input: lastStatement.input,
+                    statement_output: lastStatement.output,
+                    turn_input: inputTokens,
+                    turn_output: outputTokens,
+                    total_input: turnData.session_input_tokens || 0,
+                    total_output: turnData.session_output_tokens || 0,
+                    turn_cost: turnCost,           // NEW - authoritative turn cost
+                    session_cost_usd: sessionCost  // NEW - authoritative session cost
+                }, true);
+            } else {
+                // Fallback: Show simple summary if no detailed events available
+                const genieInfoEl = document.createElement('div');
+                genieInfoEl.className = 'p-4 status-step info';
+
+                const toolsUsed = turnData.tools_used || [];
+                const profilesConsulted = toolsUsed.length;
+                const success = turnData.success !== false;
+                const profileTags = toolsUsed.map(t => t.replace('invoke_', '')).join(', ');
+
+                const brandedName = getBrandedAgentName('genie');
+                genieInfoEl.innerHTML = `
+                    <h4 class="font-bold text-sm text-white mb-2">🔮 ${brandedName}</h4>
+                    <p class="text-xs text-gray-300 mb-2">${success ? 'Coordination completed successfully.' : 'Coordination encountered errors.'}</p>
+                    <div class="mt-3 p-3 bg-gray-800/30 rounded border border-white/10">
+                        <p class="text-xs text-gray-400"><strong>Provider:</strong> ${turnData.provider || 'N/A'}</p>
+                        <p class="text-xs text-gray-400"><strong>Model:</strong> ${turnData.model || 'N/A'}</p>
+                        <p class="text-xs text-gray-400"><strong>Profiles Consulted:</strong> ${profilesConsulted}</p>
+                        ${profileTags ? `<p class="text-xs text-gray-400"><strong>Profiles:</strong> @${profileTags.replace(/, /g, ', @')}</p>` : ''}
+                        <p class="text-xs text-gray-400 mt-2"><strong>Note:</strong> Detailed event history not available for this turn.</p>
+                    </div>
+                `;
+                DOM.statusWindowContent.appendChild(genieInfoEl);
+            }
+
+            // Render extension events if present
+            _renderExtensionEventsForReload(turnData, DOM.statusWindowContent);
+
+            // Hide replay buttons for genie profiles (no plan to replay)
+            if (DOM.headerReplayPlannedButton) {
+                DOM.headerReplayPlannedButton.classList.add('hidden');
+            }
+            if (DOM.headerReplayOptimizedButton) {
+                DOM.headerReplayOptimizedButton.classList.add('hidden');
+            }
+
+            return; // Exit early
+        }
+
+        // Check if this is a conversation_with_tools profile (LangChain agent)
+        if (turnData && turnData.profile_type === 'conversation_with_tools') {
+            DOM.statusWindowContent.innerHTML = '';
+
+            // Render skill events at the top (pre-processing, before main execution)
+            _renderSkillEventsForReload(turnData, DOM.statusWindowContent);
+
+            // Render context window snapshot early (matches live execution order)
+            _renderContextWindowSnapshotForReload(turnData);
+
+            // If we have detailed conversation_agent_events, replay them for full UI experience
+            const agentEvents = turnData.conversation_agent_events || [];
+
+            // Also check for knowledge retrieval event (renders first)
+            if (turnData.knowledge_retrieval_event) {
+                // Use knowledge_retrieval_complete type to show duration if available
+                const eventType = turnData.knowledge_retrieval_event.duration_ms ? 'knowledge_retrieval_complete' : 'knowledge_retrieval';
+                const knowledgeEventData = {
+                    step: _getConversationAgentStepTitle(eventType, turnData.knowledge_retrieval_event),
+                    details: turnData.knowledge_retrieval_event,
+                    type: eventType
+                };
+                UI.renderConversationAgentStepForReload(knowledgeEventData, DOM.statusWindowContent, false, 'knowledge');
+            }
+
+            // Render KG enrichment event if present
+            if (turnData.kg_enrichment_event) {
+                const kgEventData = {
+                    step: _getConversationAgentStepTitle('kg_enrichment', turnData.kg_enrichment_event),
+                    details: turnData.kg_enrichment_event,
+                    type: 'kg_enrichment'
+                };
+                UI.renderConversationAgentStepForReload(kgEventData, DOM.statusWindowContent, true, 'knowledge');
+            }
+
+            if (agentEvents.length > 0) {
+                // Update status title to indicate historical view
+                const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+                if (statusTitle) {
+                    const brandedName = getBrandedAgentName(turnData.profile_type || 'conversation_with_tools');
+                    statusTitle.textContent = `${brandedName} - Turn ${turnId}`;
+                }
+
+                // Pre-process: merge tool_invoked with tool_completed pairs
+                // This prevents duplicate rows - we only show the final state for each tool call
+                console.log('[ReloadPlan] Raw agentEvents:', agentEvents.map(e => e.type));
+                const processedEvents = _mergeToolEvents(agentEvents);
+                console.log('[ReloadPlan] Processed events after merge:', processedEvents.map(e => e.type));
+
+                // Replay each event using the same renderer as live execution
+                processedEvents.forEach((event, index) => {
+                    // Completion events never show spinners (they're final by definition)
+                    const isCompletionEvent = ['conversation_tool_completed', 'conversation_agent_complete'].includes(event.type);
+                    const isFinal = isCompletionEvent || index === processedEvents.length - 1;
+                    // Check if payload is already a complete event (has 'step' field)
+                    // or if it's just details that need to be wrapped
+                    let eventData;
+                    if (event.payload && typeof event.payload === 'object' && 'step' in event.payload) {
+                        // Payload is complete event_dict (session name events)
+                        eventData = event.payload;
+                    } else {
+                        // Payload is just details (agent events) - reconstruct eventData
+                        eventData = {
+                            step: _getConversationAgentStepTitle(event.type, event.payload),
+                            details: event.payload,
+                            type: event.type
+                        };
+                    }
+                    UI.renderConversationAgentStepForReload(eventData, DOM.statusWindowContent, isFinal, 'agent');
+                });
+
+                // Render system events (session name generation, etc.) after agent events
+                const systemEvents = turnData.system_events || [];
+                if (systemEvents.length > 0) {
+                    systemEvents.forEach((event, index) => {
+                        // System events are always final (completed)
+                        const isFinal = true;
+
+                        // Check if payload is already a complete event (has 'step' field)
+                        let eventData;
+                        if (event.payload && typeof event.payload === 'object' && 'step' in event.payload) {
+                            // Payload is complete event_dict (session name events) - use as-is
+                            eventData = event.payload;
+                        } else {
+                            // Payload is just details - reconstruct eventData
+                            eventData = {
+                                step: _getConversationAgentStepTitle(event.type, event.payload),
+                                details: event.payload,
+                                type: event.type
+                            };
+                        }
+                        UI.renderConversationAgentStepForReload(eventData, DOM.statusWindowContent, isFinal, 'system');
+                    });
+                }
+
+                // Scroll to top after replaying all events
+                DOM.statusWindowContent.scrollTop = 0;
+
+                // Update token counts from historical turn data (isHistorical = true)
+                const inputTokens = turnData.turn_input_tokens || turnData.input_tokens || 0;
+                const outputTokens = turnData.turn_output_tokens || turnData.output_tokens || 0;
+                const lastStatement = _getLastStatementTokens(turnData);
+
+                // Get turn cost from backend (preferred) or calculate from events (fallback)
+                let turnCost = 0;
+                if (turnData.turn_cost !== undefined) {
+                    turnCost = parseFloat(turnData.turn_cost);
+                    console.log(`[Reload] Using backend turn_cost: $${turnCost.toFixed(6)}`);
+                } else {
+                    turnCost = _getTurnCost(turnData);
+                    console.warn(`[Reload] Backend turn_cost missing, calculated from events: $${turnCost.toFixed(6)}`);
+                }
+
+                // Get session cost from backend (preferred)
+                let sessionCost = 0;
+                if (turnData.session_cost_usd !== undefined) {
+                    sessionCost = parseFloat(turnData.session_cost_usd);
+                    console.log(`[Reload] Using backend session_cost_usd: $${sessionCost.toFixed(6)}`);
+                } else {
+                    console.warn('[Reload] Backend session_cost_usd missing');
+                }
+
+                UI.updateTokenDisplay({
+                    statement_input: lastStatement.input,
+                    statement_output: lastStatement.output,
+                    turn_input: inputTokens,
+                    turn_output: outputTokens,
+                    total_input: turnData.session_input_tokens || 0,
+                    total_output: turnData.session_output_tokens || 0,
+                    turn_cost: turnCost,           // NEW - authoritative turn cost
+                    session_cost_usd: sessionCost  // NEW - authoritative session cost
+                }, true);
+            } else {
+                // Fallback: Show simple summary if no detailed events available
+                const agentInfoEl = document.createElement('div');
+                agentInfoEl.className = 'p-4 status-step info';
+
+                const toolsUsed = turnData.tools_used || [];
+                const toolCount = toolsUsed.length;
+                const success = turnData.status !== 'failed';
+                const brandedName = getBrandedAgentName(turnData.profile_type || 'conversation_with_tools');
+
+                agentInfoEl.innerHTML = `
+                    <h4 class="font-bold text-sm text-white mb-2">${brandedName}</h4>
+                    <p class="text-xs text-gray-300 mb-2">${success ? 'Agent execution completed successfully.' : 'Agent execution encountered errors.'}</p>
+                    <div class="mt-3 p-3 bg-gray-800/30 rounded border border-white/10">
+                        <p class="text-xs text-gray-400"><strong>Provider:</strong> ${turnData.provider || 'N/A'}</p>
+                        <p class="text-xs text-gray-400"><strong>Model:</strong> ${turnData.model || 'N/A'}</p>
+                        <p class="text-xs text-gray-400"><strong>Tools Used:</strong> ${toolCount}</p>
+                        ${toolsUsed.length > 0 ? `<p class="text-xs text-gray-400"><strong>Tools:</strong> ${toolsUsed.join(', ')}</p>` : ''}
+                        ${turnData.knowledge_accessed ? `<p class="text-xs text-gray-400"><strong>Knowledge:</strong> ${turnData.knowledge_accessed.length} collection(s) accessed</p>` : ''}
+                        <p class="text-xs text-gray-400 mt-2"><strong>Note:</strong> Detailed event history not available for this turn.</p>
+                    </div>
+                `;
+                DOM.statusWindowContent.appendChild(agentInfoEl);
+                _replayAppendedSteps(turnData);
+            }
+
+            // Render extension events if present
+            _renderExtensionEventsForReload(turnData, DOM.statusWindowContent);
+
+            // Hide replay buttons for conversation_with_tools (no plan to replay)
+            if (DOM.headerReplayPlannedButton) {
+                DOM.headerReplayPlannedButton.classList.add('hidden');
+            }
+            if (DOM.headerReplayOptimizedButton) {
+                DOM.headerReplayOptimizedButton.classList.add('hidden');
+            }
+
+            return; // Exit early
+        }
+
+        // Check if this is an llm_only or rag_focused profile (non-tool profiles)
+        if (turnData && (turnData.profile_type === 'llm_only' || turnData.profile_type === 'rag_focused')) {
+            DOM.statusWindowContent.innerHTML = '';
+
+            // Render skill events at the top (pre-processing, before main execution)
+            _renderSkillEventsForReload(turnData, DOM.statusWindowContent);
+
+            // Render context window snapshot early (matches live execution order)
+            _renderContextWindowSnapshotForReload(turnData);
+
+            const isRagFocused = turnData.profile_type === 'rag_focused';
+
+            // Check for detailed knowledge events (similar to genie_events and conversation_agent_events)
+            const knowledgeEvents = turnData.knowledge_events || [];
+
+            if (knowledgeEvents.length > 0) {
+                // Update status title to indicate historical view
+                const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+                if (statusTitle) {
+                    const brandedName = getBrandedAgentName(turnData.profile_type || 'rag_focused');
+                    statusTitle.textContent = `${brandedName} - Turn ${turnId}`;
+                }
+
+                // Replay each event using the same renderer as live execution
+                knowledgeEvents.forEach((event, index) => {
+                    const isFinal = index === knowledgeEvents.length - 1;
+                    // Build eventData in the format expected by _renderConversationAgentStep
+                    const eventData = {
+                        step: _getConversationAgentStepTitle(event.type, event.payload),
+                        details: event.payload,
+                        type: event.type
+                    };
+                    UI.renderConversationAgentStepForReload(eventData, DOM.statusWindowContent, isFinal, 'knowledge');
+                });
+
+                // Render system events (session name generation, etc.) after knowledge events
+                const systemEvents = turnData.system_events || [];
+                if (systemEvents.length > 0) {
+                    systemEvents.forEach((event, index) => {
+                        const isFinal = index === systemEvents.length - 1;
+                        // Check if payload is already a complete event (has 'step' field)
+                        // or if it's just details that need to be wrapped
+                        let eventData;
+                        if (event.payload && typeof event.payload === 'object' && 'step' in event.payload) {
+                            // Payload is complete event_dict (session name events)
+                            eventData = event.payload;
+                        } else {
+                            // Payload is just details - reconstruct eventData
+                            eventData = {
+                                step: _getConversationAgentStepTitle(event.type, event.payload),
+                                details: event.payload,
+                                type: event.type
+                            };
+                        }
+                        UI.renderConversationAgentStepForReload(eventData, DOM.statusWindowContent, isFinal, 'system');
+                    });
+                }
+
+                // Scroll to top after replaying all events
+                DOM.statusWindowContent.scrollTop = 0;
+
+                // NOTE: Removed redundant "RAG Focused Profile" info card - this info is already
+                // shown in "Knowledge Focused Started" and "Knowledge Focused Complete" events
+            } else if (turnData.knowledge_retrieval_event && (turnData.knowledge_chunks_ui || turnData.knowledge_retrieval_event.chunks)) {
+                // Fallback: Use old rendering method if no detailed events
+                // Get chunks from new location (knowledge_chunks_ui) or fall back to old location for backwards compatibility
+                const chunks = turnData.knowledge_chunks_ui || turnData.knowledge_retrieval_event.chunks || [];
+                const knowledgeEventWithChunks = {
+                    ...turnData.knowledge_retrieval_event,
+                    chunks: chunks  // Add chunks from appropriate source
+                };
+
+                // Use the standard renderHistoricalTrace function to show detailed knowledge retrieval
+                UI.renderHistoricalTrace(
+                    [], // No plan for non-tool profiles
+                    [], // No execution trace for non-tool profiles
+                    turnId,
+                    turnData.user_query || 'N/A',
+                    knowledgeEventWithChunks, // Pass the knowledge event with chunks
+                    turnData.kg_enrichment_event || null,
+                    {  // Pass turn tokens for display
+                        turn_input_tokens: turnData.turn_input_tokens || 0,
+                        turn_output_tokens: turnData.turn_output_tokens || 0
+                    }
+                );
+                // NOTE: Removed redundant "RAG Focused Profile" info card - this info is already
+                // shown in the knowledge events rendered above
+                _replayAppendedSteps(turnData);
+            } else {
+                // Fallback: Show simple summary if no detailed knowledge data
+                // Removed emoji icons - using clean SVG icons instead
+                const title = isRagFocused ? 'RAG Focused Profile' : 'Conversation Profile';
+                const message = isRagFocused
+                    ? 'This turn used a RAG focused profile with mandatory knowledge retrieval.'
+                    : 'This turn used a conversation profile (LLM-only).';
+                const note = isRagFocused
+                    ? 'RAG focused profiles retrieve documents from knowledge repositories and synthesize answers from those sources only.'
+                    : 'Conversation profiles bypass the planner and execute directly via LLM without tool calls.';
+
+                DOM.statusWindowContent.innerHTML = `
+                    <div class="p-4 status-step info">
+                        <h4 class="font-bold text-sm text-white mb-2">${title}</h4>
+                        <p class="text-xs text-gray-300 mb-2">${turnData.message || message}</p>
+                        <div class="mt-3 p-3 bg-gray-800/30 rounded border border-white/10">
+                            <p class="text-xs text-gray-400"><strong>Provider:</strong> ${turnData.provider || 'N/A'}</p>
+                            <p class="text-xs text-gray-400"><strong>Model:</strong> ${turnData.model || 'N/A'}</p>
+                            ${isRagFocused && turnData.knowledge_retrieval_event ? `
+                                <p class="text-xs text-gray-400"><strong>Documents Retrieved:</strong> ${turnData.knowledge_retrieval_event.document_count || 0}</p>
+                                <p class="text-xs text-gray-400"><strong>Collections:</strong> ${turnData.knowledge_retrieval_event.collections?.join(', ') || 'N/A'}</p>
+                            ` : ''}
+                            <p class="text-xs text-gray-400 mt-2"><strong>Note:</strong> ${note}</p>
+                        </div>
+                    </div>`;
+                _replayAppendedSteps(turnData);
+            }
+
+            // Update token counts from historical turn data (isHistorical = true)
+            const inputTokens = turnData.turn_input_tokens || turnData.input_tokens || 0;
+            const outputTokens = turnData.turn_output_tokens || turnData.output_tokens || 0;
+            const lastStatement = _getLastStatementTokens(turnData);
+
+            // Get turn cost from backend (preferred) or calculate from events (fallback)
+            let turnCost = 0;
+            if (turnData.turn_cost !== undefined) {
+                turnCost = parseFloat(turnData.turn_cost);
+                console.log(`[Reload] Using backend turn_cost: $${turnCost.toFixed(6)}`);
+            } else {
+                turnCost = _getTurnCost(turnData);
+                console.warn(`[Reload] Backend turn_cost missing, calculated from events: $${turnCost.toFixed(6)}`);
+            }
+
+            // Get session cost from backend (preferred)
+            let sessionCost = 0;
+            if (turnData.session_cost_usd !== undefined) {
+                sessionCost = parseFloat(turnData.session_cost_usd);
+                console.log(`[Reload] Using backend session_cost_usd: $${sessionCost.toFixed(6)}`);
+            } else {
+                console.warn('[Reload] Backend session_cost_usd missing');
+            }
+
+            UI.updateTokenDisplay({
+                statement_input: lastStatement.input,
+                statement_output: lastStatement.output,
+                turn_input: inputTokens,
+                turn_output: outputTokens,
+                total_input: turnData.session_input_tokens || 0,
+                total_output: turnData.session_output_tokens || 0,
+                turn_cost: turnCost,           // NEW - authoritative turn cost
+                session_cost_usd: sessionCost  // NEW - authoritative session cost
+            }, true);
+
+            // Render extension events if present
+            _renderExtensionEventsForReload(turnData, DOM.statusWindowContent);
+
+            // Hide replay buttons for non-tool profiles (no plan to replay)
+            if (DOM.headerReplayPlannedButton) {
+                DOM.headerReplayPlannedButton.classList.add('hidden');
+            }
+            if (DOM.headerReplayOptimizedButton) {
+                DOM.headerReplayOptimizedButton.classList.add('hidden');
+            }
+
+            return; // Exit early
+        }
+
+        // === Unified tool_enabled reload (handles both modern sessions with
+        //     tool_enabled_events and legacy sessions without them) ===
+
+        // Update status title with branded agent name
+        const statusTitle = DOM.statusTitle || document.getElementById('status-title');
+        if (statusTitle) {
+            const brandedName = getBrandedAgentName('tool_enabled');
+            statusTitle.textContent = `${brandedName} - Turn ${turnId}`;
+        }
+
+        // Validate: need at least plan, trace, or lifecycle events
+        if (!turnData || (!turnData.original_plan && !turnData.execution_trace
+            && (!turnData.tool_enabled_events || turnData.tool_enabled_events.length === 0))) {
+            throw new Error("Received empty or invalid turn details from the server.");
+        }
+
+        // Pre-render context window snapshots for correct positioning
+        const snapshotEvent = turnData?.context_window_snapshot_event;
+        const snapshotHtml = snapshotEvent ? renderContextWindowSnapshot(snapshotEvent) : null;
+        const strategicSnapshotEvent = turnData?.strategic_context_snapshot_event;
+        const strategicSnapshotHtml = strategicSnapshotEvent ? renderContextWindowSnapshot(strategicSnapshotEvent, { partial: true }) : null;
+
+        // Render historical trace with all available data
+        // renderHistoricalTrace renders execution_start at top and execution_complete
+        // at bottom when tool_enabled_events are provided
+        UI.renderHistoricalTrace(
+            turnData.original_plan || [],
+            turnData.execution_trace || [],
+            turnId,
+            turnData.user_query,
+            turnData.knowledge_retrieval_event || null,
+            turnData.kg_enrichment_event || null,
+            {
+                turn_input_tokens: turnData.turn_input_tokens || 0,
+                turn_output_tokens: turnData.turn_output_tokens || 0
+            },
+            turnData.system_events || [],
+            turnData.duration_ms || 0,
+            turnData.tool_enabled_events || [],
+            snapshotHtml,
+            strategicSnapshotHtml
+        );
+
+        // Update task ID display
+        const taskIdToDisplay = turnData.task_id || turnId;
+        UI.updateTaskIdDisplay(taskIdToDisplay);
+
+        // Update model display to reflect the turn's actual model
+        if (turnData.provider && turnData.model) {
+            UI.updateStatusPromptName(turnData.provider, turnData.model, true, turnData.dual_model_info);
+        }
+
+        // Update token display with dual-model breakdown for cost tooltips
+        const inputTokens = turnData.turn_input_tokens || turnData.input_tokens || 0;
+        const outputTokens = turnData.turn_output_tokens || turnData.output_tokens || 0;
+        const lastStatement = _getLastStatementTokens(turnData);
+
+        // Get turn cost from backend (preferred) or calculate from events (fallback)
+        let turnCost = 0;
+        if (turnData.turn_cost !== undefined) {
+            turnCost = parseFloat(turnData.turn_cost);
+            console.log(`[Reload] Using backend turn_cost: $${turnCost.toFixed(6)}`);
+        } else {
+            turnCost = _getTurnCost(turnData);
+            console.warn(`[Reload] Backend turn_cost missing, calculated from events: $${turnCost.toFixed(6)}`);
+        }
+
+        // Get session cost from backend (preferred)
+        let sessionCost = 0;
+        if (turnData.session_cost_usd !== undefined) {
+            sessionCost = parseFloat(turnData.session_cost_usd);
+            console.log(`[Reload] Using backend session_cost_usd: $${sessionCost.toFixed(6)}`);
+        } else {
+            console.warn('[Reload] Backend session_cost_usd missing');
+        }
+
+        const perModelBreakdown = _getPerModelBreakdown(turnData);
+        UI.updateTokenDisplay({
+            statement_input: lastStatement.input,
+            statement_output: lastStatement.output,
+            turn_input: inputTokens,
+            turn_output: outputTokens,
+            total_input: turnData.session_input_tokens || 0,
+            total_output: turnData.session_output_tokens || 0,
+            turn_cost: turnCost,           // NEW - authoritative turn cost
+            session_cost_usd: sessionCost, // NEW - authoritative session cost
+            planning_phase: turnData.planning_phase,
+            perModelBreakdown: perModelBreakdown
+        }, true);
+
+        // Render skill events if present (pre-processing, before extensions)
+        _renderSkillEventsForReload(turnData, DOM.statusWindowContent);
+
+        // Render extension events if present
+        _renderExtensionEventsForReload(turnData, DOM.statusWindowContent);
+
+        // Show replay buttons
+        if (DOM.headerReplayPlannedButton) {
+            DOM.headerReplayPlannedButton.classList.remove('hidden');
+            DOM.headerReplayPlannedButton.disabled = false;
+            DOM.headerReplayPlannedButton.dataset.turnId = turnId;
+        }
+        if (DOM.headerReplayOptimizedButton) {
+            DOM.headerReplayOptimizedButton.classList.remove('hidden');
+            DOM.headerReplayOptimizedButton.disabled = false;
+            DOM.headerReplayOptimizedButton.dataset.turnId = turnId;
+        }
+
+    } catch (error) {
+        console.error(`Error loading details for turn ${turnId}:`, error);
+        DOM.statusWindowContent.innerHTML = `<div class="p-4 status-step error"><h4 class="font-bold text-sm text-white mb-2">Error Loading Details</h4><p class="text-xs">${error.message}</p></div>`;
+    } finally {
+        // Apply event filter state to newly rendered historical events
+        UI.applyEventFilterToDOM();
+        // WS3: overlay eval verdicts on the trajectory (Sessions ↔ Agents bridge).
+        // Runs for every profile branch (return-in-try still hits finally); the
+        // overlay self-skips flow/error turns. Never disturbs the rendered trace.
+        if (UI.injectTrajectoryEvalOverlay) {
+            UI.injectTrajectoryEvalOverlay(sessionId, turnId, _evalOverlayTurnData);
+        }
+        // Reset flag after historical viewing completes
+        state.isViewingHistoricalTurn = false;
+    }
+}
+
+/**
+ * Handles clicks on the "Replay Original Query" button. Fetches the original query
+ * text for that turn and re-submits it, triggering a NEW PLAN.
+ * @param {HTMLButtonElement} buttonEl - The button element that was clicked.
+ */
+export async function handleReplayQueryClick(buttonEl) {
+    const turnId = buttonEl.dataset.turnId;
+    const sessionId = state.currentSessionId;
+    if (!turnId || !sessionId) {
+        console.error("Missing turnId or sessionId for replaying query.");
+        return;
+    }
+
+    try {
+        // 1. Fetch ONLY the original query text
+        const queryData = await API.fetchTurnQuery(sessionId, turnId);
+        const originalQuery = queryData.query;
+
+        if (!originalQuery) {
+            throw new Error("Could not retrieve the original query for this turn.");
+        }
+
+        // Determine the current active profile override from the UI
+        let profileOverrideId = null;
+        if (window.activeTagPrefix) {
+            const tag = window.activeTagPrefix.replace('@', '').trim().toUpperCase();
+            const overrideProfile = window.configState?.profiles?.find(p => p.tag === tag);
+            if (overrideProfile) {
+                profileOverrideId = overrideProfile.id;
+            }
+        }
+
+        const displayMessage = `Replaying **query** from Turn ${turnId}: ${originalQuery}`;
+        // Add a message indicating a *query* replay
+        UI.addMessage('user', displayMessage, null, true, 'text');
+
+        // 2. Re-submit using handleStreamRequest, *without* a plan
+        handleStreamRequest('/ask_stream', {
+            message: originalQuery,      // Used for original_user_input on backend
+            display_message: displayMessage, // The message to be saved in history
+            session_id: sessionId,
+            source: 'text',
+            is_replay: true,             // Ensures logging and disables history for planning
+            plan_to_execute: null,       // Explicitly null. This forces a new plan.
+            profile_override_id: profileOverrideId // Use current UI profile, not original
+        });
+
+    } catch (error) {
+        console.error(`Error replaying query for turn ${turnId}:`, error);
+        UI.addMessage('assistant', `Sorry, could not replay the query from Turn ${turnId}. Error: ${error.message}`);
+    }
+}
+
+/**
+ * Handles clicks on the "Replay Planned Query" button. Fetches the original query *and*
+ * the original plan for that turn, then re-submits *the plan* for execution.
+ * @param {HTMLButtonElement} buttonEl - The button element that was clicked.
+ */
+async function handleReplayPlanClick(buttonEl) {
+    const turnId = buttonEl.dataset.turnId;
+    const sessionId = state.currentSessionId;
+    if (!turnId || !sessionId) {
+        console.error("Missing turnId or sessionId for replaying plan.");
+        return;
+    }
+
+    try {
+        // 1. Fetch BOTH the original query (for context) and the original plan
+        const [queryData, planData] = await Promise.all([
+            API.fetchTurnQuery(sessionId, turnId),
+            API.fetchTurnPlan(sessionId, turnId)
+        ]);
+
+        const originalQuery = queryData.query;
+        const originalPlan = planData.plan;
+
+        if (!originalQuery) {
+            throw new Error("Could not retrieve the original query for this turn.");
+        }
+        if (!originalPlan) {
+            throw new Error("Could not retrieve the original plan for this turn.");
+        }
+
+        // Determine the current active profile override from the UI
+        let profileOverrideId = null;
+        if (window.activeTagPrefix) {
+            const tag = window.activeTagPrefix.replace('@', '').trim().toUpperCase();
+            const overrideProfile = window.configState?.profiles?.find(p => p.tag === tag);
+            if (overrideProfile) {
+                profileOverrideId = overrideProfile.id;
+            }
+        }
+
+        const displayMessage = `Replaying **plan** from Turn ${turnId}: ${originalQuery}`;
+        // Add a message indicating a *plan* replay
+        UI.addMessage('user', displayMessage, null, true, 'text');
+
+        // 2. Re-submit using handleStreamRequest, passing the plan_to_execute
+        handleStreamRequest('/ask_stream', {
+            message: originalQuery,      // Used for original_user_input on backend
+            display_message: displayMessage, // The message to be saved in history
+            session_id: sessionId,
+            source: 'text',
+            is_replay: true,             // Ensures logging and disables history for planning (which is skipped anyway)
+            plan_to_execute: originalPlan, // This tells the backend to skip planning and execute this plan
+            profile_override_id: profileOverrideId // Use current UI profile, not original
+        });
+
+    } catch (error) {
+        console.error(`Error replaying plan for turn ${turnId}:`, error);
+        UI.addMessage('assistant', `Sorry, could not replay the plan from Turn ${turnId}. Error: ${error.message}`);
+    }
+}
+
+/**
+ * Handles clicks on the "Context" status dot to purge agent memory.
+ */
+async function handleContextPurgeClick() {
+    if (!state.currentSessionId) {
+        return;
+    }
+
+    // Use the existing UI.showConfirmation
+    UI.showConfirmation(
+        'Purge Agent Memory?',
+        "Are you sure you want to archive the context of all past turns? This will force the agent to re-evaluate the next query from scratch. Your chat log and replay ability will be preserved.",
+        async () => {
+            try {
+                // Call the new API endpoint
+                await API.purgeSessionMemory(state.currentSessionId);
+                // Blink the dot on success
+                UI.blinkContextDot();
+                
+                // --- START NEW LOGIC ---
+                // Visually invalidate all existing turns in the DOM
+                const allBadges = DOM.chatLog.querySelectorAll('.turn-badge');
+                allBadges.forEach(badge => {
+                    badge.classList.add('context-invalid');
+                });
+        
+                // Update avatar titles to reflect archived state
+                const allClickableAvatars = DOM.chatLog.querySelectorAll('.clickable-avatar');
+                allClickableAvatars.forEach(avatar => {
+                    // Remove old title text if present and add the new one
+                    avatar.title = avatar.title.replace(' (Archived Context)', '') + ' (Archived Context)';
+                });
+                
+                // --- END NEW LOGIC ---
+
+            } catch (error) {
+                console.error(`Failed to purge agent memory:`, error);
+                // Optionally show an error to the user
+                if (window.showAppBanner) {
+                    window.showAppBanner(`Error: Could not purge agent memory. ${error.message}`, 'error');
+                }
+            }
+        }
+    );
+}
+
+
+export async function handleLoadResources(type) {
+    const tabButton = document.querySelector(`.resource-tab[data-type="${type}"]`);
+    const categoriesContainer = document.getElementById(`${type}-categories`);
+    const panelsContainer = document.getElementById(`${type}-panels-container`);
+    const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
+
+    try {
+        let data = await API.loadResources(type);
+
+        // Handle new response format with profile metadata for special profiles
+        // Backend returns { tools: {}, profile_type: 'rag_focused', ... } for rag_focused/genie profiles
+        if (data && data.profile_type) {
+            const profileType = data.profile_type;
+
+            if (profileType === 'rag_focused') {
+                state.activeRagProfile = {
+                    tag: data.profile_tag,
+                    knowledgeCollections: data.knowledge_collections || []
+                };
+                state.activeGenieProfile = null;
+                console.log(`📚 Default profile is RAG-focused: @${data.profile_tag}`);
+            } else if (profileType === 'genie') {
+                state.activeGenieProfile = {
+                    tag: data.profile_tag,
+                    slaveProfiles: data.slave_profiles || []
+                };
+                state.activeRagProfile = null;
+                console.log(`🧞 Default profile is Genie coordinator: @${data.profile_tag}`);
+            }
+
+            // Extract the actual tools/prompts from the wrapper
+            data = data[type] || {};
+        }
+
+        if (!data || Object.keys(data).length === 0) {
+            if(tabButton) {
+                tabButton.style.display = 'none';
+            }
+            // Still render the panel for special profiles to show the message
+            if (state.activeRagProfile || state.activeGenieProfile) {
+                if (window.capabilitiesModule) {
+                    window.capabilitiesModule.renderResourcePanel(type);
+                }
+            }
+            return;
+        }
+
+        tabButton.style.display = 'inline-block';
+        state.resourceData[type] = data;
+
+        if (type === 'prompts') {
+            UI.updatePromptsTabCounter();
+        } else if (type === 'tools') {
+            UI.updateToolsTabCounter();
+        } else {
+            UI.updateResourceTabCounter(type, typeCapitalized);
+        }
+
+        categoriesContainer.innerHTML = '';
+        panelsContainer.innerHTML = '';
+
+        Object.keys(data).forEach(category => {
+            const categoryTab = document.createElement('button');
+            categoryTab.className = 'category-tab';
+            UI.fillCategoryTab(categoryTab, UI.mcpCategoryLabel(category), data[category]);  // the stored key stays on dataset.category
+            categoryTab.dataset.category = category;
+            categoryTab.dataset.type = type;
+            categoriesContainer.appendChild(categoryTab);
+
+            const panel = document.createElement('div');
+            panel.id = `panel-${type}-${category}`;
+            panel.className = 'category-panel px-4 space-y-2';
+            panel.dataset.category = category;
+
+            data[category].forEach(resource => {
+                const itemEl = UI.createResourceItem(resource, type);
+                panel.appendChild(itemEl);
+            });
+            panelsContainer.appendChild(panel);
+        });
+
+        document.querySelectorAll(`#${type}-categories .category-tab`).forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll(`#${type}-categories .category-tab`).forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll(`#${type}-panels-container .category-panel`).forEach(p => {
+                    p.classList.toggle('open', p.dataset.category === tab.dataset.category);
+                });
+            });
+        });
+
+        if (categoriesContainer.querySelector('.category-tab')) {
+            categoriesContainer.querySelector('.category-tab').click();
+        }
+
+    } catch (error) {
+        console.error(`Failed to load ${type}: ${error.message}`);
+        if(tabButton) {
+            tabButton.textContent = `${typeCapitalized} (Error)`;
+            tabButton.style.display = 'inline-block';
+        }
+        categoriesContainer.innerHTML = '';
+        panelsContainer.innerHTML = `<div class="p-4 text-center text-red-400">Failed to load ${type}.</div>`;
+    }
+}
+
+
+function handleResourceTabClick(e) {
+    if (e.target.classList.contains('resource-tab')) {
+        const type = e.target.dataset.type;
+        document.querySelectorAll('.resource-tab').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+
+        document.querySelectorAll('.resource-panel').forEach(panel => {
+            panel.style.display = panel.id === `${type}-panel` ? 'flex' : 'none';
+        });
+
+        // Lazy-load Knowledge Graphs panel on first click (or refresh on subsequent)
+        if (type === 'knowledge-graphs') {
+            loadKnowledgeGraphsPanel();
+        }
+
+        // Lazy-load Context panel on first click
+        if (type === 'context') {
+            loadContextPanel();
+        }
+
+        // Lazy-load Skills panel on first click (or refresh on subsequent)
+        if (type === 'skills') {
+            loadSkillsPanel();
+        }
+
+        // Lazy-load Extensions panel on first click (or refresh on subsequent)
+        if (type === 'extensions') {
+            loadExtensionsPanel();
+        }
+
+        // Lazy-load Components panel on first click (or refresh on subsequent)
+        if (type === 'components') {
+            import('./handlers/componentsPanelHandler.js?v=1.11').then(mod => mod.loadComponentsPanel());
+        }
+
+        // Lazy-load Workspace panel on first click (or refresh on subsequent)
+        if (type === 'workspace') {
+            loadWorkspacePanel();
+        }
+    }
+}
+
+function openPromptModal(prompt) {
+    DOM.promptModalOverlay.classList.remove('hidden', 'opacity-0');
+    DOM.promptModalContent.classList.remove('scale-95', 'opacity-0');
+    DOM.promptModalTitle.textContent = prompt.name;
+    DOM.promptModalForm.dataset.promptName = prompt.name;
+    DOM.promptModalInputs.innerHTML = '';
+    DOM.promptModalForm.querySelector('button[type="submit"]').textContent = 'Run Prompt';
+
+    if (prompt.arguments && prompt.arguments.length > 0) {
+        prompt.arguments.forEach(arg => {
+            const inputGroup = document.createElement('div');
+            const label = document.createElement('label');
+            label.htmlFor = `prompt-arg-${arg.name}`;
+            label.className = 'block text-sm font-medium text-gray-300 mb-1';
+            label.textContent = arg.name + (arg.required ? ' *' : '');
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `prompt-arg-${arg.name}`;
+            input.name = arg.name;
+            input.className = 'w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-[#F15F22] focus:border-[#F15F22] outline-none';
+            input.placeholder = arg.description || `Enter value for ${arg.name}`;
+            if (arg.required) input.required = true;
+
+            inputGroup.appendChild(label);
+            inputGroup.appendChild(input);
+            DOM.promptModalInputs.appendChild(inputGroup);
+        });
+    } else {
+        DOM.promptModalInputs.innerHTML = '<p class="text-gray-400">This prompt requires no arguments.</p>';
+    }
+
+    DOM.promptModalForm.onsubmit = (e) => {
+        e.preventDefault();
+        const promptName = e.target.dataset.promptName;
+        const formData = new FormData(e.target);
+        const arugments = Object.fromEntries(formData.entries());
+
+        UI.closePromptModal();
+        // Priority: typed @TAG > resource panel profile > undefined
+        const profileId = window.activeProfileOverrideId || state.currentResourcePanelProfileId || undefined;
+        console.log(`🎯 [Prompt Invocation] Using profile_override_id: ${profileId}`);
+        handleStreamRequest('/invoke_prompt_stream', {
+            session_id: state.currentSessionId,
+            prompt_name: promptName,
+            arguments: arugments,
+            profile_override_id: profileId
+        });
+    };
+}
+
+function openCorrectionModal(data) {
+    DOM.promptModalOverlay.classList.remove('hidden', 'opacity-0');
+    DOM.promptModalContent.classList.remove('scale-95', 'opacity-0');
+
+    const spec = data.specification;
+    DOM.promptModalTitle.textContent = `Correction for: ${spec.name}`;
+    DOM.promptModalForm.dataset.toolName = spec.name;
+    DOM.promptModalInputs.innerHTML = '';
+    DOM.promptModalForm.querySelector('button[type="submit"]').textContent = 'Run Correction';
+
+    const messageEl = document.createElement('p');
+    messageEl.className = 'text-yellow-300 text-sm mb-4 p-3 bg-yellow-500/10 rounded-lg';
+    messageEl.textContent = data.message;
+    DOM.promptModalInputs.appendChild(messageEl);
+
+    spec.arguments.forEach(arg => {
+        const inputGroup = document.createElement('div');
+        const label = document.createElement('label');
+        label.htmlFor = `correction-arg-${arg.name}`;
+        label.className = 'block text-sm font-medium text-gray-300 mb-1';
+        label.textContent = arg.name + (arg.required ? ' *' : '');
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `correction-arg-${arg.name}`;
+        input.name = arg.name;
+        input.className = 'w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-[#F15F22] focus:border-[#F15F22] outline-none';
+        input.placeholder = arg.description || `Enter value for ${arg.name}`;
+        if (arg.required) input.required = true;
+
+        inputGroup.appendChild(label);
+        inputGroup.appendChild(input);
+        DOM.promptModalInputs.appendChild(inputGroup);
+    });
+
+    DOM.promptModalForm.onsubmit = (e) => {
+        e.preventDefault();
+        const toolName = e.target.dataset.toolName;
+        const formData = new FormData(e.target);
+        const userArgs = Object.fromEntries(formData.entries());
+
+        const correctedPrompt = `Please run the tool '${toolName}' with the following corrected parameters: ${JSON.stringify(userArgs)}`;
+
+        UI.closePromptModal();
+
+        handleStreamRequest('/ask_stream', { message: correctedPrompt, session_id: state.currentSessionId });
+    };
+}
+
+async function openViewPromptModal(promptName) {
+    DOM.viewPromptModalOverlay.classList.remove('hidden', 'opacity-0');
+    DOM.viewPromptModalContent.classList.remove('scale-95', 'opacity-0');
+    DOM.viewPromptModalTitle.textContent = `Viewing Prompt: ${promptName}`;
+    DOM.viewPromptModalText.textContent = 'Loading...';
+
+    try {
+        const token = localStorage.getItem('tda_auth_token');
+        const res = await fetch(`/prompt/${promptName}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            DOM.viewPromptModalText.textContent = data.content;
+        } else {
+            if (data.error === 'dynamic_prompt_error') {
+                DOM.viewPromptModalText.textContent = `Info: ${data.message}`;
+            } else {
+                throw new Error(data.error || 'Failed to fetch prompt content.');
+            }
+        }
+    } catch (error) {
+        DOM.viewPromptModalText.textContent = `Error: ${error.message}`;
+    }
+}
+
+// --- FUNCTIONS MOVED TO handlers/configManagement.js ---
+// getCurrentCoreConfig
+// handleCloseConfigModalRequest
+// handleConfigActionButtonClick
+// finalizeConfiguration
+// handleConfigFormSubmit
+// loadCredentialsAndModels
+// handleProviderChange
+// handleModelChange
+// handleRefreshModelsClick
+// openPromptEditor
+// forceClosePromptEditor
+// closePromptEditor
+// saveSystemPromptChanges
+// resetSystemPrompt
+// ---
+
+function openChatModal() {
+    DOM.chatModalOverlay.classList.remove('hidden', 'opacity-0');
+    DOM.chatModalContent.classList.remove('scale-95', 'opacity-0');
+    DOM.chatModalInput.focus();
+}
+
+async function handleChatModalSubmit(e) {
+    e.preventDefault();
+    const message = DOM.chatModalInput.value.trim();
+    if (!message) return;
+
+    UI.addMessageToModal('user', message);
+    state.simpleChatHistory.push({ role: 'user', content: message });
+    DOM.chatModalInput.value = '';
+    DOM.chatModalInput.disabled = true;
+
+    try {
+        const res = await fetch('/simple_chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: message,
+                history: state.simpleChatHistory
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            UI.addMessageToModal('assistant', data.response);
+            state.simpleChatHistory.push({ role: 'assistant', content: data.response });
+        } else {
+            throw new Error(data.error || 'An unknown error occurred.');
+        }
+
+    } catch (error) {
+        UI.addMessageToModal('assistant', `Error: ${error.message}`);
+    } finally {
+        DOM.chatModalInput.disabled = false;
+        DOM.chatModalInput.focus();
+    }
+}
+
+function handleKeyDown(e) {
+    // Cancel TTS playback on Escape (takes priority when TTS is active)
+    if (e.key === 'Escape' && (state.currentTTSAudio || state.ttsState !== 'IDLE')) {
+        e.preventDefault();
+        cancelTTS();
+        return;
+    }
+
+    if (e.key === 'Control' && !e.repeat) {
+        if (e.shiftKey) {
+            state.isVoiceModeLocked = !state.isVoiceModeLocked;
+            if (state.isVoiceModeLocked) {
+                startRecognition();
+            } else {
+                stopRecognition();
+            }
+        } else {
+            state.isTempVoiceMode = true;
+            startRecognition();
+        }
+        UI.updateVoiceModeUI();
+        e.preventDefault();
+        return;
+    }
+
+    if (e.key === 'Alt' && !e.repeat) {
+        if (e.shiftKey) {
+            state.isLastTurnModeLocked = !state.isLastTurnModeLocked;
+        } else {
+            state.isTempLastTurnMode = true;
+        }
+        UI.updateHintAndIndicatorState();
+        e.preventDefault();
+    }
+}
+
+function handleKeyUp(e) {
+    if (e.key === 'Control') {
+        if (state.isTempVoiceMode) {
+            state.isTempVoiceMode = false;
+            stopRecognition();
+            UI.updateVoiceModeUI();
+        }
+        e.preventDefault();
+    }
+
+    if (e.key === 'Alt') {
+        if (state.isTempLastTurnMode) {
+            state.isTempLastTurnMode = false;
+            UI.updateHintAndIndicatorState();
+        }
+        e.preventDefault();
+    }
+}
+
+function handleKeyObservationsToggleClick() {
+    switch (state.keyObservationsMode) {
+        case 'autoplay-off':
+            state.keyObservationsMode = 'autoplay-on';
+            break;
+        case 'autoplay-on':
+            state.keyObservationsMode = 'off';
+            break;
+        case 'off':
+        default:
+            state.keyObservationsMode = 'autoplay-off';
+            break;
+    }
+    localStorage.setItem('keyObservationsMode', state.keyObservationsMode);
+    UI.updateKeyObservationsModeUI();
+
+    let announcementText = '';
+    switch (state.keyObservationsMode) {
+        case 'autoplay-off':
+            announcementText = 'Key Observations Autoplay Off';
+            break;
+        case 'autoplay-on':
+            announcementText = 'Key Observations Autoplay On';
+            break;
+        case 'off':
+            announcementText = 'Key Observations Off';
+            break;
+    }
+
+    if (announcementText) {
+        (async () => {
+            try {
+                const audioBlob = await API.synthesizeText(announcementText);
+                if (audioBlob) {
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                }
+            } catch (error) {
+                console.error("Failed to play state change announcement:", error);
+            }
+        })();
+    }
+}
+
+
+async function handleTogglePrompt(promptName, isDisabled, buttonEl) {
+    try {
+        await API.togglePromptApi(promptName, isDisabled);
+
+        for (const category in state.resourceData.prompts) {
+            const prompt = state.resourceData.prompts[category].find(p => p.name === promptName);
+            if (prompt) {
+                prompt.disabled = isDisabled;
+                break;
+            }
+        }
+
+        const promptItem = document.getElementById(`resource-prompts-${promptName}`);
+        const runButton = promptItem.querySelector('.run-prompt-button');
+
+        promptItem.classList.toggle('opacity-60', isDisabled);
+        promptItem.title = isDisabled ? 'This prompt is disabled and will not be used by the agent.' : '';
+        runButton.disabled = isDisabled;
+        runButton.title = isDisabled ? 'This prompt is disabled.' : 'Run this prompt.';
+
+        buttonEl.innerHTML = isDisabled ?
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clip-rule="evenodd" /><path d="M2 10s3.939 4 8 4 8-4 8-4-3.939-4-8-4-8 4-8 4zm13.707 4.293a1 1 0 00-1.414-1.414L12.586 14.6A8.007 8.007 0 0110 16c-4.478 0-8.268-2.943-9.542-7 .946-2.317 2.83-4.224 5.166-5.447L2.293 1.293A1 1 0 00.879 2.707l14 14a1 1 0 001.414 0z" /></svg>` :
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>`;
+
+        UI.updatePromptsTabCounter();
+
+    } catch (error) {
+        console.error(`Failed to toggle prompt ${promptName}:`, error);
+        if (typeof window.showAppBanner === 'function') {
+            window.showAppBanner(`Could not ${isDisabled ? 'disable' : 'enable'} '${promptName}': ${error.message}`, 'error', 6000);
+        }
+    }
+}
+
+async function handleToggleTool(toolName, isDisabled, buttonEl) {
+    try {
+        await API.toggleToolApi(toolName, isDisabled);
+
+        for (const category in state.resourceData.tools) {
+            const tool = state.resourceData.tools[category].find(t => t.name === toolName);
+            if (tool) {
+                tool.disabled = isDisabled;
+                break;
+            }
+        }
+
+        const toolItem = document.getElementById(`resource-tools-${toolName}`);
+        toolItem.classList.toggle('opacity-60', isDisabled);
+        toolItem.title = isDisabled ? 'This tool is disabled and will not be used by the agent.' : '';
+
+        buttonEl.innerHTML = isDisabled ?
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clip-rule="evenodd" /><path d="M2 10s3.939 4 8 4 8-4 8-4-3.939-4-8-4-8 4-8 4zm13.707 4.293a1 1 0 00-1.414-1.414L12.586 14.6A8.007 8.007 0 0110 16c-4.478 0-8.268-2.943-9.542-7 .946-2.317 2.83-4.224 5.166-5.447L2.293 1.293A1 1 0 00.879 2.707l14 14a1 1 0 001.414 0z" /></svg>` :
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>`;
+
+        UI.updateToolsTabCounter();
+
+    } catch (error) {
+        console.error(`Failed to toggle tool ${toolName}:`, error);
+        if (typeof window.showAppBanner === 'function') {
+            window.showAppBanner(`Could not ${isDisabled ? 'disable' : 'enable'} '${toolName}': ${error.message}`, 'error', 6000);
+        }
+    }
+}
+
+/**
+ * Handles the save action when editing a session name (Enter or Blur).
+ * @param {Event} e - The event object (blur or keydown).
+ */
+export async function handleSessionRenameSave(e) {
+    const inputElement = e.target;
+    const sessionItem = inputElement.closest('.session-item');
+    if (!sessionItem) return;
+
+    const sessionId = sessionItem.dataset.sessionId;
+    const newName = inputElement.value.trim();
+    const originalName = inputElement.dataset.originalName;
+
+    if (!newName || newName === originalName) {
+        UI.exitSessionEditMode(inputElement, originalName);
+        return;
+    }
+
+    inputElement.disabled = true;
+    inputElement.style.opacity = '0.7';
+
+    try {
+        await renameSession(sessionId, newName);
+        UI.exitSessionEditMode(inputElement, newName);
+        UI.moveSessionToTop(sessionId);
+    } catch (error) {
+        console.error(`Failed to rename session ${sessionId}:`, error);
+        inputElement.style.borderColor = 'red';
+        inputElement.disabled = false;
+        // Revert to original name and exit edit mode on API error
+        UI.exitSessionEditMode(inputElement, originalName);
+    }
+}
+
+/**
+ * Handles the cancel action when editing a session name (Escape).
+ * @param {Event} e - The event object (keydown).
+ */
+export function handleSessionRenameCancel(e) {
+    const inputElement = e.target;
+    const originalName = inputElement.dataset.originalName;
+    UI.exitSessionEditMode(inputElement, originalName);
+}
+
+async function handleToggleTurnValidity(badgeEl) {
+    const turnId = badgeEl.dataset.turnId;
+    const sessionId = state.currentSessionId;
+    if (!turnId || !sessionId) {
+        console.error("Missing turnId or sessionId for toggling validity.");
+        return;
+    }
+
+    try {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add authentication token if available
+        const authToken = localStorage.getItem('tda_auth_token');
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch(`/api/session/${sessionId}/turn/${turnId}/toggle_validity`, {
+            method: 'POST',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to toggle turn validity.');
+        }
+
+        // On success, toggle the UI
+        const allBadgesForTurn = document.querySelectorAll(`.turn-badge[data-turn-id="${turnId}"]`);
+        allBadgesForTurn.forEach(badge => {
+            badge.classList.toggle('context-invalid');
+        });
+
+    } catch (error) {
+        console.error(`Error toggling validity for turn ${turnId}:`, error);
+        if (window.showAppBanner) {
+            window.showAppBanner(`Error: Could not update turn status. ${error.message}`, 'error');
+        }
+    }
+}
+
+/**
+ * Apply active/inactive styling to the canvas split mode toggle button.
+ */
+function applyCanvasToggleStyle(btn, isOn) {
+    btn.classList.toggle('canvas-toggle-active', isOn);
+    btn.title = isOn ? 'Canvas Split Mode (On)' : 'Canvas Split Mode (Off)';
+}
+
+// --- Initializer ---
+
+export function initializeEventListeners() {
+    DOM.chatForm.addEventListener('submit', handleChatSubmit);
+    DOM.newChatButton.addEventListener('click', handleStartNewSession);
+    if (DOM.headerNewSessionButton) DOM.headerNewSessionButton.addEventListener('click', handleStartNewSession);
+    DOM.resourceTabs.addEventListener('click', handleResourceTabClick);
+
+    // Delegated click handler for Knowledge Graphs panel actions (export, delete)
+    const kgPanelContent = document.getElementById('knowledge-graphs-content');
+    if (kgPanelContent) {
+        kgPanelContent.addEventListener('click', handleKnowledgeGraphPanelClick);
+    }
+
+    DOM.keyObservationsToggleButton.addEventListener('click', handleKeyObservationsToggleClick);
+    // the context chip on the composer: a click locks / unlocks 'Turn summaries' (= Shift + Alt)
+    if (DOM.inputHint) {
+        DOM.inputHint.addEventListener('click', () => {
+            state.isLastTurnModeLocked = !state.isLastTurnModeLocked;
+            UI.updateHintAndIndicatorState();
+            if (DOM.userInput && !DOM.userInput.disabled) DOM.userInput.focus();
+        });
+    }
+
+    // Voice button click toggles locked voice mode (same as Shift+Ctrl)
+    if (DOM.voiceInputButton) {
+        DOM.voiceInputButton.addEventListener('click', () => {
+            state.isVoiceModeLocked = !state.isVoiceModeLocked;
+            if (state.isVoiceModeLocked) {
+                startRecognition();
+            } else {
+                stopRecognition();
+            }
+            UI.updateVoiceModeUI();
+        });
+    }
+
+    // Delegated event listener for copy buttons and NEW reload/replay buttons
+    DOM.chatLog.addEventListener('click', (e) => {
+        const copyButton = e.target.closest('.copy-button');
+        const clickableAvatar = e.target.closest('.clickable-avatar[data-turn-id]');
+        const clickableBadge = e.target.closest('.clickable-badge[data-turn-id]');
+
+        if (clickableBadge) {
+            e.stopPropagation();
+            handleToggleTurnValidity(clickableBadge);
+        } else if (copyButton) {
+            const copyType = copyButton.dataset.copyType;
+            if (copyType === 'code') {
+                copyToClipboard(copyButton);
+            } else if (copyType === 'table') {
+                copyTableToClipboard(copyButton);
+            }
+        } else if (clickableAvatar) {
+            handleReloadPlanClick(clickableAvatar);
+        }
+    });
+
+    if (DOM.stopExecutionButton) {
+        DOM.stopExecutionButton.addEventListener('click', handleStopExecutionClick);
+    } else {
+        console.error("Stop execution button not found in DOM elements.");
+    }
+
+    if (DOM.headerReplayPlannedButton) {
+        DOM.headerReplayPlannedButton.addEventListener('click', (e) => {
+            // --- MODIFICATION: Wire to the new handleReplayPlanClick ---
+            handleReplayPlanClick(e.currentTarget);
+        });
+    }
+    if (DOM.headerReplayOptimizedButton) {
+        DOM.headerReplayOptimizedButton.addEventListener('click', (e) => {
+             if (window.showAppBanner) {
+                window.showAppBanner('Replay Optimized Query - Not Implemented Yet.', 'info');
+            }
+            // Placeholder: handleReplayOptimizedClick(e.currentTarget);
+        });
+    }
+
+    // Context Window Analytics button in Live Status header
+    if (DOM.cwAnalyticsButton) {
+        DOM.cwAnalyticsButton.addEventListener('click', () => {
+            if (!state.currentSessionId) return;
+            const sessionName = DOM.activeSessionTitle?.textContent || 'Current Session';
+            openContextAnalyticsModal(state.currentSessionId, sessionName);
+        });
+    }
+
+
+    DOM.mainContent.addEventListener('click', (e) => {
+        const runButton = e.target.closest('.run-prompt-button');
+        const viewButton = e.target.closest('.view-prompt-button');
+        const promptToggleButton = e.target.closest('.prompt-toggle-button');
+        const toolToggleButton = e.target.closest('.tool-toggle-button');
+
+        if (runButton && !runButton.disabled) {
+            const resourceItem = runButton.closest('.resource-item');
+            const promptName = resourceItem.id.replace('resource-prompts-', '');
+            let promptData = null;
+            for (const category in state.resourceData.prompts) {
+                const found = state.resourceData.prompts[category].find(p => p.name === promptName);
+                if (found) {
+                    promptData = found;
+                    break;
+                }
+            }
+            if (promptData) openPromptModal(promptData);
+            return;
+        }
+
+        if (viewButton) {
+            const resourceItem = viewButton.closest('.resource-item');
+            const promptName = resourceItem.id.replace('resource-prompts-', '');
+            openViewPromptModal(promptName);
+            return;
+        }
+
+        if (promptToggleButton) {
+            const resourceItem = promptToggleButton.closest('.resource-item');
+            const promptName = resourceItem.id.replace('resource-prompts-', '');
+            let promptData = null;
+            for (const category in state.resourceData.prompts) {
+                const found = state.resourceData.prompts[category].find(p => p.name === promptName);
+                if (found) {
+                    promptData = found;
+                    break;
+                }
+            }
+            if (promptData) handleTogglePrompt(promptName, !promptData.disabled, promptToggleButton);
+            return;
+        }
+
+        if (toolToggleButton) {
+            const resourceItem = toolToggleButton.closest('.resource-item');
+            const toolName = resourceItem.id.replace('resource-tools-', '');
+             let toolData = null;
+            for (const category in state.resourceData.tools) {
+                const found = state.resourceData.tools[category].find(t => t.name === toolName);
+                if (found) {
+                    toolData = found;
+                    break;
+                }
+            }
+            if (toolData) handleToggleTool(toolName, !toolData.disabled, toolToggleButton);
+            return;
+        }
+    });
+
+    // Delegated event listener for session list (Phase 3: Event Delegation)
+    // Single listener handles all session item interactions (edit, delete, copy, load)
+    DOM.sessionList.addEventListener('click', (e) => {
+        const sessionItem = e.target.closest('.session-item');
+        if (!sessionItem) return;
+
+        const editButton = e.target.closest('.session-edit-button');
+        const deleteButton = e.target.closest('.session-delete-button');
+        const copyButton = e.target.closest('.session-copy-button');
+        const analyticsButton = e.target.closest('.session-analytics-button');
+
+        if (deleteButton) {
+            handleDeleteSessionClick(deleteButton);
+        } else if (editButton) {
+            UI.enterSessionEditMode(editButton);
+        } else if (copyButton) {
+            // Handle copy session ID to clipboard
+            e.stopPropagation();
+            const sessionId = sessionItem.dataset.sessionId;
+            navigator.clipboard.writeText(sessionId).then(() => {
+                // Visual feedback: change icon to checkmark
+                const originalHTML = copyButton.innerHTML;
+                copyButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                setTimeout(() => {
+                    copyButton.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy session ID: ', err);
+            });
+        } else if (analyticsButton) {
+            e.stopPropagation();
+            const sessionId = sessionItem.dataset.sessionId;
+            const sessionName = sessionItem.querySelector('.session-name-span')?.textContent || 'Session';
+            openContextAnalyticsModal(sessionId, sessionName);
+        } else if (!sessionItem.querySelector('.session-edit-input')) {
+            handleLoadSession(sessionItem.dataset.sessionId);
+        }
+    });
+
+    // --- NEW: Active session title click to edit ---
+    if (DOM.activeSessionTitle) {
+        DOM.activeSessionTitle.addEventListener('click', () => {
+            UI.enterActiveSessionTitleEdit();
+        });
+    }
+
+    // --- NEW: Listen for custom rename event dispatched by UI.saveActiveSessionTitleEdit ---
+    UderiaBus.on('uderia:session-title-renamed', (e) => {
+        const { newName } = e.detail || {};
+        if (newName) {
+            renameActiveSession(newName);
+        }
+    });
+
+    // All modal listeners
+    DOM.promptModalClose.addEventListener('click', UI.closePromptModal);
+    DOM.promptModalOverlay.addEventListener('click', (e) => {
+        if (e.target === DOM.promptModalOverlay) UI.closePromptModal();
+    });
+    DOM.viewPromptModalClose.addEventListener('click', UI.closeViewPromptModal);
+    DOM.viewPromptModalOverlay.addEventListener('click', (e) => {
+        if (e.target === DOM.viewPromptModalOverlay) UI.closeViewPromptModal();
+    });
+    
+    // Info Modal (now accessed from user dropdown)
+    DOM.infoModalClose.addEventListener('click', () => {
+        DOM.infoModalOverlay.classList.add('opacity-0');
+        DOM.infoModalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => DOM.infoModalOverlay.classList.add('hidden'), 300);
+    });
+    DOM.infoModalOverlay.addEventListener('click', (e) => {
+        if (e.target === DOM.infoModalOverlay) {
+            DOM.infoModalClose.click();
+        }
+    });
+
+    // Config modal listeners
+    // DOM.configMenuButton.addEventListener('click', () => {
+    //     DOM.configModalOverlay.classList.remove('hidden', 'opacity-0');
+    //     DOM.configModalContent.classList.remove('scale-95', 'opacity-0');
+    //     // --- MODIFICATION: Use function from config handler ---
+    //     // This function will need to be created/moved
+    //     // For now, we'll assume getCurrentCoreConfig is still here
+    //     // state.pristineConfig = getCurrentCoreConfig();
+    //     // UI.updateConfigButtonState();
+    //     // ---
+    //     // Let's find getCurrentCoreConfig. It's not exported.
+    //     // It's in the configManagement.js file but not exported.
+    //     // I will assume for now that it is correctly handled by the config form's input listener.
+    // });
+    // DOM.configModalClose.addEventListener('click', handleCloseConfigModalRequest);
+    // DOM.configActionButton.addEventListener('click', handleConfigActionButtonClick);
+    
+    // Old config form event listeners - wrapped in null checks since form was removed
+    if (DOM.configForm) {
+        DOM.configForm.addEventListener('submit', handleConfigFormSubmit);
+        DOM.configForm.addEventListener('input', UI.updateConfigButtonState);
+    }
+
+    // LLM config listeners - wrapped in null checks
+    if (DOM.llmProviderSelect) {
+        DOM.llmProviderSelect.addEventListener('change', handleProviderChange);
+    }
+    // AWS credentials are now stored in encrypted database only (no localStorage)
+    // API keys are now stored in encrypted database only (no localStorage)
+    // Ollama host is now stored in encrypted database only (no localStorage)
+    if (DOM.refreshModelsButton) {
+        DOM.refreshModelsButton.addEventListener('click', handleRefreshModelsClick);
+    }
+    if (DOM.llmModelSelect) {
+        DOM.llmModelSelect.addEventListener('change', handleModelChange);
+    }
+
+
+    // Prompt editor listeners (button may not exist if removed from UI)
+    if (DOM.promptEditorButton) {
+        DOM.promptEditorButton.addEventListener('click', openPromptEditor);
+    }
+    if (DOM.promptEditorClose) {
+        DOM.promptEditorClose.addEventListener('click', closePromptEditor);
+    }
+    if (DOM.promptEditorSave) {
+        DOM.promptEditorSave.addEventListener('click', saveSystemPromptChanges);
+    }
+    if (DOM.promptEditorReset) {
+        DOM.promptEditorReset.addEventListener('click', () => resetSystemPrompt(false));
+    }
+    if (DOM.promptEditorTextarea) {
+        DOM.promptEditorTextarea.addEventListener('input', UI.updatePromptEditorState);
+    }
+
+    // Simple chat modal listeners (button may not exist if removed from UI)
+    if (DOM.chatModalButton) {
+        DOM.chatModalButton.addEventListener('click', openChatModal);
+    }
+    if (DOM.chatModalClose) {
+        DOM.chatModalClose.addEventListener('click', UI.closeChatModal);
+    }
+    if (DOM.chatModalOverlay) {
+        DOM.chatModalOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.chatModalOverlay) UI.closeChatModal();
+        });
+    }
+    if (DOM.chatModalForm) {
+        DOM.chatModalForm.addEventListener('submit', handleChatModalSubmit);
+    }
+
+    // Global listeners
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    DOM.statusWindowContent.addEventListener('mouseenter', () => { state.isMouseOverStatus = true; });
+    DOM.statusWindowContent.addEventListener('mouseleave', () => { state.isMouseOverStatus = false; });
+
+    DOM.windowMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        DOM.windowDropdownMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+        if (!DOM.windowDropdownMenu.contains(e.target) && e.target !== DOM.windowMenuButton) {
+            DOM.windowDropdownMenu.classList.remove('open');
+        }
+        // Settings dropdown removed - now using user dropdown for Info
+    });
+
+    DOM.contextStatusDot.addEventListener('click', handleContextPurgeClick);
+
+    DOM.ccrStatusDot.addEventListener('click', () => {
+        if (state.lastRagCaseData) {
+            UI.showRagCaseModal(state.lastRagCaseData);
+        } else {
+        }
+    });
+
+    DOM.ragCaseModalClose.addEventListener('click', UI.closeRagCaseModal);
+    DOM.ragCaseModalCloseBottom.addEventListener('click', UI.closeRagCaseModal);
+    DOM.ragCaseModalOverlay.addEventListener('click', (e) => {
+        if (e.target === DOM.ragCaseModalOverlay) UI.closeRagCaseModal();
+    });
+    DOM.ragCaseModalCopy.addEventListener('click', () => {
+        if (state.lastRagCaseData) {
+            navigator.clipboard.writeText(JSON.stringify(state.lastRagCaseData.full_case_data, null, 2)).then(() => {
+                // Provide visual feedback
+                const originalText = DOM.ragCaseModalCopy.textContent;
+                DOM.ragCaseModalCopy.textContent = 'Copied!';
+                setTimeout(() => {
+                    DOM.ragCaseModalCopy.textContent = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy RAG case data: ', err);
+            });
+        }
+    });
+
+    const toggleTooltipsCheckbox = document.getElementById('toggle-tooltips-checkbox');
+    if (toggleTooltipsCheckbox) {
+        // Set initial state from localStorage
+        const savedTooltipPref = localStorage.getItem('showTooltips');
+        state.showTooltips = savedTooltipPref === null ? true : savedTooltipPref === 'true';
+        toggleTooltipsCheckbox.checked = state.showTooltips;
+
+        toggleTooltipsCheckbox.addEventListener('change', (e) => {
+            state.showTooltips = e.target.checked;
+            localStorage.setItem('showTooltips', state.showTooltips);
+        });
+    }
+
+    // --- Canvas Split Mode Toggle ---
+    if (DOM.canvasModeToggle) {
+        const savedCanvasMode = localStorage.getItem('canvasSplitMode');
+        setCanvasSplitMode(savedCanvasMode === 'on');
+        applyCanvasToggleStyle(DOM.canvasModeToggle, state.canvasSplitMode);
+
+        DOM.canvasModeToggle.addEventListener('click', async () => {
+            setCanvasSplitMode(!state.canvasSplitMode);
+            localStorage.setItem('canvasSplitMode', state.canvasSplitMode ? 'on' : 'off');
+            applyCanvasToggleStyle(DOM.canvasModeToggle, state.canvasSplitMode);
+
+            // When turning OFF, close the split panel if open
+            if (!state.canvasSplitMode) {
+                try {
+                    const { closeSplitPanel } = loadRendererModule('canvas').then(m => { if (!m) throw new Error('canvas is not installed in this deployment'); return m; });
+                    closeSplitPanel();
+                } catch (e) {
+                    console.warn('[Canvas] Could not close split panel:', e);
+                }
+            }
+        });
+
+        // Listen for split mode activation from inline compact card clicks (renderer.js)
+        UderiaBus.on('uderia:canvas-split-mode-changed', (e) => {
+            if (e.detail?.on !== undefined) {
+                setCanvasSplitMode(e.detail.on);
+                applyCanvasToggleStyle(DOM.canvasModeToggle, state.canvasSplitMode);
+            }
+        });
+    }
+
+    const welcomeScreenCheckbox = document.getElementById('toggle-welcome-screen-checkbox');
+    const welcomeScreenPopupCheckbox = document.getElementById('welcome-screen-show-at-startup-checkbox');
+
+    const handleWelcomeScreenToggle = (e) => {
+        const isChecked = e.target.checked;
+        state.showWelcomeScreenAtStartup = isChecked;
+        // Note: localStorage is now only updated on page load/unload, not on every toggle
+        // This prevents race conditions with other configuration saves
+        if (welcomeScreenCheckbox) welcomeScreenCheckbox.checked = isChecked;
+        if (welcomeScreenPopupCheckbox) welcomeScreenPopupCheckbox.checked = isChecked;
+    };
+
+    if (welcomeScreenCheckbox) {
+        welcomeScreenCheckbox.addEventListener('change', handleWelcomeScreenToggle);
+    }
+    if (welcomeScreenPopupCheckbox) {
+        welcomeScreenPopupCheckbox.addEventListener('change', handleWelcomeScreenToggle);
+    }
+    
+    if (DOM.appMenuToggle) {
+        DOM.appMenuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSideNav();
+        });
+    }
+
+    if (DOM.viewSwitchButtons) {
+        DOM.viewSwitchButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Find the closest ancestor which is a link
+                const link = e.target.closest('.view-switch-button');
+                const viewId = link.dataset.view;
+                if (viewId) {
+                    handleViewSwitch(viewId);
+                }
+            });
+        });
+    }
+    
+    // --- MODIFICATION START: Add delegated event listener for case feedback buttons ---
+    document.addEventListener('click', async (e) => {
+        const caseFeedbackBtn = e.target.closest('.case-feedback-btn');
+        if (caseFeedbackBtn) {
+            e.preventDefault();
+            const sessionId = caseFeedbackBtn.dataset.sessionId;
+            const turnId = parseInt(caseFeedbackBtn.dataset.turnId);
+            const caseId = caseFeedbackBtn.dataset.caseId;
+            const vote = caseFeedbackBtn.dataset.vote;
+            
+            // Require either (sessionId + turnId) OR caseId
+            if ((!sessionId || isNaN(turnId)) && !caseId) {
+                console.error('Missing required data on feedback button (need either session+turn or case ID)');
+                return;
+            }
+            
+            try {
+                // Import the API functions
+                const { updateTurnFeedback, updateRAGCaseFeedback } = await import('./api.js?v=1.2');
+                
+                // Get current state from button classes
+                const isActive = caseFeedbackBtn.classList.contains('text-[#F15F22]');
+                const newVote = isActive ? null : vote;
+                
+                // Update backend using appropriate endpoint
+                if (caseId) {
+                    // Direct RAG case feedback (doesn't require session)
+                    // Name the repository: the same case id exists in every collection
+                    // the pack was installed into, and a vote is about one copy.
+                    const result = await updateRAGCaseFeedback(
+                        caseId, newVote, state.currentInspectedCollectionId
+                    );
+                    console.log('[CaseFeedback] Result:', result);
+                    
+                    // Calculate new feedback score for immediate UI update
+                    const newScore = newVote === 'up' ? 1 : newVote === 'down' ? -1 : 0;
+                    
+                    // Immediately update table row feedback badge (before server refresh)
+                    const { updateTableRowFeedback } = await import('./ui.js?v=1.287');
+                    updateTableRowFeedback(caseId, newScore);
+                    console.log('[CaseFeedback] Updated table row feedback immediately for', caseId);
+                    
+                    // Display warning if session doesn't exist
+                    if (result.warning) {
+                        console.log('[CaseFeedback] Warning detected, showing banner:', result.warning);
+                        if (window.showAppBanner) {
+                            window.showAppBanner(result.warning, 'warning');
+                        } else {
+                            console.warn('[CaseFeedback] showAppBanner not available');
+                        }
+                    } else {
+                        // Show success message even without warning
+                        if (window.showAppBanner) {
+                            const action = newVote === 'up' ? 'marked helpful' : newVote === 'down' ? 'marked unhelpful' : 'cleared';
+                            window.showAppBanner(`RAG case ${action}`, 'success');
+                        }
+                    }
+                    
+                    // Update the case details panel to show updated feedback score
+                    // (Don't refresh entire table - we already updated the row immediately above)
+                    console.log('[CaseFeedback] Refreshing case details panel for case', caseId);
+                    const { selectCaseRow } = await import('./ui.js?v=1.287');
+                    await selectCaseRow(caseId);
+                } else if (sessionId && !isNaN(turnId)) {
+                    // Session-based feedback
+                    await updateTurnFeedback(sessionId, turnId, newVote);
+                } else {
+                    throw new Error('Invalid feedback data');
+                }
+                
+                // Update UI: find both buttons in this container
+                const container = caseFeedbackBtn.closest('.inline-flex');
+                const upBtn = container.querySelector('[data-vote="up"]');
+                const downBtn = container.querySelector('[data-vote="down"]');
+                
+                // Reset both buttons
+                upBtn.classList.remove('text-[#F15F22]', 'bg-gray-800/60');
+                upBtn.classList.add('text-gray-300');
+                downBtn.classList.remove('text-[#F15F22]', 'bg-gray-800/60');
+                downBtn.classList.add('text-gray-300');
+                
+                // Apply active state to clicked button if not clearing
+                if (newVote) {
+                    caseFeedbackBtn.classList.remove('text-gray-300');
+                    caseFeedbackBtn.classList.add('text-[#F15F22]', 'bg-gray-800/60');
+                }
+                
+            } catch (error) {
+                console.error('Failed to update case feedback:', error);
+                if (window.showAppBanner) {
+                    window.showAppBanner(`Error updating feedback: ${error.message}`, 'error');
+                }
+            }
+        }
+    });
+    // --- MODIFICATION END ---
+
+    // Add event listener for the copy session ID button
+    document.addEventListener('DOMContentLoaded', () => {
+        const copyButton = document.getElementById('copy-session-id');
+        if (copyButton) {
+            copyButton.addEventListener('click', () => {
+                const sessionId = state.activeSessionId; // Assuming activeSessionId holds the current session ID
+                if (sessionId) {
+                    UI.copySessionIdToClipboard(sessionId);
+                } else {
+                    console.error('No active session ID found.');
+                }
+            });
+        }
+    });
+
+    // --- Event Filter Chip Handlers ---
+    if (DOM.eventFilterRow) {
+        DOM.eventFilterRow.addEventListener('click', (e) => {
+            const chip = e.target.closest('.event-filter-chip');
+            if (!chip) return;
+            const category = chip.dataset.filter;
+            if (category) {
+                UI.toggleEventFilter(category);
+            }
+        });
+        // Sync chip UI with persisted state on load
+        UI.syncFilterChipsWithState();
+    }
+}
+// --- Repository Tab Switching ---
+// DEPRECATED: Tab switching now handled by initializeRepositoryTabs() in ragCollectionManagement.js
+// which supports all 3 tabs (Planner, Knowledge, Knowledge Graphs) via .active class.
+export function wireRepositoryTabs() {
+    // No-op — kept for backward compatibility with existing import in main.js
+}
+
+// --- Export harmonization functions for use in event reload ---
+// These functions are used by ui.js during historical event rendering
+// to regenerate harmonized titles from stored event payloads
+window.EventHandlers = {
+    getToolEnabledTitle,
+    getLlmOnlyTitle,
+    getRagFocusedTitle,
+    getGenieTitle,
+    getLifecycleTitle,
+
+    // Called by external components (e.g. flow renderer) to reload session chat after execution
+    reloadCurrentSession: async (sessionId) => {
+        const sid = sessionId || window.__currentSessionId || localStorage.getItem('currentSessionId');
+        if (sid) await handleLoadSession(sid);
+    },
+
+    // Called by external components (e.g. scheduler renderer) to submit a query in the current session
+    triggerChatQuery: async (prompt) => {
+        if (!prompt || !state.currentSessionId) {
+            console.warn('[triggerChatQuery] Cannot submit — no prompt or no active session');
+            return false;
+        }
+        const inputEl = DOM.userInput;
+        if (!inputEl) return false;
+        inputEl.value = prompt;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        const syntheticEvent = { preventDefault: () => {}, type: 'submit' };
+        await handleChatSubmit(syntheticEvent, 'component');
+        return true;
+    },
+};
+
+// Refresh sessions list when a background scheduler task fires
+UderiaBus.on('uderia:scheduler-background-run', async () => {
+    try {
+        const { refreshSessionsList } = await import('./handlers/configManagement.js?v=1.189');
+        await refreshSessionsList(false);
+    } catch (_) {}
+});
+
+
+// S4 — one-line description of a persisted recovery step (mirrors resilience_envelope.describe,
+// used only when a stamped step predates the summary field).
+function _describeRecovery(st) {
+    const k = st.kind, r = st.reason || '', from = st.from || '?', to = st.to || from;
+    if (k === 'retry') return `${from} failed (${r}); retried after ${Number(st.delay || 0).toFixed(1)}s (attempt ${st.attempt})`;
+    if (k === 'continuation') return `${from} stopped at its output limit (${r}); asked to continue exactly where it stopped (continuation ${st.attempt})`;
+    if (k === 'fallback') return `${from} could not serve (${r}); the signed fallback ${to} served instead — cost billed at ${to}`;
+    if (k === 'refusal') return `${from} refused the request (${r}); an honest answer naming the refusal was delivered`;
+    return `${k}: ${r}`;
+}

@@ -1,0 +1,65 @@
+<!-- Ontology suite view (Tier 5 Step 1) — part of the isolated, optional enterprise
+     feature. An ADDITIONAL-VALUE surface: it never re-draws per-agent config; it shows
+     the systemic + trust insight no other compartment has, lets you DISCOVER which agent
+     knows about a topic and USE it, and LINKS OUT to existing compartments. Build-on-read.
+     Included by index.html only when ``ontology_enabled`` and only if present in the build.
+
+     Scaffold = the Trust panel's, byte for byte: full-bleed gradient command-center band
+     (title + hero search + KPIs + two cards), the perfPanelResizer divider spanning the
+     whole panel, then the lower pane (canonical tab strip + sub-toolbar + stage) on the
+     plain view background. Deliberate deviation: the STAGE stays full-width — a
+     force-directed canvas needs the estate, not a text column. -->
+<div id="ontology-view" class="app-view flex flex-col w-full h-full" style="background-color: var(--bg-primary);">
+    <div class="w-full h-full flex flex-col overflow-hidden">
+
+        <!-- Command center band -->
+        <div id="ontology-command-center" class="px-6 pt-6 pb-6" style="background: linear-gradient(to bottom right, var(--bg-secondary), var(--bg-primary)); border-bottom: 1px solid var(--border-primary);">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 id="ontology-title" class="text-3xl font-bold" style="color: var(--text-primary);">Ontology</h1>
+                        <p id="ontology-subtitle" class="mt-1" style="color: var(--text-muted);">What your world knows, who you can ask, and what to trust — always in sync.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="ontology-summary" class="text-sm" style="color: var(--text-muted);"></span>
+                        <button id="ontology-refresh-btn" class="card-btn card-btn--sm card-btn--secondary flex items-center gap-1.5" title="Rebuild from the live estate">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Discover & Route: "Ask your world" — the panel's signature, kept as the hero row -->
+                <div id="ontology-discover" class="mb-4"></div>
+
+                <!-- Estate KPIs + the two band cards (composition + insights) -->
+                <div id="ontology-kpis" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"></div>
+                <div id="ontology-band-cards" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Lower pane (the perfPanelResizer divider is inserted above this) -->
+        <div id="ontology-lower-pane" class="flex-1 min-h-0 flex flex-col">
+            <!-- Canonical tab strip: Map · Matrix · Trust (rendered by the handler),
+                 with the mode sub-toolbar (scope + lens chips + graph actions) sharing
+                 the SAME row on the right — one row, no wasted screen estate. -->
+            <div class="px-6 pt-3" style="border-bottom: 1px solid var(--border-secondary);">
+                <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+                    <div id="ontology-mode-tabs" class="flex gap-1 overflow-x-auto scrollbar-hide"></div>
+                    <div id="ontology-controls" class="flex items-center gap-3 flex-wrap pb-1"></div>
+                </div>
+            </div>
+
+            <!-- Stage: split Explorer (taxonomy tree + graph) / Matrix / Trust + inspect panel -->
+            <div id="ontology-stage" class="flex-1 min-h-0 relative" style="margin: 0.75rem 1.5rem 1.5rem;">
+                <aside id="ontology-tree" class="absolute top-0 left-0 h-full overflow-auto"></aside>
+                <div id="ontology-graph-container" class="absolute top-0 bottom-0 right-0"></div>
+                <div id="ontology-matrix" class="absolute inset-0 overflow-auto" style="display:none;"></div>
+                <div id="ontology-scoreboard" class="absolute inset-0 overflow-auto" style="display:none;"></div>
+                <aside id="ontology-inspect" class="absolute top-0 right-0 h-full" aria-hidden="true"></aside>
+            </div>
+        </div>
+    </div>
+</div>

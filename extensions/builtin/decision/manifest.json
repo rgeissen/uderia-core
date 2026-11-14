@@ -1,0 +1,65 @@
+{
+  "name": "decision-maker",
+  "version": "1.0.0",
+  "extension_id": "decision",
+  "display_name": "Decision Maker",
+  "description": "Analyzes the LLM answer and produces a binary or multi-branch decision output for routing on a flow decision node or an external automation engine.",
+  "author": "TDA Core Team",
+  "license": "MIT",
+  "category": "Automation",
+  "extension_tier": "llm",
+  "requires_llm": true,
+  "keywords": [
+    "decision",
+    "branching",
+    "switch",
+    "routing",
+    "flow",
+    "workflow"
+  ],
+  "files": {
+    "extension": "decision.py"
+  },
+  "output_target": "silent",
+  "parameters": {
+    "supported": true,
+    "description": "Force a severity context or decision mode",
+    "examples": [
+      "critical",
+      "warning",
+      "binary"
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "result": {
+        "type": "string",
+        "description": "Decision outcome (nominal, approaching_threshold, threshold_exceeded, action_required)"
+      },
+      "severity": {
+        "type": "string",
+        "description": "Severity level (ok, info, warning, critical)"
+      },
+      "confidence": {
+        "type": "number",
+        "description": "Confidence score 0-1"
+      },
+      "branch_key": {
+        "type": "string",
+        "description": "Combined key for a Switch/decision node (result_severity)"
+      },
+      "reasoning": {
+        "type": "string",
+        "description": "Brief explanation of the decision"
+      }
+    }
+  },
+  "metadata": {
+    "tags": [
+      "built-in",
+      "automation",
+      "core"
+    ]
+  }
+}

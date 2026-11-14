@@ -1,0 +1,22 @@
+{
+  "name": "knowledge-graph-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on using the Knowledge Graph component (TDA_KnowledgeGraph) well — acting on authoritative enrichment, staying within the model's deployed scope, compiling metric slices, and enriching the graph.",
+  "author": "Uderia",
+  "tags": ["knowledge-graph", "metrics", "schema", "grounding", "scope"],
+  "keywords": ["knowledge graph", "deployed", "compile_metric", "scope", "foreign key", "enrich", "entity", "relationship", "TDA_KnowledgeGraph"],
+  "use_cases": [
+    "Acting on an authoritative knowledge-graph enrichment in SQL",
+    "Choosing a metric slice for compile_metric",
+    "Staying within the model's deployed scope instead of brute-forcing unrelated databases",
+    "Enriching the graph with newly discovered relationships",
+    "Choosing visualize (inline) vs open (full panel)"
+  ],
+  "main_file": "knowledge-graph-expert.md",
+  "last_updated": "2026-06-28",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "git-fork"
+  }
+}

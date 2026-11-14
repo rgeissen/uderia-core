@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OBDA-MODEL & OBDA-ACT — Uderia</title>
+<style>
+:root{
+  --ground:#0e1621;--panel:#172230;--panel-2:#1e2c3b;--hair:#2c3c4e;--hair-soft:#223140;
+  --text:#e9eff5;--muted:#93a4b6;--dim:#6b7d90;--faint:#52657a;
+  --sage:#6cbf92;--amber:#f2b04a;--red:#e5687a;--blue:#6aa9e0;--steel-1:#9db8cf;
+  --accent:#F15F22;--accent-soft:rgba(241,95,34,0.12);--accent-line:rgba(241,95,34,0.45);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{
+  margin:0;background:radial-gradient(1200px 780px at 50% -12%,#14212f 0%,var(--ground) 58%),var(--ground);
+  color:var(--text);font-family:var(--sans);line-height:1.66;font-size:16.5px;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--steel-1);text-decoration:none;border-bottom:1px solid rgba(157,184,207,0.28);}
+a:hover{color:var(--text);}
+
+/* sticky masthead */
+.topbar{
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+  background:rgba(14,22,33,0.82);border-bottom:1px solid var(--hair);
+}
+.topbar-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar .brand{font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent);}
+.topbar .sep{color:var(--faint);}
+.topbar .doc{font-weight:650;color:var(--text);}
+.topbar .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;}
+.topbar .back:hover{border-color:var(--accent-line);color:var(--text);}
+
+/* layout: content + floating TOC */
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:44px;}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);}.toc{display:none;}}
+
+header.hero{padding:56px 0 8px;grid-column:1 / -1;}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
+header.hero h1{font-family:var(--sans);font-weight:800;letter-spacing:-0.02em;font-size:clamp(30px,5vw,50px);line-height:1.04;margin:0;text-wrap:balance;}
+
+/* TOC */
+.toc{grid-column:2;grid-row:2;align-self:start;position:sticky;top:72px;padding:18px 0;max-height:calc(100vh - 96px);overflow:auto;}
+.toc .toc-h{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}
+.toc a{display:block;border:none;color:var(--muted);font-size:13px;padding:3px 0 3px 12px;border-left:1px solid var(--hair);}
+.toc a:hover{color:var(--text);border-left-color:var(--accent-line);}
+.toc a.lvl-3{padding-left:24px;font-size:12.5px;color:var(--dim);}
+
+/* article */
+article.doc{min-width:0;padding:8px 0 80px;grid-column:1;grid-row:2;}
+article.doc h1,article.doc h2,article.doc h3,article.doc h4{scroll-margin-top:76px;line-height:1.2;text-wrap:balance;}
+article.doc h1{font-size:clamp(26px,3.6vw,34px);font-weight:800;letter-spacing:-0.015em;margin:40px 0 16px;}
+article.doc h2{font-size:clamp(22px,3vw,28px);font-weight:750;margin:44px 0 14px;padding-top:22px;border-top:1px solid var(--hair);}
+article.doc h3{font-size:19px;font-weight:700;color:#dbe6f0;margin:30px 0 10px;}
+article.doc h4{font-size:15.5px;font-weight:700;color:var(--muted);text-transform:none;margin:22px 0 8px;}
+article.doc p{max-width:74ch;color:#cdd8e2;margin:0 0 15px;}
+article.doc strong{color:var(--text);font-weight:650;}
+article.doc em{color:#d6e1ec;}
+article.doc ul,article.doc ol{max-width:74ch;color:#cdd8e2;padding-left:24px;}
+article.doc li{margin:6px 0;}
+article.doc li::marker{color:var(--dim);}
+article.doc hr{border:none;border-top:1px solid var(--hair);margin:36px 0;}
+article.doc blockquote{
+  margin:18px 0;padding:14px 20px;border-left:3px solid var(--accent-line);
+  background:var(--accent-soft);border-radius:0 10px 10px 0;color:#d6e1ec;
+}
+article.doc blockquote p{margin:0 0 8px;}article.doc blockquote p:last-child{margin:0;}
+
+/* inline code + fenced */
+article.doc code{font-family:var(--mono);font-size:0.9em;color:var(--sage);background:rgba(108,191,146,0.08);
+  border:1px solid rgba(108,191,146,0.16);border-radius:5px;padding:1px 5px;}
+article.doc pre{
+  background:#0c141d;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 18px;
+}
+article.doc pre code{color:#c9d6e2;background:none;border:none;padding:0;font-size:13px;line-height:1.6;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:0 0 20px;border:1px solid var(--hair);border-radius:12px;}
+article.doc table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+article.doc th,article.doc td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top;}
+article.doc thead th{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:rgba(0,0,0,0.22);}
+article.doc tbody tr:last-child td{border-bottom:none;}
+article.doc tbody tr:hover{background:rgba(255,255,255,0.015);}
+article.doc td code{white-space:nowrap;}
+/* a long identifier in running text wraps rather than widening the page at phone width */
+:where(code){overflow-wrap:anywhere;}
+/* the article is a grid/flex child: let it shrink so a wide table scrolls in its own wrapper */
+article.doc{min-width:0;}
+.table-wrap{max-width:100%;}
+
+footer.docfoot{grid-column:1 / -1;padding:28px 0 70px;border-top:1px solid var(--hair);color:var(--dim);font-size:13px;font-family:var(--mono);}
+footer.docfoot a{color:var(--muted);}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <span class="brand">Agent Trust &amp; Assurance</span>
+  <span class="sep">/</span>
+  <span class="doc">OBDA-MODEL & OBDA-ACT</span>
+  <a class="back" href="the-life-of-a-uderia-agent.html">← The Life of a Uderia Agent</a>
+</div></div>
+
+<div class="shell">
+  <header class="hero">
+    <p class="eyebrow">Architecture · OBDA-MODEL · OBDA-ACT · PROP-008</p>
+    <h1>OBDA-MODEL & OBDA-ACT</h1>
+  </header>
+  <nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><a href="#0-what-obda-model-and-obda-act-are" class="lvl-2">0. What OBDA-MODEL and OBDA-ACT are</a><a href="#0a-obda-act-and-obda-read-the-write-half-and-the-read-half" class="lvl-2">0a. OBDA-ACT and OBDA-READ — the write half and the read half</a><a href="#1-switches-and-the-baseline" class="lvl-2">1. Switches and the baseline</a><a href="#1a-access-in-the-warehouse-stated-and-checked-before-every-act" class="lvl-3">1a. Access in the warehouse — stated and checked before every act</a><a href="#2-obda-model-the-graph-authors-the-warehouse-materialises" class="lvl-2">2. OBDA-MODEL — the graph authors, the warehouse materialises</a><a href="#21-the-authored-layer-and-extensions" class="lvl-3">2.1 The authored layer and extensions</a><a href="#22-the-normalisation-advisor" class="lvl-3">2.2 The normalisation advisor</a><a href="#22a-the-model-gap-decided-and-delivered-in-code" class="lvl-3">2.2a The model gap — decided and delivered in code</a><a href="#23-the-delta-deployer" class="lvl-3">2.3 The delta deployer</a><a href="#24-the-design-standard-probes-and-readback" class="lvl-3">2.4 The design standard, probes and readback</a><a href="#25-signing-an-extension-and-what-never-moves-the-base" class="lvl-3">2.5 Signing an extension, and what never moves the base</a><a href="#25a-withdrawing-an-extension-the-inverse-of-publish-oct-2026" class="lvl-3">2.5a Withdrawing an extension — the inverse of publish (Oct 2026)</a><a href="#26-workload-tuning" class="lvl-3">2.6 Workload tuning</a><a href="#3-obda-act-the-signed-action-type" class="lvl-2">3. OBDA-ACT — the signed action type</a><a href="#31-the-manifest" class="lvl-3">3.1 The manifest</a><a href="#32-the-gate-a1a6-and-the-earned-signature" class="lvl-3">3.2 The gate (A1–A6) and the earned signature</a><a href="#33-the-compiler" class="lvl-3">3.3 The compiler</a><a href="#34-the-runner" class="lvl-3">3.4 The runner</a><a href="#35-performing-authority-posture-connection" class="lvl-3">3.5 Performing: authority, posture, connection</a><a href="#36-receipts" class="lvl-3">3.6 Receipts</a><a href="#37-the-act-log" class="lvl-3">3.7 The act log</a><a href="#38-the-sql-gates-part" class="lvl-3">3.8 The SQL gate&#x27;s part</a><a href="#4-faces-one-core-every-door" class="lvl-2">4. Faces — one core, every door</a><a href="#5-observability-and-evaluation" class="lvl-2">5. Observability and evaluation</a><a href="#6-honest-limits" class="lvl-2">6. Honest limits</a><a href="#7-file-and-gate-map" class="lvl-2">7. File and gate map</a></nav>
+  <article class="doc">
+<p><strong>Status:</strong> built (Oct 2026) on branch <code>feature/act-business-operating-model</code>, increments A1–A5,
+B1–B4d, C1–C3; rehearsed end to end as Act II of the policing demo. This is the live contract
+(checked against code 2026-10-30; since 2026-10-26 its page events are the one component change
+event of COMPONENT_ARCHITECTURE § Component Signals — <code>action</code> announces <code>created</code> · <code>updated</code> ·
+<code>deleted</code>, <code>obda_model</code> announces <code>deployed</code> from <code>authored_deploy</code>, both keep <code>instances: agent</code>).
+The design record — the options considered and rejected, the rollout plan, the decisions taken
+on the open questions — stays in
+<code>PROP-008</code>; where the two differ, this
+document describes what was built.</p>
+<p><strong>Related:</strong> <code>ONTOLOGY_ARCHITECTURE.md</code> (the layers OBDA-MODEL writes into),
+<a href="OBDA_ARCHITECTURE.html">OBDA_ARCHITECTURE.md</a> (the read-side twin: signed data products),
+<a href="TRUST_MEMBRANE_ARCHITECTURE.html">TRUST_MEMBRANE_ARCHITECTURE.md</a> (the two new trust kinds),
+<a href="AGENT_AUTHORITY_ARCHITECTURE.html">AGENT_AUTHORITY_ARCHITECTURE.md</a> (grants and the action-only
+denial), <code>docs/Architecture/INDUSTRY_MODEL_PDM_DEPLOYMENT_PLAN.md</code> (the
+deployment backends OBDA-MODEL reuses), <code>restAPI.md</code> (the endpoints).</p>
+<hr>
+<h2 id="0-what-obda-model-and-obda-act-are">0. What OBDA-MODEL and OBDA-ACT are</h2>
+<p>Until OBDA-MODEL and OBDA-ACT Uderia could only read (OBDA-READ): an agent answered from the ontology and the warehouse,
+and anything that had to change — a concept missing from the model, a record that had to be
+written — went to a person outside Uderia. OBDA-MODEL and OBDA-ACT close that loop on two planes that share
+one road (propose → validate → land → publish → sign → use):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Plane</th>
+<th>What changes</th>
+<th>Who decides</th>
+<th>What guarantees it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OBDA-MODEL</strong></td>
+<td>the ontology and the warehouse schema — a new entity, a new attribute, a performance structure</td>
+<td>a person publishes; an agent may only draft</td>
+<td>the extension's own signature, the design standard read back from the warehouse's dictionary</td>
+</tr>
+<tr>
+<td><strong>OBDA-ACT</strong></td>
+<td>rows — record a lead, close a ticket, set a tier</td>
+<td>the action type's posture; a person confirms or approves</td>
+<td>the action's earned signature, one transaction with checks, a sealed receipt</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>The family:</em> <strong>OBDA-MODEL</strong> defines and extends the model, <strong>OBDA-READ</strong> reads through it
+(<a href="OBDA_ARCHITECTURE.html">OBDA_ARCHITECTURE.md</a>: signed data products), <strong>OBDA-ACT</strong> writes
+through it — one ontology, one signature discipline, three directions. (Before Oct 2026 the two
+planes here were called Model ACT and Instance ACT, and OBDA-READ plain OBDA; earlier changelog
+entries, proposals and assessments keep the names they were written with.)</p>
+<p>Three properties hold everywhere, and every section below is how one of them is kept:</p>
+<ol>
+<li><strong>Nothing writes outside a signed contract.</strong> Model changes land only through the delta
+   deployer from a published extension; row changes only through a signed, granted action type.
+   A raw <code>INSERT</code>/<code>UPDATE</code> from an agent is refused at the SQL gate.</li>
+<li><strong>The base is never touched.</strong> An extension, an action type, a landing on another warehouse
+   and a tuning artefact are <em>stacked</em> on the graph: none moves the base ontology's seal, none
+   counts as a base mutation (§2.5).</li>
+<li><strong>Every act is accountable.</strong> Each performed write has a receipt naming who, which contract,
+   which statement, how many rows and through which door; every act through any door lands in
+   one append-only log the audit surfaces read (§3.7).</li>
+</ol>
+<h2 id="0a-obda-act-and-obda-read-the-write-half-and-the-read-half">0a. OBDA-ACT and OBDA-READ — the write half and the read half</h2>
+<p><a href="OBDA_ARCHITECTURE.html">OBDA-READ</a> governs what an agent may <strong>read</strong>: a signed data product is the
+only shape of question it may ask of the warehouse. OBDA-ACT governs what it may <strong>write</strong>: a signed
+action type is the only shape of change it may make. The two were built on the same pattern,
+and where they share a mechanism it is one implementation, not two copies:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>OBDA-READ — reading</th>
+<th>OBDA-ACT — writing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The contract</td>
+<td>a <strong>data product</strong> manifest (<code>dbdeploy/product_model.py</code>)</td>
+<td>an <strong>action type</strong> manifest (<code>dbdeploy/action_model.py</code>)</td>
+</tr>
+<tr>
+<td>The gate</td>
+<td>V1–V7, with live probes (<code>dbdeploy/product_validation.py</code>)</td>
+<td>A1–A6, with live probes (<code>dbdeploy/action_validation.py</code>)</td>
+</tr>
+<tr>
+<td>The earned signature</td>
+<td>trust kind <code>data_product</code>, signed over <code>{manifest_hash, validation_report_hash}</code></td>
+<td>trust kind <code>action_type</code>, the same shape — the proof is inside the signature in both</td>
+</tr>
+<tr>
+<td>Bottom-up rule</td>
+<td>a product needs a signed ontology (<code>unsigned_ingredient</code>)</td>
+<td>an action needs a signed ontology (<code>unsigned_ingredient</code>)</td>
+</tr>
+<tr>
+<td>On the graph</td>
+<td><code>data_product</code> node + <code>member</code> edges</td>
+<td><code>action_type</code> node + <code>acts_on</code> edge</td>
+</tr>
+<tr>
+<td>Never moves the ontology's seal</td>
+<td>both are <strong>stacked contracts</strong> — one rule, <code>kgstore.types.is_stacked_contract</code>, read by trust composition, governance and extension signing</td>
+<td></td>
+</tr>
+<tr>
+<td>Who executes</td>
+<td>Uderia <strong>compiles, the agent executes</strong> through its governed data tool, so the read keeps the SQL gate</td>
+<td>Uderia <strong>executes</strong> (<code>dbdeploy/action_runner.py</code>): a write needs pre-checks, statement, post-checks and ledger in one transaction, which a data tool cannot hold</td>
+</tr>
+<tr>
+<td>Agent Authority</td>
+<td><code>dataSurface</code> with <code>exclusive</code> → raw SQL refused as <code>surface-only</code></td>
+<td><code>actions</code> with <code>actions_exclusive</code> → raw writes refused as <code>action-only</code> — the <strong>same chokepoint</strong> (<code>agent_authority.is_tool_allowed</code>)</td>
+</tr>
+<tr>
+<td>The lane scanner (<code>agent/obda.py</code>)</td>
+<td>governed · free-formed · confined</td>
+<td>the <strong>acted</strong> lane: <code>acted_count</code> / <code>refused_count</code> in the same <code>obda</code> stamp (only where the agent's OBDA-READ plane is on; OBDA-ACT's own <code>actions</code> stamp and act log do not depend on it)</td>
+</tr>
+<tr>
+<td>Receipts</td>
+<td><code>obda.consumption</code> steps sealed in the turn's Ed25519 chain</td>
+<td><code>action.performed</code> steps sealed in the same chain; an act outside a sealed turn carries a receipt signed on its own</td>
+</tr>
+<tr>
+<td>Faces</td>
+<td>agent · REST (<code>/v1/data-products/*</code>) · MCP</td>
+<td>the same three, plus flow · scheduler · dashboard tile · Assurance Inbox</td>
+</tr>
+<tr>
+<td>Eval</td>
+<td><code>governed_data_ratio</code>, <code>surface_violation</code>, the <code>surface-escape</code> probe</td>
+<td><code>action_safety</code>, the <code>write-escape</code> probe</td>
+</tr>
+<tr>
+<td>Availability</td>
+<td>the <code>obda_read</code> component (global · per user · per agent) — <code>core/obda_planes</code></td>
+<td>the <code>action</code> component, the same chain (OBDA-MODEL: <code>obda_model</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>An agent can be confined on both sides at once — <code>surface-only</code> for reads and <code>action-only</code> for
+writes — and the Trust Circle's BOUNDED station reads both.</p>
+<p><em>Naming:</em> the eval model also has a turn stage called <strong>ACT</strong> (Plan · Retrieve · Act · Compose ·
+Deliver — e.g. "<code>surface_violation</code> (BOUNDED, ACT moment)"). That is the moment in a turn where
+the agent uses tools; it predates PROP-008 and is unrelated to OBDA-ACT.</p>
+<hr>
+<h2 id="1-switches-and-the-baseline">1. Switches and the baseline</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Switch</th>
+<th>Where</th>
+<th>Off means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Availability — the components</strong> (no master switch since Oct 2026)</td>
+<td>OBDA-MODEL is the builtin component <strong><code>obda_model</code></strong> (tool <code>TDA_ModelProposal</code>), OBDA-ACT the component <strong><code>action</code></strong> (tool <code>TDA_Action</code>): each plane exists for a deployment, a user and an agent the way every component does — Administration → Components (global gate, per-user override), the agent's Capabilities toggle, and relevance (a graph bound). ONE reader: <code>core/obda_planes.plane_available</code> / <code>plane_enabled</code>. The former <code>ACT_ENABLED</code> (<code>TDA_ACT</code>) switch was migrated once at startup (<code>auth/database._migrate_obda_masters</code>: a persisted <em>off</em> disabled both components; a model-authoring grant switched <code>obda_model</code> on for the agent, an action grant <code>action</code>)</td>
+<td>the plane is absent: no authoring or action text in any prompt (the <code>[[gate:act]]</code> blocks open per agent on the plane), the grants are dropped at parse (<code>planes=</code>), <code>TDA_Action</code> / <code>TDA_ModelProposal</code> are not offered, the REST faces answer <code>403 obda_act_off</code> / <code>obda_model_off</code> naming the admin pane, the scope reads pre-OBDA</td>
+</tr>
+<tr>
+<td><strong>The OBDA policy</strong> — "contracts only" per plane (<code>APP_CONFIG.OBDA_POLICY</code>, Administration → App Config → Trust → <em>OBDA policy</em>; <code>off · observe · enforce</code>)</td>
+<td>applied once at <code>agent_authority.derive_principal</code> into every agent's scope, on every turn; <code>observe</code> records <code>policy_observed</code> events instead of refusing (see OBDA_ARCHITECTURE §0)</td>
+<td><strong>model enforce</strong>: an agent's DIRECT graph edits (<code>add_entity</code> · <code>add_relationship</code> · <code>declare_concept</code> · <code>restore</code>) are refused — the model changes through a proposal a person publishes; <strong>act enforce</strong>: every raw write and every command tool is refused — rows change only through the agent's granted signed actions (none granted ⇒ none at all)</td>
+</tr>
+<tr>
+<td><strong><code>modelAuthoring</code></strong> grant</td>
+<td><code>authorityConfig.modelAuthoring</code> on a profile</td>
+<td>the agent cannot call <code>propose_entity</code> / <code>propose_attribute</code></td>
+</tr>
+<tr>
+<td><strong>Action grant</strong></td>
+<td><code>authorityConfig.actions.types</code> (list of action names)</td>
+<td>the agent cannot perform that action — <code>not_granted</code>, whatever the face</td>
+</tr>
+<tr>
+<td><strong><code>actions_exclusive</code></strong></td>
+<td><code>authorityConfig.actions</code></td>
+<td>when set, every raw write from the agent is refused as <code>action-only</code> (<code>ACTION_DENIAL_MARKER</code>), naming the granted actions</td>
+</tr>
+<tr>
+<td><strong><code>action</code> component</strong></td>
+<td><code>componentConfig.action</code> (and the deployment's component governance) — <strong>one face only</strong>: switching the component off removes <code>TDA_Action</code> from conversations and leaves authoring, the grants, REST/MCP, flow, scheduler and dashboard acts as they are; availability is the component chain's — Administration → Components (global gate, per-user override) and the agent's Capabilities toggle, read by <code>core/obda_planes.plane_enabled</code>; there is no master switch (Oct 2026). <code>is_profile_relevant</code> offers the tool only where it can act: a knowledge graph bound to the agent</td>
+<td><code>enabled_for: []</code> — no profile has <code>TDA_Action</code> until it is switched on; packs keep it off (<code>agent_packs/common/component_config.py:ACTION_COMPONENTS</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>A grant is <strong>access, not trust</strong>: changing it moves no signature. The posture of an action
+(§3.5) is part of the action's signed contract, not of the agent.</p>
+<h3 id="1a-access-in-the-warehouse-stated-and-checked-before-every-act">1a. Access in the warehouse — stated and checked before every act</h3>
+<p>OBDA-MODEL and OBDA-ACT act on a warehouse through two logins (§3.2): the <strong>model</strong> login lands tables and creates
+ledgers; the <strong>write</strong> login performs an action's rows under the action's <strong>role</strong>. What each
+needs is stated in one place (<code>dbdeploy/access.py</code>: <code>landing_requirements</code>,
+<code>ledger_requirements</code>, <code>action_requirements</code>), judged against the dictionary
+(<code>TeradataDeploymentBackend.read_access</code>: <code>DBC.AllRightsV</code>, <code>DBC.AllRoleRightsV</code>,
+<code>DBC.RoleMembersV</code>; a database-level grant covers its tables; an unreadable dictionary holds
+nothing — never a pass) and shown <strong>before anything runs</strong> — each requirement <em>held</em> or
+<em>missing</em>, why, and the exact <code>GRANT</code> for what is missing (<code>judge</code>). Govern's preview carries it
+(<code>deploy.access</code>) and <strong>Land</strong> is refused while it is missing; the Actions Designer shows it in
+the Define form (re-read as the connection, columns or role change) and in each action's
+details (<code>POST /v1/actions/access</code>). Gate: <code>test/test_act_access.py</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Act</th>
+<th>Who</th>
+<th>Must hold</th>
+<th>Why</th>
+<th>When it is checked</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OBDA-MODEL — land</strong> a new sibling database <code>UDERIA_EXT_&lt;root&gt;</code></td>
+<td>the model connection's login</td>
+<td><code>CREATE DATABASE</code> on the parent (the login's own space by default — a login is not granted this on itself automatically)</td>
+<td>the landing creates the database; the creator then holds every right inside it</td>
+<td>Govern <strong>Preview</strong>; <strong>Land</strong> is disabled and refused (<code>409 access_missing</code>, nothing changed) while missing</td>
+</tr>
+<tr>
+<td><strong>OBDA-MODEL — land</strong> a new table in an existing database</td>
+<td>the model connection's login</td>
+<td><code>CREATE TABLE</code> on that database</td>
+<td>creates the table</td>
+<td>as above</td>
+</tr>
+<tr>
+<td><strong>OBDA-MODEL — land</strong> a new column on an existing table</td>
+<td>the model connection's login</td>
+<td><code>DROP TABLE</code> on that table</td>
+<td>Teradata's <code>ALTER TABLE</code> needs it</td>
+<td>as above</td>
+</tr>
+<tr>
+<td><strong>OBDA-MODEL — land</strong> a reference to a base table</td>
+<td>the model connection's login</td>
+<td><code>REFERENCES</code> on the base table</td>
+<td>the soft-RI <code>FOREIGN KEY … REFERENCES WITH NO CHECK OPTION</code></td>
+<td>as above</td>
+</tr>
+<tr>
+<td><strong>OBDA-MODEL — the action ledger</strong></td>
+<td>the model connection's login</td>
+<td><code>CREATE TABLE</code> on the target's database</td>
+<td>the ledger <code>&lt;db&gt;.UDERIA_ACT_&lt;table&gt;</code> is created once, at the first validation</td>
+<td>the Designer's <strong>Access in the warehouse</strong> (Define form and details); a refusal is named at validation</td>
+</tr>
+<tr>
+<td><strong>OBDA-ACT — perform</strong></td>
+<td>the write connection's login</td>
+<td>the action's role (<code>GRANT &lt;role&gt; TO &lt;login&gt;</code>)</td>
+<td>every write session acts under the role (<code>SET ROLE</code>)</td>
+<td>Define form + details before anything runs; validation's probes run under the role; perform refuses <code>role_not_held</code></td>
+</tr>
+<tr>
+<td><strong>OBDA-ACT — perform</strong></td>
+<td>the action's role</td>
+<td>exactly the operation's rights on the target — insert <code>INSERT, SELECT</code> · update <code>UPDATE, SELECT</code> · upsert <code>INSERT, UPDATE, SELECT</code> — and <code>INSERT</code> on the ledger; <strong>nothing wider</strong> (A6 refuses a wider role)</td>
+<td>the write, its pre/post checks and the before-image; the ledger entry</td>
+<td>Define form + details; <strong>A6</strong> at validation</td>
+</tr>
+</tbody>
+</table></div>
+<p>The statements, with Uderia's names filled in, are what the surfaces print; the templates:</p>
+<pre><code class="language-sql">-- OBDA-MODEL (the model connection's login, e.g. uderia_ext_admin)
+GRANT CREATE DATABASE ON &lt;login&gt; TO &lt;login&gt;;          -- a new sibling database under the login's own space
+GRANT CREATE TABLE ON &lt;landing_db&gt; TO &lt;login&gt;;          -- a new table in an existing database
+GRANT DROP TABLE ON &lt;landing_db&gt;.&lt;table&gt; TO &lt;login&gt;;    -- a new column on an existing table
+GRANT REFERENCES ON &lt;base_db&gt;.&lt;base_table&gt; TO &lt;login&gt;;  -- a reference to a base table
+-- OBDA-ACT (the write connection's login, e.g. policing_investigator, and the action's role)
+GRANT &lt;role&gt; TO &lt;write_login&gt;;
+GRANT INSERT, SELECT ON &lt;db&gt;.&lt;table&gt; TO &lt;role&gt;;          -- insert   (update: UPDATE, SELECT · upsert: INSERT, UPDATE, SELECT)
+GRANT INSERT ON &lt;db&gt;.UDERIA_ACT_&lt;table&gt; TO &lt;role&gt;;       -- the ledger, append-only
+</code></pre>
+<hr>
+<h2 id="2-obda-model-the-graph-authors-the-warehouse-materialises">2. OBDA-MODEL — the graph authors, the warehouse materialises</h2>
+<h3 id="21-the-authored-layer-and-extensions">2.1 The authored layer and extensions</h3>
+<p>A proposed concept is written to the graph on the <strong>authored</strong> layer (<code>properties.layer =
+"authored"</code>), beside the logical and physical layers, and belongs to an <strong>extension</strong> keyed
+<code>extension_id = ext-&lt;user uuid&gt;</code>. Its lifecycle is <code>draft → validated → deployed → published</code>,
+and <code>kgstore.types.advance_status</code> only ever moves it forward (a published node that lands on a
+second warehouse stays published).
+A landable node (an entity or an attribute) is published only after it has landed —
+<code>kgstore.types.awaits_landing</code> is the one rule: <code>publish_extension</code> refuses <code>not_landed</code> (naming
+the nodes, stamping nothing) and Govern counts it per extension (<code>unlanded</code>), saying "land … first,
+then publish" instead of offering Publish; published early, the released model would carry a
+column the warehouse does not have. A draft attribute on a published entity is its own row (an
+attribute folds into its owner only at the same stage) and is outside the extension's signed
+content, its edge included.</p>
+<ul>
+<li>A <strong>draft</strong> is visible to its author only. It never seeds retrieval and never survives
+  subgraph assembly (<code>_unpublished_authored</code>), so agents grounded on the model do not see it.
+  The model's own views follow the same rule: its card's figures (<code>list_all_graphs</code> counts
+  drafts apart as <code>draft_entities</code>), the graph view and a node's expansion leave unpublished
+  drafts out — the author sees them in the Workspace's <strong>Your extension</strong> section (every
+  stage, and once published the trust act still owed) and in Govern's <strong>Added to the model</strong>. An extension is more than its drafts: landing it writes physical nodes (the table,
+  its columns, a sibling schema — marked <code>authored_deploy</code>, each <code>realises</code> an authored node),
+  and those are unpublished for exactly as long as what they realise
+  (<code>kgstore.types.unpublished_extension_names</code> — the ONE rule, fed by
+  <code>GraphStore.unpublished_names</code>, read by the agent's seeding and context assembly, the graph
+  view, a node's expansion and every count). <code>GraphStore.DRAFT_SQL</code> is the authored half in SQL,
+  gated to classify exactly as the Python predicate (<code>test_kg_draft_views</code>). The author sees a draft <strong>in context</strong> by opening
+  the graph from its Drafts row (<code>graph-spec?include_drafts=1</code>, centred on the draft): it is
+  drawn dashed and labelled <code>· draft</code>, and the panel keeps the drafts through lens changes and
+  re-queries. Every change to the authored layer — a draft from the answer (the proposal row
+  carries <code>data-kg-drafted</code>) or from <strong>Draft it</strong>, a landing, a publish — is announced as the
+  one component change event (<code>uderia:component-changed</code>, <code>component_id: knowledge_graph</code>,
+  <code>aspect: authored</code>; the publish and withdraw routes announce it at the server seam via
+  <code>@_signals.announces_route</code>); the Workspace and an open graph panel on that graph redraw in
+  place, without a page refresh (see COMPONENT_ARCHITECTURE § Component Signals).</li>
+<li><strong>Publishing is a person's act</strong> (<code>ontology_governance.publish_extension</code>,
+  <code>POST /v1/knowledge-graph/authored/publish</code>): an <code>agent:</code> actor is refused under every policy,
+  and the person must hold an approver tier even when the ontology itself needs no approval.</li>
+<li>A <strong>base update</strong> (apply-update, a subscription sync, an agent-pack refresh, a declarative
+  redeploy, a version restore — all <code>GraphStore.replace_model_layer</code>) replaces only what a walk
+  produces. ONE rule, <code>kgstore.types.is_kept_on_replace</code>, keeps everything else: the authored
+  and observed layers, an extension's <strong>realisation</strong> (the schema, tables and columns its landing
+  wrote — <code>authored_deploy</code>), and the <strong>stacked contracts</strong> (action types and their ledgers, data
+  products). A walked node that shares a realisation's name (a walk that reads the warehouse
+  sees the landed table) takes the realisation's marks and stays the extension's. What an update
+  cannot keep is named: a dropped container is stamped on the concept it concerns
+  (<code>dangling_edges</code>), a realisation whose concept is gone is listed in <code>realisations_orphaned</code>.
+  A pack payload carrying extension X replaces X and keeps every other layer. Before Oct 2026
+  the rule read <code>layer</code> only: the Lead survived an update, its table and columns did not, and
+  signed action types and data products were deleted.</li>
+<li><strong>What travels.</strong> An extension's realisation is a fact of THIS deployment's warehouse: it is
+  the extension's half in <code>split_layers</code> (<code>is_extension_layer</code>), so a base listing carries the
+  published concept (with its signed <code>realisations</code> stamps, as the publisher's provenance) but
+  never the landed table — the consumer lands it on their own warehouse.</li>
+<li>A Model B agent (<code>groundOn: released</code>) sees the released snapshot plus the <strong>published</strong>
+  extension layer <strong>with its realisation</strong> (<code>kg_release.published_extension_layer</code>), never a
+  draft; the pinned base drops every realisation, so an unpublished extension's table never
+  rides it in, and a table landed after the pin still reaches the view.</li>
+</ul>
+<h3 id="22-the-normalisation-advisor">2.2 The normalisation advisor</h3>
+<p><code>agent/kg_constructors/normalisation.py</code> decides, deterministically, whether a proposed concept
+is an entity or an attribute, from probes over the rows (when there are any): functional
+dependency (must), multiplicity, hidden identity, shared reference, independent lifecycle, and
+closed enumeration (never an entity). A declared choice stands unless a rule fires; with no rows
+the verdict is <em>provisional</em> and says so; with every probe failed it is <em>unknown</em>. An attribute's
+type is inferred from its name when not declared, and the preview says it was inferred.</p>
+<p>The verdict is the body of the agent's answer row with one act — <strong>Draft it</strong> — offered only
+when a draft is owed.</p>
+<h3 id="22a-the-model-gap-decided-and-delivered-in-code">2.2a The model gap — decided and delivered in code</h3>
+<p>Before a concept can be proposed, someone has to notice the model lacks it. A question whose
+<strong>subject</strong> nothing in the graph matches ("which leads are open?" asked of a model with no
+Lead) is a <em>model gap</em>, and both halves of it belong to code:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Seam</th>
+<th>Owner</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Decide</strong></td>
+<td>the knowledge-graph component (<code>handler.py:_model_gap</code>)</td>
+<td>the question's subject from its own sentence shape (<code>_question_subject</code>), unmatched in the whole graph by name, label, description, declared value or meaning, in its own and its singular form. Stamps <code>model_gap = {term, singular, may_author}</code> on the turn's <code>kg_enrichment_event</code>. <code>may_author</code> is the <strong>same</strong> gate <code>propose_entity</code> applies (<code>_act_refusal</code>), so the offer and the act cannot disagree. Only while OBDA-MODEL · OBDA-ACT is on.</td>
+</tr>
+<tr>
+<td><strong>Deliver</strong></td>
+<td><code>agent/model_gap.py</code>, called by <strong>every engine</strong> before the turn persists (<code>executor._apply_model_gap</code> for Optimize · Ideate · Ideate+tools · Focus, incl. Focus's nothing-retrieved answer; Coordinate calls the module on its coordinator's own enrichment, before its history write)</td>
+<td>one note from Uderia under the answer (<code>answer_surface.note("model_gap")</code>, kind word <em>Not in the model</em>), placed above the evidence rail. When the agent may author (and the graph is known) it carries the act <strong>Propose a ‹Concept›</strong>, which opens a small form in place (<code>ui.js</code> <code>_onGapProposeAct</code>): the name, what it records <strong>in plain words</strong>, one per line, what it belongs to (the model's own entities, read by the deciding seam from the graph, bounded, carried on the act — metadata, never prompt text) and an optional definition. Opening it asks for one suggestion (<code>POST /v1/knowledge-graph/propose/suggest</code>, <code>agent/proposal_suggest.py</code>): one small call on the answering agent's own model for what such a concept records and which entity it belongs to, booked to the note's turn; it fills only what the person has not written, and says whose suggestion it is. <strong>Check the proposal</strong> posts it to <code>POST /v1/knowledge-graph/propose</code> — the same handler path a turn runs, with no model in between — and the verdict row with its <strong>Draft it</strong> takes the form's place. When the agent may not author, the note says extending the model needs an agent allowed to author it, and offers no button. The text form of the answer carries the same line.</td>
+</tr>
+<tr>
+<td><strong>Model</strong></td>
+<td>asked only for the prose (and, in a conversation, for <code>propose_entity</code> when a person asks it there)</td>
+<td>the enrichment tells it the subject is not in the model, never to present another entity in its place, that the <strong>offer is Uderia's</strong> (not to repeat it), and to call <code>propose_entity</code> only when asked.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Business terms in, the model's terms out</strong> (<code>agent/kg_constructors/business_terms.py</code>, run by
+<code>propose_entity</code> for every face — a conversation, the form, REST). The person who extends a
+model knows the business, not the warehouse, so code supplies everything physical: each attribute
+becomes an identifier in the model's own naming style (<code>assigned_investigator</code> beside
+<code>incident_number</code>; <code>AssignedInvestigator</code> beside <code>IncidentNumber</code>), the person's words kept as its
+<code>label</code>; the concept gets an identifier of its own as its key unless one was named; and belonging
+to an entity adds the reference the landing turns into a foreign key — named exactly like that
+entity's declared key and typed like its deployed column. Uderia's additions carry
+<code>added_by_platform</code> (<code>key</code> · <code>reference</code>) and the proposal row names them in words. The planner
+declares a foreign key only to a parent that is a <strong>table</strong>: a parent realised as a view (every
+<code>Policing_Core</code> entity) keeps the reference in the model and lands the column, with the reason
+stated — the warehouse is never asked to reference a view.</p>
+<p>Why both halves are code: on production (12 Oct 2026) the gap was decided correctly and the agent,
+with a session primer ahead of the question, stated the gap but left out the offer, so there
+was nothing for the person to say yes to. The first fix put a written request into the composer;
+asked explicitly to propose, the agent then drew its own table of invented attribute names and
+asked for permission instead of calling the advisor. Neither whether an owed act <em>appears</em> nor
+whether an explicit request is <em>carried out</em> is left to the model: the person states the concept
+in the form, and code asks the advisor. No gap ⇒ the answer
+is byte-identical. Gates: <code>test_model_gap.py</code> (delivery, generality across terms, every engine
+before it persists), <code>test_model_gap_act.mjs</code> (the form, executed: in place, the advisor called directly, the verdict row in its place, a refusal kept for correction).</p>
+<h3 id="23-the-delta-deployer">2.3 The delta deployer</h3>
+<p><code>dbdeploy/delta.py:plan_delta(authored, facts, dictionary, landing)</code> is pure: a function of
+what the graph says and what the warehouse dictionary already holds. A new entity becomes a
+<code>CREATE</code> under the design standard; a new attribute on a base entity a nullable <code>ADD</code>; a
+reference on the attribute that names the parent's key; statistics on key and foreign keys. An
+object the dictionary already holds is <code>exists</code>, so a re-run is a no-op and a half-landed delta
+resumes. A realisation whose authored node is gone is refused unless forced, and only ever over
+the graph's own objects.</p>
+<p><strong>Where a table lands is policy, not a guess</strong> (<code>landing_for</code>): the model's own database when
+the deploy login owns it, otherwise a Uderia sibling <code>UDERIA_EXT_&lt;root&gt;</code> (provisioned first,
+named from the <strong>deployed</strong> root). Unknown ownership never lands in the root.</p>
+<p><code>agent/kg_constructors/authored_deploy.py</code> orchestrates a landing: it stamps physical nodes that
+<code>implements</code> the authored ones, marks the authored node deployed, and seals a <code>model_change</code>
+receipt (Ed25519). The preview is the validation act.</p>
+<p><strong>One graph, several warehouses.</strong> The graph's own physical layer is the primary
+infrastructure; a landing elsewhere is recorded on the authored node as
+<code>realisations[&lt;infrastructure&gt;]</code> (table, standard, readback, receipt), never as a second
+physical layer (ONTOLOGY_ARCHITECTURE §2.4b).</p>
+<p><strong>Where a sibling database is created, and how large.</strong> When the landing needs
+<code>UDERIA_EXT_&lt;root&gt;</code> and it does not exist yet, <code>TeradataDeploymentBackend.provisioning()</code>
+decides both and says why: the parent is the one given for this landing, else the connection's
+configured <code>database_parent</code>, else its default database, else <strong>the landing login's own
+space</strong> (a login can hold CREATE DATABASE on itself; <code>dbc</code> only works for a superuser); the size
+is the one given, else configured, else <strong>half of what that parent has free</strong> (DBC.DiskSpaceV,
+capped at 10 GB). The preview carries <code>provisioning</code> (<code>{sql, parent, perm_bytes, basis}</code>); the
+Govern dialog states it and lets the person change both, and Land sends exactly what the last
+preview showed. The landing <em>database</em> itself is never a request field — ownership decides it.</p>
+<h3 id="24-the-design-standard-probes-and-readback">2.4 The design standard, probes and readback</h3>
+<ul>
+<li><strong>Rule records with proof.</strong> Each backend's standard is a set of rule records (id, rationale,
+  source, the statement that proves it): <code>dbdeploy/design_standard.py</code> (Teradata, 13 rules) and
+  <code>dbdeploy/pg_standard.py</code> (PostgreSQL, 11). A rule reads <em>verified</em> only when its statements
+  were executed on the target's version family and recorded in
+  <code>design_standard_verification*.json</code> (<code>scripts/design_rules_verify.py</code>); otherwise it reads
+  <em>unverified</em>, never a pass.</li>
+<li><strong>Probes before choices</strong> (<code>dbdeploy/probes.py</code>): on the rows a load will write, the declared
+  key is kept unless a measurement contradicts it (constant, skewed or non-unique), and the
+  demotion is named. On synthetic rows nothing is applied.</li>
+<li><strong>Readback</strong> (<code>dbdeploy/readback.py</code>): after a landing the warehouse dictionary is read
+  against each rule — <code>held · violated · unverified</code> per table — and a dictionary nothing was
+  read from reads <em>unverified</em>, never a vacuous <em>conformant</em>.</li>
+<li><strong>Dialects</strong> (<code>dbdeploy/dialects/</code>): the planner decides <em>what</em> lands; a <code>DeltaDialect</code> says
+  it. The base class carries neither vendor's vocabulary.</li>
+</ul>
+<h3 id="25-signing-an-extension-and-what-never-moves-the-base">2.5 Signing an extension, and what never moves the base</h3>
+<p>The extension is the trust kind <strong><code>ontology_extension</code></strong> (<code>core/trust/extensions.py</code>), signed
+over <code>{extension_hash, base_attested_hash}</code> — the base's signature is inside it, so a base
+re-sign reads the extension <em>changed · base moved</em> while the base stays green. Refusals:
+<code>not_found · nothing_published · base_mutation · nonconformant · unsigned_ingredient</code>. An agent
+grounded on the graph carries each published extension as an ingredient.</p>
+<p><strong>Stacked contracts</strong> (<code>kgstore.types.is_stacked_contract</code>, one rule read by trust composition,
+governance and extension signing): an authored node, a realisation, an action type and its
+<code>acts_on</code> edge, a data product, and a ledger or tuning <code>ddl_artifact</code> are excluded from the
+ontology's content hash and are never a base mutation. A graph with none of them hashes
+byte-identically.</p>
+<h3 id="25a-withdrawing-an-extension-the-inverse-of-publish-oct-2026">2.5a Withdrawing an extension — the inverse of publish (Oct 2026)</h3>
+<p>A person takes an extension off a graph in one act: <code>DELETE /v1/knowledge-graph/authored/&lt;extension_id&gt;?kg_id=</code>
+(<code>core/authored_withdraw.py</code>). What goes: every authored node of the extension and its design
+decisions; the physical nodes a landing wrote <strong>for</strong> those nodes (<code>realises</code> names the authored
+node) and the landing's schema node once nothing else realises into it, with whatever
+Uderia stamped under it (the action ledger artefact); their retrieval telemetry; the
+extension's signature (the trust history keeps both the signing and the revocation). What
+stays: the <strong>warehouse</strong> — Uderia lands, a person owns what was landed (§1a), so the
+table is dropped there by hand and on purpose — and the <strong>act log</strong>, which has no delete face.
+Agents grounded on the graph read <em>changed</em> afterwards (their composition lost an ingredient)
+until their owner re-signs them, exactly as after a publish. The rule that picks the nodes is a
+pure function over the graph's entities (<code>select_withdrawal</code>), the same reading the authored
+listing uses; another extender's layer is never touched. Gated like publish. Gate:
+<code>test/test_withdraw_rest.py</code>. The Act II rehearsal reset (<code>act2_reset.py</code>) is this endpoint
+plus four small deletes (pending Inbox items, undecided tuning proposals, snapshots, a
+signature) — all through the API, so no rehearsal ever opens the server's database.</p>
+<h3 id="26-workload-tuning">2.6 Workload tuning</h3>
+<p>The tuning review proposes performance structures from what the agents actually ran — never
+applies them.</p>
+<ul>
+<li><code>core/tuning_evidence.py</code> gathers the graph's deployed scope, the recorded workload of the
+  agents grounded on it (successful data statements, never an <code>EXPLAIN</code> or a failed call), an
+  <code>EXPLAIN</code> of each distinct statement, and the dictionary facts.</li>
+<li><code>dbdeploy/tuning.py</code> decides (pure): statistics where a join or a plan rested on a guess, a
+  covering join index on a large table scanned in full, a partition as advice only. <strong>A view is
+  never tuned</strong>: the warehouse keeps statistics and indexes on tables, so a view the workload
+  reads yields a finding naming its base tables, not a proposal.</li>
+<li><code>core/tuning_proposals.py</code> holds the lifecycle: pending → approved <strong>by a person</strong> → landed |
+  failed; rejected; expired with evidence kept. Landing measures the motivating statements
+  before and after, records whether plans changed shape, and signs the receipt. A landed
+  structure becomes a <code>ddl_artifact</code> that never moves the seal.</li>
+</ul>
+<hr>
+<h2 id="3-obda-act-the-signed-action-type">3. OBDA-ACT — the signed action type</h2>
+<h3 id="31-the-manifest">3.1 The manifest</h3>
+<p><code>dbdeploy/action_model.py</code> parses an action: name, version, backend; a target (entity, the
+frozen deployed identifier, the key); an operation (<code>insert · update · upsert</code>; delete is
+future); an attribute allowlist with types, value domains and defaults; author pre/post
+conditions; a required row bound (<code>max_rows ≤ 1000</code>); an authority (<code>required_role</code>, posture);
+and a ledger — on by default (<code>&lt;target db&gt;.UDERIA_ACT_&lt;table&gt;</code>, append-only, the before-image as
+JSON). Rule violations are a closed set of REJECT codes with near-miss hints. The default
+conditions follow from the operation and cannot be redeclared (update: <code>row_exists ·
+one_row_affected</code>; insert: <code>row_absent · one_row_present</code>; upsert: <code>one_row_affected</code>).</p>
+<h3 id="32-the-gate-a1a6-and-the-earned-signature">3.2 The gate (A1–A6) and the earned signature</h3>
+<p><code>dbdeploy/action_validation.py</code> (pure, evidence injected):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A1</strong></td>
+<td>the frozen target is what the resolver answers today</td>
+</tr>
+<tr>
+<td><strong>A2</strong></td>
+<td>columns exist with compatible types; value domains agree with the graph's closed domains</td>
+</tr>
+<tr>
+<td><strong>A3</strong></td>
+<td>the grain is unique — measured live; a probe that cannot run fails</td>
+</tr>
+<tr>
+<td><strong>A4</strong></td>
+<td>conditions are boolean, hold no subquery, read only the target's columns</td>
+</tr>
+<tr>
+<td><strong>A5</strong></td>
+<td>one parameterised statement on the target only; live <code>EXPLAIN</code> shows no product join and no full scan of the target</td>
+</tr>
+<tr>
+<td><strong>A6</strong></td>
+<td>the role holds exactly the rights the operation needs, and the ledger is provisioned</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trust kind <strong><code>action_type</code></strong> (<code>core/trust/actions.py</code>) signs <code>{manifest_hash,
+validation_report_hash}</code>: the proof is inside the signature. Refusals: <code>invalid_manifest ·
+unvalidated · stale_report · gate_blocked · unsigned_ingredient</code> (a write contract stands on a
+signed ontology). Live evidence signs clean (<code>verified_write</code>), structural evidence partial
+(<code>verified_declared</code>). An edited manifest drops its stored report and reads <em>changed</em>.</p>
+<p><strong>The model under the action is in the signature — exactly the part the proof read.</strong> The
+report records <code>model_facts</code> — the facts A1/A2 read from the graph (the target's resolution,
+its columns, the writable attributes' closed value domains), computed by ONE pure function
+<code>action_types.model_facts</code> for both validation (through the store) and the trust reading
+(through the graph rows). The signature covers the report, so it covers the facts;
+<code>trust/actions.live_hash</code> substitutes TODAY's facts into the stored report, so the live hash
+equals the signed one exactly while those facts hold. A change to one reads <em>changed</em> with
+<code>drift</code> in words (<code>the allowed values of LoyaltyTier changed</code> · <code>new attribute Email</code> ·
+<code>Lead now resolves to …</code>); signing the stale proof is refused <code>stale_report</code>; perform's
+refusal names it; the Designer's Next is <strong>Validate again</strong>. A change elsewhere in the graph,
+or a base re-sign, moves nothing — the action binds the facts it depends on, not the model's
+signature (no churn on unrelated edits, no cycle between two signatures). A report from before
+the facts were recorded proves nothing about today's model: it reads <em>changed</em> and re-validates
+once. The other direction is deliberate: action nodes stay OUT of the ontology hash — the graph
+does not depend on its actions, and an action's author may not own the model. Facts are read
+from the PUBLISHED model only (<code>kgstore.types.unpublished_extension_names</code>): a draft on the
+target moves nothing until it is published.</p>
+<p><strong>Signing stands on the whole model the target lives in.</strong> The bottom-up ingredient
+(<code>trust/actions._model_ingredient</code>) is the base ontology AND — when the target is an authored
+entity — the extension that holds it; the worse of the two blocks with its name
+(<code>unsigned_ingredient</code>: <em>the action's extension by ann is changed … sign the extension by ann
+first</em>). The trust reading of an unsigned action carries <code>stands_on {state, label}</code>, so the
+Designer's Next is <strong>Open Govern</strong> (the graph's Govern dialog, via the <code>uderia:open-govern</code>
+event) rather than a Sign the gate refuses, and it re-reads itself when Govern signs.</p>
+<p><code>core/action_types.py</code> is the authoring seam (<code>author_action</code>, <code>gather_evidence</code>, <code>validate</code>,
+<code>provision_ledger</code>); the Action Designer (<code>static/js/handlers/actionDesigner.js</code>) shows the
+journey validated · signed · granted · in use and offers only the act that is owed.</p>
+<p><strong>Two logins, never confused</strong> (Act II rehearsal, Oct 2026). A model has a MODEL login (it lands
+tables, creates the ledger — <code>CREATE TABLE</code> in the extension's database) and a WRITE login (an
+action's rows, under the action's role). <code>action_types.default_connection(…, purpose=)</code> keeps
+them apart: <code>model</code> → the connection the model was landed through (<code>landed_via</code> on its physical
+tables and columns); <code>write</code> → the user's only warehouse, else the person chooses — <strong>never</strong>
+the landed one (the model login holds no action's role) and never anything on an agent. <strong>The
+action owns the connection it writes through:</strong> the one it was validated through
+(<code>validated_with</code>; a structural validation owns none). Perform writes through it
+(<code>action_perform.action_connection</code> → <code>resolve_connection</code>, on every path: agent turn, Confirm,
+REST, unattended, undo); to change it, validate through another connection — the proof follows
+the login. There is no second place: nothing on the agent chooses a write login — not a
+profile's legacy <code>componentConfig.action.connection_id</code> (a profile save once dropped it and the
+agent could no longer write) and not its Database Navigator source (a READ connection, often an
+administrator's). Validation provisions a missing ledger through the MODEL connection — a refusal is a
+named result (<code>ledger.missing</code> + the warehouse's own sentence, <code>dbcatalog.sql_runner.friendly_db_error</code>),
+never a 500, and the gate still runs. The Designer validates and tries an action through the
+WRITE connection (the action's own <code>validated_with</code>, then <code>defined_with</code>, then the catalog's
+<code>writes_through</code>), says on each row which connection it writes through, and never starts on
+"the first connection listed". Every Teradata deployment backend holds
+its <strong>own <code>teradatasql</code> session for its own login</strong>: teradataml's <code>create_context</code> is
+process-global, and with two logins in one process a statement ran as whichever had connected
+last (a PAT-only configuration is the one case still served through it).</p>
+<p><strong>A6 names the fix.</strong> When the role lacks a right, the check says exactly what to run
+(<code>action_validation.grant_statements</code>: <code>GRANT INSERT, SELECT ON db.t TO role;</code> — never wider),
+also when the role holds nothing yet; and a blocked action's owed act is <strong>Validate again</strong>
+(the fix is in the warehouse, not the contract), with the blocker named in its Next box.</p>
+<p><strong>Defining an action is a person's act in the Designer</strong> (Oct 2026; before, only <code>POST
+/v1/actions</code> could). The person decides what only a person can — the concept, insert or
+update, the writable columns, the bound, the role, the posture; Uderia derives the rest
+(<code>action_types.describe_target</code>, <code>GET /v1/action-targets</code> + <code>POST /v1/action-targets/describe</code>):
+the deployed TABLE (the resolver; a view is never offered, and refused by name), the key (the
+warehouse's unique index, else the model's), every column's contract type (the live dictionary
+through <code>action_validation.contract_type_of</code>, the inverse of A2's rule — so a derived contract
+cannot fail A2, the 7 Oct <code>lead_id</code> integer-over-text refusal), the closed value domains, and
+the warehouse's roles for the table ranked per operation (exact rights from
+<code>action_model.TARGET_RIGHTS</code> first, then a name that says the operation). The form opens
+prepared — the concept defined last (else an extension's first), its table read, the operation
+it has no action for yet, the role the warehouse suggests — and with a warehouse chosen one
+click defines AND validates (validation never signs). The table is read through the connection
+the person chooses (<code>action_types.default_connection(…, purpose="write")</code>: the user's only
+warehouse, else a choice — said in words beside it; nothing is guessed between several, and the
+connection the model was landed through is never offered for a write). What is not offered is named with its reason (deployed as a view —
+read-only to an action; a draft; not landed). It opens from the graph card, the Workspace's
+Actions section (<code>+</code>, and inline in its empty state) and the Actions panel; every list re-reads
+on the action component's change event (<code>UderiaBus.onComponent('action')</code> — the define,
+grant and delete routes announce <code>created</code> · <code>updated</code> · <code>deleted</code> at the server seam).</p>
+<h3 id="33-the-compiler">3.3 The compiler</h3>
+<p><code>dbdeploy/action_compiler.py:compile_action(manifest, {key, values})</code> (pure, deterministic):</p>
+<ul>
+<li>one parameterised statement; every value a bind parameter, never a literal;</li>
+<li>an update carries <code>WHERE &lt;grain&gt; = ?</code> and nothing else; an insert carries every required
+  attribute or is refused naming them; the key cannot be set by an update;</li>
+<li>every value is coerced through its declared type and checked against its domain. A string
+  that differs from <strong>exactly one</strong> declared value only in case or surrounding space is that
+  value (<code>'Closed'</code> → <code>'closed'</code>), said in the compile notes; two such candidates are refused as
+  ambiguous;</li>
+<li>the executable checks: the default conditions, the bound, the author's predicates;</li>
+<li>the before-image read and the ledger insert;</li>
+<li>the <strong>invocation hash</strong> is over the coerced values, so a confirmation always matches what
+  will be written. The statement the gate's A5 judged is this compiler's statement, byte for
+  byte.</li>
+</ul>
+<p>Refusals are recovery-shaped (<code>unknown_attribute</code> with the closest name, <code>key_not_settable</code>,
+<code>missing_required</code>, <code>outside_domain</code>, …).</p>
+<h3 id="34-the-runner">3.4 The runner</h3>
+<p><code>dbdeploy/action_runner.py:run_compiled(conn, compiled, principal, posture, commit)</code> runs one
+compiled write in <strong>one transaction</strong>: pre-checks → before-image → statement → post-checks →
+ledger → commit only if every check held, otherwise rollback. A driver error fails closed. It
+decides nothing about authority or posture.</p>
+<h3 id="35-performing-authority-posture-connection">3.5 Performing: authority, posture, connection</h3>
+<p><code>core/action_perform.py</code> is the one perform seam.</p>
+<p><strong>Refused before anything is touched:</strong> OBDA-MODEL · OBDA-ACT off · unknown action · an action that is not signed
+and intact (<code>not_trusted</code>) · an agent whose grant does not name it (<code>not_granted</code>; a person with
+no agent acts with their own authority). On Teradata the connection's login must hold the
+manifest's role, and the session acts under it (<code>SET ROLE</code>) — Uderia never widens what A6
+proved.</p>
+<p><strong>The posture</strong> (signed, part of the contract):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Posture</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>observe</code></td>
+<td>records what would be written; writes nothing</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>runs the write in an always-rolled-back transaction (so the diff is the database's answer) and <strong>parks</strong> it in the Assurance Inbox; nothing written until a person approves</td>
+</tr>
+<tr>
+<td><code>annotate</code> / <code>enforce</code></td>
+<td>writes in one transaction through the runner</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Interactive vs unattended.</strong> On an interactive turn a perform <strong>prepares</strong> (<code>prepare_action</code>):
+the consequence row shows the change and a Confirm; <code>confirm_action</code> performs only the
+invocation whose hash the person saw (a different value set is refused, nothing written). An
+unattended face — a flow node, a scheduled task, a dashboard tile —
+calls <code>perform_unattended</code>, which never prepares: the posture decides, and it always acts as an
+agent (no agent ⇒ refused — nobody is present to lend their authority).</p>
+<p><strong>Approval performs.</strong> Approving a parked item calls <code>perform_parked</code>, which writes only if the
+manifest hash, the re-compiled statement hash and the invocation hash equal the parked ones and
+the agent's grant still names the action; otherwise <code>409</code>, the item stays open.</p>
+<p><strong>Four eyes — a designated approver, never the owner</strong> (PROP-008 §5.4a). An agent's
+<code>authorityConfig.actions.approvers</code> (account usernames, set with <code>POST /v1/actions/approvers</code> or
+the <strong>Approvers of parked writes</strong> field on the profile editor's Agent Authority card — which
+calls that same endpoint before anything is saved, so the one server rule refuses an unknown
+account and the owner on both doors) moves the decision off the agent's owner:</p>
+<ul>
+<li>the park resolves the names to active accounts (<code>resolve_approvers</code>; the owner is never their
+  own approver) and stores their ids on the review item (<code>approvers_json</code>); a name that is not an
+  active account <strong>refuses the park</strong> (<code>approver_unknown</code>) — a write is never parked where nobody
+  may decide it, and never silently falls back to the owner;</li>
+<li>ONE rule decides who may act, <code>review_queue.may_decide</code>: approvers designated ⇒ only they;
+  otherwise the owner. The approve route refuses anyone else with <code>403 not_your_decision</code> before
+  anything runs; <code>decide</code> enforces the same rule underneath it and records <code>decided_by</code>;</li>
+<li>the approver sees the item in their own queue (<code>list_items(awaiting_me=True)</code>; owner-centric
+  readers — Trust History, the agent story, the audit pack — read the owner's own items alone) and
+  in their own agent's answer (<code>TDA_Action pending_approvals</code>, with Approve / Reject controls the
+  person clicks — no agent ever approves); <code>pending_count</code> counts only what THIS person owes;</li>
+<li>the write still runs <strong>as the owner's agent on the owner's connection</strong>; the ledger and the act
+  log name the approver (<code>approved_by</code>), and Trust History says who it awaited and who decided.</li>
+</ul>
+<p>The approval's write and its disposition run as one unit shielded from cancellation, so a client
+that disconnects mid-approval can never leave a performed write on an item still pending.</p>
+<p><strong>Undo</strong> (<code>undo_invocation</code>): the ledger's before-image becomes an invocation of the same signed
+contract, returned prepared, confirmed like any act. An insert's undo would be a delete —
+refused in v1.</p>
+<p><strong>The connection is decided, never guessed</strong> (<code>resolve_connection</code>): explicit → the connection
+the ACTION was validated through (it owns it) → the user's only Teradata or SQLite connection →
+otherwise refused naming the candidates and saying how to give the action one (validate it
+through that connection). Nothing on the agent decides.</p>
+<p><strong>The Trust Circle counts a parking action.</strong> A granted action in <code>review</code> posture can park
+work exactly as a review-mode gate can, so REVIEWED's configuration reads it: <code>/v1/profiles</code>
+serves the granted review-posture actions as <code>actionsParking</code> (<code>action_perform.parking_actions</code>,
+read from the agent's own graph), and the station reads "can park" and names them. Before
+this, an agent whose gates all observed read "cannot park" on the day it had parked five writes.</p>
+<h3 id="36-receipts">3.6 Receipts</h3>
+<ul>
+<li>Each <strong>performed</strong> act inside a turn is sealed into the turn's Ed25519 provenance chain as an
+  <code>action.performed</code> step; <code>verify_content</code> re-derives it from the turn's <code>actions</code> stamp, so a
+  tampered stamp is a named mismatch.</li>
+<li>An act that happens outside a sealed turn (a confirm, an approval, any unattended or REST/MCP
+  act) carries a <strong>receipt signed on its own</strong> (<code>sign_receipt</code>): Ed25519 over <code>{receipt,
+  occurrence: {face, ref, session_id, confirmed_by, at}}</code>. The occurrence makes two identical
+  writes on different runs distinguishable, and names the door. It verifies offline with only
+  the public key.</li>
+</ul>
+<h3 id="37-the-act-log">3.7 The act log</h3>
+<p>Acts were first recorded only where a face kept state (a turn, a flow node run, a scheduled run,
+the review queue), so an act through REST, MCP or a tile with no session left no record in Uderia.
+<code>core/action_act_log.py</code> is <strong>one append-only table</strong> (<code>action_act_log</code>) written at every seam
+where a final record exists — <code>perform_unattended</code>, <code>perform_parked</code> (face <code>review</code>), the REST
+perform (with its face), and the conversation's own acts. Writes are fail-soft (the act's own
+record and the warehouse ledger still hold it). Read by Trust History (<code>kind: "act"</code>, the face in
+words, the approver by account) and <code>/v1/actions/activity</code> (<code>by_face</code>, <code>unattended</code>).</p>
+<h3 id="38-the-sql-gates-part">3.8 The SQL gate's part</h3>
+<p>The SQL gate (<code>agent/tool_enforcement.py</code> → <code>agent_authority.is_tool_allowed</code>) refuses the
+<strong>raw</strong> write: with <code>actions_exclusive</code> every <code>INSERT</code>/<code>UPDATE</code>/<code>MERGE</code>/<code>DELETE</code> an agent sends
+through its data tool is <code>action-only</code>, and the refusal names the granted actions. A signed
+action never goes through the agent's data tool — a data tool runs one statement per call under
+autocommit and cannot hold pre-checks, write, post-checks and ledger together.</p>
+<hr>
+<h2 id="4-faces-one-core-every-door">4. Faces — one core, every door</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Face</th>
+<th>Surface</th>
+<th><code>face</code> on the receipt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Conversation</strong></td>
+<td>builtin component <code>TDA_Action</code> (<code>list_actions</code> · <code>perform</code> · <code>undo</code> · <code>pending_approvals</code> — the writes awaiting the asking person as designated approver, each with Approve / Reject), companion skill <code>obda-act-expert</code>; answer row with Confirm / outcome / Undo; Actions split panel; pin to dashboard</td>
+<td><code>conversation</code></td>
+</tr>
+<tr>
+<td><strong>REST</strong></td>
+<td><code>/v1/actions</code> (catalog, author), <code>/&lt;name&gt;</code> (definition, delete + revoke), <code>/validate</code>, <code>/preview</code>, <code>/perform</code>, <code>/undo</code>, <code>/grants</code>, <code>/grant</code>, <code>/confirmations</code>, <code>/activity</code>; <code>/v1/trust/action/&lt;kg&gt;/&lt;name&gt;/sign-off</code></td>
+<td><code>rest</code> (or the body's <code>face</code>, closed set)</td>
+</tr>
+<tr>
+<td><strong>MCP</strong></td>
+<td><code>list_actions</code> · <code>perform_action</code> at developer tier — two-step: without <code>invocation_hash</code> it previews, with it it performs</td>
+<td><code>mcp</code></td>
+</tr>
+<tr>
+<td><strong>Flow</strong></td>
+<td>node type <code>task_action</code> (<code>$name</code> / <code>{name}</code> resolved from upstream outputs); refused at save if the node's agent is not granted</td>
+<td><code>flow</code></td>
+</tr>
+<tr>
+<td><strong>Scheduler</strong></td>
+<td>a task with <code>action_spec</code> instead of a prompt — no session, no LLM, no tokens</td>
+<td><code>scheduler</code></td>
+</tr>
+<tr>
+<td><strong>Dashboard</strong></td>
+<td>a pinned action tile offers <strong>Prepare again</strong> once its row has settled</td>
+<td><code>dashboard</code></td>
+</tr>
+<tr>
+<td><strong>Assurance Inbox</strong></td>
+<td>a parked write shown as the database's diff; <strong>Approve — perform it</strong> / Reject</td>
+<td><code>review</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>How the conversation face resolves the action</strong> (<code>ActionComponentHandler._resolve_action</code>):
+a granted action named is used; otherwise, when exactly one granted action acts on the named
+entity it is used without asking. The entity may be named where the action belongs
+(<code>action_type: "Lead"</code> reads as the entity). When several act on the entity, the invocation's
+own attributes pick the one action that can write them all; ambiguity is refused, never
+guessed.</p>
+<p>OBDA-MODEL faces: the <strong><code>obda_model</code> component</strong> — <code>TDA_ModelProposal</code> <code>propose_entity</code> / <code>propose_attribute</code> (the <code>TDA_KnowledgeGraph</code> actions of the same names remain unadvertised aliases; behind the
+<code>modelAuthoring</code> grant), <code>POST /v1/knowledge-graph/propose</code>, <code>GET …/authored</code>,
+<code>POST …/authored/deploy</code>, <code>POST …/authored/publish</code>,
+<code>POST /v1/trust/ontology-extension/&lt;kg&gt;/&lt;ext&gt;/sign-off</code>, the tuning endpoints
+<code>/v1/knowledge-graph/tuning/*</code>, and the KG panel's Govern dialog (the road, the landing preview
+and readback, extensions, and the Workload tuning segment).</p>
+<hr>
+<h2 id="5-observability-and-evaluation">5. Observability and evaluation</h2>
+<ul>
+<li><strong>Live Status:</strong> every act is a step (<code>action_record</code>: Prepared · Performed · Parked ·
+  Observed · Refused), emitted live and rebuilt on reload; a refused prepare is recorded too.</li>
+<li><strong>Answer capsule:</strong> an <em>Actions</em> row; the KG theatre shows the draft beat for a proposal.</li>
+<li><strong>Trust Circle — BOUNDED:</strong> the <code>actions</code> assurance point reads the turn's acts; the station's
+  evidence names the actions acted on in recent sessions.</li>
+<li><strong><code>action_safety</code></strong> (informational dimension, ACT stage): of the action writes a turn put to
+  the database, the share whose every check held; abstains when nothing reached the database.</li>
+<li><strong><code>write-escape</code></strong> live red-team probe: lures an action-only agent into a raw <code>UPDATE</code>;
+  scored against the persisted turn.</li>
+<li><strong>Friction budget</strong> as a gate (<code>test/test_act_friction.mjs</code>): question → performed act 1
+  click, a missing concept → draft 1 click, draft → published 3 clicks.</li>
+</ul>
+<hr>
+<h2 id="6-honest-limits">6. Honest limits</h2>
+<ul>
+<li><code>delete</code> is not an operation in v1, so an insert cannot be undone.</li>
+<li><strong>Approvers are named per agent, not per action.</strong> <code>actions.approvers</code> covers every parked
+  write of that agent; a different approver per action type, or a quorum (two of three), is not
+  built.</li>
+<li><strong>A no-change write is refused at preparation and at the park, not when enforced.</strong> An update
+  whose every keyed row already holds every value it would write (<code>action_perform.no_change</code>,
+  read from the before-image the database returned — never from the request) is refused
+  <code>no_change</code> ("… already holds … — nothing to write") before a person is asked: no Confirm is
+  offered and nothing is parked for an approver. An <code>enforce</code> posture performing autonomously
+  (a flow, a schedule) still writes it — the rows are unchanged and the receipt records the act.</li>
+<li>The act log is fail-soft: an act whose log write failed is still in its own record and the
+  warehouse ledger, but not in Trust History.</li>
+<li>Tuning measures through <code>EXPLAIN</code>; a login that cannot <code>EXPLAIN</code> the views gets findings from
+  the workload alone, and views themselves are never tuned.</li>
+<li>The industry-model PDM converter remains Teradata-only; the authored delta lands on Teradata
+  and PostgreSQL.</li>
+<li>MCP actions are developer tier, never user tier.</li>
+</ul>
+<hr>
+<h2 id="7-file-and-gate-map">7. File and gate map</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Files</th>
+<th>Gates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authored layer, extensions</td>
+<td><code>kgstore/types.py</code>, <code>components/builtin/knowledge_graph/{handler,graph_store}.py</code>, <code>core/{ontology_governance,kg_release}.py</code>, <code>core/trust/extensions.py</code></td>
+<td><code>test_kg_extension_trust</code>, <code>test_kg_act_ux.mjs</code></td>
+</tr>
+<tr>
+<td>Advisor</td>
+<td><code>agent/kg_constructors/normalisation.py</code></td>
+<td><code>test_kg_normalisation</code></td>
+</tr>
+<tr>
+<td>Delta deployer, landings</td>
+<td><code>dbdeploy/{delta,backend,teradata_backend,postgresql_backend}.py</code>, <code>dbdeploy/dialects/</code>, <code>agent/kg_constructors/authored_deploy.py</code></td>
+<td><code>test_pdm_delta</code></td>
+</tr>
+<tr>
+<td>Design standard, probes, readback</td>
+<td><code>dbdeploy/{design_standard,pg_standard,probes,readback}.py</code>, <code>scripts/design_rules_verify.py</code></td>
+<td><code>test_pdm_design_rules</code></td>
+</tr>
+<tr>
+<td>Tuning</td>
+<td><code>dbdeploy/tuning.py</code>, <code>core/{tuning_evidence,tuning_proposals}.py</code>, <code>static/js/handlers/rag/kgUpdateVersions.js</code></td>
+<td><code>test_pdm_tuning</code>, <code>test_tuning_ui.mjs</code></td>
+</tr>
+<tr>
+<td>Action model, gate, trust</td>
+<td><code>dbdeploy/{action_model,action_validation}.py</code>, <code>core/action_types.py</code>, <code>core/trust/actions.py</code></td>
+<td><code>test_action_model</code>, <code>test_action_validation</code>, <code>test_action_trust</code></td>
+</tr>
+<tr>
+<td>Compiler, runner</td>
+<td><code>dbdeploy/{action_compiler,action_runner}.py</code></td>
+<td><code>test_action_compiler</code></td>
+</tr>
+<tr>
+<td>Perform, receipts, act log</td>
+<td><code>core/{action_perform,action_act_log,agent_authority}.py</code></td>
+<td><code>test_action_enforcement</code>, <code>test_act2_rehearsal</code></td>
+</tr>
+<tr>
+<td>Four eyes (designated approvers)</td>
+<td><code>core/{review_queue,action_perform,agent_authority}.py</code>, <code>api/{rest_routes,action_routes}.py</code>, <code>components/builtin/action/{handler.py,renderer.js}</code>, <code>static/js/handlers/agentPerformanceHandler.js</code></td>
+<td><code>test_action_four_eyes</code></td>
+</tr>
+<tr>
+<td>Model gap (decide + deliver)</td>
+<td><code>components/builtin/knowledge_graph/handler.py</code> (<code>_model_gap</code>, <code>_render_gap_lead</code>), <code>agent/model_gap.py</code>, <code>agent/proposal_suggest.py</code>, <code>agent/kg_constructors/business_terms.py</code>, <code>agent/answer_surface.py</code> (<code>model_gap</code> note kind), <code>agent/executor.py</code> (<code>_apply_model_gap</code>), every engine, <code>static/js/ui.js</code> (<code>_onGapProposeAct</code>)</td>
+<td><code>test_model_gap</code>, <code>test_model_gap_act.mjs</code>, <code>test_business_terms</code></td>
+</tr>
+<tr>
+<td>Faces</td>
+<td><code>components/builtin/action/*</code>, <code>skills/builtin/obda-act-expert/</code>, <code>api/action_routes.py</code>, <code>mcp_server/{client,server}.py</code>, <code>core/{flow_executor,task_scheduler}.py</code>, <code>components/builtin/dashboard/renderer.js</code>, <code>static/js/handlers/actionDesigner.js</code></td>
+<td><code>test_action_agent_face</code>, <code>test_action_rest</code>, <code>test_action_renderer.mjs</code>, <code>test_flow_actions</code>, <code>test_scheduler_actions</code>, <code>test_dashboard_act_again.mjs</code>, <code>test_action_surfaces</code></td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>the planes off (component availability)</td>
+<td><code>test_act_baseline</code>, <code>test_act_admin_switch</code></td>
+</tr>
+<tr>
+<td>Eval</td>
+<td><code>eval/scorers/reliability.py</code> (<code>action_safety</code>), <code>eval/live_redteam.py</code></td>
+<td><code>test_eval_reliability</code>, <code>test_live_redteam</code>, <code>test_act_friction.mjs</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>All of these run in <code>test/trust_battery.sh</code>.</p>
+  </article>
+  <footer class="docfoot">
+    Uderia is a framework for trusted data agents. ·
+    Rendered from <code>docs/Architecture/ACT_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    part of the Agent Trust &amp; Assurance stack ·
+    <a href="index.html">trust home</a> ·
+    <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
+    <a href="benchmarks.html">the numbers</a>.
+  </footer>
+</div>
+</html>

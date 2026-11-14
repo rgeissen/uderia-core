@@ -1,0 +1,184 @@
+[
+  {
+    "chroma_id": "case_8310a6c8-0623-5a1d-a867-a6d053c59912",
+    "bare_id": "8310a6c8-0623-5a1d-a867-a6d053c59912",
+    "collection_id": 1,
+    "user_query": "what are the top 5 customers based on revenue generated?",
+    "is_most_efficient": false,
+    "user_feedback_score": 0,
+    "tools": [
+      "TDA_Charting",
+      "TDA_FinalReport"
+    ],
+    "metadata": {
+      "user_query": "what are the top 5 customers based on revenue generated?",
+      "is_most_efficient": false,
+      "output_tokens": 480,
+      "collection_id": 1,
+      "user_uuid": "b4c6f907-eaba-4615-8718-e04717445925",
+      "had_tactical_improvements": false,
+      "strategy_type": "successful",
+      "had_plan_improvements": false,
+      "is_session_primer": false,
+      "timestamp": "2026-06-03T17:18:45.443930+00:00",
+      "is_success": true,
+      "mcp_server_id": "1763483266562-a6kulj4xc",
+      "full_case_data": "{\"case_id\": \"8310a6c8-0623-5a1d-a867-a6d053c59912\", \"metadata\": {\"session_id\": \"5551b01c-30a0-477f-a4d5-69809b78bf28\", \"turn_id\": 6, \"is_success\": true, \"task_id\": \"task-18e8b297-67b7-4ac4-b739-c65ef5cf7dd5\", \"collection_id\": 1, \"has_orchestration\": false, \"is_session_primer\": false, \"had_plan_improvements\": false, \"had_tactical_improvements\": false, \"timestamp\": \"2026-06-03T17:18:45.443930+00:00\", \"user_feedback_score\": 0, \"llm_config\": {\"provider\": \"Google\", \"model\": \"gemini-3.1-flash-lite\", \"profile_tag\": \"OPGGT\", \"input_tokens\": 12173, \"output_tokens\": 480}, \"is_most_efficient\": false, \"strategy_metrics\": {\"phase_count\": 2, \"steps_per_phase\": {\"1\": 1, \"2\": 1}, \"total_steps\": 2}, \"user_uuid\": \"b4c6f907-eaba-4615-8718-e04717445925\", \"mcp_server_id\": \"1763483266562-a6kulj4xc\"}, \"intent\": {\"user_query\": \"what are the top 5 customers based on revenue generated?\"}, \"successful_strategy\": {\"phases\": [{\"phase\": 1, \"goal\": \"Visualize the top 5 customers and their revenue.\", \"relevant_tools\": [\"TDA_Charting\"], \"arguments\": {\"chart_type\": \"bar\", \"title\": \"Top 5 Customers by Revenue\", \"data\": \"result_of_phase_1\"}}, {\"phase\": 2, \"goal\": \"Generate the final report summarizing the top 5 customers.\", \"relevant_tools\": [\"TDA_FinalReport\"], \"arguments\": {}}]}}",
+      "user_feedback_score": 0,
+      "task_id": "task-18e8b297-67b7-4ac4-b739-c65ef5cf7dd5",
+      "has_orchestration": false,
+      "case_id": "8310a6c8-0623-5a1d-a867-a6d053c59912"
+    },
+    "full_case_data": {
+      "case_id": "8310a6c8-0623-5a1d-a867-a6d053c59912",
+      "metadata": {
+        "session_id": "5551b01c-30a0-477f-a4d5-69809b78bf28",
+        "turn_id": 6,
+        "is_success": true,
+        "task_id": "task-18e8b297-67b7-4ac4-b739-c65ef5cf7dd5",
+        "collection_id": 1,
+        "has_orchestration": false,
+        "is_session_primer": false,
+        "had_plan_improvements": false,
+        "had_tactical_improvements": false,
+        "timestamp": "2026-06-03T17:18:45.443930+00:00",
+        "user_feedback_score": 0,
+        "llm_config": {
+          "provider": "Google",
+          "model": "gemini-3.1-flash-lite",
+          "profile_tag": "OPGGT",
+          "input_tokens": 12173,
+          "output_tokens": 480
+        },
+        "is_most_efficient": false,
+        "strategy_metrics": {
+          "phase_count": 2,
+          "steps_per_phase": {
+            "1": 1,
+            "2": 1
+          },
+          "total_steps": 2
+        },
+        "user_uuid": "b4c6f907-eaba-4615-8718-e04717445925",
+        "mcp_server_id": "1763483266562-a6kulj4xc"
+      },
+      "intent": {
+        "user_query": "what are the top 5 customers based on revenue generated?"
+      },
+      "successful_strategy": {
+        "phases": [
+          {
+            "phase": 1,
+            "goal": "Visualize the top 5 customers and their revenue.",
+            "relevant_tools": [
+              "TDA_Charting"
+            ],
+            "arguments": {
+              "chart_type": "bar",
+              "title": "Top 5 Customers by Revenue",
+              "data": "result_of_phase_1"
+            }
+          },
+          {
+            "phase": 2,
+            "goal": "Generate the final report summarizing the top 5 customers.",
+            "relevant_tools": [
+              "TDA_FinalReport"
+            ],
+            "arguments": {}
+          }
+        ]
+      }
+    }
+  },
+  {
+    "chroma_id": "case_a605a89c-fc73-50a6-9310-6a929827448f",
+    "bare_id": "a605a89c-fc73-50a6-9310-6a929827448f",
+    "collection_id": 1,
+    "user_query": "show me the knowledge graph",
+    "is_most_efficient": true,
+    "user_feedback_score": 0,
+    "tools": [
+      "TDA_FinalReport",
+      "TDA_KnowledgeGraph"
+    ],
+    "metadata": {
+      "strategy_type": "successful",
+      "task_id": "task-235c39ef-9fa3-44e8-a8df-f6720f97605d",
+      "user_feedback_score": 0,
+      "had_plan_improvements": false,
+      "collection_id": 1,
+      "mcp_server_id": "1763483266562-a6kulj4xc",
+      "is_most_efficient": true,
+      "has_orchestration": false,
+      "output_tokens": 290,
+      "had_tactical_improvements": false,
+      "is_session_primer": false,
+      "full_case_data": "{\"case_id\": \"a605a89c-fc73-50a6-9310-6a929827448f\", \"metadata\": {\"session_id\": \"33146595-b01f-47da-b716-7e58b37e9481\", \"turn_id\": 4, \"is_success\": true, \"task_id\": \"task-235c39ef-9fa3-44e8-a8df-f6720f97605d\", \"collection_id\": 1, \"has_orchestration\": false, \"is_session_primer\": false, \"had_plan_improvements\": false, \"had_tactical_improvements\": false, \"timestamp\": \"2026-06-03T18:03:45.962073+00:00\", \"user_feedback_score\": 0, \"llm_config\": {\"provider\": \"Google\", \"model\": \"gemini-3.1-flash-lite\", \"profile_tag\": \"OPGGT\", \"input_tokens\": 16322, \"output_tokens\": 290}, \"is_most_efficient\": true, \"strategy_metrics\": {\"phase_count\": 2, \"steps_per_phase\": {\"1\": 1, \"2\": 1}, \"total_steps\": 2}, \"user_uuid\": \"b4c6f907-eaba-4615-8718-e04717445925\", \"mcp_server_id\": \"1763483266562-a6kulj4xc\"}, \"intent\": {\"user_query\": \"show me the knowledge graph\"}, \"successful_strategy\": {\"phases\": [{\"phase\": 1, \"goal\": \"Open the knowledge graph interface to display the current entity relationships.\", \"relevant_tools\": [\"TDA_KnowledgeGraph\"], \"arguments\": {\"action\": \"open\"}}, {\"phase\": 2, \"goal\": \"Synthesize the final status report for opening the knowledge graph.\", \"relevant_tools\": [\"TDA_FinalReport\"], \"arguments\": {}}]}}",
+      "is_success": true,
+      "user_uuid": "b4c6f907-eaba-4615-8718-e04717445925",
+      "user_query": "show me the knowledge graph",
+      "case_id": "a605a89c-fc73-50a6-9310-6a929827448f",
+      "timestamp": "2026-06-03T18:03:45.962073+00:00"
+    },
+    "full_case_data": {
+      "case_id": "a605a89c-fc73-50a6-9310-6a929827448f",
+      "metadata": {
+        "session_id": "33146595-b01f-47da-b716-7e58b37e9481",
+        "turn_id": 4,
+        "is_success": true,
+        "task_id": "task-235c39ef-9fa3-44e8-a8df-f6720f97605d",
+        "collection_id": 1,
+        "has_orchestration": false,
+        "is_session_primer": false,
+        "had_plan_improvements": false,
+        "had_tactical_improvements": false,
+        "timestamp": "2026-06-03T18:03:45.962073+00:00",
+        "user_feedback_score": 0,
+        "llm_config": {
+          "provider": "Google",
+          "model": "gemini-3.1-flash-lite",
+          "profile_tag": "OPGGT",
+          "input_tokens": 16322,
+          "output_tokens": 290
+        },
+        "is_most_efficient": true,
+        "strategy_metrics": {
+          "phase_count": 2,
+          "steps_per_phase": {
+            "1": 1,
+            "2": 1
+          },
+          "total_steps": 2
+        },
+        "user_uuid": "b4c6f907-eaba-4615-8718-e04717445925",
+        "mcp_server_id": "1763483266562-a6kulj4xc"
+      },
+      "intent": {
+        "user_query": "show me the knowledge graph"
+      },
+      "successful_strategy": {
+        "phases": [
+          {
+            "phase": 1,
+            "goal": "Open the knowledge graph interface to display the current entity relationships.",
+            "relevant_tools": [
+              "TDA_KnowledgeGraph"
+            ],
+            "arguments": {
+              "action": "open"
+            }
+          },
+          {
+            "phase": 2,
+            "goal": "Synthesize the final status report for opening the knowledge graph.",
+            "relevant_tools": [
+              "TDA_FinalReport"
+            ],
+            "arguments": {}
+          }
+        ]
+      }
+    }
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "component_id": "find_tools",
+  "display_name": "Tool Finder",
+  "icon_accent": "#6366f1",
+  "answer_surface": {
+    "open": false
+  },
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path stroke-linecap=\"round\" d=\"M21 21l-4.35-4.35M8 11h6M11 8v6\"/></svg>",
+  "description": "The Governed Tool Surface's search: an agent whose tool surface is governed is offered only the tools that could answer this turn and can bring in a held tool by describing what it needs. It never finds a tool Agent Authority denies. Offered only to agents with a governed surface — otherwise it is not present at all.",
+  "version": "1.0.0",
+  "component_type": "action",
+  "instances": "none",
+  "signals": {
+    "emits": [],
+    "listens": [],
+    "announces": [],
+    "consumes_refs": false
+  },
+  "category": "General",
+  "tool_definition": {
+    "name": "TDA_FindTools",
+    "description": "Some tools are held back for this turn to keep your context small. Call this with a short description of the capability you need (e.g. 'user grants and security', 'table space usage', 'column statistics') and the matching held tools are added to your tool set for the rest of the turn — then call them directly. A tool your authority denies is never found.",
+    "args": {
+      "query": {
+        "type": "string",
+        "description": "What you need the tool to do, in a few words.",
+        "required": true
+      }
+    }
+  },
+  "backend": {
+    "handler_file": "handler.py",
+    "handler_class": "FindToolsHandler"
+  },
+  "instructions": {
+    "file": "instructions.json",
+    "format": "intensity_keyed"
+  },
+  "profile_defaults": {
+    "enabled_for": [
+      "llm_only",
+      "rag_focused",
+      "tool_enabled",
+      "genie"
+    ]
+  }
+}

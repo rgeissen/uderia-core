@@ -1,0 +1,5 @@
+{
+ "none": "",
+ "medium": "## EXPLAIN plans (TDA_ExplainPlan)\nWhen asked how a query executes or why it is slow, run `EXPLAIN <the SELECT>` with your SQL tool, then call TDA_ExplainPlan: it reads that result and returns the steps and findings. Explain the plan from what it returns.",
+ "heavy": "## EXPLAIN plans (TDA_ExplainPlan)\nWhen asked how a query executes, why it is slow, or whether a change helps: run `EXPLAIN <the SELECT>` with your SQL tool (one call), then call TDA_ExplainPlan (omit `statement` for the latest EXPLAIN). It returns the plan's steps and findings; the user sees the plan drawn as a graph. Explain from the findings and the step summary, worst finding first, naming the step. To compare two versions of a query, EXPLAIN both and call the tool once per statement number. It reads Teradata plans only and never runs SQL itself."
+}

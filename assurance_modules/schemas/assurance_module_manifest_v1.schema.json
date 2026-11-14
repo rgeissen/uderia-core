@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uderia.com/schemas/assurance_module_manifest_v1.schema.json",
+  "title": "Uderia Assurance Module Pack Manifest v1",
+  "description": "A pack contributes PROPERTIES (things that can be assessed), ASSESSORS (ways of assessing them) and TUNABLES (the bands their numbers are read against). It never contributes a station, a lane, an enforcement act or a binding \u2014 those are platform grammar, and a binding is an operator's decision. See docs/proposals/PROP-003-assurance-module-plane.md.",
+  "type": "object",
+  "required": [
+    "pack_id",
+    "display_name",
+    "version"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Namespace for everything the pack contributes, and the artifact id the trust layer signs. Must equal the pack's directory name."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "author": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "properties": {
+      "type": "array",
+      "description": "New assessable properties. The loader namespaces each key, so an author writes a local key and cannot collide with a platform property.",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "question"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "label": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One sentence, true of the PROPERTY and of both lanes \u2014 never of one implementation of it. This is what the Assurance Guide shows above the lanes."
+          },
+          "lanes": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "IN_FLIGHT",
+                "IN_FLIGHT_TRIGGERED",
+                "POST_HOC"
+              ]
+            },
+            "description": "The lanes that are MEANINGFUL for this property \u2014 distinct from what an assessor is capable of."
+          },
+          "lane_notes": {
+            "type": "object",
+            "description": "Why a lane is deliberately absent. Rendered as the honest-absence reading; a lane may be declared OR explained away, never both.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "enforced_by": {
+            "enum": [
+              "outbound_guard",
+              "inbound_guard",
+              "grounding_gate",
+              "honesty_gate"
+            ],
+            "description": "Ask an EXISTING mechanism to consult this property during the turn \u2014 the difference between measuring an answer and affecting one. Bound to both lanes by the operator, this is the sibling shape: one module, two lanes, `shared` symmetry, the Guide's S badge. A pack names a gate that exists; it never introduces a gate, an act or a posture."
+          }
+        }
+      }
+    },
+    "assessors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "property",
+          "tier"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "property": {
+            "type": "string",
+            "description": "A local key from this pack's `properties`, or a platform property key (binding a third-party module to a native property is the point of the plane)."
+          },
+          "label": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "declarative",
+              "verified",
+              "scanned"
+            ],
+            "description": "declarative = no Python at all (all lanes) \u00b7 verified = a statically verified pure subset (all lanes) \u00b7 scanned = full Python, confined to POST_HOC by construction."
+          },
+          "requires": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "answer",
+                "question",
+                "chunks",
+                "tool_calls",
+                "tool_outputs",
+                "retrieval_scores",
+                "scope_databases",
+                "config",
+                "stamp"
+              ]
+            },
+            "description": "Context fields this assessor cannot run without. Conformance refuses a binding to a lane that cannot supply them \u2014 the failure that would otherwise be invisible."
+          },
+          "subject_is_model_output": {
+            "type": "boolean",
+            "description": "True when the question is about what the MODEL wrote, so a platform-authored answer (a withholding notice) must abstain rather than be graded."
+          },
+          "source_file": {
+            "type": "string",
+            "description": "verified/scanned tiers only."
+          },
+          "class": {
+            "type": "string",
+            "description": "Assessor subclass name; auto-detected when omitted."
+          },
+          "spec": {
+            "type": "object",
+            "description": "declarative tier only. Exactly ONE of patterns / metric_expr / rubric.",
+            "properties": {
+              "field": {
+                "enum": [
+                  "answer",
+                  "question",
+                  "chunks",
+                  "tool_outputs"
+                ]
+              },
+              "finding_noun": {
+                "type": "string"
+              },
+              "patterns": {
+                "type": "object",
+                "properties": {
+                  "flag": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "clear": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "metric_expr": {
+                "type": "string"
+              },
+              "metric_name": {
+                "type": "string"
+              },
+              "gate": {
+                "type": "number"
+              },
+              "higher_is_better": {
+                "type": "boolean"
+              },
+              "rubric": {
+                "type": "object",
+                "properties": {
+                  "prompt_template": {
+                    "type": "string",
+                    "description": "May interpolate {answer}, {question}, {chunks} \u2014 nothing else."
+                  }
+                }
+              },
+              "finding_category": {
+                "enum": [
+                  "pii",
+                  "toxicity",
+                  "exfil"
+                ],
+                "description": "What KIND of finding this is, from the platform's closed set. Classification is assessment (the pack's job); the ACT that follows is policy (the platform's) \u2014 a pack says 'this is personal data', the ladder decides personal data is redacted in enforce."
+              },
+              "span_label": {
+                "type": "string",
+                "description": "How a masked span is labelled, e.g. PHI \u2192 [REDACTED:PHI]."
+              }
+            }
+          }
+        }
+      }
+    },
+    "tunables": {
+      "type": "array",
+      "description": "The bands a pack's metrics are read against. Surfaced as sliders under Config \u2192 Trust \u2192 Quality bands, grouped by the moment they belong to.",
+      "items": {
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "property": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "gate": {
+            "type": "number"
+          },
+          "healthy": {
+            "type": "number"
+          },
+          "higher_is_better": {
+            "type": "boolean"
+          },
+          "stage": {
+            "enum": [
+              "plan",
+              "retrieve",
+              "act",
+              "compose",
+              "deliver",
+              "the_run",
+              "flow_run"
+            ],
+            "description": "The moment in the turn this measures, from eval/stages.py."
+          }
+        }
+      }
+    },
+    "suggested_bindings": {
+      "type": "array",
+      "description": "What the pack RECOMMENDS. Never applied automatically: the set of assessments running on a deployment must equal the set an operator assigned.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "property": {
+            "type": "string"
+          },
+          "lane": {
+            "enum": [
+              "IN_FLIGHT",
+              "IN_FLIGHT_TRIGGERED",
+              "POST_HOC"
+            ]
+          },
+          "assessor": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "guide": {
+      "type": "object",
+      "description": "Per-key desc/long text, merged into the Assurance Guide so a third-party entry documents itself exactly like a native one.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "desc": {
+            "type": "string"
+          },
+          "long": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

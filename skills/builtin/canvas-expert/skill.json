@@ -1,0 +1,22 @@
+{
+  "name": "canvas-expert",
+  "version": "1.0.0",
+  "description": "Expert guidance on using the Canvas component (TDA_Canvas) well — deciding when content belongs in an interactive canvas vs inline code, updating and reopening canvases, and producing complete, production-quality artifacts.",
+  "author": "Uderia",
+  "tags": ["canvas", "code", "artifacts", "html", "documents"],
+  "keywords": ["canvas", "code", "html", "script", "document", "mermaid", "preview", "TDA_Canvas"],
+  "use_cases": [
+    "Deciding when to use a canvas vs an inline code block vs a plain answer",
+    "Updating an open canvas with complete content",
+    "Reopening a previously created canvas instead of regenerating it",
+    "Producing self-contained, runnable artifacts",
+    "Citing knowledge sources that informed generated content"
+  ],
+  "main_file": "canvas-expert.md",
+  "last_updated": "2026-06-28",
+
+  "uderia": {
+    "injection_target": "user_context",
+    "icon": "code"
+  }
+}

@@ -1,0 +1,343 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ANSWER SURFACE — one grammar for everything a reply carries beside its
+   prose (docs/roadmap/ANSWER_SURFACE_GRAMMAR.md). This file is the ONLY place
+   the answer body's look is decided: the token block below is the contract,
+   and `agent/answer_surface.py` is the only producer of these classes.
+
+   Three shapes:
+     .ans-lead   the answer's figure — never framed (the unframed thing IS the answer)
+     .ans-note   a platform statement about the answer — a left rule in an attention tone
+     .ans-ev     one row of the evidence rail — the only framed thing in the body
+
+   Rules: one hairline, one radius, no shadow, no gradient, no blur; colour is the
+   IDENTITY of a source on a row (--ans-accent, set per kind) and a STATE only on a
+   note (the trust tokens); theme tokens for everything else. Class names never
+   contain "card" (a global [class*="card"] rule paints anything so named).
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+    --ans-body: 0.925rem;
+    --ans-body-lh: 1.55;
+    --ans-small: 0.8rem;
+    --ans-kind: 0.7rem;
+    --ans-lead: 1.85rem;
+    --ans-unit: 0.75rem;
+    --ans-row-h: 2.25rem;
+    --ans-radius: 10px;
+    --ans-hair: var(--border-secondary, rgba(255, 255, 255, 0.06));
+    --ans-row-bg: color-mix(in srgb, var(--card-bg, rgba(24, 26, 30, 0.92)) 55%, transparent);
+    --ans-row-bg-hover: var(--hover-bg-strong, rgba(255, 255, 255, 0.06));
+    --ans-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ── the answer's figure ─────────────────────────────────────────────────── */
+.ans-lead { margin: 0 0 var(--ans-unit) 0; }
+.ans-lead-v { font-size: var(--ans-lead); line-height: 1.1; font-weight: 650; letter-spacing: -0.01em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.ans-lead-l { margin-top: 0.25rem; font-size: var(--ans-small); color: var(--text-muted); }
+
+/* ── the answer's prose: observations as a plain list, a report's section headings ── */
+.message-content .ans-obs { margin: 0 0 var(--ans-unit) 1.1rem; padding: 0; list-style: disc; font-size: var(--ans-body); line-height: var(--ans-body-lh); color: var(--text-primary); }
+.message-content .ans-obs li { margin: 0.2rem 0; }
+.message-content .ans-obs li::marker { color: var(--teradata-orange, #F15F22); }
+.message-content .ans-h { font-weight: 650; color: var(--text-primary); margin: 0.9rem 0 0.35rem; }
+.message-content h3.ans-h { font-size: 1.05rem; } .message-content h4.ans-h { font-size: 0.95rem; color: var(--text-muted); }
+/* a table the formatter rendered inside a row keeps its own look; only its outer frame dissolves */
+.ans-ev-b .table-container { margin-top: 0.5rem; }
+.ans-ev-b h4 { font-size: var(--ans-small); color: var(--text-muted); font-weight: 600; margin: 0; }
+.ans-ev-b h4 code { font-family: var(--ans-mono); font-size: inherit; }
+
+/* ── THE data table — one industrial grid for every table a reply carries ──── */
+.ans-tw { overflow: auto; max-height: 420px; border-top: 1px solid var(--ans-hair); border-bottom: 1px solid var(--ans-hair); }
+.ans-ev-b .ans-tw { margin-top: 0.5rem; }
+/* A grid stored without its wrap (compute row tables before Oct 2026) scrolls itself: bare in the
+   evidence row it was clipped by the fold (details.ans-ev is overflow:hidden) — cut on the right. */
+#chat-log .message-content .ans-ev-b > table.ans-t, .ans-ev-b > table.ans-t { display: block; max-width: 100%; overflow-x: auto; }
+/* A prose table scrolls sideways inside its own wrap and never vertically (it flows with the
+   prose). The table itself stays display:table (below), so the wrap is what scrolls: with the
+   wrap `overflow: visible` a wide grid (2,100 px) pushed the message past the right edge of the
+   chat — on an iPad the conversation was cut on the right and slid sideways under a swipe. */
+.message-content .ans-tw-prose { margin: 0 0 var(--ans-unit); border-radius: 6px; border: 1px solid var(--ans-hair); max-height: none; max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+.message-content .ans-tf-prose { margin: 0.35rem 0.85rem 0.5rem; }
+.message-content .ans-tf-prose .ans-act { display: inline-flex; align-items: center; gap: 0.25rem; margin: 0; background: none; border: 0; padding: 0; font: inherit; font-size: var(--ans-small); font-weight: 600; color: var(--teradata-orange, #F15F22); cursor: pointer; }
+.message-content .ans-tf-prose .ans-act:hover, .message-content .ans-tf-prose .ans-act:focus-visible { text-decoration: underline; outline: none; }
+/* `#chat-log .message-content table` (polish.css) makes every table display:block so it can
+   scroll; the grid scrolls through its own wrap (.ans-tw), so it stays a real table at full width */
+table.ans-t, #chat-log .message-content table.ans-t, [data-theme="light"] .message-bubble table.ans-t { background: transparent; box-shadow: none; display: table; border-collapse: collapse; width: 100%; font-size: var(--ans-small); line-height: 1.35; font-variant-numeric: tabular-nums; }
+table.ans-t th {
+    position: sticky; top: 0; z-index: 1;
+    text-align: left; padding: 0.45rem 0.65rem;
+    font-size: var(--ans-kind); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--text-muted); background: var(--card-bg, rgba(24, 26, 30, 0.92));
+    border-bottom: 1px solid var(--ans-hair); white-space: nowrap;
+}
+table.ans-t td { padding: 0.42rem 0.65rem; border-top: 1px solid var(--ans-hair); color: var(--text-primary); white-space: nowrap; vertical-align: top; }
+table.ans-t tbody tr:first-child td { border-top: 0; }
+table.ans-t tbody tr:hover td { background: var(--ans-row-bg-hover); }
+/* ONE type system per row (operator's call, Sep 2026): every column left-aligned and every cell
+   in the body's typeface — a numeric cell is marked (ans-num) but never set in mono, because a
+   sans name beside a mono figure read as two tables in one row; the grid's tabular figures
+   still stack the digits on the left edge */
+table.ans-t th.ans-num, table.ans-t td.ans-num { text-align: left; }
+table.ans-t td:first-child, table.ans-t th:first-child { padding-left: 0.85rem; }
+table.ans-t td:last-child, table.ans-t th:last-child { padding-right: 0.85rem; }
+/* a DDL row's body is its statement: the code block's own frame/gradient/shadow dissolve */
+.ans-ev-b .sql-code-block.ans-ddl { background: none; border: 0; box-shadow: none; border-radius: 0; margin-top: 0.5rem; }
+.ans-ev-b .sql-code-block.ans-ddl pre { margin: 0; }
+/* the footer: the statement on the left (one gesture away), the acts on the right */
+.ans-tf { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-top: 0.45rem; }
+.ans-tf-l { flex: 1 1 auto; min-width: 0; }
+.ans-tf-r { flex: none; display: flex; align-items: center; gap: 0.25rem; }
+.ans-tf-r .ans-act { margin: 0; }
+.ans-tf-r .ans-act + .ans-act::before { content: "·"; color: var(--text-muted); margin-right: 0.5rem; }
+.ans-tf-r .copy-button { background: none; padding: 0; border: 0; color: inherit; }
+.ans-tf-r .copy-button.copied { color: var(--trust-pass, #34d399); background: none; }
+
+/* the legacy light-theme table/card rules in themes.css are `!important`; inside a row the
+   grid and the dissolved frame must carry the same weight — scoped to .ans-ev-b, so no
+   table or card OUTSIDE a row changes */
+[data-theme="light"] .message-bubble .ans-ev-b > .response-card { background: none !important; background-image: none !important; border: 0 !important; box-shadow: none !important; }
+[data-theme="light"] .message-bubble .ans-ev-b table.ans-t { background: transparent !important; border: 0 !important; }
+[data-theme="light"] .message-bubble .ans-ev-b table.ans-t thead { background: none !important; }
+[data-theme="light"] .message-bubble .ans-ev-b table.ans-t th { color: var(--text-muted) !important; background: var(--card-bg, #fff) !important; border-bottom: 1px solid var(--ans-hair) !important; }
+[data-theme="light"] .message-bubble .ans-ev-b table.ans-t td { color: var(--text-primary) !important; border-bottom: 0 !important; }
+[data-theme="light"] .message-bubble .ans-ev-b table.ans-t tbody tr:hover { background: var(--ans-row-bg-hover) !important; }
+[data-theme="light"] .message-bubble .ans-tw-prose table.ans-t { background: transparent !important; }
+
+/* ── the statement behind a data row ───────────────────────────────────── */
+.ans-ev-b .ans-stmt { margin: 0; }
+.ans-ev-b .ans-stmt-s { cursor: pointer; list-style: none; font-size: var(--ans-kind); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
+.ans-ev-b .ans-stmt-s::-webkit-details-marker { display: none; }
+.ans-ev-b .ans-stmt-s::before { content: "›"; display: inline-block; margin-right: 0.4rem; transition: transform 0.15s ease; }
+.ans-ev-b .ans-stmt[open] > .ans-stmt-s::before { transform: rotate(90deg); }
+/* the statement block is a flat, theme-toned pane — the platform's gradient code-block
+   look (`.message-bubble pre`, in both themes) does not apply inside a row */
+.message-bubble .ans-ev-b .ans-stmt-b, [data-theme="light"] .message-bubble .ans-ev-b .ans-stmt-b {
+    margin: 0.4rem 0 0; padding: 0.5rem 0.65rem; font-family: var(--ans-mono); font-size: var(--ans-small); line-height: 1.45;
+    color: var(--text-primary); background: var(--bg-primary, transparent); background-image: none; border: 1px solid var(--ans-hair); border-radius: 6px;
+    white-space: pre-wrap; overflow-x: auto; box-shadow: none;
+}
+
+/* ── a cited document inside a `sources` row ─────────────────────────────── */
+.ans-src { border-top: 1px solid var(--ans-hair); }
+.ans-src:first-child { border-top: 0; }
+.ans-src-s { display: flex; align-items: center; gap: 0.5rem; min-height: 2rem; padding: 0.35rem 0; cursor: pointer; list-style: none; font-size: var(--ans-small); color: var(--text-muted); }
+.ans-src-s::-webkit-details-marker { display: none; }
+.ans-src-s > .ans-ic:first-child { flex: none; transition: transform 0.15s ease; }
+.ans-src[open] > .ans-src-s > .ans-ic:first-child { transform: rotate(90deg); }
+.ans-src-n { color: var(--text-primary); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ans-src-coll { color: var(--text-muted); white-space: nowrap; }
+.ans-src-coll::before { content: "·"; margin-right: 0.5rem; }
+.ans-src .ans-chip { font-size: var(--ans-kind); }
+.ans-src-b { padding: 0.25rem 0 0.75rem 1.4rem; font-size: var(--ans-small); line-height: var(--ans-body-lh); color: var(--text-primary); }
+.ans-src-b p { margin: 0 0 0.5rem; }
+.message-content .rag-synthesis-section { margin-bottom: var(--ans-unit); }
+@media (prefers-reduced-motion: reduce) { .ans-src-s > .ans-ic:first-child { transition: none; } }
+
+/* ── a component's spec-route container inside a row ────────────────────── */
+/* the row is the frame: the renderer's own card chrome sits flush in the body */
+.ans-ev-b > [data-component-id] { min-width: 0; }
+/* a silent payload: an act with nothing to show (a panel opened, a patch delivered) —
+   its container stays in the DOM so the renderer runs, but nothing is ever painted */
+.ans-silent { display: none; }
+
+/* ── a note about the answer ─────────────────────────────────────────────── */
+.ans-note {
+    display: flex; align-items: baseline; gap: 0.5rem;
+    margin: var(--ans-unit) 0 0 0; padding: 0.35rem 0 0.35rem 0.75rem;
+    border-left: 3px solid var(--ans-tone, var(--text-muted));
+    font-size: var(--ans-small); line-height: 1.5; color: var(--text-muted);
+}
+.ans-note .ans-ic { flex: none; align-self: center; color: var(--ans-tone, var(--text-muted)); }
+.ans-note .ans-kind { color: var(--ans-tone, var(--text-muted)); }
+.ans-note-t { color: var(--text-primary); min-width: 0; }
+.ans-note-t strong { font-weight: 600; }
+.ans-tone-muted  { --ans-tone: var(--text-muted, #94a3b8); }
+.ans-tone-warn   { --ans-tone: var(--trust-warn, #fbbf24); }
+.ans-tone-danger { --ans-tone: var(--trust-danger, #f87171); }
+.ans-note-route {
+    margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 0.15rem;
+    background: none; border: 0; padding: 0; font: inherit; font-size: var(--ans-kind);
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); cursor: pointer;
+}
+.ans-note-route:hover, .ans-note-route:focus-visible { color: var(--text-primary); outline: none; }
+.ans-note-route .ans-ic { width: 11px; height: 11px; }
+/* a note's act (agent/model_gap.py — "Propose a Lead"): the platform's offer, in the act style */
+.ans-note .ans-act {
+    margin-left: auto; flex: none; background: none; border: 0; padding: 0; font: inherit;
+    font-size: var(--ans-small); font-weight: 600; color: var(--teradata-orange, #F15F22); cursor: pointer;
+}
+.ans-note .ans-act:hover, .ans-note .ans-act:focus-visible { text-decoration: underline; outline: none; }
+.ans-note .ans-act[disabled] { opacity: 0.6; cursor: default; text-decoration: none; }
+/* the model-gap proposal form (ui.js _onGapProposeAct): opened in place under its note */
+.ans-gap-form {
+    margin: 0.5rem 0 0 0; padding: 0.75rem 0.85rem; display: flex; flex-direction: column; gap: 0.55rem;
+    border: 1px solid var(--border-primary, rgba(148,163,184,0.25)); border-radius: 0.5rem;
+    background: var(--card-bg, transparent); font-size: var(--ans-small);
+}
+.ans-gap-row { display: grid; grid-template-columns: 9.5rem 1fr; gap: 0.75rem; align-items: start; }
+.ans-gap-l { color: var(--text-muted); padding-top: 0.35rem; }
+.ans-gap-form input, .ans-gap-form textarea, .ans-gap-form select {
+    width: 100%; box-sizing: border-box; font: inherit; color: var(--text-primary);
+    background: var(--bg-primary, transparent); border: 1px solid var(--border-secondary, rgba(148,163,184,0.2));
+    border-radius: 0.375rem; padding: 0.35rem 0.5rem;
+}
+.ans-gap-form textarea { resize: vertical; line-height: 1.5; }  /* business terms, not code */
+.ans-gap-form input:focus, .ans-gap-form textarea:focus, .ans-gap-form select:focus { outline: 1px solid var(--teradata-orange, #F15F22); outline-offset: 0; }
+.ans-gap-result {
+    margin: 0.5rem 0 0 0; padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border-primary, rgba(148,163,184,0.25)); border-radius: 0.5rem; background: var(--card-bg, transparent);
+}
+.ans-gap-hint { color: var(--text-muted); margin: -0.25rem 0 0 10.25rem; font-size: var(--ans-kind, 0.75rem); }
+@media (max-width: 640px) { .ans-gap-hint { margin-left: 0; } }
+.kg-proposal-records { color: var(--text-primary); margin: 0.35rem 0; }
+.ans-gap-foot { display: flex; align-items: center; gap: 1rem; justify-content: flex-end; }
+.ans-gap-msg { margin-right: auto; color: var(--trust-warn, #fbbf24); }
+.ans-gap-form .ans-act { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; cursor: pointer; color: var(--teradata-orange, #F15F22); }
+.ans-gap-form .ans-gap-cancel { color: var(--text-muted); font-weight: 500; }
+.ans-gap-form .ans-act:hover, .ans-gap-form .ans-act:focus-visible { text-decoration: underline; outline: none; }
+.ans-gap-form .ans-act[disabled] { opacity: 0.6; cursor: default; text-decoration: none; }
+@media (max-width: 640px) { .ans-gap-row { grid-template-columns: 1fr; gap: 0.25rem; } .ans-gap-l { padding-top: 0; } }
+
+/* ── markdown the MODEL wrote (formatter.md_inline / the block rules) ──────────
+   Deliberately unlike a note: a note is the PLATFORM speaking (icon + kind word + a 3px
+   bar in an attention tone); a quotation the model wrote is prose — body size, no icon,
+   no kind word, a 1px neutral hairline. The two can never be mistaken for each other. */
+.message-content blockquote.ans-md-quote {
+    margin: 0 0 var(--ans-unit) 0; padding: 0.05rem 0 0.05rem 0.9rem;
+    border-left: 1px solid var(--border-secondary, rgba(148,163,184,0.35));
+    color: var(--text-muted);
+}
+.message-content blockquote.ans-md-quote p { color: inherit; }
+.message-content blockquote.ans-md-quote > :last-child { margin-bottom: 0; }
+.message-content a.ans-md-link {
+    color: var(--teradata-orange, #F15F22); text-decoration: underline;
+    text-decoration-thickness: 1px; text-underline-offset: 2px;
+}
+.message-content a.ans-md-link:hover, .message-content a.ans-md-link:focus-visible { text-decoration-thickness: 2px; outline: none; }
+.message-content li.ans-md-task { list-style: none; margin-left: -1.1rem; display: flex; gap: 0.45rem; align-items: baseline; }
+.message-content .ans-md-task-box { flex: none; accent-color: var(--teradata-orange, #F15F22); }
+.message-content del { opacity: 0.7; }
+
+/* ── the kind word: the same glyph on notes and rows ─────────────────────── */
+.ans-kind {
+    flex: none; font-size: var(--ans-kind); font-weight: 650; letter-spacing: 0.05em;
+    text-transform: uppercase; white-space: nowrap;
+}
+
+/* ── the evidence rail ───────────────────────────────────────────────────── */
+.ans-rail { display: flex; flex-direction: column; gap: 0.375rem; margin-top: var(--ans-unit); }
+.ans-ev {
+    /* the kind's identity brackets the row: the same accent opens it on the left and closes
+       it on the right, so a wide row reads as one thing from its word to its provenance */
+    border: 1px solid var(--ans-hair);
+    border-left: 3px solid var(--ans-accent, var(--text-muted));
+    border-right: 3px solid var(--ans-accent, var(--text-muted));
+    border-radius: var(--ans-radius); background: var(--ans-row-bg);
+    overflow: hidden;
+    /* ONE identity per row: whatever a component renders inside reads --sp-accent (the same
+       variable its split panel sets), so the body can never wear a colour the frame does not */
+    --sp-accent: var(--ans-accent);
+}
+/* ONE fact, ONE place: the row's summary states the component's name and its key size; an
+   element inside the body that RESTATES it (a card header with the name, a "4 nodes" badge, a
+   toast title repeating the schedule) carries data-ans-restates and is not shown inside a row.
+   Outside a row — a dashboard tile, a split panel — the same element shows: there it is the
+   only statement. Renderers mark the element; this rule is the only hider. */
+.ans-ev-b [data-ans-restates] { display: none !important; }
+.ans-ev-s {
+    list-style: none; cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 0.55rem;
+    min-height: var(--ans-row-h); padding: 0 0.85rem 0 0.7rem;
+    font-size: var(--ans-small); color: var(--text-muted);
+}
+.ans-ev-s::-webkit-details-marker { display: none; }
+.ans-ev-s:hover { background: var(--ans-row-bg-hover); }
+.ans-ev-s:focus-visible { outline: 2px solid var(--teradata-orange, #F15F22); outline-offset: -2px; }
+/* the two icons never give way to a long title: the chevron and the component icon keep
+   their 14px box whatever the summary's length (a flex row shrinks an svg without this —
+   the scheduler's long title once squeezed its chevron to 9px while the others kept 14) */
+.ans-ev-s > .ans-ic, .ans-src-s > .ans-ic { flex: none; width: 14px; height: 14px; }
+.ans-ev-s > .ans-ic:first-child { transition: transform 160ms ease; color: var(--text-muted); }
+.ans-ev[open] > .ans-ev-s > .ans-ic:first-child { transform: rotate(90deg); }
+.ans-ev-s > .ans-ic:nth-child(2) { color: var(--ans-accent, var(--text-muted)); }
+.ans-ev-s .ans-kind { color: var(--ans-accent, var(--text-muted)); min-width: 5.2rem; }
+.ans-ev-t { color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; }
+.ans-ev-t strong { font-weight: 600; }
+.ans-prov {
+    flex: none; margin-left: auto; font-family: var(--ans-mono); font-size: var(--ans-kind);
+    letter-spacing: 0.02em; color: var(--text-muted); white-space: nowrap;
+}
+.ans-ev-b { padding: 0.25rem 0.85rem 0.85rem 0.85rem; border-top: 1px solid var(--ans-hair); font-size: var(--ans-body); line-height: var(--ans-body-lh); color: var(--text-primary); }
+.ans-ev-b > :first-child { margin-top: 0.5rem; }
+/* the row is the frame: a producer's own outer frame inside a row is dissolved */
+.ans-ev-b > .response-card, .ans-ev-b .response-card.mb-4:only-child,
+[data-theme="light"] .ans-ev-b > .response-card, [data-theme="light"] .ans-ev-b .response-card.mb-4:only-child { background: none; background-image: none; border: 0; box-shadow: none; padding: 0; margin: 0; backdrop-filter: none; border-radius: 0; }
+.ans-ev-b > .response-card::before, [data-theme="light"] .ans-ev-b > .response-card::before { display: none; content: none; }
+/* a receipt / result table inside a row */
+.ans-ev-b .ans-act {
+    display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.6rem;
+    background: none; border: 0; padding: 0; font: inherit; font-size: var(--ans-small); font-weight: 600;
+    color: var(--ans-accent, var(--text-primary)); cursor: pointer;
+}
+.ans-ev-b .ans-act:hover, .ans-ev-b .ans-act:focus-visible { text-decoration: underline; outline: none; }
+.ans-ev-b .ans-chip {
+    display: inline-flex; align-items: center; font-size: var(--ans-kind); padding: 1px 7px; border-radius: 999px;
+    border: 1px solid var(--ans-hair); color: var(--text-muted); white-space: nowrap; vertical-align: middle;
+}
+.ans-ev-b .ans-meta { color: var(--text-muted); font-size: var(--ans-small); }
+.ans-ev-b .ans-meta strong { color: var(--text-primary); }
+
+/* ── light theme ─────────────────────────────────────────────────────────── */
+[data-theme="light"] .ans-ev { --ans-row-bg: rgba(15, 23, 42, 0.025); --ans-row-bg-hover: rgba(15, 23, 42, 0.05); }
+[data-theme="light"] .ans-tone-warn   { --ans-tone: var(--trust-warn, #b45309); }
+[data-theme="light"] .ans-tone-danger { --ans-tone: var(--trust-danger, #dc2626); }
+
+@media (prefers-reduced-motion: reduce) { .ans-ev-s > .ans-ic:first-child { transition: none; } }
+@media (max-width: 640px) { .ans-prov { display: none; } .ans-ev-t { white-space: normal; } }
+
+/* ── the acts strip — every control on one 24px baseline, one type, one hairline ── */
+/* The verdict (.la-trust — the ONE trust control, its STATE tone stays its own), Regenerate
+   (.tl-act) and the vote group (.ans-ctl-group > .ans-ctl) share size, type and shape:
+   mono 11px, hairline, radius 6, transparent. Hover raises the hairline; a pressed vote
+   fills with the brand accent. Colour on the verdict is never touched here. */
+.msg-actions-row { --ans-ctl-h: 24px; --ans-ctl-fs: 11px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: var(--ans-unit) !important; padding-top: 0.6rem; border-top: 1px solid var(--ans-hair); }
+.msg-actions-row .msg-actions-slot { display: flex; align-items: center; min-width: 0; }
+/* A narrow column (iPad Split View, a side panel open) wraps the acts onto a second line; a control
+   is never shrunk — the vote group clips its own corners (overflow:hidden) and so clipped its buttons. */
+.msg-actions-row, .msg-actions-row .msg-actions-slot { flex-wrap: wrap; row-gap: 0.5rem; }
+.msg-actions-row .ans-ctl-group, .msg-actions-row .la-trust, .msg-actions-row .tl-act { flex: none; }
+.msg-actions-row .la-trust, .msg-actions-row .tl-act, .ans-ctl {
+    height: var(--ans-ctl-h); box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 9px; border-radius: 6px; line-height: 1; white-space: nowrap; user-select: none; cursor: pointer;
+    font: 500 var(--ans-ctl-fs) var(--ans-mono); letter-spacing: 0.02em;
+}
+.msg-actions-row .tl-act, .ans-ctl {
+    border: 1px solid var(--border-primary, rgba(148, 163, 184, 0.3)); background: transparent; color: var(--text-muted);
+    transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+.msg-actions-row .tl-act:hover, .ans-ctl:hover, .msg-actions-row .tl-act:focus-visible, .ans-ctl:focus-visible {
+    color: var(--text-primary); border-color: var(--text-muted); background: var(--ans-row-bg-hover); outline: none;
+}
+.msg-actions-row .tl-act svg, .ans-ctl svg { width: 13px; height: 13px; flex: none; }
+.msg-actions-row .tl-menu::before { display: none; }          /* the group gap is the separator */
+.msg-actions-row .tl-menu, .msg-actions-row .msg-actions-slot { gap: 8px; }
+/* the vote group: one hairline, two segments, a rule between them */
+.ans-ctl-group { display: inline-flex; align-items: stretch; height: var(--ans-ctl-h); border: 1px solid var(--border-primary, rgba(148, 163, 184, 0.3)); border-radius: 6px; overflow: hidden; }
+.ans-ctl-group > .ans-ctl { height: auto; border: 0; border-radius: 0; }
+.ans-ctl-group > .ans-ctl + .ans-ctl { border-left: 1px solid var(--border-primary, rgba(148, 163, 184, 0.3)); }
+.ans-ctl[aria-pressed="true"] { color: var(--teradata-orange, #F15F22); background: color-mix(in srgb, var(--teradata-orange, #F15F22) 12%, transparent); }
+.ans-ctl .vote-label { opacity: 1; font: inherit; letter-spacing: inherit; color: inherit; }
+
+/* ── PROP-008 Model ACT: the proposal row (knowledge_graph propose_*) ─────────────────
+   The advisor's verdict in words, its reasons, its findings, what happened — and the one
+   act that is owed. Theme tokens only; the row's frame is the evidence row's. */
+.kg-proposal { font-size: var(--ans-small, 0.8125rem); color: var(--text-primary); }
+.kg-proposal-head { line-height: 1.45; }
+.kg-proposal-tag { display: inline-block; margin-left: 0.35rem; padding: 0 0.4rem; border: 1px solid var(--border-primary); border-radius: 999px; font-size: 0.6875rem; color: var(--text-muted); vertical-align: 1px; }
+.kg-proposal-why, .kg-proposal-findings { margin: 0.4rem 0 0 1.1rem; padding: 0; }
+.kg-proposal-why li { margin: 0.15rem 0; color: var(--text-muted); }
+.kg-proposal-findings li { margin: 0.15rem 0; color: var(--trust-warn, #b45309); }
+.kg-proposal-state { margin-top: 0.45rem; color: var(--text-muted); }
+.kg-proposal-foot { margin-top: 0.5rem; padding-top: 0.45rem; border-top: 1px solid var(--ans-hair, var(--border-secondary)); }
+.kg-proposal-foot .ans-act { background: none; border: 0; padding: 0; font: inherit; font-size: var(--ans-small, 0.8125rem); font-weight: 600; color: var(--teradata-orange, #F15F22); cursor: pointer; }
+.kg-proposal-foot .ans-act:hover, .kg-proposal-foot .ans-act:focus-visible { text-decoration: underline; outline: none; }
+.kg-proposal-foot .ans-act[disabled] { opacity: 0.6; cursor: default; text-decoration: none; }

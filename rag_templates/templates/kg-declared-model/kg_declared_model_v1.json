@@ -1,0 +1,188 @@
+{
+  "template_id": "kg_declared_model_v1",
+  "template_name": "Knowledge Graph Constructor - Declared Model (ISO/IEC 11179)",
+  "template_version": "1.0.0",
+  "template_type": "knowledge_graph",
+  "description": "Deterministic construction of a Knowledge Graph from a model that publishes its own metadata as an ISO/IEC 11179 registry stored with it. No LLM, no MCP, no guessing — the registry's object classes, data elements, value domains, permissible values and associations are walked directly into the two-layer topology; the deployed types come from the data dictionary.",
+  "status": "active",
+  "created_at": "2026-09-15T00:00:00Z",
+  "updated_at": "2026-09-15T00:00:00Z",
+  "icon": {
+    "type": "knowledge_graph",
+    "color": "purple"
+  },
+  "_surface_legend": "surface ∈ {deploy, edit, both}: 'deploy'=per-build only, 'edit'=template config only, 'both'=Edit sets default + Deploy overrides. 'none'=identity field, never user-editable.",
+  "input_variables": {
+    "profile_id": {
+      "type": "string",
+      "required": true,
+      "surface": "deploy",
+      "description": "Profile that will own the knowledge graph (any KG-capable profile; no MCP tools required)."
+    },
+    "connection_id": {
+      "type": "select",
+      "required": true,
+      "surface": "deploy",
+      "options_source": "database-connections",
+      "description": "Database connection holding the registry and the deployed model. Credentials are resolved through the platform's encrypted connection store — never entered here."
+    },
+    "catalog_database": {
+      "type": "select",
+      "required": true,
+      "surface": "deploy",
+      "options_source": "declared-registries",
+      "description": "The database holding the five ISO/IEC 11179 registry tables. Discovered deterministically by scanning the connection's dictionary."
+    },
+    "core_database": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "The database the model's entities deploy into — the graph's anchor and trusted scope. Leave empty to read it from the registry's deployed_object column."
+    },
+    "model_name": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Display name of the logical model root; every entity is qualified by it."
+    },
+    "discovery_mode": {
+      "type": "hidden",
+      "required": false,
+      "surface": "none",
+      "default": "declared_model",
+      "options": [
+        "declared_model"
+      ],
+      "description": "Strategy selector — fixed for this template."
+    },
+    "include_columns": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": true,
+      "description": "Include attribute and column nodes, carrying each data element's definition, PII/sensitivity classification, declared vs deployed type and decoded permissible values. Off = a compact entity-level graph."
+    },
+    "include_physical": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": true,
+      "description": "Include the physical layer (schema/table/column) with real, queryable identifiers and types read from the data dictionary — views included. Required for the grounding gate's trusted scope to resolve."
+    },
+    "max_value_codes": {
+      "type": "number",
+      "required": false,
+      "surface": "both",
+      "default": 60,
+      "description": "Cap on decoded permissible values kept per attribute, keeping node payloads bounded on large code lists."
+    },
+    "validate_with_source": {
+      "type": "boolean",
+      "required": false,
+      "surface": "both",
+      "default": false,
+      "description": "Probe the deployed objects (row counts, declared-key uniqueness, stored date shapes, blank ratios) and stamp the readings on the graph."
+    },
+    "graph_name": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Display name for the knowledge graph (defaults to the model name)."
+    },
+    "description": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Description for the knowledge graph."
+    },
+    "kg_store_config_id": {
+      "type": "string",
+      "required": false,
+      "surface": "deploy",
+      "description": "Graph store backend to build into (defaults to the profile's configured backend)."
+    }
+  },
+  "construction": {
+    "endpoint": "/api/v1/knowledge-graph/generate",
+    "method": "POST",
+    "deterministic": true,
+    "requires_llm": false,
+    "requires_mcp": false,
+    "estimated_tokens": 0
+  },
+  "output_schema": {
+    "logical_layer": {
+      "description": "The model's meaning — what an analyst reasons about.",
+      "entity_types": [
+        "database",
+        "domain",
+        "entity",
+        "attribute",
+        "product_bridge"
+      ],
+      "relationship_types": [
+        "contains",
+        "foreign_key",
+        "is_a",
+        "relates_to"
+      ]
+    },
+    "physical_layer": {
+      "description": "The deployed, queryable realization — what SQL actually addresses (tables and views alike).",
+      "entity_types": [
+        "schema",
+        "table",
+        "column"
+      ],
+      "relationship_types": [
+        "contains",
+        "implements"
+      ]
+    },
+    "source_tag": "declared_model_constructor"
+  },
+  "notes": {
+    "type_rule": "Meaning comes from the registry (declared_type); the deployed type comes from the data dictionary, which covers views as well as tables. A divergence is counted and reported, never silently reconciled.",
+    "bridges": "An association of kind type_correspondence is a declared CLASS-level correspondence between two domains, never an instance join. It becomes a product_bridge node stating its basis and whether both ends resolved — a governance finding when they do not.",
+    "resync": "The graph stores a source descriptor and can be re-synced when the registry changes."
+  },
+  "extraction_phases": {
+    "structural": {
+      "phase": 1,
+      "description": "Deterministic read of the 11179 registry into the two-layer topology. Physical column types come from the data dictionary, never from the registry's declared type.",
+      "requires_llm": false,
+      "always_runs": true,
+      "extracts": {
+        "entity_types": [
+          "database",
+          "domain",
+          "entity",
+          "attribute",
+          "product_bridge",
+          "schema",
+          "table",
+          "column"
+        ],
+        "relationship_types": [
+          "contains",
+          "implements",
+          "foreign_key",
+          "is_a",
+          "relates_to"
+        ]
+      },
+      "source_tag": "declared_model_constructor",
+      "parsing_rules": {
+        "database": "The logical model itself (root node), stamped standard=iso_11179.",
+        "domain": "One per subject_area declared on the object classes.",
+        "entity": "One per object_class row: definition, natural key, grain, deployed object, temporal pattern, lineage.",
+        "attribute": "One per data_element row: definition, declared vs deployed type, PII/sensitivity, semantic type, decoded permissible values.",
+        "schema_table_column": "The deployed realization named by deployed_object; types read from DBC.ColumnsV (views included).",
+        "implements": "Physical table -> logical entity, physical column -> logical attribute.",
+        "foreign_key": "From association rows of kind pk_fk_join / bridge.",
+        "is_a": "From association rows of kind is_a (subtype -> supertype).",
+        "product_bridge": "From association rows of kind type_correspondence: a node carrying the basis, with relates_to edges to each end that resolved."
+      }
+    }
+  }
+}

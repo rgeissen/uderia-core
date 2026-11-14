@@ -1,0 +1,330 @@
+/**
+ * skillsPanelHandler.js
+ *
+ * Manages the Skills tab in the Resource Panel.
+ * Shows skills assigned to the current profile as expandable cards.
+ * - Enabled: skill available for manual #hashtag invocation
+ * - Active: skill auto-applies on every query (implies enabled)
+ * Changes persist to profile config via PUT /api/v1/profiles/<id>.
+ */
+
+import { state } from '../state.js';
+import * as API from '../api.js?v=1.2';
+
+import { coalescedFetch } from './requestCoalescer.js';
+import { tabLabel } from './resourceBadge.js?v=1.3';
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+// Match skillHandler.js badge styles exactly
+const INJECTION_TARGET_CONFIG = {
+    system_prompt: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)', label: 'System Prompt' },
+    user_context:  { color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.25)',  label: 'User Context' },
+};
+const TAG_COLOR = { color: '#94a3b8', bg: 'rgba(148,163,184,0.10)', border: 'rgba(148,163,184,0.18)' };
+
+function _getHeaders() {
+    const token = localStorage.getItem('tda_auth_token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
+}
+
+// ── Card creation ───────────────────────────────────────────────────────────
+
+function createSkillCard(skill) {
+    const detailsEl = document.createElement('details');
+    detailsEl.className = 'resource-item';
+    detailsEl.dataset.skillId = skill.id;
+
+    // Left border accent: green if active (every turn), blue if enabled (on request)
+    const isEnabled = !!skill.enabled && skill.available !== false;
+    if (skill.active && isEnabled) {
+        detailsEl.style.borderLeftWidth = '4px';
+        detailsEl.style.borderLeftColor = '#10b981';
+    } else if (isEnabled) {
+        detailsEl.style.borderLeftWidth = '4px';
+        detailsEl.style.borderLeftColor = '#3b82f6';
+    }
+
+    const targetCfg = INJECTION_TARGET_CONFIG[skill.injection_target] || INJECTION_TARGET_CONFIG.system_prompt;
+
+    // Status badge — the platform's three words (resourceBadge.js): ACTIVE = injected on every
+    // turn without being asked; ENABLED = usable on request (#name on a turn); OFF. "auto" is a
+    // mark, not a state: the platform holds the switch (the skill follows its component).
+    let statusBadge = '';
+    if (skill.active && isEnabled) {
+        statusBadge = '<span class="text-xs font-semibold px-2 py-0.5 rounded" title="Injected on every turn without being asked" style="color: #10b981; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);">ACTIVE</span>';
+    } else if (isEnabled) {
+        statusBadge = '<span class="text-xs font-semibold px-2 py-0.5 rounded" title="Usable on request: type #name on a turn" style="color: #3b82f6; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);">ENABLED</span>';
+    } else {
+        statusBadge = '<span class="text-xs font-semibold px-2 py-0.5 rounded" title="Not switched on for this agent" style="color: #6b7280; background: rgba(107,114,128,0.15); border: 1px solid rgba(107,114,128,0.3);">OFF</span>';
+    }
+    if (skill.auto) {
+        statusBadge += '<span class="text-[10px] ml-1 skill-auto-mark" title="Switched on by the platform: it follows its component. Turn the component off and the skill goes with it." style="color: var(--text-muted);">auto</span>';
+    }
+
+    const availabilityNote = !skill.available
+        ? '<span class="text-xs ml-1" style="color:#f87171;">(disabled by admin)</span>'
+        : '';
+
+    // Pack provenance — same tags as the Skills config card.
+    const packBadge = skill.pack_name
+        ? (skill.pack_orphaned
+            ? `<span class="text-[10px] font-medium px-2 py-0.5 rounded whitespace-nowrap"
+                     title="Installed by the agent pack &quot;${skill.pack_name}&quot;, which has since been uninstalled. The skill was kept and can be deleted if no longer needed."
+                     style="background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25);">Orphaned &middot; ${skill.pack_name}</span>`
+            : `<span class="text-[10px] font-medium px-2 py-0.5 rounded whitespace-nowrap"
+                     title="Installed by the agent pack &quot;${skill.pack_name}&quot;. Uninstalling that pack keeps this skill and marks it orphaned."
+                     style="background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.25);">Pack &middot; ${skill.pack_name}</span>`)
+        : '';
+
+    // Progressive disclosure (PROP-005) — same tag as the Skills config card.
+    const _libN = skill.library_sections || 0;
+    const libraryBadge = skill.progressive
+        ? `<span class="text-[10px] font-medium px-2 py-0.5 rounded whitespace-nowrap"
+                 title="Progressive disclosure: this skill injects a lean root and the agent fetches these sections on demand (TDA_SkillLibrary)."
+                 style="background: rgba(14,165,233,0.12); color: #38bdf8; border: 1px solid rgba(14,165,233,0.25);">Library &middot; ${_libN} section${_libN === 1 ? '' : 's'}</span>`
+        : '';
+
+    // Summary row (always visible) — badges match skillHandler.js
+    const summaryHTML = `
+        <summary class="flex justify-between items-center px-3 py-2.5">
+            <div class="flex items-center gap-2 flex-wrap min-w-0">
+                <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">#${skill.id}</span>
+                <span class="text-sm font-medium truncate">${skill.name}</span>
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded whitespace-nowrap" style="background: ${targetCfg.bg}; color: ${targetCfg.color}; border: 1px solid ${targetCfg.border};">${targetCfg.label}</span>
+                ${packBadge}
+                ${libraryBadge}
+                ${statusBadge}
+                ${availabilityNote}
+            </div>
+            <svg class="chevron w-5 h-5 flex-shrink-0" style="color: var(--text-muted, #9ca3af);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </summary>
+    `;
+
+    // Expanded content
+    const tagPills = (skill.tags || [])
+        .map(t => `<span class="text-xs px-2 py-0.5 rounded" style="background: ${TAG_COLOR.bg}; color: ${TAG_COLOR.color}; border: 1px solid ${TAG_COLOR.border};">${t}</span>`)
+        .join(' ');
+
+    // Toggle buttons (only if skill is available at admin level)
+    let toggles = '';
+    if (skill.available) {
+        const enabledStyle = skill.enabled
+            ? 'background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3);'
+            : 'background: var(--hover-bg, #4b5563); color: var(--text-muted, #9ca3af);';
+        const enabledLabel = skill.enabled ? 'Enabled' : 'Enable';
+        const enabledTitle = skill.enabled ? 'Disable #hashtag invocation' : 'Enable #hashtag invocation';
+
+        const activeStyle = skill.active
+            ? 'background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);'
+            : 'background: var(--hover-bg, #4b5563); color: var(--text-muted, #9ca3af);';
+        const activeLabel = skill.active ? 'Auto-Active' : 'Activate';
+        const activeTitle = skill.active ? 'Stop auto-applying on every query' : 'Auto-apply on every query';
+
+        toggles = `
+            <button class="skill-toggle-btn px-3 py-1 text-xs font-semibold rounded-md transition-colors"
+                    style="${enabledStyle}"
+                    data-skill-id="${skill.id}" data-field="enabled" data-current="${skill.enabled ? '1' : '0'}"
+                    title="${enabledTitle}">${enabledLabel}</button>
+            <button class="skill-toggle-btn px-3 py-1 text-xs font-semibold rounded-md transition-colors"
+                    style="${activeStyle}"
+                    data-skill-id="${skill.id}" data-field="active" data-current="${skill.active ? '1' : '0'}"
+                    title="${activeTitle}">${activeLabel}</button>
+        `;
+    }
+
+    const contentHTML = `
+        <div class="px-3 pb-3 pt-2 space-y-2 text-xs" style="color:var(--text-muted,#9ca3af);">
+            ${skill.description ? `<p class="text-xs" style="color: var(--text-muted, #9ca3af);">${skill.description}</p>` : ''}
+            ${tagPills ? `<div class="flex flex-wrap gap-1">${tagPills}</div>` : ''}
+            <div class="flex items-center gap-2 pt-2" style="border-top: 1px solid var(--border-primary, rgba(148,163,184,0.18));">
+                ${toggles}
+            </div>
+        </div>
+    `;
+
+    detailsEl.innerHTML = summaryHTML + contentHTML;
+    return detailsEl;
+}
+
+function renderEmptyState(container) {
+    container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <svg class="w-12 h-12 mb-4" style="color: var(--text-muted, #6b7280);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+            </svg>
+            <p class="text-sm font-semibold mb-1" style="color: var(--text-primary, #e5e7eb);">No Skills Assigned</p>
+            <p class="text-xs max-w-xs" style="color: var(--text-muted, #6b7280);">
+                Assign skills to this profile in Anatomy &rarr; Agent Profiles &rarr; Edit to have them auto-applied on every query.
+            </p>
+        </div>
+    `;
+}
+
+function renderLoadingState(container) {
+    container.innerHTML = `
+        <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-6 w-6 border-2" style="border-color: var(--border-primary); border-top-color: #10b981;"></div>
+            <span class="ml-3 text-sm" style="color: var(--text-muted, #9ca3af);">Loading skills...</span>
+        </div>
+    `;
+}
+
+// ── Main load function ──────────────────────────────────────────────────────
+
+export async function loadSkillsPanel() {
+    const container = document.getElementById('skills-panel-content');
+    if (!container) return;
+
+    const profileId = state.currentResourcePanelProfileId;
+    if (!profileId) {
+        renderEmptyState(container);
+        return;
+    }
+
+    renderLoadingState(container);
+
+    try {
+        const res = await coalescedFetch(`/api/v1/profiles/${encodeURIComponent(profileId)}/skills`, {
+            headers: _getHeaders(),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const skills = (data.skills || []).slice().sort((a, b) =>
+            String(a.display_name || a.name || a.skill_id || '').localeCompare(String(b.display_name || b.name || b.skill_id || '')));
+
+        // Update tab counter and visibility — hide tab when no skills assigned
+        const tabBtn = document.querySelector('.resource-tab[data-type="skills"]');
+        if (tabBtn) {
+            if (skills.length === 0) {
+                tabBtn.style.display = 'none';
+            } else {
+                tabBtn.style.display = 'inline-block';
+                // active/enabled/available — the one lane where active differs from enabled:
+                // active = injected every turn, enabled = usable on request (#name), available =
+                // assigned. A skill disabled by the admin is listed but not enabled.
+                tabBtn.textContent = tabLabel('Skills', skills, s => s.enabled && s.available !== false, s => s.active);
+            }
+        }
+
+        if (skills.length === 0) {
+            renderEmptyState(container);
+            return;
+        }
+
+        container.innerHTML = '';
+        for (const skill of skills) {
+            container.appendChild(createSkillCard(skill));
+        }
+    } catch (err) {
+        console.error('Failed to load skills panel:', err);
+        container.innerHTML = `
+            <div class="flex items-center justify-center py-12 text-center">
+                <p class="text-sm" style="color: #ef4444;">Failed to load skills: ${err.message}</p>
+            </div>
+        `;
+    }
+}
+
+// ── Dynamic focus (called from eventHandlers.js on skills_applied) ──────────
+
+export function highlightSkill(skillId) {
+    // Switch tab directly — do NOT call tabBtn.click() here because that triggers
+    // loadSkillsPanel() via handleResourceTabClick, which wipes the card DOM before
+    // we can highlight it.
+    document.querySelectorAll('.resource-tab').forEach(t => t.classList.remove('active'));
+    const tabBtn = document.querySelector('.resource-tab[data-type="skills"]');
+    if (tabBtn) tabBtn.classList.add('active');
+    document.querySelectorAll('.resource-panel').forEach(p => {
+        p.style.display = p.id === 'skills-panel' ? 'flex' : 'none';
+    });
+
+    const card = document.querySelector(`[data-skill-id="${CSS.escape(skillId)}"]`);
+    if (!card) {
+        // Panel not yet populated (first visit) — load it now.
+        loadSkillsPanel();
+        return;
+    }
+    if (state?.currentlySelectedResource) state.currentlySelectedResource.classList.remove('resource-selected');
+    card.open = true;
+    card.classList.add('resource-selected');
+    if (state) state.currentlySelectedResource = card;
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+}
+
+// ── Toggle handler ──────────────────────────────────────────────────────────
+
+async function handleSkillToggle(skillId, field, currentValue) {
+    const profileId = state.currentResourcePanelProfileId;
+    if (!profileId) return;
+
+    try {
+        const skillsRes = await coalescedFetch(`/api/v1/profiles/${encodeURIComponent(profileId)}/skills`, {
+            headers: _getHeaders(),
+        });
+        if (!skillsRes.ok) throw new Error('Failed to load profile skills');
+        const data = await skillsRes.json();
+
+        const skills = (data.skills || []).map(s => ({
+            id: s.id,
+            enabled: !!s.enabled,
+            active: !!s.active,
+            param: s.param || null,
+        }));
+
+        const entry = skills.find(s => s.id === skillId);
+        if (!entry) return;
+
+        const newValue = !currentValue;
+
+        if (field === 'enabled') {
+            entry.enabled = newValue;
+            if (!newValue) entry.active = false;
+        } else if (field === 'active') {
+            entry.active = newValue;
+            if (newValue) entry.enabled = true;
+        }
+
+        await API.updateProfile(profileId, { skillsConfig: { skills } });
+
+        await loadSkillsPanel();
+        if (window.loadActivatedSkills) window.loadActivatedSkills();
+    } catch (err) {
+        console.error(`Failed to toggle skill ${field}:`, err);
+    }
+}
+
+// ── Event delegation ────────────────────────────────────────────────────────
+
+export function initSkillsPanelEvents() {
+    const container = document.getElementById('skills-panel-content');
+    if (!container) return;
+
+    container.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.skill-toggle-btn');
+        if (toggleBtn) {
+            e.stopPropagation();
+            const skillId = toggleBtn.dataset.skillId;
+            const field = toggleBtn.dataset.field;
+            const currentValue = toggleBtn.dataset.current === '1';
+            handleSkillToggle(skillId, field, currentValue);
+        }
+    });
+}
+
+// ── Reset (called on session switch) ────────────────────────────────────────
+
+export function resetSkillsPanelState() {
+    const container = document.getElementById('skills-panel-content');
+    if (container) container.innerHTML = '';
+
+    const tabBtn = document.querySelector('.resource-tab[data-type="skills"]');
+    if (tabBtn) {
+        tabBtn.textContent = 'Skills';
+        tabBtn.style.display = 'inline-block';
+    }
+}
