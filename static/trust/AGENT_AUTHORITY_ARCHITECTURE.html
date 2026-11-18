@@ -176,7 +176,7 @@ distinct is the whole point of this rename.</p>
    only <em>remove</em>; it can never grant or elevate.</li>
 </ol>
 <p>If you came here looking for "the agent's identity," you want the <strong>Profile</strong> and, for how it's
-surfaced as an estate-wide map, the <code>Platform Ontology</code>. This
+surfaced as an estate-wide map, the <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PLATFORM_ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">Platform Ontology</a>. This
 document is specifically the <strong>access/authority</strong> face.</p>
 <h2 id="1-the-idea">1. The idea</h2>
 <p>When an agent acts <strong>autonomously</strong> — a genie expert delegated by a coordinator, a scheduled
@@ -526,12 +526,12 @@ engine that bypasses <code>invoke_mcp_tool</code>.</p>
   turn and the answer nonetheless asserts the effect (no write succeeded, the refusal not
   disclosed), the honesty gate's <code>claimed_effect_after_denial</code> kind reads <code>danger</code> at GROUNDED
   (<code>agent/honesty/gate.py:assess_claimed_effect_after_denial</code>; <code>test/test_honesty_claimed_effect.py</code>).
-  See <code>ANSWER_GATES_ARCHITECTURE.md</code>.</p>
+  See <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/ANSWER_GATES_ARCHITECTURE.md" target="_blank" rel="noopener">ANSWER_GATES_ARCHITECTURE.md</a>.</p>
 </li>
 </ul>
 <h3 id="3b-several-mcp-servers-prop-006-phase-2">3b. Several MCP servers (PROP-006 phase 2)</h3>
 <p>An agent with additional MCP servers sees an additional server's tools under a qualified name
-(<code>crm__base_readQuery</code>, <code>MULTI_SOURCE_ARCHITECTURE.md §9</code>). Authority
+(<code>crm__base_readQuery</code>, <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/MULTI_SOURCE_ARCHITECTURE.md" target="_blank" rel="noopener">MULTI_SOURCE_ARCHITECTURE.md §9</a>). Authority
 is decided at the same chokepoints, on the name the agent sees:</p>
 <ul>
 <li><code>denied_tools</code> matches that name — <code>base_readQuery</code> denies the primary server's tool,
@@ -697,7 +697,7 @@ calls <code>config_manager.update_profile</code>).</p>
   </article>
   <footer class="docfoot">
     Uderia is a framework for trusted data agents. ·
-    Rendered from <code>docs/Architecture/AGENT_AUTHORITY_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    Rendered from <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/AGENT_AUTHORITY_ARCHITECTURE.md" target="_blank" rel="noopener"><code>docs/Architecture/AGENT_AUTHORITY_ARCHITECTURE.md</code></a> by <code>scripts/render_trust_docs.py</code> ·
     part of the Agent Trust &amp; Assurance stack ·
     <a href="index.html">trust home</a> ·
     <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·

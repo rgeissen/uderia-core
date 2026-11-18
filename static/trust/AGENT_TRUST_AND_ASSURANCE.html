@@ -170,7 +170,7 @@ failure mode, each safe to run on its own, and each strongest when run together.
 <tr>
 <td><strong>Deployment Security</strong></td>
 <td><em>Is the deployment itself secure?</em> (authN/Z, secrets, encryption, audit)</td>
-<td><code>SECURITY_ARCHITECTURE.md</code></td>
+<td><a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/SECURITY_ARCHITECTURE.md" target="_blank" rel="noopener">SECURITY_ARCHITECTURE.md</a></td>
 </tr>
 <tr>
 <td><strong>Agent Trust &amp; Assurance</strong></td>
@@ -236,9 +236,9 @@ concepts, metrics, and domain terms.</p>
 <li><strong>The Platform Ontology</strong> ("Ontology" view) is the whole-deployment map, centred on your
   agents — showing agents, their memory, sessions, knowledge, components, and configuration — so
   you can <em>see</em> what grounds what.</li>
-<li><em>Deeper reading (internals, optional):</em> <code>ONTOLOGY_ARCHITECTURE.md</code> ·
-  <code>PLATFORM_ONTOLOGY_ARCHITECTURE.md</code> ·
-  <code>KG_INSPECTOR_ARCHITECTURE.md</code></li>
+<li><em>Deeper reading (internals, optional):</em> <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">ONTOLOGY_ARCHITECTURE.md</a> ·
+  <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PLATFORM_ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">PLATFORM_ONTOLOGY_ARCHITECTURE.md</a> ·
+  <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/KG_INSPECTOR_ARCHITECTURE.md" target="_blank" rel="noopener">KG_INSPECTOR_ARCHITECTURE.md</a></li>
 </ul>
 <h3 id="22-③⑥-grounding-anti-hallucination-enforced">2.2 ③⑥ Grounding — anti-hallucination, enforced</h3>
 <p><strong>Grounding</strong> checks every answer against the knowledge the agent was actually given, and can
@@ -541,7 +541,7 @@ release lifecycle:</p>
 <li><strong>Governed metrics:</strong> a business metric is defined once in the ontology and consumed by both
   the AI <em>and</em> business-intelligence tools from that one definition; each answer shows whether
   the metric comes from a governed, trusted ontology.</li>
-<li><em>Deeper reading (internals, optional):</em> <code>PACK_GOVERNANCE_ARCHITECTURE.md</code></li>
+<li><em>Deeper reading (internals, optional):</em> <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PACK_GOVERNANCE_ARCHITECTURE.md" target="_blank" rel="noopener">PACK_GOVERNANCE_ARCHITECTURE.md</a></li>
 </ul>
 <h3 id="29-operational-trust-consumption-cost">2.9 Operational trust — consumption &amp; cost</h3>
 <p>An agent you cannot bound is not operationally trustworthy. Per-user <strong>consumption limits</strong>
@@ -1725,7 +1725,7 @@ one per station is exactly the drift this grammar exists to prevent.</p>
 per provider how to keep it warm (a breakpoint at the prefix's end on Claude and Nova, an affinity
 key on OpenAI, Azure and xAI, nothing where marking would route away from a caching upstream);
 the turn records what the provider served from cache
-(<code>PROMPT_CACHE_ARCHITECTURE.md</code>). That reading lives under SIGNED, not TRUSTED,
+(<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PROMPT_CACHE_ARCHITECTURE.md" target="_blank" rel="noopener">PROMPT_CACHE_ARCHITECTURE.md</a>). That reading lives under SIGNED, not TRUSTED,
 because of what a miss <em>means</em>: the cached prefix is the same bytes the signature covers, so a
 call whose prefix did not change, inside the cache lifetime, above the provider's minimum, on a
 provider that caches — and that still came back uncached — says <strong>something in the prefix
@@ -2158,7 +2158,7 @@ laggards so you know who to fix. A green estate station means <em>every</em> age
 least one is.</p>
 <blockquote>
 <p>Contract and conventions behind these readings:
-<code>TRUST_STATUS_COMMUNICATION.md</code></p>
+<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/TRUST_STATUS_COMMUNICATION.md" target="_blank" rel="noopener">TRUST_STATUS_COMMUNICATION.md</a></p>
 </blockquote>
 <h3 id="30a-reading-a-stations-modules-what-actually-assessed-this">3.0a Reading a station's modules — what actually assessed this</h3>
 <p>A station panel names the <strong>mechanisms</strong> that ran ("1 withheld", "nothing acted"). That tells you
@@ -2396,7 +2396,7 @@ hover either button and the tooltip tells you, for that agent, before you click.
   tokens, ships <strong>off</strong>, and never overrides an agent whose judges you turned off.</li>
 </ul>
 <p>Full mechanism:
-<code>FEEDBACK_SIGNAL_ARCHITECTURE.md</code>.</p>
+<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/FEEDBACK_SIGNAL_ARCHITECTURE.md" target="_blank" rel="noopener">FEEDBACK_SIGNAL_ARCHITECTURE.md</a>.</p>
 <h3 id="31-the-operating-posture-a-maturity-ladder">3.1 The operating posture — a maturity ladder</h3>
 <p>Do <strong>not</strong> switch everything to <em>enforce</em> on day one. The stack is designed for a graduated
 rollout: <strong>observe → measure → tighten</strong>. Every capability starts safe (baseline), so you climb
@@ -2788,7 +2788,7 @@ since. It does <strong>not</strong> say which half moved, and the two have diffe
 <p>Re-signing a deployment-face drift <strong>cannot clear it</strong> — the portable signature was never
 broken. That is why the SIGNED panel offers the act that is <em>owed</em> rather than a generic
 "sign" button: an offered act that cannot help reads as the fix, which is worse than no button
-at all (<code>Rule 8.5</code>). The panel names the drift
+at all (<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/TRUST_STATUS_COMMUNICATION.md" target="_blank" rel="noopener">Rule 8.5</a>). The panel names the drift
 verbatim in its Evidence slot, so you can tell the two apart before you click.</p>
 <h4 id="attesting-the-deployment">Attesting the deployment</h4>
 <p><strong>Signing alone does not turn a badge green.</strong> An agent you installed from a pack — or any agent
@@ -2944,8 +2944,8 @@ does PROVEN.</p>
 channel</strong>, the deployment's public-key fingerprint (<code>GET /api/v1/provenance/public-key</code>, or ask
 the operator). Then either:</p>
 <ul>
-<li>open the evidence verifier page (<code>/static/trust/verify-evidence.html</code>, also on
-  trust.uderia.com) and drop the file in. Nothing is uploaded; the check runs in the browser; or</li>
+<li>open the evidence verifier page (<code>/static/trust/verify-evidence.html</code>, also at
+  https://rgeissen.github.io/trust/verify-evidence.html) and drop the file in. Nothing is uploaded; the check runs in the browser; or</li>
 <li>run <code>python scripts/verify_evidence.py &lt;file&gt; --fingerprint &lt;fingerprint&gt;</code>, which needs only
   <code>pip install cryptography</code>.</li>
 </ul>
@@ -3090,7 +3090,7 @@ other systems):</p>
 <td>—</td>
 <td>—</td>
 <td>KG inspector, Ontology view</td>
-<td><code>ONTOLOGY</code></td>
+<td><a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">ONTOLOGY</a></td>
 </tr>
 <tr>
 <td>Grounding</td>
@@ -3162,7 +3162,7 @@ other systems):</p>
 <td>off</td>
 <td>opt-in</td>
 <td>App Config → Features → System Feature Availability</td>
-<td><code>PACK_GOVERNANCE</code></td>
+<td><a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PACK_GOVERNANCE_ARCHITECTURE.md" target="_blank" rel="noopener">PACK_GOVERNANCE</a></td>
 </tr>
 <tr>
 <td>Governance</td>
@@ -3178,7 +3178,7 @@ other systems):</p>
 <td>disabled</td>
 <td>yes</td>
 <td>App Config → Security</td>
-<td><code>SECURITY</code></td>
+<td><a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/SECURITY_ARCHITECTURE.md" target="_blank" rel="noopener">SECURITY</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -3203,21 +3203,21 @@ other systems):</p>
   <a href="TRUST_MEMBRANE_ARCHITECTURE.html">TRUST_MEMBRANE_ARCHITECTURE.md</a> ·
   <a href="EVIDENCE_ARCHITECTURE.html">EVIDENCE_ARCHITECTURE.md</a> ·
   <a href="AGENT_AUTHORITY_ARCHITECTURE.html">AGENT_AUTHORITY_ARCHITECTURE.md</a> ·
-  <code>ONTOLOGY_ARCHITECTURE.md</code> ·
-  <code>PLATFORM_ONTOLOGY_ARCHITECTURE.md</code> ·
-  <code>PACK_GOVERNANCE_ARCHITECTURE.md</code></li>
+  <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">ONTOLOGY_ARCHITECTURE.md</a> ·
+  <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PLATFORM_ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">PLATFORM_ONTOLOGY_ARCHITECTURE.md</a> ·
+  <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PACK_GOVERNANCE_ARCHITECTURE.md" target="_blank" rel="noopener">PACK_GOVERNANCE_ARCHITECTURE.md</a></li>
 <li><strong>Roadmap / tier docs:</strong> <code>TIER_1.1</code> ·
   <code>TIER_1.3</code> · <code>TIER_1.4</code> ·
   <code>TIER_4.2</code> · <code>TIER_4.3</code> ·
   <code>TIER_5.2 Trust Membrane</code></li>
 <li><strong>Delivered (Aug 2026):</strong> <a href="OBDA_ARCHITECTURE.html">OBDA_ARCHITECTURE</a> — grounding and identity made <em>structural</em>: signed data products, the data surface, sealed consumption receipts, the compositional ratchet. (The vision that predicted it: OBDA_VISION (<code>docs/roadmap/OBDA_VISION.md</code>).)</li>
 <li><strong>Delivered (Oct 2026):</strong> <a href="ACT_ARCHITECTURE.html">ACT_ARCHITECTURE</a> — the write half: signed action types, model extensions, four-eyes approval, receipts for every act through every door.</li>
-<li><strong>The other pillar:</strong> <code>SECURITY_ARCHITECTURE.md</code></li>
+<li><strong>The other pillar:</strong> <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/SECURITY_ARCHITECTURE.md" target="_blank" rel="noopener">SECURITY_ARCHITECTURE.md</a></li>
 </ul>
   </article>
   <footer class="docfoot">
     Uderia is a framework for trusted data agents. ·
-    Rendered from <code>docs/manuals/AGENT_TRUST_AND_ASSURANCE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    Rendered from <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/manuals/AGENT_TRUST_AND_ASSURANCE.md" target="_blank" rel="noopener"><code>docs/manuals/AGENT_TRUST_AND_ASSURANCE.md</code></a> by <code>scripts/render_trust_docs.py</code> ·
     part of the Agent Trust &amp; Assurance stack ·
     <a href="index.html">trust home</a> ·
     <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·

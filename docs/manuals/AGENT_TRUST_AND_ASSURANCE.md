@@ -1942,8 +1942,8 @@ does PROVEN.
 channel**, the deployment's public-key fingerprint (`GET /api/v1/provenance/public-key`, or ask
 the operator). Then either:
 
-- open the evidence verifier page (`/static/trust/verify-evidence.html`, also on
-  trust.uderia.com) and drop the file in. Nothing is uploaded; the check runs in the browser; or
+- open the evidence verifier page (`/static/trust/verify-evidence.html`, also at
+  https://rgeissen.github.io/trust/verify-evidence.html) and drop the file in. Nothing is uploaded; the check runs in the browser; or
 - run `python scripts/verify_evidence.py <file> --fingerprint <fingerprint>`, which needs only
   `pip install cryptography`.
 

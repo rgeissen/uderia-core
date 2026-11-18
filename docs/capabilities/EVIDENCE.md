@@ -15,7 +15,7 @@ answer is named, and the answer still points at the exact version it was made wi
 - **The Evidence tab** — every signature in the estate, worst first, with *Verify all shown* and an
   **Export for audit** that puts the signatures and the signed audit pack in one file.
 - **Verifiable without Uderia** — an exported file carries the exact bytes each signature binds
-  (up to a size limit). The [evidence verifier page](https://trust.uderia.com/verify-evidence.html)
+  (up to a size limit). The [evidence verifier page](https://rgeissen.github.io/trust/verify-evidence.html)
   checks it in the browser, nothing uploaded; `scripts/verify_evidence.py` does the same with
   only `cryptography` installed. Give the deployment's key fingerprint separately and the
   verifier confirms who signed.

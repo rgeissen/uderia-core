@@ -184,11 +184,14 @@ uderia_enterprise = ["overlay/**/*", "assets/**/*", "tests/**/*"]
 
 README = '''# Uderia Enterprise Package
 
-Installed beside the public core, this package restores the full stack: identity federation
-(OIDC, SAML 2.0), Postgres sessions, the S3, Azure Blob and Google Cloud Storage file stores with
-external key managers, white-label branding, the Teradata vector store, catalog, deploy backend
-and skills, the Google, Microsoft 365 and Slack connectors, the system-prompt editor, the ANDP
-constructor, and the domain agent packs.
+**[Website](https://rgeissen.github.io/) · [The trust story](https://rgeissen.github.io/trust/) · [The public core](https://github.com/rgeissen/uderia-core)**
+
+Installed beside the public core, this package adds the three OBDA planes (OBDA-READ,
+OBDA-MODEL and OBDA-ACT), identity federation (OIDC, SAML 2.0) and Google and GitHub sign-in,
+external key managers (AWS KMS, Azure Key Vault, Google Cloud KMS, Vault), white-label
+branding, the system-prompt editor, and the acts of signing (sign-off, attestation,
+revocation). Everything else, every storage, vector and graph backend, the Teradata depth and
+the account connectors among it, is in the public core.
 
 It is loaded by the core at import (the `uderia.plugins` entry point) and adds its modules and
 assets under the names the core already knows — once it has validated the deployment's licence:
@@ -208,8 +211,9 @@ override them per user and keep their history.
     python maintenance/platform_operations.py backlog --write   # the operations catalog now
     python maintenance/platform_operations.py docs --write      # describes the merged routes
 
-The package's own dependencies (the SDKs of the identity, storage and graph backends it adds)
-are declared in its `pyproject.toml`; the public core's `requirements.txt` does not list them.
+The package's own dependencies (the OIDC and SAML libraries, and the SDKs of the key managers
+it adds) are declared in its `pyproject.toml`; the public core's `requirements.txt` does not
+list them.
 '''
 
 

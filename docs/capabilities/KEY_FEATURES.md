@@ -256,7 +256,7 @@ An agent's trust is not a claim made about it: it is checked on every answer, re
   - Third-party extensibility: add custom components without modifying core files
 
 * **System Customization**: Take control of agent behavior:
-  - System prompt editing in **Administration → Prompts** (Prompt Engineer and Enterprise licences), with per-agent prompt overrides on the agent profile
+  - System prompt editing in **Administration → Prompts** (the enterprise package, activated by an Enterprise or Partner licence; in the public core the prompts are plain text files), with per-agent prompt overrides on the agent profile
   - Save and reset capabilities for experimentation
   - An Ideate agent without tools for baseline testing against the bare model
   - Dynamic Capability Management (enable/disable tools/prompts)

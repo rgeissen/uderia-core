@@ -11,13 +11,16 @@ Usage:
     python scripts/render_trust_docs.py            # render all four
     python scripts/render_trust_docs.py --check    # exit 1 if any render is stale
 
-Link policy (the bundle is SELF-CONTAINED — served at /static/trust/, sibling links only):
+Link policy (the bundle is served at /static/trust/ of every deployment and at /trust/ of the
+GitHub page; neither serves the repository, so a repository link leaves the bundle):
   * ``#anchor``                          → kept
-  * links to the four doc sources        → rewritten to the sibling ``.html``
+  * links to the rendered doc sources    → rewritten to the sibling ``.html``
   * links to in-bundle pages (``.html``) → kept
   * absolute ``http(s)://``              → kept
+  * a repo-relative link whose target ships in the public core (``oss/public_core.json``)
+    → its page in the public repository (``PUBLIC_REPO``), which carries the same paths
   * any other repo-relative link (.md/.py/…) → UNLINKED to <code>basename</code> —
-    honest: the target is not served, so a dead link would lie.
+    honest: the target is published nowhere, so a link would lie.
 
 Requires the ``markdown`` package (docs tooling only — deliberately NOT a runtime
 dependency; ``pip install markdown`` in the venv).
@@ -38,6 +41,7 @@ except ImportError:  # pragma: no cover
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "static", "trust")
 CSS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trust_doc_shell.css")
+PUBLIC_REPO = "https://github.com/rgeissen/uderia-core"   # the public core, same paths as here
 
 # ── the docs (source → page metadata) ───────────────────────────────────────
 DOCS = [
@@ -137,7 +141,33 @@ def gh_slug(text: str, seen: dict) -> str:
     return s if n == 0 else f"{s}-{n}"
 
 
-def rewrite_links(body: str) -> str:
+def public_core_files() -> frozenset:
+    """The files the public core carries — the one membership rule, ``oss/public_core.json``."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from build_public_core import MANIFEST, classify, tracked_files
+    finally:
+        sys.path.pop(0)
+    import json
+    decided, _ = classify(tracked_files(), json.loads(MANIFEST.read_text(encoding="utf-8"))["rules"])
+    return frozenset(f for f, r in decided.items() if r["action"] == "include")
+
+
+def public_url(src: str, base: str, public: frozenset) -> str | None:
+    """The public-repository page of a repo-relative link from ``src``, or None when the core lacks it."""
+    if not base or base.startswith("/"):
+        return None
+    path = os.path.normpath(os.path.join(os.path.dirname(src), base)).replace(os.sep, "/")
+    if path.startswith(".."):
+        return None
+    if path in public:
+        return f"{PUBLIC_REPO}/blob/main/{path}"
+    if any(f.startswith(path.rstrip("/") + "/") for f in public):
+        return f"{PUBLIC_REPO}/tree/main/{path.rstrip('/')}"
+    return None
+
+
+def rewrite_links(body: str, src: str = "", public: frozenset = frozenset()) -> str:
     def _sub(m):
         href = m.group(1)
         frag = ""
@@ -152,6 +182,9 @@ def rewrite_links(body: str) -> str:
             return f'href="{SIBLING_MAP[name]}{frag}"'
         if name in IN_BUNDLE_HTML:
             return f'href="{name}{frag}"'
+        url = public_url(src, base, public)
+        if url:
+            return f'href="{url}{frag}" target="_blank" rel="noopener"'
         return "data-unlinked=\"" + html_mod.escape(href, quote=True) + "\""
     out = re.sub(r'href="([^"]+)"', _sub, body)
     # collapse unlinked anchors to inline code (the honest non-link)
@@ -202,7 +235,7 @@ def wrap_tables(body: str) -> str:
         "</table>", "</table></div>")
 
 
-def render_doc(cfg: dict, css: str) -> str:
+def render_doc(cfg: dict, css: str, public: frozenset = frozenset()) -> str:
     src_path = os.path.join(ROOT, cfg["src"])
     md_text = open(src_path, encoding="utf-8").read()
     # Drop the document's own H1 (the hero carries the title).
@@ -212,10 +245,12 @@ def render_doc(cfg: dict, css: str) -> str:
         extensions=["tables", "fenced_code", "sane_lists", "md_in_html"],
         output_format="html5",
     )
-    body = rewrite_links(body)
+    body = rewrite_links(body, cfg["src"], public)
     body, toc = add_heading_ids(body)
     body = resolve_fragment_links(body)
     body = wrap_tables(body)
+    source_ref = (f'<a href="{PUBLIC_REPO}/blob/main/{cfg["src"]}" target="_blank" rel="noopener">'
+                  f'<code>{cfg["src"]}</code></a>' if cfg["src"] in public else f"<code>{cfg['src']}</code>")
     toc_html = "".join(
         f'<a href="#{slug}" class="lvl-{lvl}">{html_mod.escape(text)}</a>'
         for lvl, slug, text in toc)
@@ -244,7 +279,7 @@ def render_doc(cfg: dict, css: str) -> str:
   </article>
   <footer class="docfoot">
     Uderia is a framework for trusted data agents. ·
-    Rendered from <code>{cfg['src']}</code> by <code>scripts/render_trust_docs.py</code> ·
+    Rendered from {source_ref} by <code>scripts/render_trust_docs.py</code> ·
     part of the Agent Trust &amp; Assurance stack ·
     <a href="index.html">trust home</a> ·
     <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·
@@ -262,9 +297,10 @@ def main() -> int:
     args = ap.parse_args()
     css = open(CSS_PATH, encoding="utf-8").read()
     stale = []
+    public = public_core_files()
     for cfg in DOCS:
         out_path = os.path.join(OUT_DIR, cfg["out"])
-        rendered = render_doc(cfg, css)
+        rendered = render_doc(cfg, css, public)
         current = open(out_path, encoding="utf-8").read() if os.path.exists(out_path) else ""
         if args.check:
             if rendered != current:

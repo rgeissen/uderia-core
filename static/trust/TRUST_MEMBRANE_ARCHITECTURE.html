@@ -276,7 +276,7 @@ harmonised band <strong>clean · partial · blocked</strong>.</p>
 <td>Assurance module</td>
 <td><code>assurance_module</code></td>
 <td>pack manifest + module content + <strong>capability honesty</strong> (a claimed tier must be provable)</td>
-<td>code-safety + tier proof (<code>ASSURANCE_MODULE_PLANE_ARCHITECTURE.md</code>)</td>
+<td>code-safety + tier proof (<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/ASSURANCE_MODULE_PLANE_ARCHITECTURE.md" target="_blank" rel="noopener">ASSURANCE_MODULE_PLANE_ARCHITECTURE.md</a>)</td>
 </tr>
 <tr>
 <td>Data product</td>
@@ -426,7 +426,7 @@ formulas by <strong>evidence, never by a flag</strong>:</p>
   the pack sync fan-out. The consumer of a REFERENCE cannot repair it — the content is the
   publisher's.</li>
 <li><strong>A subscribed repository is a VIEW of the publisher's collection, not a copy</strong>
-  (<code>MARKETPLACE_ARCHITECTURE.md §1</code>) — the subscriber's card
+  (<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/MARKETPLACE_ARCHITECTURE.md" target="_blank" rel="noopener">MARKETPLACE_ARCHITECTURE.md §1</a>) — the subscriber's card
   shows the publisher's collection id and store. Its trust state is therefore the
   publisher's, at the same moment, and the <strong>Locked</strong> pill on the subscriber's card reports
   the <em>publisher's</em> opt-in, never the subscriber's (who cannot write to it under any
@@ -462,7 +462,7 @@ campaign change the runtime around the seal without changing the seal:</p>
   moves the hash, so a learned case is never replayed under a signature that does not cover it.</li>
 </ul>
 <p>Gates: <code>test_agent_learning.py</code>, <code>test_planner_binding_scope.py</code>, <code>test_signed_seed_replay.py</code>.
-Rule: <code>RAG.md</code> → "Where an agent learns".</p>
+Rule: <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/RAG/RAG.md" target="_blank" rel="noopener">RAG.md</a> → "Where an agent learns".</p>
 <p>The worked walkthrough, publisher and subscriber side by side, is
 <a href="AGENT_TRUST_AND_ASSURANCE.html">AGENT_TRUST_AND_ASSURANCE.md §3.5a</a>.</p>
 <h3 id="3a2-planner-health-the-gate-names-the-case-it-refused-nov-2026">3a.2 Planner Health — the gate names the case it refused (Nov 2026)</h3>
@@ -607,7 +607,7 @@ classified on this instance — activate the agent once, then attest"</em>). <co
 server: added, removed, renamed alias, its catalog becoming unreadable, tools or prompts that
 appeared or were removed. The portable half does not change — which servers an agent reads is a
 deployment decision, and a pack does not carry them. Architecture:
-<code>MULTI_SOURCE_ARCHITECTURE.md §9</code>. Gate: <code>test_trust_deployment</code>,
+<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/MULTI_SOURCE_ARCHITECTURE.md" target="_blank" rel="noopener">MULTI_SOURCE_ARCHITECTURE.md §9</a>. Gate: <code>test_trust_deployment</code>,
 <code>test_multi_mcp_runtime</code>.</p>
 <h2 id="4-the-bottom-up-sign-gate">4. The bottom-up sign gate</h2>
 <p><code>agent_signable(ingredients)</code> refuses to sign an agent unless every ingredient is already
@@ -642,7 +642,7 @@ component-instance; collections inherit trust free via the reference model. Full
 enterprise feature — the <em>Ontology Suite</em></strong> — governed by a single switch
 (<code>core/enterprise.py</code>, ON for all tiers today; a one-line flip makes it Enterprise-only).
 Removal manifest + absence-tolerance contract: <code>src/trusted_data_agent/core/trust/README.md</code>.
-Canonical suite description: <code>PLATFORM_ONTOLOGY_ARCHITECTURE.md §11</code>.</p>
+Canonical suite description: <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/PLATFORM_ONTOLOGY_ARCHITECTURE.md" target="_blank" rel="noopener">PLATFORM_ONTOLOGY_ARCHITECTURE.md §11</a>.</p>
 <h2 id="7a-what-an-agents-signature-covers-jul-2026">7a. What an agent's signature covers (Jul 2026)</h2>
 <p>An agent's signable content is its <strong>composition + its safety posture</strong> — the grounding,
 guardrail and honesty modes that decide what it will and will not say. Before this, two
@@ -694,7 +694,7 @@ to an explicit hash-format version bump); the sign-time TOCTOU (fail-safe direct
 license gate's fail-open (search key <code>TRUST_LICENSE_FAIL_OPEN</code> — must flip with the
 Enterprise gate).</p>
 <h2 id="7c-history-owner-scoped-agents-signing-keys-prop-009-41-oct-2026">7c. History, owner-scoped agents, signing keys (PROP-009 §4.1, Oct 2026)</h2>
-<p>Three facts the evidence work (<code>PROP-009</code>)
+<p>Three facts the evidence work (PROP-009 (<code>docs/proposals/PROP-009-evidence-per-result.md</code>))
 needs, and that the original single-row design could not hold:</p>
 <ul>
 <li><strong>A re-sign must not erase what was signed before.</strong> <code>trust_attestations</code> keeps one
@@ -742,7 +742,7 @@ hand sign-off would (approver tier; refused under separation of duties), keeps t
 and the bottom-up gate's refusals, and records why under <code>verdict.renewal</code> (the run, the
 repository, the files, the policy), so an evidence view that names a signer can say <em>renewed by
 the scheduled sync</em>. Detail:
-<code>KNOWLEDGE_RETRIEVAL_ARCHITECTURE.md</code> §<em>Signature renewal
+<a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/KNOWLEDGE_RETRIEVAL_ARCHITECTURE.md" target="_blank" rel="noopener">KNOWLEDGE_RETRIEVAL_ARCHITECTURE.md</a> §<em>Signature renewal
 after a sync</em>. Gate: <code>test/test_signature_renewal.py</code>.</p>
 <p>The renewal reaches a pack's subscribers: after the owner's agents, the seal of every installed
 pack that ships the repository (or a renewed agent) is renewed — renewal only, the aggregate
@@ -774,7 +774,7 @@ loud fail-open warning), preserving the removability contract.</p>
 <p><strong>Remaining (minor):</strong> a cross-instance <em>trusted-publisher policy</em> (verification works; the
 allow-list is a config choice); the <em>Enforced</em> grounding level (a turn may only execute 🟢
 ingredients — TIER_5.2 §6). Note the Tier 4.3 <strong>Model B</strong> (an agent grounds on the ontology's
-RELEASED version only, opt-in per agent) IS built (Sep 2026, <code>KNOWLEDGE_GRAPH_ARCHITECTURE.md</code>).</p>
+RELEASED version only, opt-in per agent) IS built (Sep 2026, <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/KNOWLEDGE_GRAPH_ARCHITECTURE.md#released-only-grounding--model-b-tier-43-1a" target="_blank" rel="noopener">KNOWLEDGE_GRAPH_ARCHITECTURE.md</a>).</p>
 <p><strong>Tests:</strong> <code>test/test_trust_membrane.py</code> (244 assertions — three-state truth, hashing,
 compositional truth table, the per-kind validators, scanners, bands, portability incl. cross-instance
 pubkey round-trip, the owner-readable ingredient rule), plus <code>test_trust_deployment.py</code>,
@@ -783,7 +783,7 @@ pubkey round-trip, the owner-readable ingredient rule), plus <code>test_trust_de
   </article>
   <footer class="docfoot">
     Uderia is a framework for trusted data agents. ·
-    Rendered from <code>docs/Architecture/TRUST_MEMBRANE_ARCHITECTURE.md</code> by <code>scripts/render_trust_docs.py</code> ·
+    Rendered from <a href="https://github.com/rgeissen/uderia-core/blob/main/docs/Architecture/TRUST_MEMBRANE_ARCHITECTURE.md" target="_blank" rel="noopener"><code>docs/Architecture/TRUST_MEMBRANE_ARCHITECTURE.md</code></a> by <code>scripts/render_trust_docs.py</code> ·
     part of the Agent Trust &amp; Assurance stack ·
     <a href="index.html">trust home</a> ·
     <a href="the-life-of-a-uderia-agent.html">the visual story</a> ·

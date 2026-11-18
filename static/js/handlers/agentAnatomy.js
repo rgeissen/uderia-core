@@ -309,7 +309,7 @@
                    Hover a faculty to read it; click to open the editor at exactly that place.</p></div>
                 ${_legend()}
                 ${links}
-                <a class="an-story-link" href="https://trust.uderia.com/agent-anatomy-of-trust.html" target="_blank" rel="noopener" style="margin-top:14px;">Read the anatomy of trust
+                <a class="an-story-link" href="/static/trust/agent-anatomy-of-trust.html" target="_blank" rel="noopener" style="margin-top:14px;">Read the anatomy of trust
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>`;
         }
         return `<div class="an-panel-head">
@@ -320,7 +320,7 @@
             <p class="an-copy">Hover to learn; click to open. Pick an agent at the star's center to see
                <em>its</em> living anatomy.</p></div>
             ${_legend()}
-            <a class="an-story-link" href="https://trust.uderia.com/agent-anatomy-of-trust.html" target="_blank" rel="noopener" style="margin-top:14px;">Read the anatomy of trust
+            <a class="an-story-link" href="/static/trust/agent-anatomy-of-trust.html" target="_blank" rel="noopener" style="margin-top:14px;">Read the anatomy of trust
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>`;
     }
 

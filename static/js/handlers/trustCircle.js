@@ -434,7 +434,7 @@
                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-4"/><path d="M12 3v2"/></svg>
                  Start a new leg</button>` : ''}
         <div class="tc-foot">
-            <a class="tc-story-link" href="https://trust.uderia.com/the-life-of-a-uderia-agent.html" target="_blank" rel="noopener">
+            <a class="tc-story-link" href="/static/trust/the-life-of-a-uderia-agent.html" target="_blank" rel="noopener">
                 Read the full story — the life of a Uderia agent
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
             <div class="tc-lastevent" id="tc-lastevent"><span class="tc-lastevent-dot"></span><span id="tc-lastevent-text">Watching for live trust events…</span></div>

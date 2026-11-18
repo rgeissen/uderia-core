@@ -360,7 +360,7 @@ The closed trust loop is not only enforced — it is **drawn**. The Trust Circle
 
 Because each station reads live state rather than a stored number, the Trust Circle can never overstate trust: an absent signal is shown as an honest gap, not a green light.
 
-Public story: **[trust.uderia.com — The Life of a Uderia Agent](https://trust.uderia.com/the-life-of-a-uderia-agent.html)** · operator detail in the [Agent Trust & Assurance runbook](../manuals/AGENT_TRUST_AND_ASSURANCE.md) · design: Agent Anatomy Panel (`docs/roadmap/AGENT_ANATOMY_PANEL.md`) · contract: [Trust Status Communication](../Architecture/TRUST_STATUS_COMMUNICATION.md) ([casebook](../Architecture/TRUST_STATUS_COMMUNICATION_CASEBOOK.md)) · reading guide: [Trust UX FAQ](../manuals/TRUST_UX_FAQ.md).
+Public story: **[The Life of a Uderia Agent](https://rgeissen.github.io/trust/the-life-of-a-uderia-agent.html)** · operator detail in the [Agent Trust & Assurance runbook](../manuals/AGENT_TRUST_AND_ASSURANCE.md) · design: Agent Anatomy Panel (`docs/roadmap/AGENT_ANATOMY_PANEL.md`) · contract: [Trust Status Communication](../Architecture/TRUST_STATUS_COMMUNICATION.md) ([casebook](../Architecture/TRUST_STATUS_COMMUNICATION_CASEBOOK.md)) · reading guide: [Trust UX FAQ](../manuals/TRUST_UX_FAQ.md).
 
 ---
 

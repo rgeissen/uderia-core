@@ -6,6 +6,8 @@
 
 [![License: FSL-1.1-ALv2](https://img.shields.io/badge/License-FSL--1.1--ALv2-blue.svg)](LICENSE) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](docs/guides/INSTALL.md)
 
+**[Website](https://rgeissen.github.io/) · [The trust story](https://rgeissen.github.io/trust/)**
+
 Uderia is a framework for building efficient data agents that run on any model, over any data source, inside your own walls, and prove every action. Agents built on it answer questions from your data and your documents, act on your systems only within the authority they were given, and leave a signed record of what they did. Its runtime implementation, **the Uderia platform** — a server, an interface and a REST API — makes them work out of the box.
 
 ![Uderia in use](./images/AppOverview.gif)
@@ -78,7 +80,7 @@ Trust in Uderia is earned, shown and carried, never asserted. It is applied at f
 | **After every turn** | The turn is scored by a profile-class-aware scorer suite, sealed with an Ed25519 signature over its execution chain, and recorded with the evidence of every part it used. | [Evidence](docs/capabilities/EVIDENCE.md) · [Proof pack A6](docs/proof-packs/A6_EVAL_OBSERVABILITY.md) |
 | **Over the agent's life** | Its configuration, knowledge, graphs and skills are each signed; its Trust Circle shows where it stands and which act is owed; its trust posture travels with it and is checked again on arrival. | [Trust Membrane](docs/capabilities/TRUST_MEMBRANE.md) · [Operator runbook](docs/manuals/AGENT_TRUST_AND_ASSURANCE.md) |
 
-Controls are mapped to ISO 27001, SOC 2, the EU AI Act and the NIST AI RMF in the [operator runbook](docs/manuals/AGENT_TRUST_AND_ASSURANCE.md).
+Controls are mapped to ISO 27001, SOC 2, the EU AI Act and the NIST AI RMF in the [operator runbook](docs/manuals/AGENT_TRUST_AND_ASSURANCE.md). The whole of it, told along one agent's life from its first configuration to its signed answers: [The Life of a Uderia Agent](https://rgeissen.github.io/trust/the-life-of-a-uderia-agent.html), part of [the trust story](https://rgeissen.github.io/trust/).
 
 **Check a signed answer yourself, without installing Uderia** — a captured attestation and the public key ship in the repository:
 
@@ -86,6 +88,8 @@ Controls are mapped to ISO 27001, SOC 2, the EU AI Act and the NIST AI RMF in th
 cd docs/proof-packs/samples && pip install cryptography && python verify_attestation.py
 # RESULT: ATTESTATION VALID — verdict is cryptographically bound to the trajectory
 ```
+
+An evidence file exported from a deployment can be checked the same way in a browser, with nothing installed and nothing uploaded: the [evidence verifier](https://rgeissen.github.io/trust/verify-evidence.html).
 
 ## Seven principles
 
@@ -168,7 +172,7 @@ Open `http://localhost:5050`, sign in as `admin` / `admin`, and change the passw
 
 | You want to | Start with |
 |---|---|
-| Understand why it matters | [Value Proposition](docs/value/VALUE_PROPOSITION.md) · framings: the framework (`docs/value/POSITIONING_FRAMEWORK.md`) · Uderia on Teradata (`docs/value/POSITIONING_TERADATA.md`) |
+| Understand why it matters | [Value Proposition](docs/value/VALUE_PROPOSITION.md) · [The trust story](https://rgeissen.github.io/trust/) · framings: the framework (`docs/value/POSITIONING_FRAMEWORK.md`) · Uderia on Teradata (`docs/value/POSITIONING_TERADATA.md`) |
 | See everything it does | [Capabilities](docs/capabilities/README.md) · [Key Features](docs/capabilities/KEY_FEATURES.md) |
 | Install and run it | [Installation](docs/guides/INSTALL.md) · [Docker](docs/guides/DOCKER.md) |
 | Use it day to day | [User Guide](docs/guides/USER_GUIDE.md) · [Consumption Profiles](docs/guides/CONSUMPTION_PROFILES.md) |
@@ -214,5 +218,7 @@ The copyright stays with the author. Contributions to the public core are accept
 * **Author/Initiator:** Rainer Geissendoerfer ([LinkedIn](https://www.linkedin.com/in/rainer-geissendoerfer/))
 
 * **Source Code & Contributions:** the public core is Fair Source under the Functional Source License (FSL-1.1-ALv2), each release becoming Apache 2.0 open source after two years; issues and pull requests are welcome, under the contributor licence agreement described in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+* **Website:** <https://rgeissen.github.io/> · the trust story: <https://rgeissen.github.io/trust/>
 
 * **Git Repository:** <https://github.com/rgeissen/uderia-core>
