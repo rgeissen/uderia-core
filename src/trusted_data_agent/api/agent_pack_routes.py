@@ -59,9 +59,10 @@ _VALIDATION_ERROR_CODES = frozenset({
     "posture_downgrade",
 })
 
-# Logo for outbound emails — served from the public uderia.com website.
-# Upload static/images/Uderia_Logo.png to the uderia.com web root to make this work.
-_EMAIL_LOGO_URL = "https://uderia.com/Uderia_Logo.png"
+# Logo for outbound emails — a PNG (mail clients do not render SVG), served from the
+# public core's repository; the website the emails link to is _EMAIL_SITE_URL.
+_EMAIL_LOGO_URL = "https://raw.githubusercontent.com/rgeissen/uderia-core/main/static/images/Uderia_Logo.png"
+_EMAIL_SITE_URL = "https://rgeissen.github.io/"
 app_logger = logging.getLogger("quart.app")
 
 DB_PATH = Path(__file__).resolve().parents[3] / "tda_auth.db"
@@ -3689,9 +3690,9 @@ def _build_author_notification_html(
             <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;letter-spacing:1px;
                        text-transform:uppercase;color:#94a3b8">What is Uderia?</p>
             <p style="margin:0 0 16px 0;font-size:14px;line-height:1.75;color:#475569">
-              Uderia is an enterprise AI orchestration platform that lets teams deploy
-              multi-agent workflows against their data — connecting language models,
-              data sources, and tools in a governed, auditable way.
+              Uderia is a framework for building efficient data agents that run on
+              any model, over any data source, inside your own walls, and prove
+              every action.
             </p>
             <p style="margin:0 0 32px 0;font-size:14px;line-height:1.75;color:#475569">
               Agent packs are portable bundles — profiles, skills, and routing logic —
@@ -3716,7 +3717,7 @@ def _build_author_notification_html(
                    style="margin-bottom:40px">
               <tr>
                 <td align="center">
-                  <a href="https://uderia.com"
+                  <a href="{_EMAIL_SITE_URL}"
                      style="display:inline-block;padding:14px 36px;background:#F15F22;
                             color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;
                             border-radius:6px;letter-spacing:0.25px">
@@ -4004,7 +4005,7 @@ def _build_author_update_notification_html(
                    style="margin-bottom:40px">
               <tr>
                 <td align="center">
-                  <a href="https://uderia.com"
+                  <a href="{_EMAIL_SITE_URL}"
                      style="display:inline-block;padding:14px 36px;background:#F15F22;
                             color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;
                             border-radius:6px;letter-spacing:0.25px">

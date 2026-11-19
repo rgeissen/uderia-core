@@ -7,8 +7,6 @@ Each clause of that sentence is a fact you can check. "Efficient" is the planner
 
 This page is the neutral core of the value story. It says what the framework gives an organisation and where each claim is substantiated. How the same facts are told to a team deciding how to build its agents, and how they are told to a Teradata account, are two separate framings: Positioning: the framework (`docs/value/POSITIONING_FRAMEWORK.md`) and Positioning: Uderia on Teradata (`docs/value/POSITIONING_TERADATA.md`).
 
-![Demo](../../images/AppOverview.gif)
-
 ## Where it is heading: the autonomous enterprise
 
 The ambition behind Uderia is an enterprise where routine questions and decisions are delegated to agents, and people spend their attention where judgement is needed. Autonomy there is earned, not switched on: each agent is given as much as its evidence supports, and no more. Its gates move from observing to enforcing, its changes from parked for review to approved, and its authority always fails closed ([the maturity ladder](../manuals/AGENT_TRUST_AND_ASSURANCE.md#31-the-operating-posture--a-maturity-ladder)). Some acts stay with people by design: signing an agent, entering credentials, approving a change.

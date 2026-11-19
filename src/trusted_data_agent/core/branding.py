@@ -43,8 +43,8 @@ class Brand:
     product_name: str = "Uderia Platform"          # <title>, email subjects
     short_name: str = "Uderia"                     # scheduler subject prefix, prose
     display_name: str = "UDERIA"                   # nav + hero wordmark text
-    subtitle: str = "PLATFORM"                     # hero third line (rendered uppercase)
-    kicker: str = "AUTONOMOUS • ENTERPRISE"        # letterspaced category line
+    subtitle: str = "FRAMEWORK"                    # hero third line (rendered uppercase)
+    kicker: str = "TRUSTED • DATA • AGENTS"        # letterspaced category line
     hero_line_1: str = "Cloud-Level Reasoning."
     hero_line_2: str = "Zero-Trust Privacy."       # the gradient-emphasized line
     copyright: str = "© 2026 Uderia. All rights reserved."

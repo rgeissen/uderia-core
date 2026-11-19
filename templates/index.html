@@ -10276,8 +10276,8 @@
                 <img src="/static/images/Uderia_Logo.svg" alt="Uderia Logo" class="h-16 mx-auto mb-3">
                 <p class="text-lg text-white font-bold tracking-wide mb-1">UDERIA</p>
                 <p class="text-xs text-gray-500 tracking-widest uppercase mb-4">You · Data · Freedom <span class="normal-case">(ελευθερία)</span></p>
-                <p class="text-xl text-white font-semibold">Autonomous <span class="text-teradata-orange">•</span> Enterprise</p>
-                <p class="text-xl text-white font-semibold">Platform</p>
+                <p class="text-xl text-white font-semibold">{{ brand.kicker | title | replace('•', '<span class="text-teradata-orange">•</span>') | safe }}</p>
+                <p class="text-xl text-white font-semibold">{{ brand.subtitle | title }}</p>
                 {% else %}
                 <img src="{{ brand.logo_light }}" alt="{{ brand.product_name }}" class="h-16 mx-auto mb-3">
                 {% if brand.wordmark %}<img src="{{ brand.wordmark }}" alt="" class="h-4 mx-auto mb-2">{% endif %}
@@ -10290,7 +10290,7 @@
             {% if brand.is_default %}
             <div class="flex justify-center gap-6 mb-4 text-sm">
                 <a href="https://rgeissen.github.io/" target="_blank" class="text-teradata-orange hover:underline inline-flex items-center gap-1">
-                    uderia.com
+                    Website
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </a>
                 <a href="https://github.com/rgeissen/uderia-core.git" target="_blank" class="text-teradata-orange hover:underline inline-flex items-center gap-1">

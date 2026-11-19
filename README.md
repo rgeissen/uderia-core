@@ -10,8 +10,6 @@
 
 Uderia is a framework for building efficient data agents that run on any model, over any data source, inside your own walls, and prove every action. Agents built on it answer questions from your data and your documents, act on your systems only within the authority they were given, and leave a signed record of what they did. Its runtime implementation, **the Uderia platform** — a server, an interface and a REST API — makes them work out of the box.
 
-![Uderia in use](./images/AppOverview.gif)
-
 ---
 
 ## Why it exists
