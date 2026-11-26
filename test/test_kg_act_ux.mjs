@@ -77,7 +77,7 @@ console.log('[§1] the theatre: a propose_* result is a draft op, live and on re
   r2.end({});
   const src = readFileSync('static/js/handlers/kgTheatre.js', 'utf8');
   check('the Execute summary counts drafts (the receipt line)', /drafted\b/.test(src.match(/execute: S\.statements\.length[\s\S]{0,900}/)[0]));
-  check('the stage draws a draft dashed and labels it', /ui\.drafts\.get\(e\.name\)/.test(src) && /stroke-dasharray', draftKind \? '6 4'/.test(src) && /draftKind\.toUpperCase\(\)/.test(src));
+  check('the stage draws a draft dashed and labels it', /ui\.drafts\.get\(e\.name\)/.test(src) && /draft: !!draftKind/.test(src) && /dash: o\.draft \? '6 4'/.test(src) && /attr\('stroke-dasharray', bs\.dash\)/.test(src) && /draftKind\.toUpperCase\(\)/.test(src));
   check('the drafts map is reset with the other per-turn sets, at both sites', (src.match(/ui\.drafts = new Map\(\)/g) || []).length === 2);
 }
 

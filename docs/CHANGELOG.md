@@ -1,5 +1,33 @@
 # Uderia Changelog
 
+## Nov 2026 (v1.29) — Release
+
+**13 commits since v1.28 (14 – 26 Nov 2026).** A small release after the two distributions went out. Headlines:
+
+- **The KG execution theatre reads in the light theme** — one palette per theme, the stage reads the theme from the element that carries it (`<body>`) and follows a change, a state recedes by its drawing instead of fading; `reset()` resets again (a mid-line comment had commented out half of it); the Chrome gate serves the module's sibling import and measures every story text in both themes. Full entry below.
+- **The public core shows nothing of the author's infrastructure** — one named public demo endpoint (MCP 8888, read-only), the compose's production blocks dropped by the export, links point at `uderia-core`, proposals and performance results out, a gate on the export.
+- **Framing** — the default brand reads TRUSTED • DATA • AGENTS / FRAMEWORK and the About box reads the brand in force; the README and the trust story link the website and the public core; the overview GIF with the old tagline is gone; the enterprise README describes the package as it is since 12 Nov.
+- **Small corrections** — the Teradata tab of Vector Stores carries no BETA badge; KEY_FEATURES names the prompt editor as the enterprise package's; the Teradata partner licence's Schedule E names the five entitlements.
+
+- **Two gates found red while cutting the release** — the Files panel listens to `uderia:effective-profile` since v1.28 without declaring it (`components/builtin/files/manifest.json` → `signals.listens`; `test_component_bus.mjs` was red); `test_platform_playbooks` runs alone after the pool (its meaning ranker warms in a background thread, and under the pool three rankings fell back to words).
+
+**Deploy:** `pyproject` 1.29.0 · compose `uderia-v1-29` + build-arg default `v1.29` · annotated tag `v1.29`. The first start of v1.29 is a schema-ledger upgrade (a `VACUUM INTO` backup first). No schema change, no new Python dependencies, no prompt change.
+
+## Nov 2026 — The KG execution theatre reads in the light theme
+
+**Why:** an operator screenshot of the theatre in the light theme (26 Nov 2026): entity names and question words near-white on a pale stage, attribute rows and cardinalities barely visible, the receipt a dark card, the statement strip dark-slate keywords on a near-black surface. Four causes: the stage read its colour tokens from `<html>`, and the app carries the theme on `<body>` — so the drawing got the `:root` dark defaults in EVERY theme, while the chrome followed its CSS variables (it also read them once at mount, so it could not have followed a change either); half the palette was hardcoded neon tuned for a dark stage (1.5–2:1 on white); every receding state was told by fading, and a faded box dissolves on white where it still reads against black; the strip's surface was a hardcoded dark hex under theme-following text.
+
+- **One palette per theme, exported:** `kgTheatre.PALETTE` (`dark` · `light`) holds every hue the theatre alone draws and every state ladder; the injected stylesheet's theme variables are written from it (`_themeVars`), so the strip, ribbon and trail cannot hold a second list. The dark table is the stage as it was.
+- **The stage reads the theme where the app sets it:** `themeHost()` is the element that carries `data-theme` (`<body>`, `<html>` as the fallback); `readTheme()` reads the tokens from it at mount and again from a `MutationObserver` (`retheme()`: the same frame, the same hold, no replay).
+- **The first fix shipped broken (07c3a7a3, same day):** it read `<html>`, and the test harness themed `<html>` too, so every gate passed while the app stayed dark-on-light. The harness now themes `<body>` over `:root` dark defaults, as `templates/index.html` does; the light scenarios fail on that build (names at luminance 0.95, the receipt a dark card, a text at 1.03:1).
+- **Light: a state recedes by its drawing, not by fading** (`boxStyle`, also the key's swatch): lit is a white card lifted off the stage, solid a tinted card, known a neutral card that keeps its hue on the border, dim a neutral card with a grey border, background a pale one; nothing that carries text goes below 0.7. No subject-area wash on white; a receded thread turns neutral; relationship and thread labels carry a plate of the stage's colour so a line never strikes them through; the receipt is a light card with elevation; the statement strip is a light code surface.
+- **Text readings of bright tokens:** brand orange, pass green and the indigo of a by-meaning thread carry text through `orangeT` · `passT` · `accentT` (the dark `accentT` is lighter than the old indigo, which read 4.0:1).
+- **Not changed:** type sizes and the layout (the overlap gate measures both); the dark ladder.
+- **The Chrome gate was red at HEAD:** `test_kg_theatre_dom.mjs` served the module but not its sibling import (`../kgVocabulary.js`), so the stage never mounted and every scenario failed since the vocabulary module was introduced. It is a manual gate, so nothing reported it. Fixed in the gate's server.
+- **Gates:** `test_kg_theatre.mjs` `[theme]` (every text hue ≥ 4.5:1 on its stage and every statement token on its chip, both themes; the palette's stage is the page's `--bg-primary`; the light ladder's floor; tokens read per theme; no hue literal in the renderer) · `test_kg_theatre_dom.mjs` six theme scenarios (light receipt, Inspect, prevented, held at Seed, the theme turning light under a mounted stage, dark) with a probe that measures every story text at its effective opacity against the stage (≥ 3:1) — it found four texts under 3:1 that a look at the frames had passed.
+
+Files: `static/js/handlers/kgTheatre.js` (v1.27, pin 1.38), `components/builtin/knowledge_graph/renderer.js`, `test/test_kg_theatre.mjs`, `test/test_kg_theatre_dom.mjs`, `test/kg_theatre_harness/index.html`, `test/test_kg_act_ux.mjs`, `docs/Architecture/KG_INSPECTOR_ARCHITECTURE.md`.
+
 ## Nov 2026 — The public core shows nothing of the author's infrastructure; one public demo endpoint
 
 **Why:** the last check before the core went public found the author's setup in it: the published `docker-compose.yml` mounted the production host's path over `/app` (on any other machine an empty folder, so a container without code), set the production URL and privileged mode; the changelog mapped every MCP endpoint, its database identity and which ports were forwarded, and named the warehouse's public port; the Quick Start cloned the private development repository; `docs/proposals/` argued against a named product; and 70 old performance-run outputs named the production server.

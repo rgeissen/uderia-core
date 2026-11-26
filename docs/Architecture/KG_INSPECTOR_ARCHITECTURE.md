@@ -254,6 +254,27 @@ forward while the injected context it does not read recedes to a *background* re
 held. This is the distinction the retired hover spotlight used to make on Execute, moved into the
 frame where the preview model needs it.
 
+**Two themes, one palette each (Nov 2026).** Every hue the theatre alone draws and every state
+ladder lives in the exported `PALETTE` (`dark` · `light`); the shared tokens (text, border, card,
+the trust colours) are the page's CSS variables. `readTheme()` fills the drawing's tokens at mount
+and again whenever the theme attribute changes — on `<body>`, where the app sets it (read from `<html>` the tokens are the `:root` dark defaults in every theme; `themeHost()` is the one reader) (`retheme()` redraws the frame on stage — the same
+hold, no replay); read once at mount, a stage opened dark kept dark colours on a light page. The
+stylesheet's theme variables are written from the same table (`_themeVars`), so the statement
+strip, the ribbon and the trail hold no second list. Two rules the light table exists for: **a hue
+that carries text clears 4.5:1 on its stage** (a token too bright to carry text has a text
+reading: `orangeT` · `passT` · `dangerT` · `accentT`), and **a state recedes by its drawing, not by
+fading** — on a dark stage a faded box still reads against black, on a white one it dissolves.
+`boxStyle(state, hue, {back, cooling, draft})` is the ONE reading of an entity box (the stage and
+the key's swatch draw from it): dark tells the states apart by how far the hue fades; light draws
+lit as a white card lifted off the stage, solid as a tinted card, known as a neutral card with its
+hue on the border, dim as a neutral card with a grey border, background as a pale one, and takes
+nothing that carries text below 0.7. Light also drops the subject-area wash (a tint over white
+turns every box inside it peach), turns a receded thread neutral, and gives relationship and
+thread labels a plate of the stage's colour. Adding a colour: a `PALETTE` entry in BOTH tables
+(and in `PALETTE_TEXT` when it is drawn as text) — never a literal in the renderer. Gates:
+`test_kg_theatre.mjs` `[theme]`, and the theme scenarios of `test_kg_theatre_dom.mjs`, whose probe
+measures every story text at its effective opacity against the stage.
+
 **Key and Explain (optional, remembered).** Two toggles in the caption bar, off by default,
 persisted per browser (`kg_theatre_legend`, `kg_theatre_explain`), each a full-width row UNDER
 the caption so neither ever covers the stage. **Key** draws one swatch per mark from the tokens the

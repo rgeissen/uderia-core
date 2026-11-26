@@ -2,6 +2,8 @@
 
 This list reflects the recent enhancements and updates to Uderia, as shown on the application's welcome screen.
 
+*   **26-Nov-2026:** The Execution Theatre in the Light Theme — The knowledge graph's execution theatre is now fully readable in the light theme: entities, relationships, the question and the receipt are drawn for a light stage, and the stage follows when you switch themes. [Architecture →](Architecture/KG_INSPECTOR_ARCHITECTURE.md)
+*   **19-Nov-2026:** Trusted Data Agents Framework — The default brand reads TRUSTED • DATA • AGENTS / FRAMEWORK, the About box shows the brand in force, and the README links the website and the trust story.
 *   **14-Nov-2026:** The Core Is Fair Source — The public core is licensed under the Functional Source License: read it, run it, change it and use it inside your organisation. Each release becomes Apache 2.0 open source two years after it ships. The enterprise package adds the OBDA planes, identity federation, key managers, branding, the prompt editor and signing.
 *   **12-Nov-2026:** Ready Sooner, With an Expert Included — The server answers within seconds of starting while the embedding model loads in the background, and a new installation comes with the Uderia Expert agent already installed and its documentation already indexed.
 *   **11-Nov-2026:** Your Licence at a Glance — The Info box shows the licence this deployment runs on: its tier, which parts of the enterprise package it covers, who holds it and when it expires.

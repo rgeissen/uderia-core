@@ -24,7 +24,7 @@ import { nodesLabel, relationshipsLabel } from '../kgVocabulary.js?v=1.0';   // 
  * eventsFromTurn · skinSentence. DOM export: mountTheatre.
  */
 
-export const THEATRE_VERSION = '1.25';
+export const THEATRE_VERSION = '1.27';
 export const BEATS = ['understand', 'seed', 'expand', 'inject', 'execute', 'verify', 'receipt'];
 export const BEAT_LABEL = {
     understand: 'Understand', seed: 'Seed', expand: 'Expand', inject: 'Inject',
@@ -88,6 +88,59 @@ export const LEGEND = [
         { sw: 'icon', v: 'absent', label: 'used by the statement but not declared \u2014 not a key' },
     ] },
 ];
+
+// The stage's own colours and state ladders, ONE table per theme. The shared tokens (text,
+// border, card, the trust colours) come from the page's CSS variables; what is here is what
+// only the theatre draws. Two rules the light table exists for:
+//   - a hue that carries TEXT clears 4.5:1 on the stage (the dark table's neon hues read
+//     1.5–2:1 on white); a `…T` entry is the text reading of a token too bright to carry text
+//   - a state RECEDES by its drawing (neutral fill, grey border, quieter text), not by fading:
+//     on a dark stage a faded box still reads against black, on a white one it dissolves —
+//     so the light ladder never takes anything that carries text below 0.7
+// Gate: test_kg_theatre.mjs (contrast of every text hue on its stage, both themes).
+export const PALETTE = {
+    dark: {
+        ent: '#22c55e', attr: '#a3e635', table: '#0d9488', col: '#5eead4', fk: '#f59e0b', pk: '#fbbf24', domain: '#f97316', accent: '#6366f1',
+        product: '#eab308', bridge: '#f43f5e', metric: '#06b6d4',
+        accentT: '#818cf8', orangeT: '#F15F22', passT: '#34d399', dangerT: '#f87171',
+        stage: '#141619', code: '#1a1c21', grid: 'rgba(255,255,255,0.045)', chip: 'rgba(255,255,255,0.04)', tint: 0.14,
+        op: {
+            ent: { dim: 0.22, known: 0.55, solid: 1, lit: 1, back: 0.45 },
+            rel: { dim: 0.18, known: 0.45, solid: 0.9, lit: 1, pass: 1, danger: 1, back: 0.3 },
+            area: 0.5, label: 0.55, word: 0.6, focusRest: 0.18, threadBack: 0.16, threadDotBack: 0.25, threadLabelBack: 0.3,
+            field: { all: 0.55, rest: 0.35, margin: 0.10, gone: 0.06, link: 0.12, linkLit: 0.35, linkRest: 0.06 },
+            beat: 0.55, ahead: 0.4, beatAhead: 0.45, sub: 0.6,
+        },
+    },
+    light: {
+        ent: '#166534', attr: '#3f6212', table: '#0f766e', col: '#115e59', fk: '#b45309', pk: '#854d0e', domain: '#c2410c', accent: '#4f46e5',
+        product: '#854d0e', bridge: '#be123c', metric: '#0e7490',
+        accentT: '#4338ca', orangeT: '#c2410c', passT: '#047857', dangerT: '#b91c1c',
+        stage: '#ffffff', code: '#f8fafc', grid: 'rgba(15,23,42,0.07)', chip: 'rgba(15,23,42,0.04)', tint: 0.09,
+        surface: '#ffffff', neutralFill: '#f8fafc', neutralStroke: '#94a3b8',
+        op: {
+            ent: { dim: 0.75, known: 0.85, solid: 1, lit: 1, back: 0.8 },
+            rel: { dim: 0.4, known: 0.65, solid: 0.9, lit: 1, pass: 1, danger: 1, back: 0.5 },
+            area: 0.8, label: 0.8, word: 1, focusRest: 0.6, threadBack: 0.4, threadDotBack: 0.5, threadLabelBack: 0.7,
+            field: { all: 0.85, rest: 0.6, margin: 0.25, gone: 0.18, link: 0.25, linkLit: 0.5, linkRest: 0.12 },
+            beat: 0.8, ahead: 0.6, beatAhead: 0.65, sub: 0.8,
+        },
+    },
+};
+// The palette entries that are drawn as TEXT on the stage (the gate holds each to 4.5:1).
+export const PALETTE_TEXT = ['ent', 'attr', 'table', 'col', 'fk', 'pk', 'domain', 'product', 'bridge', 'metric', 'accentT', 'orangeT', 'passT', 'dangerT'];
+// The entries a statement token is written in, on its own tinted chip over the code surface.
+export const PALETTE_CODE = ['ent', 'attr', 'pk', 'dangerT'];
+export function hexAlpha(hex, a) {
+    const h = String(hex).replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+// The element that CARRIES the theme. The app sets `data-theme` on <body> (templates/index.html),
+// so the theme's variables are declared there: read from <html> they resolve to the :root
+// defaults — the dark values — whatever the theme (the light stage painted near-white names and a
+// dark receipt for exactly this reason). <html> is the fallback for a page that themes its root.
+export function themeHost() { try { const b = document.body; return (b && b.hasAttribute('data-theme')) ? b : document.documentElement; } catch (_) { return null; } }
+export function themeName() { try { return themeHost().getAttribute('data-theme') === 'light' ? 'light' : 'dark'; } catch (_) { return 'dark'; } }
 
 // The stage's counts, read ONCE. An entity is a box the question can be answered from; a
 // correspondence node is not one, and one correspondence is one however many edges tie it
@@ -990,17 +1043,34 @@ function _htmlIcon(name, size = 14) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
 }
 function _tok(name, fb) {
-    try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fb; } catch (_) { return fb; }
+    try { const v = getComputedStyle(themeHost()).getPropertyValue(name).trim(); return v || fb; } catch (_) { return fb; }
 }
 function _reducedMotion() { try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
 
 const _CSS_ID = 'kg-theatre-styles';
+// The stylesheet's theme variables, written from PALETTE — the strip, the ribbon and the trail
+// read the same table the stage draws with (a second list of colours here is how the strip
+// came to write dark-slate keywords on a near-black surface in the light theme).
+function _themeVars(p, light) {
+    const chip = (hex, k = 1) => hexAlpha(hex, +(p.tint * k).toFixed(3));
+    return [
+        `--kgt-grid:${p.grid}`, `--kgt-code:${p.code}`, `--kgt-chip:${p.chip}`,
+        `--kgt-code-fg:${light ? '#475569' : 'var(--text-muted,#94a3b8)'}`, `--kgt-code-kw:${light ? '#0f172a' : 'var(--text-secondary,#e2e8f0)'}`,
+        `--kgt-code-shadow:${light ? '0 1px 2px rgba(15,23,42,.06),0 4px 14px rgba(15,23,42,.08)' : 'none'}`,
+        `--kgt-ent:${p.ent}`, `--kgt-ent-bg:${chip(p.ent)}`, `--kgt-attr:${p.attr}`, `--kgt-attr-bg:${chip(p.attr)}`,
+        `--kgt-key:${p.pk}`, `--kgt-key-bg:${chip(p.pk)}`, `--kgt-lit-bg:${chip(p.pk, 0.7)}`, `--kgt-bad:${p.dangerT}`, `--kgt-bad-bg:${chip(p.dangerT)}`,
+        `--kgt-orange-t:${p.orangeT}`, `--kgt-pass-t:${p.passT}`, `--kgt-danger-t:${p.dangerT}`,
+        `--kgt-op-beat:${p.op.beat}`, `--kgt-op-ahead:${p.op.ahead}`, `--kgt-op-beat-ahead:${p.op.beatAhead}`, `--kgt-op-sub:${p.op.sub}`, `--kgt-op-focus-rest:${p.op.focusRest}`,
+    ].join(';');
+}
 function _injectCss() {
     if (document.getElementById(_CSS_ID)) return;
     const st = document.createElement('style'); st.id = _CSS_ID;
     st.textContent = `
+.kgt-root{${_themeVars(PALETTE.dark, false)}}
+[data-theme="light"] .kgt-root{${_themeVars(PALETTE.light, true)}}
 .kgt-root{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;background:var(--bg-primary,#141619);color:var(--text-primary,#f8fafc);font-family:var(--font-primary,'Inter',sans-serif);
-  background-image:radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);background-size:22px 22px}
+  background-image:radial-gradient(var(--kgt-grid) 1px, transparent 1px);background-size:22px 22px}
 .kgt-stage{flex:1;min-height:0;position:relative;overflow:hidden}
 .kgt-stage svg{display:block;width:100%;height:100%}
 .kgt-caption{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:6px 14px;background:var(--bg-secondary,#1f2126);border-top:1px solid var(--border-secondary,rgba(255,255,255,0.06))}
@@ -1012,7 +1082,7 @@ function _injectCss() {
 .kgt-cap-main{font-size:13px;line-height:1.3;color:var(--text-primary,#f8fafc);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .kgt-cap-sub{font-size:11px;color:var(--text-muted,#94a3b8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .kgt-ribbon{display:flex;align-items:center;gap:12px;flex-shrink:0}
-.kgt-beat{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-muted,#94a3b8);opacity:.55}
+.kgt-beat{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-muted,#94a3b8);opacity:var(--kgt-op-beat)}
 .kgt-beat i{display:inline-block;width:7px;height:7px;border-radius:50%;border:1px dashed var(--text-muted,#94a3b8)}
 .kgt-beat.done{opacity:1}.kgt-beat.done i{border:none;background:var(--trust-pass,#34d399)}
 .kgt-beat.danger i{background:var(--trust-danger,#f87171)!important;border:none}
@@ -1021,46 +1091,47 @@ function _injectCss() {
 .kgt-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px}
 .kgt-btn{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;border:1px solid var(--border-secondary,rgba(255,255,255,0.08));background:transparent;color:var(--text-muted,#94a3b8);font-size:10.5px;cursor:pointer}
 .kgt-btn:hover{color:var(--text-primary,#f8fafc);background:var(--hover-bg-strong,rgba(255,255,255,0.08))}
-.kgt-pills{display:inline-flex;gap:2px;padding:2px;border-radius:9999px;background:rgba(255,255,255,0.04);border:1px solid var(--border-secondary,rgba(255,255,255,0.06))}
+.kgt-pills{display:inline-flex;gap:2px;padding:2px;border-radius:9999px;background:var(--kgt-chip);border:1px solid var(--border-secondary,rgba(255,255,255,0.06))}
 .kgt-pill{height:20px;padding:0 9px;border-radius:9999px;font-size:10.5px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--text-muted,#94a3b8);cursor:pointer}
-.kgt-pill.on{background:rgba(241,95,34,.12);color:var(--teradata-orange,#F15F22);border-color:rgba(241,95,34,.4)}
+.kgt-pill.on{background:rgba(241,95,34,.12);color:var(--kgt-orange-t);border-color:rgba(241,95,34,.4)}
 .kgt-rail{position:absolute;top:10px;right:10px;width:248px;box-sizing:border-box;max-height:calc(100% - 20px);overflow:auto;border-radius:10px;background:var(--card-bg,rgba(24,26,30,0.92));border:1px solid var(--border-primary,rgba(255,255,255,0.1));padding:10px 12px;display:none}
 .kgt-root.inspect .kgt-rail{display:block}
 .kgt-rail h4{margin:0 0 8px;font-size:9px;letter-spacing:.12em;color:var(--text-muted,#94a3b8);font-weight:600}
 .kgt-trail{display:flex;flex-direction:column;gap:0}
 .kgt-tr{display:grid;grid-template-columns:14px 1fr auto;column-gap:8px;padding:6px 6px;margin:0 -6px;border-radius:6px;border-left:0}
 .kgt-tr.done{cursor:pointer}.kgt-tr.done:hover{background:var(--hover-bg-strong,rgba(255,255,255,0.06))}
-.kgt-tr.held{background:rgba(241,95,34,.10);box-shadow:inset 2px 0 0 var(--teradata-orange,#F15F22)}.kgt-tr.ahead{opacity:.4}.kgt-beat.ahead{opacity:.45}
+.kgt-tr.held{background:rgba(241,95,34,.10);box-shadow:inset 2px 0 0 var(--teradata-orange,#F15F22)}.kgt-tr.ahead{opacity:var(--kgt-op-ahead)}.kgt-beat.ahead{opacity:var(--kgt-op-beat-ahead)}
 .kgt-tr.preview,.kgt-tr-st.preview{box-shadow:inset 2px 0 0 transparent;background:repeating-linear-gradient(180deg,var(--teradata-orange,#F15F22) 0 3px,transparent 3px 6px) left/2px 100% no-repeat,rgba(241,95,34,.06)}
 .kgt-tr.known{cursor:pointer}.kgt-tr.known:hover{background:var(--hover-bg-strong,rgba(255,255,255,0.06))}
-.kgt-tr.queued .d{background:transparent;border:1px dashed var(--teradata-orange,#F15F22);opacity:.9;box-sizing:border-box}.kgt-tr.queued .t{color:var(--text-secondary,#e2e8f0)}.kgt-tr.queued .s,.kgt-tr.absent .s,.kgt-tr.pending .s{font-style:italic;opacity:.6}
+.kgt-tr.queued .d{background:transparent;border:1px dashed var(--teradata-orange,#F15F22);opacity:.9;box-sizing:border-box}.kgt-tr.queued .t{color:var(--text-secondary,#e2e8f0)}.kgt-tr.queued .s,.kgt-tr.absent .s,.kgt-tr.pending .s{font-style:italic;opacity:var(--kgt-op-sub)}
 .kgt-tr.absent .d{background:transparent;border:1px solid var(--text-muted,#94a3b8);opacity:.5;box-sizing:border-box}.kgt-tr.absent .t{color:var(--text-muted,#94a3b8);text-decoration:line-through;text-decoration-color:rgba(148,163,184,.5)}
 .kgt-beat.queued i{border:1px dashed var(--teradata-orange,#F15F22)}
-.kgt-btn[aria-pressed="true"]{color:var(--teradata-orange,#F15F22);border-color:rgba(241,95,34,.45);background:rgba(241,95,34,.10)}
+.kgt-btn[aria-pressed="true"]{color:var(--kgt-orange-t);border-color:rgba(241,95,34,.45);background:rgba(241,95,34,.10)}
 .kgt-explain{display:none;align-items:baseline;gap:10px;padding:6px 14px 7px;background:var(--bg-secondary,#1f2126);border-top:1px solid var(--border-secondary,rgba(255,255,255,0.06));font-size:11.5px;line-height:1.45;color:var(--text-secondary,#e2e8f0)}
 .kgt-root.explain .kgt-explain{display:flex}
-.kgt-explain .lb{flex:0 0 auto;font-size:9px;letter-spacing:.12em;font-weight:600;color:var(--teradata-orange,#F15F22);padding-top:2px}
+.kgt-explain .lb{flex:0 0 auto;font-size:9px;letter-spacing:.12em;font-weight:600;color:var(--kgt-orange-t);padding-top:2px}
 .kgt-explain .tx{min-width:0}.kgt-explain .does{color:var(--text-muted,#94a3b8)}.kgt-explain .did{color:var(--text-primary,#f8fafc)}.kgt-explain .st{color:var(--text-muted,#94a3b8);font-style:italic}
 .kgt-legend{display:none;flex-wrap:wrap;gap:4px 18px;padding:7px 14px 8px;background:var(--bg-secondary,#1f2126);border-top:1px solid var(--border-secondary,rgba(255,255,255,0.06));font-size:10.5px;color:var(--text-secondary,#e2e8f0);max-height:34%;overflow:auto}
 .kgt-root.legend .kgt-legend{display:flex}
 .kgt-legend .grp{display:flex;flex-wrap:wrap;align-items:center;gap:3px 12px}.kgt-legend .gl{flex:0 0 100%;font-size:9px;letter-spacing:.12em;font-weight:600;color:var(--text-muted,#94a3b8);margin-top:3px}
 .kgt-legend .it{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.kgt-legend .it svg{flex:0 0 auto;display:block}.kgt-legend .it .sv{font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;color:var(--text-muted,#94a3b8)}
-.kgt-question.kgt-q-focus [data-term="0"]{opacity:.18!important}.kgt-question.kgt-q-focus text[data-term="1"]{opacity:1!important;font-weight:600}.kgt-question.kgt-q-focus rect[data-term="1"]{stroke-opacity:1!important}
+.kgt-question.kgt-q-focus [data-term="0"]{opacity:var(--kgt-op-focus-rest)!important}.kgt-question.kgt-q-focus text[data-term="1"]{opacity:1!important;font-weight:600}.kgt-question.kgt-q-focus rect[data-term="1"]{stroke-opacity:1!important}
+[data-theme="light"] .kgt-question.kgt-q-focus text[data-term="1"]{fill:var(--text-primary)}
 svg.kgt-v-focus .kgt-perimeter,svg.kgt-v-focus .kgt-ghost{opacity:1!important}
 .kgt-tr .d{width:8px;height:8px;border-radius:50%;background:var(--text-muted,#94a3b8);margin-top:5px;opacity:.5}
 .kgt-tr.done .d{background:var(--trust-pass,#34d399);opacity:1}.kgt-tr.active .d{background:var(--teradata-orange,#F15F22);opacity:1;animation:kgt-breathe 1.6s ease-in-out infinite}.kgt-tr.danger .d{background:var(--trust-danger,#f87171);opacity:1}
 .kgt-tr .t{font-size:11px;font-weight:600;color:var(--text-primary,#f8fafc)}.kgt-tr.pending .t{color:var(--text-muted,#94a3b8)}
 .kgt-tr .s{grid-column:2/4;font-size:10px;color:var(--text-secondary,#e2e8f0);opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kgt-tr .ts{font-size:9.5px;color:var(--text-muted,#94a3b8);font-family:var(--font-mono,'JetBrains Mono',monospace)}
-.kgt-strip{position:absolute;left:14px;right:14px;bottom:10px;min-height:32px;max-height:74px;border-radius:8px;background:#1a1c21;border:1px solid var(--border-primary,rgba(255,255,255,0.1));display:block;padding:7px 10px;line-height:1.55;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10.5px;color:var(--text-muted,#94a3b8);overflow:hidden;white-space:normal;overflow-wrap:anywhere;cursor:pointer;opacity:0;transition:opacity .3s}
+.kgt-strip{position:absolute;left:14px;right:14px;bottom:10px;min-height:32px;max-height:74px;border-radius:8px;background:var(--kgt-code);box-shadow:var(--kgt-code-shadow);border:1px solid var(--border-primary,rgba(255,255,255,0.1));display:block;padding:7px 10px;line-height:1.55;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10.5px;color:var(--kgt-code-fg);overflow:hidden;white-space:normal;overflow-wrap:anywhere;cursor:pointer;opacity:0;transition:opacity .3s}
 .kgt-strip.on{opacity:1}.kgt-strip.open{max-height:45%;overflow:auto}
-.kgt-strip .stmts{display:inline-flex;gap:4px;margin-right:8px;vertical-align:middle}.kgt-strip .st{min-width:18px;height:18px;padding:0 5px;border-radius:9px;border:1px solid var(--border-primary,rgba(255,255,255,.14));background:transparent;color:var(--text-muted,#94a3b8);font:600 10px var(--font-primary,'Inter',sans-serif);cursor:pointer}.kgt-strip .st.ok{border-color:rgba(52,211,153,.5);color:var(--trust-pass,#34d399)}.kgt-strip .st.bad{border-color:rgba(248,113,113,.6);color:var(--trust-danger,#f87171)}.kgt-strip .st.on{background:var(--teradata-orange,#F15F22);border-color:var(--teradata-orange,#F15F22);color:#fff}
+.kgt-strip .stmts{display:inline-flex;gap:4px;margin-right:8px;vertical-align:middle}.kgt-strip .st{min-width:18px;height:18px;padding:0 5px;border-radius:9px;border:1px solid var(--border-primary,rgba(255,255,255,.14));background:transparent;color:var(--text-muted,#94a3b8);font:600 10px var(--font-primary,'Inter',sans-serif);cursor:pointer}.kgt-strip .st.ok{border-color:rgba(52,211,153,.5);color:var(--kgt-pass-t)}.kgt-strip .st.bad{border-color:rgba(248,113,113,.6);color:var(--kgt-danger-t)}.kgt-strip .st.on{background:var(--teradata-orange,#F15F22);border-color:var(--teradata-orange,#F15F22);color:#fff}
 .kgt-tr-st{display:grid;grid-template-columns:14px 1fr auto;column-gap:8px;padding:3px 6px 3px 22px;margin:0 -6px;border-radius:6px;font-size:10px;color:var(--text-secondary,#e2e8f0);cursor:pointer}.kgt-tr-st:hover{background:var(--hover-bg-strong,rgba(255,255,255,0.06))}.kgt-tr-st.held{background:rgba(241,95,34,.10);box-shadow:inset 2px 0 0 var(--teradata-orange,#F15F22)}.kgt-tr-st .d{width:6px;height:6px;border-radius:50%;margin-top:4px;background:var(--trust-pass,#34d399)}.kgt-tr-st.bad .d{background:var(--trust-danger,#f87171)}.kgt-tr-st .w{color:var(--text-muted,#94a3b8);font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px}
 .kgt-strip .chev{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:6px;transition:transform .2s}.kgt-strip .chev svg{width:12px;height:12px;display:block}.kgt-strip.open .chev{transform:rotate(180deg)}.kgt-strip .sql{display:inline}.kgt-strip.danger{border-color:rgba(248,113,113,.7)}
 .kgt-root.inspect .kgt-strip{right:266px}
 .kgt-strip .lbl{position:absolute;right:10px;top:-14px;font-size:8.5px;letter-spacing:.08em;color:var(--text-muted,#94a3b8);font-family:var(--font-primary,'Inter',sans-serif)}
 .kgt-strip span.tk{padding:2px 4px;border-radius:4px}
-.kgt-strip span.ent{color:#22c55e;background:rgba(34,197,94,.14)}.kgt-strip span.attr{color:#a3e635;background:rgba(163,230,53,.14)}.kgt-strip span.key{color:#fbbf24;background:rgba(251,191,36,.14)}.kgt-strip span.lit{color:#fbbf24;background:rgba(251,191,36,.10)}.kgt-strip span.bad{color:#f87171;background:rgba(248,113,113,.14);text-decoration:underline;text-decoration-thickness:2px}.kgt-strip span.kw{color:var(--text-secondary,#e2e8f0)}
+.kgt-strip span.ent{color:var(--kgt-ent);background:var(--kgt-ent-bg)}.kgt-strip span.attr{color:var(--kgt-attr);background:var(--kgt-attr-bg)}.kgt-strip span.key{color:var(--kgt-key);background:var(--kgt-key-bg)}.kgt-strip span.lit{color:var(--kgt-key);background:var(--kgt-lit-bg)}.kgt-strip span.bad{color:var(--kgt-bad);background:var(--kgt-bad-bg);text-decoration:underline;text-decoration-thickness:2px}.kgt-strip span.kw{color:var(--kgt-code-kw)}
 .kgt-root.watch .kgt-strip{cursor:pointer}
 .kgt-tip{font-family:var(--font-primary,'Inter',sans-serif);position:fixed;z-index:9999;max-width:300px;padding:9px 11px;border-radius:9px;background:var(--bg-overlay,rgba(38,40,46,0.98));border:1px solid var(--border-primary,rgba(255,255,255,0.1));box-shadow:0 10px 28px rgba(0,0,0,.45);color:var(--text-primary,#f8fafc);font-size:11px;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .12s}
 .kgt-tip .t{font-size:12px;font-weight:600;color:var(--text-primary,#f8fafc)}
@@ -1122,13 +1193,23 @@ export function mountTheatre(host, opts) {
     const tip = document.createElement('div'); tip.className = 'kgt-tip'; document.body.appendChild(tip);
 
     // ── theme tokens ──
-    const T = {
-        ent: '#22c55e', attr: '#a3e635', table: '#0d9488', col: '#5eead4', fk: '#f59e0b', pk: '#fbbf24', domain: '#f97316',
-        pass: _tok('--trust-pass', '#34d399'), warn: _tok('--trust-warn', '#fbbf24'), danger: _tok('--trust-danger', '#f87171'),
-        orange: _tok('--teradata-orange', '#F15F22'), accent: '#6366f1', txt: _tok('--text-primary', '#f8fafc'),
-        txt2: _tok('--text-secondary', '#e2e8f0'), muted: _tok('--text-muted', '#94a3b8'), border: _tok('--border-primary', 'rgba(255,255,255,0.1)'),
-        card: _tok('--card-bg', 'rgba(24,26,30,0.92)'), bg: _tok('--bg-primary', '#141619'),
-    };
+    // Read from the theme IN FORCE, and read again when it changes (`retheme`, below): captured
+    // once at mount, a stage opened in the dark theme kept painting near-white names and a
+    // dark receipt after the page turned light — the chrome followed its CSS variables, the
+    // drawing did not.
+    const T = {};
+    function readTheme() {
+        const name = themeName(), p = PALETTE[name], light = name === 'light';
+        Object.assign(T, p, {
+            light, op: p.op,
+            pass: _tok('--trust-pass', '#34d399'), warn: _tok('--trust-warn', '#fbbf24'), danger: _tok('--trust-danger', '#f87171'),
+            orange: _tok('--teradata-orange', '#F15F22'), txt: _tok('--text-primary', light ? '#0f172a' : '#f8fafc'),
+            txt2: _tok('--text-secondary', light ? '#334155' : '#e2e8f0'), muted: _tok('--text-muted', light ? '#64748b' : '#94a3b8'), border: _tok('--border-primary', light ? 'rgba(148,163,184,0.35)' : 'rgba(255,255,255,0.1)'),
+            card: _tok('--card-bg', light ? 'rgba(255,255,255,0.95)' : 'rgba(24,26,30,0.92)'), bg: _tok('--bg-primary', p.stage),
+            wMono: light ? 500 : 400,   // coloured mono text carries a little more weight on white (a monospace face: the width does not move)
+        });
+    }
+    readTheme();
     const mono = "var(--font-mono,'JetBrains Mono',monospace)";
 
     // ── state ──
@@ -1182,6 +1263,9 @@ export function mountTheatre(host, opts) {
         const glow = defs.append('filter').attr('id', 'kgt-glow').attr('x', '-40%').attr('y', '-40%').attr('width', '180%').attr('height', '180%');
         glow.append('feGaussianBlur').attr('stdDeviation', 6).attr('result', 'b');
         const fm = glow.append('feMerge'); fm.append('feMergeNode').attr('in', 'b'); fm.append('feMergeNode').attr('in', 'SourceGraphic');
+        // a lifted surface on the light stage (a lit entity, the receipt): elevation, where the dark stage uses glow
+        defs.append('filter').attr('id', 'kgt-shadow').attr('x', '-20%').attr('y', '-30%').attr('width', '140%').attr('height', '170%')
+            .append('feDropShadow').attr('dx', 0).attr('dy', 2).attr('stdDeviation', 4).attr('flood-color', '#0f172a').attr('flood-opacity', 0.16);
         gMain = svg.append('g').attr('class', 'kgt-main');
         gField = gMain.append('g').attr('class', 'kgt-field');
         gRegions = gMain.append('g').attr('class', 'kgt-regions');
@@ -1388,7 +1472,7 @@ export function mountTheatre(host, opts) {
         const areas = Object.entries(layout.areas);
         const sel = gRegions.selectAll('g.kgt-area').data(areas, d => d[0]);
         const ent = sel.enter().append('g').attr('class', 'kgt-area');
-        ent.append('rect').attr('rx', 22).attr('fill', T.domain).attr('fill-opacity', 0.04).attr('stroke', T.domain).attr('stroke-opacity', 0.3);
+        ent.append('rect').attr('rx', 22).attr('fill', T.domain).attr('fill-opacity', T.light ? 0 : 0.04).attr('stroke', T.domain).attr('stroke-opacity', 0.3);   // no wash on the light stage: a tint over white turns every box inside it peach
         ent.append('text').attr('font-size', 9).attr('fill', T.domain).attr('letter-spacing', '.12em').attr('font-weight', 600);
         const all = ent.merge(sel);
         all.select('rect').attr('x', d => d[1].x).attr('y', d => d[1].y).attr('width', d => d[1].w).attr('height', d => d[1].h);
@@ -1397,10 +1481,10 @@ export function mountTheatre(host, opts) {
         // the top seed of a turn must not light nothing
         const seededAreas = new Map();
         if (ui.performed && ui.performed.has('seed')) for (const s of (S.seeds || [])) if (s.type === 'domain') seededAreas.set(_leaf(s.name), s);
-        all.select('rect').attr('stroke', d => seededAreas.has(String(d[0]).toLowerCase()) ? T.orange : T.domain).attr('stroke-opacity', d => seededAreas.has(String(d[0]).toLowerCase()) ? 0.85 : 0.3);
-        all.select('text').attr('fill', d => seededAreas.has(String(d[0]).toLowerCase()) ? T.orange : T.domain)
+        all.select('rect').attr('stroke', d => seededAreas.has(String(d[0]).toLowerCase()) ? T.orange : T.domain).attr('stroke-opacity', d => seededAreas.has(String(d[0]).toLowerCase()) ? 0.85 : (T.light ? 0.5 : 0.3));
+        all.select('text').attr('fill', d => seededAreas.has(String(d[0]).toLowerCase()) ? T.orangeT : T.domain)
             .text(d => { const sd = seededAreas.get(String(d[0]).toLowerCase()); const base = d[0] === '_' ? (m.kg && m.kg.name ? String(m.kg.name).toUpperCase() : 'MODEL') : `${String(d[0]).toUpperCase()} \u00b7 SUBJECT AREA`; return sd ? `${base} \u00b7 SEEDED BY \u201c${(sd.terms || []).join(', ')}\u201d` : base; });
-        all.attr('opacity', d => (ui.regionsSolid || seededAreas.has(String(d[0]).toLowerCase())) ? 1 : 0.5);
+        all.attr('opacity', d => (ui.regionsSolid || seededAreas.has(String(d[0]).toLowerCase())) ? 1 : T.op.area);
         sel.exit().remove();
     }
 
@@ -1433,7 +1517,7 @@ export function mountTheatre(host, opts) {
             ui.routes.set(d.r, rt);
             const st = relState(d.r);
             const col = { dim: T.muted, known: T.muted, solid: T.fk, lit: T.fk, pass: T.pass, danger: T.danger }[st] || T.muted;
-            const op = (ui.executing && (st === 'solid' || st === 'known')) ? 0.3 : ({ dim: 0.18, known: 0.45, solid: 0.9, lit: 1, pass: 1, danger: 1 }[st] || 0.2);   // an unused relationship recedes with its tables
+            const op = (ui.executing && (st === 'solid' || st === 'known')) ? T.op.rel.back : (T.op.rel[st] || T.op.rel.dim);   // an unused relationship recedes with its tables
             const strong = st === 'lit' || st === 'pass' || st === 'danger';
             const sw = strong ? 2.2 : 1.4;
             g.transition().duration(rm ? 0 : 320).attr('opacity', op);
@@ -1461,6 +1545,28 @@ export function mountTheatre(host, opts) {
         sel.exit().remove();
     }
 
+    // ONE reading of an entity box's state — the stage draws from it and so does the key's swatch.
+    // Dark: every state is the entity's hue, told apart by how far it fades. Light: the fade is
+    // shallow and the DRAWING tells the states apart — lit is a white card lifted off the stage,
+    // solid a tinted one, known a neutral card that keeps its hue on the border, dim a neutral
+    // card with a grey border, background (in the context, unread by the statement) a pale one.
+    function boxStyle(st, col, o) {
+        o = o || {};
+        const b = { op: o.back ? T.op.ent.back : T.op.ent[st], sw: 1.5, shadow: false, dot: col, name: T.txt, kind: col, fill: col + '30', stroke: col,
+            dash: o.draft ? '6 4' : (o.cooling ? '3 3' : null) };
+        if (T.light) {
+            if (st === 'lit') Object.assign(b, { fill: T.surface, sw: 2, shadow: true });
+            else if (o.back) Object.assign(b, { fill: hexAlpha(col, 0.05), stroke: hexAlpha(col, 0.55), name: T.txt2, kind: T.txt2 });
+            else if (st === 'solid') b.fill = hexAlpha(col, 0.09);
+            else if (st === 'known') Object.assign(b, { fill: T.neutralFill, name: T.txt2 });
+            else Object.assign(b, { fill: T.neutralFill, stroke: T.neutralStroke, dot: T.neutralStroke, name: T.txt2, kind: T.txt2 });   // the quiet text of a receded box is the secondary tone: the muted one, faded with its box, falls under 3:1
+        }
+        if (o.cooling) { b.fill = 'transparent'; b.stroke = col + (T.light ? '99' : '55'); b.shadow = false; }
+        else if (o.draft) { b.fill = 'transparent'; b.shadow = false; }
+        return b;
+    }
+    function typeColor(e) { return e.type === 'data_product' ? T.product : e.type === 'product_bridge' ? T.bridge : e.type === 'metric' ? T.metric : T.ent; }
+
     function renderEntities() {
         const m = S.model; if (!m || !gEntities) return;
         const data = Object.values(m.entities).filter(e => layout.pos[e.name]);
@@ -1470,7 +1576,7 @@ export function mountTheatre(host, opts) {
         ent.append('rect').attr('class', 'ring').attr('rx', 15).attr('fill', 'none').attr('stroke', T.orange).attr('stroke-width', 1.5).attr('stroke-dasharray', '3 4').attr('opacity', 0);
         ent.append('rect').attr('class', 'box').attr('rx', 8).attr('stroke-width', 1.5);
         ent.append('circle').attr('class', 'dot').attr('r', 4.5);
-        ent.append('text').attr('class', 'name').attr('font-size', 12).attr('font-weight', 600).attr('fill', T.txt);
+        ent.append('text').attr('class', 'name').attr('font-size', 12).attr('font-weight', 600);
         ent.append('text').attr('class', 'kind').attr('font-size', 8).attr('letter-spacing', '.06em').attr('text-anchor', 'end');
         ent.append('text').attr('class', 'facts').attr('font-size', 9).attr('fill', T.muted).attr('font-family', mono);
         ent.append('line').attr('class', 'sep').attr('stroke', T.border);
@@ -1480,11 +1586,13 @@ export function mountTheatre(host, opts) {
         const all = ent.merge(sel);
         all.each(function (e) {
             const g = d3.select(this); const p = layout.pos[e.name]; const st = entityState(e.name);
-            const col = e.type === 'data_product' ? '#eab308' : e.type === 'product_bridge' ? '#f43f5e' : e.type === 'metric' ? '#06b6d4' : T.ent;
+            const col = typeColor(e);
             // From Execute on, the frame's subject is the STATEMENT: the injected context it does not
             // read recedes to a background reading, the tables it reads (and their joins) stay forward.
             // Inject's frame — everything solid — is the context as the agent received it.
-            const op = (ui.executing && st === 'solid' && !ui.used.has(e.name)) ? 0.45 : { dim: 0.22, known: 0.55, solid: 1, lit: 1 }[st];
+            const draftKind = ui.drafts.get(e.name) || null;
+            const bs = boxStyle(st, col, { back: ui.executing && st === 'solid' && !ui.used.has(e.name), cooling: ui.cooling.has(e.name), draft: !!draftKind });
+            const op = bs.op;
             const hasFacts = depth === 'inspect' && (e.rows != null || e.keyUnique != null);
             const hdr = HDR + (hasFacts ? 14 : 0);
             const rows = rowsOf(e.name);
@@ -1497,11 +1605,10 @@ export function mountTheatre(host, opts) {
             g.transition().duration(rm ? 0 : 320).attr('transform', `translate(${p.x},${p.y})`).attr('opacity', op);
             g.select('rect.glow').attr('x', -6).attr('y', -6).attr('width', p.w + 12).attr('height', h + 12).attr('opacity', st === 'lit' ? 0.10 : 0);
             g.select('rect.ring').attr('x', -11).attr('y', -11).attr('width', p.w + 22).attr('height', h + 22).attr('opacity', ui.rings.has(e.name) ? 1 : 0).classed('kgt-breathe', ui.rings.has(e.name));
-            const draftKind = ui.drafts.get(e.name) || null;
-            g.select('rect.box').attr('width', p.w).attr('height', h).attr('fill', ui.cooling.has(e.name) ? 'transparent' : (draftKind ? 'transparent' : col + '30')).attr('stroke', ui.cooling.has(e.name) ? col + '55' : col).attr('stroke-dasharray', draftKind ? '6 4' : (ui.cooling.has(e.name) ? '3 3' : null));
-            g.select('circle.dot').attr('cx', 14).attr('cy', 15).attr('fill', col);
-            g.select('text.name').attr('x', 26).attr('y', 19).text(ellipsize(e.label, 12, p.w - 26 - 58));
-            g.select('text.kind').attr('x', p.w - 10).attr('y', 19).attr('fill', col).text(draftKind ? draftKind.toUpperCase() : e.type === 'data_product' ? 'PRODUCT' : e.type === 'product_bridge' ? 'BRIDGE' : e.type === 'metric' ? 'METRIC' : 'ENTITY');
+            g.select('rect.box').attr('width', p.w).attr('height', h).attr('fill', bs.fill).attr('stroke', bs.stroke).attr('stroke-width', bs.sw).attr('stroke-dasharray', bs.dash).attr('filter', bs.shadow ? 'url(#kgt-shadow)' : null);
+            g.select('circle.dot').attr('cx', 14).attr('cy', 15).attr('fill', bs.dot);
+            g.select('text.name').attr('x', 26).attr('y', 19).attr('fill', bs.name).text(ellipsize(e.label, 12, p.w - 26 - 58));
+            g.select('text.kind').attr('x', p.w - 10).attr('y', 19).attr('fill', bs.kind).attr('font-weight', T.light ? 600 : null).text(draftKind ? draftKind.toUpperCase() : e.type === 'data_product' ? 'PRODUCT' : e.type === 'product_bridge' ? 'BRIDGE' : e.type === 'metric' ? 'METRIC' : 'ENTITY');
             g.select('text.facts').attr('x', 26).attr('y', 35).text(hasFacts ? ellipsize([e.rows != null ? `${Number(e.rows).toLocaleString()} ${Number(e.rows) === 1 ? 'row' : 'rows'}` : null, e.keyUnique === true ? 'key verified unique' : e.keyUnique === false ? 'key NOT unique' : null].filter(Boolean).join(' · '), 9, p.w - 36, true) : '');
             g.select('line.sep').attr('x1', 8).attr('y1', hdr).attr('x2', p.w - 8).attr('y2', hdr).attr('opacity', rows.length ? 1 : 0);
             // rows
@@ -1523,14 +1630,15 @@ export function mountTheatre(host, opts) {
                 const rowW = p.w - 40, nameMax = Math.min(textW(r.name, 11, true), rowW * 0.72);
                 const detW = detail ? Math.min(textW(detail, 9.5, true), rowW - nameMax - 10) : 0;
                 rg.select('text.nm').attr('x', 30).attr('y', 15).attr('fill', strong ? T.txt2 : T.muted).attr('text-decoration', r.role === 'absent' ? 'line-through' : null).text(ellipsize(r.name, 11, nameMax, true));
-                rg.select('text.dt').attr('x', p.w - 10).attr('y', 15).attr('fill', rc).text(detail ? ellipsize(detail, 9.5, detW, true) : '');
+                const rcT = r.state === 'danger' || r.role === 'absent' ? T.dangerT : r.role === 'seed' ? T.orangeT : rc;   // the detail is TEXT: a token too bright to read on the stage is written in its text reading
+                rg.select('text.dt').attr('x', p.w - 10).attr('y', 15).attr('fill', rcT).attr('font-weight', T.wMono).text(detail ? ellipsize(detail, 9.5, detW, true) : '');
                 rg.style('cursor', 'pointer').on('mousemove', (ev) => showTip(ev.clientX, ev.clientY, r.tip || `${r.name}${detail ? '\n' + detail : ''}`)).on('mouseleave', hideTip).on('click', (ev) => { ev.stopPropagation(); pinTip(ev.clientX, ev.clientY, rowWhy(e, r)); });
             });
             ra.transition().duration(rm ? 0 : 240).attr('opacity', 1);
             rs.exit().transition().duration(rm ? 0 : 160).attr('opacity', 0).remove();
             // folded count
             const folded = foldedCount(e);
-            g.select('text.folded').attr('x', 6).attr('y', h + 14).text(folded ? `▸ ${folded} attributes folded` : '').attr('opacity', folded ? 0.85 : 0);
+            g.select('text.folded').attr('x', 6).attr('y', h + 14).text(folded ? `▸ ${folded} attributes folded` : '').attr('opacity', folded ? (T.light ? 1 : 0.85) : 0);
             // physical plane (inspect) — BELOW the folded line when there is one: at h+17 the
             // IMPLEMENTS label sat on the folded line (they only ever met on a replay, because
             // live playback had skipped the inject op's flags — see the 'inject' op).
@@ -1543,6 +1651,10 @@ export function mountTheatre(host, opts) {
         });
         sel.exit().remove();
     }
+
+    // A label that a line may pass under carries a plate of the stage's own colour, drawn as a
+    // stroke BEHIND the glyphs (paint-order), so a relationship crossing it never strikes it through.
+    function plate(text) { return text.attr('paint-order', 'stroke').attr('stroke', T.bg).attr('stroke-width', 3).attr('stroke-linejoin', 'round'); }
 
     // relationship labels through the label layer (cardinality + key), never overlapping
     function renderLabels() {
@@ -1565,14 +1677,14 @@ export function mountTheatre(host, opts) {
                 const nx = -(B.y - A.y), ny = (B.x - A.x); const len = Math.hypot(nx, ny) || 1;
                 return [{ x: x + (nx / len) * 10 - (nx < 0 ? w : 0), y: y + (ny / len) * 10 - h / 2 }, { x: x - (nx / len) * 10 - (nx > 0 ? w : 0), y: y - (ny / len) * 10 - h / 2 }];
             });
-            labels.push({ id: `${r.source}|${r.target}`, w, h, candidates: cands, priority: st === 'lit' ? 3 : st === 'danger' ? 4 : 1, text, color: st === 'danger' ? T.danger : st === 'pass' ? T.pass : T.fk, state: st });
+            labels.push({ id: `${r.source}|${r.target}`, w, h, candidates: cands, priority: st === 'lit' ? 3 : st === 'danger' ? 4 : 1, text, color: st === 'danger' ? T.dangerT : st === 'pass' ? T.passT : T.fk, state: st });
         }
         const placed = placeLabels(labels, occupied, null);
         for (const l of labels) {
             const p = placed[l.id]; if (!p) continue;
             ui.labelRects.push({ x: p.x, y: p.y, w: l.w, h: l.h });
-            const g = gLabels.append('g').attr('transform', `translate(${p.x},${p.y})`).attr('opacity', l.state === 'known' ? 0.55 : 1);
-            l.text.forEach((t, i) => g.append('text').attr('x', 4).attr('y', 11 + i * 12).attr('font-size', 9.5).attr('font-family', mono).attr('fill', i === 0 ? l.color : T.pk).text(t));
+            const g = gLabels.append('g').attr('transform', `translate(${p.x},${p.y})`).attr('opacity', l.state === 'known' ? T.op.label : 1);
+            l.text.forEach((t, i) => plate(g.append('text').attr('x', 4).attr('y', 11 + i * 12).attr('font-size', 9.5).attr('font-family', mono).attr('font-weight', T.wMono).attr('fill', i === 0 ? l.color : T.pk)).text(t));
         }
     }
 
@@ -1596,7 +1708,7 @@ export function mountTheatre(host, opts) {
                 gQuestion.append('rect').attr('x', x - 6).attr('y', y).attr('width', w).attr('height', 26).attr('rx', 13).attr('fill', hit.channel === 'semantic' ? T.accent : T.orange).attr('opacity', 0.16).attr('data-term', terms.has(clean) ? 1 : 0);
                 gQuestion.append('rect').attr('x', x - 6).attr('y', y).attr('width', w).attr('height', 26).attr('rx', 13).attr('fill', 'none').attr('stroke', hit.channel === 'semantic' ? T.accent : T.orange).attr('stroke-opacity', 0.6).attr('data-term', terms.has(clean) ? 1 : 0);
             }
-            gQuestion.append('text').attr('x', x + (hit ? 2 : 0)).attr('y', y + 18).attr('font-size', 14).attr('font-weight', hit ? 500 : 400).attr('fill', hit ? T.txt : T.muted).attr('opacity', hit ? 1 : 0.6).attr('data-term', terms.has(clean) ? 1 : 0).text(wd);
+            gQuestion.append('text').attr('x', x + (hit ? 2 : 0)).attr('y', y + 18).attr('font-size', 14).attr('font-weight', hit ? 500 : 400).attr('fill', hit ? T.txt : T.muted).attr('opacity', hit ? 1 : T.op.word).attr('data-term', terms.has(clean) ? 1 : 0).text(wd);
             positions.push({ term: clean, x: x + w / 2 - 3, y: y + 26, hit, hits });
             x += w + 8;
         }
@@ -1618,19 +1730,21 @@ export function mountTheatre(host, opts) {
             // question lives in screen space (gQuestion is outside gMain); convert to main coords
             const sx = (pos.x - tr.x) / tr.k, sy = (pos.y - tr.y) / tr.k;
             const tx = target ? target.x + 24 : fn.fx0, ty = target ? target.y : fn.fy0 - 8;
-            const col = pos.hit.channel === 'semantic' ? T.accent : T.orange;
-            const path = gThreads.append('path').attr('d', `M${sx},${sy} C${sx},${(sy + ty) / 2} ${tx},${(sy + ty) / 2} ${tx},${ty}`).attr('fill', 'none').attr('stroke', col).attr('stroke-width', 1.5).attr('opacity', 0.9);
             const _back = ui.executing && !!target && !ui.used.has(pos.hit.name);
-            if (_back) path.attr('opacity', 0.16);
+            // a thread to a table the statement does not read recedes: on the light stage it turns neutral, where a faded orange would only wash out
+            const col = (_back && T.light) ? T.muted : (pos.hit.channel === 'semantic' ? T.accent : T.orange);
+            const colT = (_back && T.light) ? T.txt2 : (pos.hit.channel === 'semantic' ? T.accentT : T.orangeT);
+            const path = gThreads.append('path').attr('d', `M${sx},${sy} C${sx},${(sy + ty) / 2} ${tx},${(sy + ty) / 2} ${tx},${ty}`).attr('fill', 'none').attr('stroke', col).attr('stroke-width', 1.5).attr('opacity', 0.9);
+            if (_back) path.attr('opacity', T.op.threadBack);
             if (pos.hit.channel === 'semantic') path.attr('stroke-dasharray', '4 4');
             if (animate) { const L = path.node().getTotalLength(); path.attr('stroke-dasharray', pos.hit.channel === 'semantic' ? '4 4' : `${L}`).attr('stroke-dashoffset', L).transition().duration(700).ease(d3.easeCubicOut).attr('stroke-dashoffset', 0).on('end', function () { if (pos.hit.channel !== 'semantic') d3.select(this).attr('stroke-dasharray', null); }); }
-            gThreads.append('circle').attr('cx', tx).attr('cy', ty).attr('r', 3.5).attr('fill', col).attr('opacity', _back ? 0.25 : 1);
+            gThreads.append('circle').attr('cx', tx).attr('cy', ty).attr('r', 3.5).attr('fill', col).attr('opacity', _back ? T.op.threadDotBack : 1);
             for (let t = 0.1; t < 0.6; t += 0.12) { const u = 1 - t; const bx = u * u * u * sx + 3 * u * u * t * sx + 3 * u * t * t * tx + t * t * t * tx, by = u * u * u * sy + 3 * u * u * t * (sy + ty) / 2 + 3 * u * t * t * (sy + ty) / 2 + t * t * t * ty; ui.threadRects.push({ x: bx - 6, y: by - 6, w: 12, h: 12 }); }
             const key = `${pos.hit.name}|${pos.hit.attr || ''}`;
             // ONE label per reached attribute, naming EVERY word that reached it
             const prior = seen.get(key);
             if (prior) { if (!prior.terms.includes(pos.term)) prior.terms.push(pos.term); }
-            else seen.set(key, { terms: [pos.term], hit: pos.hit, tx, ty, col, back: _back });
+            else seen.set(key, { terms: [pos.term], hit: pos.hit, tx, ty, col: colT, back: _back });
         }
         for (const [key, v] of seen) {
             const h = v.hit;
@@ -1639,7 +1753,7 @@ export function mountTheatre(host, opts) {
         }
         const occupied = boxRects(12).concat(ui.markRects.filter(r => !r.frame), ui.labelRects, ui.threadRects);
         const placed = placeLabels(labels, occupied, null);
-        for (const l of labels) { const p = placed[l.id]; if (!p) continue; ui.threadRects.push({ x: p.x, y: p.y, w: l.w, h: l.h, label: true }); gThreads.append('text').attr('x', p.x).attr('y', p.y + 10).attr('font-size', 9.5).attr('font-family', mono).attr('fill', l.col).attr('opacity', (seen.get(l.id) || {}).back ? 0.3 : 1).style('cursor', 'pointer').style('pointer-events', 'all').text(l.text).on('click', (ev) => { ev.stopPropagation(); const t = seedWhy(l.seed); if (t) pinTip(ev.clientX, ev.clientY, t); }); }
+        for (const l of labels) { const p = placed[l.id]; if (!p) continue; ui.threadRects.push({ x: p.x, y: p.y, w: l.w, h: l.h, label: true }); plate(gThreads.append('text')).attr('x', p.x).attr('y', p.y + 10).attr('font-size', 9.5).attr('font-family', mono).attr('font-weight', T.wMono).attr('fill', l.col).attr('opacity', (seen.get(l.id) || {}).back ? T.op.threadLabelBack : 1).style('cursor', 'pointer').style('pointer-events', 'all').text(l.text).on('click', (ev) => { ev.stopPropagation(); const t = seedWhy(l.seed); if (t) pinTip(ev.clientX, ev.clientY, t); }); }
     }
 
     // ── the whole graph as the opening field ──
@@ -1694,17 +1808,18 @@ export function mountTheatre(host, opts) {
         const ls = gField.selectAll('line.kgt-flink').data(field.links, d => `${d.s}|${d.t}`);
         ls.enter().append('line').attr('class', 'kgt-flink').attr('stroke', T.muted).attr('stroke-width', 1).attr('opacity', 0)
             .attr('x1', d => field.nodes[d.s].fx0).attr('y1', d => field.nodes[d.s].fy0).attr('x2', d => field.nodes[d.t].fx0).attr('y2', d => field.nodes[d.t].fy0)
-            .transition().duration(dur).attr('opacity', 0.12);
+            .transition().duration(dur).attr('opacity', T.op.field.link);
+        if (phase !== 'gather') field.phase = phase;   // what a re-theme redraws
         if (phase === 'field') {
-            all.transition().duration(dur).attr('opacity', 0.55);
+            all.transition().duration(dur).attr('opacity', T.op.field.all);
             all.select('circle.halo').attr('opacity', 0);
         } else if (phase === 'ignite') {
-            all.transition().duration(dur / 2).attr('opacity', d => seeds.has(d.name) ? 1 : 0.35);
+            all.transition().duration(dur / 2).attr('opacity', d => seeds.has(d.name) ? 1 : T.op.field.rest);
             const lit = all.filter(d => seeds.has(d.name));
             lit.select('circle.core').transition().duration(dur / 2).attr('r', 7).attr('fill', T.orange);
             lit.select('circle.halo').attr('opacity', 0.9).attr('r', 7).transition().duration(rm ? 0 : 1100).ease(d3.easeCubicOut).attr('r', 26).attr('opacity', 0);
             lit.select('text').attr('fill', T.txt).attr('font-weight', 600);
-            gField.selectAll('line.kgt-flink').transition().duration(dur / 2).attr('opacity', d => (seeds.has(field.nodes[d.s].name) || seeds.has(field.nodes[d.t].name)) ? 0.35 : 0.06);
+            gField.selectAll('line.kgt-flink').transition().duration(dur / 2).attr('opacity', d => (seeds.has(field.nodes[d.s].name) || seeds.has(field.nodes[d.t].name)) ? T.op.field.linkLit : T.op.field.linkRest);
         } else if (phase === 'gather') {
             // the rest recede to a ring that encloses the whole arrangement (never inside it),
             // each keeping its own bearing from the centre so the field's shape survives
@@ -1717,7 +1832,7 @@ export function mountTheatre(host, opts) {
             const place = d => { const p = layout.pos[d.name]; if (p) return `translate(${p.x + 14},${p.y + 15})`; const ang = Math.atan2(d.fy0 - cy, d.fx0 - cx); return `translate(${cx + Math.cos(ang) * rx},${cy + Math.sin(ang) * ry})`; };
             const first = !field.gathered;
             const moving = first ? all.transition().duration(dur).ease(d3.easeCubicInOut) : all.interrupt();
-            moving.attr('transform', place).attr('opacity', d => inScope.has(d.name) ? 0 : 0.10);
+            moving.attr('transform', place).attr('opacity', d => inScope.has(d.name) ? 0 : T.op.field.margin);
             all.filter(d => inScope.has(d.name)).style('pointer-events', 'none');
             const rest = all.filter(d => !inScope.has(d.name)).select('circle.core');
             (first ? rest.transition().duration(dur) : rest.interrupt()).attr('r', 3).attr('fill', T.muted);
@@ -1726,7 +1841,7 @@ export function mountTheatre(host, opts) {
             if (first) later(() => { all.filter(d => inScope.has(d.name)).interrupt().attr('opacity', 0); }, dur + 60);
             field.gathered = true;
         } else if (phase === 'gone') {
-            all.transition().duration(dur / 2).attr('opacity', d => inScope.has(d.name) ? 0 : 0.06);
+            all.transition().duration(dur / 2).attr('opacity', d => inScope.has(d.name) ? 0 : T.op.field.gone);
         }
         sel.exit().remove();
         field.shown = true;
@@ -1793,7 +1908,7 @@ export function mountTheatre(host, opts) {
                 ui.markRects.push({ x: pl.x, y: pl.y, w, h: 20 });
                 g.append('rect').attr('x', pl.x).attr('y', pl.y).attr('width', w).attr('height', 20).attr('rx', 10).attr('fill', T.danger).attr('opacity', 0.14);
                 g.append('rect').attr('x', pl.x).attr('y', pl.y).attr('width', w).attr('height', 20).attr('rx', 10).attr('fill', 'none').attr('stroke', T.danger).attr('stroke-opacity', .55);
-                g.append('text').attr('x', pl.x + 10).attr('y', pl.y + 13.5).attr('font-size', 10).attr('font-weight', 600).attr('fill', T.danger).text(text);
+                g.append('text').attr('x', pl.x + 10).attr('y', pl.y + 13.5).attr('font-size', 10).attr('font-weight', 600).attr('fill', T.dangerT).text(text);
             }
         }
         g.transition().duration((rm || ui.redrawing) ? 0 : 260).attr('opacity', 1);
@@ -1818,7 +1933,7 @@ export function mountTheatre(host, opts) {
         ui.markRects.push({ x: pl.x, y: pl.y, w, h: 20 });
         ui.markRects.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 + 12, frame: true });   // the camera fits the whole perimeter, label included
         g.append('rect').attr('x', pl.x).attr('y', pl.y).attr('width', w).attr('height', 20).attr('rx', 10).attr('fill', T.bg).attr('stroke', T.pass).attr('stroke-opacity', .6);
-        g.append('text').attr('x', pl.x + 8).attr('y', pl.y + 14).attr('font-size', 10).attr('font-weight', 600).attr('fill', T.pass).text(label);
+        g.append('text').attr('x', pl.x + 8).attr('y', pl.y + 14).attr('font-size', 10).attr('font-weight', 600).attr('fill', T.passT).text(label);
         g.transition().duration((rm || ui.redrawing) ? 0 : 400).attr('opacity', 0.8);
         ui.marks.push(g);
     }
@@ -1830,8 +1945,8 @@ export function mountTheatre(host, opts) {
             const y = 120 + i * 64;
             const g = gMarks.append('g').attr('class', 'kgt-ghost').attr('opacity', 0);
             g.append('circle').attr('cx', x1).attr('cy', y).attr('r', 22).attr('fill', 'none').attr('stroke', T.danger).attr('stroke-dasharray', '3 3').classed('kgt-breathe', true);
-            g.append('text').attr('x', x1).attr('y', y + 4).attr('font-size', 9).attr('text-anchor', 'middle').attr('fill', T.danger).attr('font-family', mono).text(ellipsize(n, 9, 40, true));
-            g.append('text').attr('x', x1).attr('y', y + 36).attr('font-size', 9).attr('text-anchor', 'middle').attr('fill', T.danger).text('out of scope');
+            g.append('text').attr('x', x1).attr('y', y + 4).attr('font-size', 9).attr('text-anchor', 'middle').attr('fill', T.dangerT).attr('font-family', mono).text(ellipsize(n, 9, 40, true));
+            g.append('text').attr('x', x1).attr('y', y + 36).attr('font-size', 9).attr('text-anchor', 'middle').attr('fill', T.dangerT).text('out of scope');
             g.transition().duration((rm || ui.redrawing) ? 0 : 400).attr('opacity', 1);
             ui.marks.push(g);
         });
@@ -1851,7 +1966,7 @@ export function mountTheatre(host, opts) {
         ui.markRects.push({ x: pl.x, y: pl.y, w: W, h: 70 });
         const x = pl.x, y = pl.y;
         const g = gMarks.append('g').attr('class', 'kgt-receipt').attr('opacity', 0);
-        g.append('rect').attr('x', x).attr('y', y).attr('width', W).attr('height', 70).attr('rx', 10).attr('fill', T.card).attr('stroke', T.border);
+        g.append('rect').attr('x', x).attr('y', y).attr('width', W).attr('height', 70).attr('rx', 10).attr('fill', T.card).attr('stroke', T.border).attr('filter', T.light ? 'url(#kgt-shadow)' : null);
         g.append('g').html(_svgIcon(r.state === 'danger' ? 'stop' : 'check', x + 12, y + 12, 16, r.state === 'danger' ? T.danger : r.state === 'warn' ? T.warn : T.pass));
         const title = r.prevented && !r.applied ? `${r.prevented} statement${r.prevented === 1 ? '' : 's'} stopped` : r.wasted ? 'The graph went unused' : `${['No', 'One', 'Two', 'Three', 'Four', 'Five'][r.applied] || r.applied} fact${r.applied === 1 ? '' : 's'} applied`;
         g.append('text').attr('x', x + 36).attr('y', y + 24).attr('font-size', 11.5).attr('font-weight', 600).attr('fill', T.txt).text(title);
@@ -1997,10 +2112,12 @@ export function mountTheatre(host, opts) {
             case 'bar': return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect x="0" y="0" width="${W}" height="${H}" rx="2" fill="rgba(241,95,34,.12)"/><rect x="0" y="0" width="2" height="${H}" fill="${T.orange}"/></svg>`;
             case 'time': return `<span class="sv">${_esc(v)}</span>`;
             case 'text': return `<span class="sv">${_esc(v)}</span>`;
-            case 'box': { const c = { dim: `fill="${T.ent}18" stroke="${T.ent}55" opacity=".4"`, known: `fill="${T.ent}18" stroke="${T.ent}"`, lit: `fill="${T.ent}30" stroke="${T.ent}" filter="url(#kgt-glow)"`, solid: `fill="${T.ent}30" stroke="${T.ent}" stroke-width="1.6"`, background: `fill="${T.ent}30" stroke="${T.ent}" opacity=".45"`, cooling: `fill="transparent" stroke="${T.ent}55" stroke-dasharray="3 3"` }[v]; return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="3" ${c}/></svg>`; }
+            case 'box': {   // drawn from boxStyle — the stage's own reading of the state (a swatch may not fade below what a 26px mark can show)
+                const b = boxStyle((v === 'background' || v === 'cooling') ? 'solid' : v, T.ent, { back: v === 'background', cooling: v === 'cooling' });
+                return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="3" fill="${b.fill}" stroke="${b.stroke}" stroke-width="${b.sw > 1.5 ? 1.8 : 1.2}"${b.dash ? ` stroke-dasharray="${b.dash}"` : ''} opacity="${Math.max(0.4, b.op)}"${v === 'lit' && !T.light ? ' filter="url(#kgt-glow)"' : ''}/></svg>`; }
             case 'ring': return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect x="4" y="3" width="${W - 8}" height="${H - 6}" rx="2" fill="${T.ent}30" stroke="${T.ent}"/><rect x="0.8" y="0.8" width="${W - 1.6}" height="${H - 1.6}" rx="4" fill="none" stroke="${T.orange}" stroke-dasharray="3 3"/></svg>`;
             case 'thread': return rel(v === 'semantic' ? T.accent : T.orange, v === 'semantic' ? '4 4' : null, false);
-            case 'rel': return v === 'bridge' ? rel(T.muted, '3 5') : v === 'known' ? rel(T.fk + '99', '5 4') : v === 'lit' ? rel(T.fk, '8 6', true) : v === 'pass' ? rel(T.pass) : rel(T.danger, '6 5');
+            case 'rel': return v === 'bridge' ? rel(T.muted, '3 5') : v === 'known' ? rel(T.light ? T.muted : T.fk + '99', '5 4') : v === 'lit' ? rel(T.fk, '8 6', true) : v === 'pass' ? rel(T.pass) : rel(T.danger, '6 5');
             case 'perimeter': return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="4" fill="none" stroke="${T.pass}" stroke-width="1.4" stroke-dasharray="4 3"/></svg>`;
             case 'ghost': return `<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="none" stroke="${T.danger}" stroke-dasharray="3 3"/></svg>`;
             case 'barrier': return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><path d="M1 6 H25" fill="none" stroke="${T.danger}" stroke-width="1.8" stroke-dasharray="4 3"/><rect x="8" y="1" width="10" height="10" rx="5" fill="${T.danger}"/></svg>`;
@@ -2509,6 +2626,24 @@ export function mountTheatre(host, opts) {
         refreshChrome();
     }
 
+    // The theme changed under a mounted stage: read the tokens again and redraw what is on
+    // stage from them — the same frame, the same hold, no replay. Everything drawn from T at
+    // enter time is rebuilt, so nothing keeps the colours of the theme it was first drawn in.
+    function retheme() {
+        readTheme();
+        if (!svg || !gMain) return;
+        for (const g of [gRegions, gLinks, gEntities, gLabels, gField, gThreads]) if (g) g.selectAll('*').remove();
+        field.shown = false; ui.threadsDrawn = true;   // a redraw, not the opening: the threads do not draw themselves in again
+        const beforeSeed = !!ui.held && !(ui.stageBeat && BEAT_IDX[ui.stageBeat] >= BEAT_IDX.seed);   // a hold at Understand has seeded nothing: no threads
+        if (S.question) { const pos = renderQuestion(beforeSeed ? null : threadMap()); if (!beforeSeed) ui.threadPositions = pos || ui.threadPositions; }
+        if (field.nodes.length && !field.gathered) renderField(field.phase || 'field');
+        if (S.model) { repaint(); if (ui.markIntents.length) redrawMarks(); }
+        else { if (field.gathered) renderField('gather'); if (ui.threadPositions) drawThreads(ui.threadPositions); }
+        const lg = root.querySelector('.kgt-legend'); if (lg) delete lg.dataset.built; legend();
+    }
+    const mo = (typeof MutationObserver !== 'undefined') ? new MutationObserver(retheme) : null;
+    if (mo) for (const el of [document.documentElement, document.body]) if (el) mo.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+
     let _roLast = null;
     const ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(() => { const r = root.querySelector('.kgt-stage').getBoundingClientRect(); const key = `${Math.round(r.width)}x${Math.round(r.height)}`; if (key === _roLast) return; _roLast = key; size(); if (S.question) ui.threadPositions = renderQuestion(threadMap()) || ui.threadPositions; if (S.model) { computeLayout(S.model); repaint(); ui.cameraSet = false; cameraAll(rm ? 0 : 400); } else if (field.nodes.length && !field.gathered) { if (ui.threadPositions) drawThreads(ui.threadPositions); cameraField(rm ? 0 : 400); } }) : null;
     if (ro) ro.observe(root.querySelector('.kgt-stage'));
@@ -2527,7 +2662,7 @@ export function mountTheatre(host, opts) {
             if (next && next.wholeGraph !== undefined) opts.wholeGraph = next.wholeGraph;   // the field follows the graph as it is NOW
             if (next && next.live) _replaySource = null;                                   // a new turn on stage: the armed story is no longer the one to replay
             ui.timers.forEach(clearTimeout); ui.timers = []; ui.queue = []; ui.playing = false; ui.ended = false; ui.danger = false; ui.userMoved = false;
-            ui.lit = new Set(); ui.solid = new Set(); ui.known = new Set(); ui.rings = new Set(); ui.cooling = new Set(); ui.drafts = new Map();   // PROP-008: name → 'draft' | 'proposed' (a dashed box) ui.relStates = new Map(); ui.rowsByEntity = {}; ui.regionsSolid = false; ui.showFolded = false; ui.marks = []; ui.used = new Set(); ui.executing = false;
+            ui.lit = new Set(); ui.solid = new Set(); ui.known = new Set(); ui.rings = new Set(); ui.cooling = new Set(); ui.drafts = new Map(); ui.relStates = new Map(); ui.rowsByEntity = {}; ui.regionsSolid = false; ui.showFolded = false; ui.marks = []; ui.used = new Set(); ui.executing = false;   // drafts (PROP-008): name → 'draft' | 'proposed' (a dashed box). The comment once sat MID-LINE and commented out every reset after it: a hold at Inject kept Execute's receded context
             ui.markRects = []; ui.labelRects = []; ui.threadRects = []; ui.threadPositions = null; ui.threadsDrawn = false;
             ui.held = null; ui.heldSt = null; ui.scrubTo = null; ui.scrubSt = null; ui.stageBeat = null; ui.deferPlay = false; ui.preview = null; ui.previewSt = null; ui.previewFrom = null; ui.stripShown = null; ui.markIntents = []; ui.markSig = null; if (!ui.scrubbing) { ui.events = []; ui.endMeta = null; } unpinTip();
             ui.performed = new Set(); ui.performedSt = new Set(); if (!ui.scrubbing && !ui.replaying) ui.keepTimes = null;   // a new turn (or an armed reload) has its own clock
@@ -2538,7 +2673,7 @@ export function mountTheatre(host, opts) {
         setDepth, get depth() { return depth; }, get state() { return S; },
         get stageBeat() { return ui.stageBeat || null; }, get pending() { return ui.queue.length; },
         beatView, get prefs() { return { legend: ui.legend, explain: ui.explain }; },   // what the stage shows vs what is still queued (the gate reads these)
-        destroy() { ui.timers.forEach(clearTimeout); if (ro) ro.disconnect(); document.removeEventListener('click', _docClick); document.removeEventListener('keydown', _docKey); tip.remove(); root.remove(); },
+        destroy() { ui.timers.forEach(clearTimeout); if (ro) ro.disconnect(); if (mo) mo.disconnect(); document.removeEventListener('click', _docClick); document.removeEventListener('keydown', _docKey); tip.remove(); root.remove(); },
         root,
     };
     initStage(); buildField(opts.wholeGraph); if (field.nodes.length) { renderField('field'); cameraField(0); } refreshChrome();

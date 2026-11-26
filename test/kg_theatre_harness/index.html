@@ -1,10 +1,12 @@
 <!doctype html><!-- KG execution theatre harness: served by test/test_kg_theatre_dom.mjs, which maps ./kgTheatre.js to the shipped module.
-     Query: upto=N (events to dispatch) gap=ms end=1 (call end()) depth=watch|inspect mode=ok|cross (a cross-area join the preflight refuses). --><html data-theme="modern"><head><meta charset="utf-8">
+     Query: upto=N (events to dispatch) gap=ms end=1 (call end()) depth=watch|inspect mode=ok|cross (a cross-area join the preflight refuses).
+     The theme attribute is on BODY, as in the app (templates/index.html), and :root holds the dark defaults — a stage that reads <html> sees dark whatever the theme. theme=light mounts in the light theme; theme=flip mounts dark and turns the page light at flipAt ms (the stage must follow). --><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>:root{--bg-primary:#141619;--bg-secondary:#1f2126;--bg-overlay:rgba(38,40,46,.98);--text-primary:#f8fafc;--text-secondary:#e2e8f0;--text-muted:#94a3b8;--border-primary:rgba(255,255,255,.1);--border-secondary:rgba(255,255,255,.06);--card-bg:rgba(24,26,30,.92);--hover-bg-strong:rgba(255,255,255,.08);--teradata-orange:#F15F22;--trust-pass:#34d399;--trust-warn:#fbbf24;--trust-danger:#f87171;--font-primary:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace}
-body{margin:0;background:#141619} #host{width:100vw;height:100vh;display:flex;flex-direction:column}</style></head>
-<body><pre id="err" style="position:fixed;top:0;left:0;z-index:99;color:#f87171;font:11px monospace;background:#000c;margin:0;padding:4px;max-width:900px;white-space:pre-wrap"></pre><div id="host"></div>
+[data-theme="light"]{--bg-primary:#ffffff;--bg-secondary:#f8fafc;--bg-overlay:rgba(255,255,255,.98);--text-primary:#0f172a;--text-secondary:#334155;--text-muted:#64748b;--border-primary:rgba(148,163,184,.35);--border-secondary:rgba(148,163,184,.2);--card-bg:rgba(255,255,255,.95);--hover-bg-strong:rgba(148,163,184,.15);--trust-pass:#059669;--trust-warn:#b45309;--trust-danger:#dc2626}
+body{margin:0;background:var(--bg-primary)} #host{width:100vw;height:100vh;display:flex;flex-direction:column}</style></head>
+<body data-theme="modern"><pre id="err" style="position:fixed;top:0;left:0;z-index:99;color:#f87171;font:11px monospace;background:#000c;margin:0;padding:4px;max-width:900px;white-space:pre-wrap"></pre><div id="host"></div>
 <script>window.onerror=(m,src,l,c,e)=>{document.getElementById("err").textContent+=m+" @"+(src||"").split("/").pop()+":"+l+"\n"+((e&&e.stack)||"").split("\n").slice(0,3).join("\n")+"\n"};window.addEventListener("unhandledrejection",ev=>{document.getElementById("err").textContent+="rejection: "+(ev.reason&&ev.reason.stack||ev.reason)+"\n"});</script>
 <script type="module">
 import { mountTheatre } from './kgTheatre.js';
@@ -59,6 +61,8 @@ const SQL_CROSS = "SELECT COUNT(*) FROM Policing_Core.v_Incident i JOIN Policing
 const names = ['Incident','Offence','Victim','Arrestee','Agency','Offender','Property','Weapon','Bias','Offence_SuspectedOfUsing','CaseObject','EmailMessage','File','Url','ChainOfCustody','Address','Person','Vehicle','Charge','Court','Sentence','Evidence','Officer','Unit','District','Report','Witness','Statement'];
 const nodes = names.map((n,i)=>{ const a=i/names.length*Math.PI*2; const r=200+((i*37)%90); return { id:i, name:'Policing Core.'+n, type:'entity', x: 590+Math.cos(a)*r*1.6, y: 360+Math.sin(a)*r*0.8 }; });
 const links = [[0,1],[0,2],[0,3],[4,0],[0,5],[0,6],[0,7],[0,8],[1,9],[10,14],[11,10],[12,10],[13,10],[16,15],[18,19],[19,20],[22,23],[23,24],[25,26],[26,27]].map(([s,t])=>({source:s,target:t,type:'foreign_key'}));
+if (q.get('theme') === 'light') document.body.setAttribute('data-theme', 'light');
+if (q.get('theme') === 'flip') setTimeout(() => document.body.setAttribute('data-theme', 'light'), Number(q.get('flipAt') || 9000));
 const t = mountTheatre(document.getElementById('host'), { depth: q.get('depth')||'watch', wholeGraph: { nodes, links, transform: {k:1,x:0,y:0} } });
 const mode = q.get('mode')||'ok';
 const events = [

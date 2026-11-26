@@ -219,7 +219,9 @@ JS_SUITES=(test_platform_roles_view test_needs_input_ui test_pricing_notice test
 # so they run alone after the pool. Their lines still print in the listed order.
 # test_tool_semantics holds a 150 ms median query-encode bound — it missed by 2 ms in the pool (Nov 2026).
 # test_living_answer_dom renders a measured duration; under the pool it went red twice (Nov 2026).
-TIMED_SUITES=(test_stream_activity_timeout test_envelope_silence test_eval_online test_tool_semantics test_living_answer_dom)
+# test_platform_playbooks ranks by MEANING once the embedder has warmed in its background thread; under the
+# pool the warm-up lost the race to the queries and three rankings fell back to words (red twice, 26 Nov 2026).
+TIMED_SUITES=(test_stream_activity_timeout test_envelope_silence test_eval_online test_tool_semantics test_living_answer_dom test_platform_playbooks)
 _is_timed() { case " ${TIMED_SUITES[*]} " in *" $1 "*) return 0 ;; esac; return 1; }
 
 if [ "$SERIAL" = "1" ]; then

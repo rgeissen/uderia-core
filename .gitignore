@@ -71,6 +71,8 @@ prompt_overrides/
 tda_keys/jwt_secret.key
 # The licence signing key never enters the repository (maintenance/licensing/ holds only the tools)
 maintenance/licensing/*.pem
+# issued licences: confidential to their holder (partner agreement §13.1), kept on the signing machine
+maintenance/licensing/issued/
 tda_keys/provenance_key.pem
 tda_keys/provenance_key.pub
 tda_keys/test_*.pem

@@ -43,6 +43,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // serve the harness, mapping ./kgTheatre.js to the SHIPPED module (no copy that can drift)
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x'); let f = u.pathname === '/kgTheatre.js' ? MODULE : path.join(HARNESS, u.pathname === '/' ? 'index.html' : u.pathname);
+  if (!fs.existsSync(f) && u.pathname.endsWith('.js')) f = path.join(ROOT, 'static/js', u.pathname);   // the module's own sibling imports (../kgVocabulary.js): 404 here left the stage unmounted and every scenario red
   if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript' : 'text/html', 'cache-control': 'no-store' }); fs.createReadStream(f).pipe(res);
 });
@@ -103,6 +104,25 @@ const PROBE_ALL = `(() => { const o = ${PROBE};
     legendSwatches: document.querySelectorAll('.kgt-legend .it svg, .kgt-legend .it .sv').length, keyPressed: document.querySelector('.kgt-key')?.getAttribute('aria-pressed'),
     explainOn: getComputedStyle(document.querySelector('.kgt-explain')).display !== 'none', explain: document.querySelector('.kgt-explain')?.textContent || '', explainPressed: document.querySelector('.kgt-explain-btn')?.getAttribute('aria-pressed'),
     prefs: window.__t ? window.__t.prefs : null,
+    theme: (() => {   // what a viewer can READ: every text of the story (the margin haze of unreached entities excepted), its fill at its effective opacity, against the stage
+      const px = (c) => { const m = /rgba?\\(([^)]+)\\)/.exec(c || ''); if (!m) return null; const p = m[1].split(/[ ,/]+/).map(Number); return { c: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }; };
+      const lum = (c) => { const [r, g, b] = c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const ratio = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+      const bg = (px(getComputedStyle(document.querySelector('.kgt-root')).backgroundColor) || { c: [0, 0, 0] }).c;
+      const svg = document.querySelector('.kgt-stage svg'); let min = 99, worst = '';
+      for (const t of svg.querySelectorAll('text')) {
+        if (!t.textContent.trim() || t.closest('.kgt-fnode')) continue;
+        let op = 1; for (let e = t; e && e !== svg; e = e.parentElement) op *= +getComputedStyle(e).opacity;
+        if (op < 0.05) continue;
+        const f = px(getComputedStyle(t).fill); if (!f) continue;
+        const a = op * f.a, eff = f.c.map((v, i) => v * a + bg[i] * (1 - a)), r = ratio(eff, bg);
+        if (r < min) { min = r; worst = t.textContent.trim().slice(0, 28) + ' @' + op.toFixed(2); }
+      }
+      const name = svg.querySelector('g.kgt-ent text.name'), card = svg.querySelector('.kgt-receipt rect'), strip = document.querySelector('.kgt-strip');
+      return { attr: document.body.getAttribute('data-theme'), rootAttr: document.documentElement.getAttribute('data-theme'), bg, min: +min.toFixed(2), worst, nameLum: name ? +lum(px(getComputedStyle(name).fill).c).toFixed(3) : null,
+        cardLum: card ? +lum(px(getComputedStyle(card).fill).c).toFixed(3) : null, stripLum: strip ? +lum(px(getComputedStyle(strip).backgroundColor).c).toFixed(3) : null,
+        kwLum: strip && strip.querySelector('.kw') ? +lum(px(getComputedStyle(strip.querySelector('.kw')).color).c).toFixed(3) : null };
+    })(),
     heldRow: document.querySelector('.kgt-trail .kgt-tr.held')?.dataset.beat || null, previewRow: document.querySelector('.kgt-trail .kgt-tr.preview')?.dataset.beat || null,
     entOps: Object.fromEntries([...document.querySelectorAll('.kgt-stage svg g.kgt-ent')].map(g => [g.__data__?.name?.split('.').pop(), +(g.getAttribute('opacity') ?? 1)])),
     rels: [...document.querySelectorAll('.kgt-stage svg g.kgt-rel')].map(g => +(g.getAttribute('opacity') ?? 1)),
@@ -122,6 +142,16 @@ const scenarios = [
   { name: 'watch receipt', q: 'upto=9&gap=600&end=1', wait: 12000, expect: ['facts applied', 'Trusted scope'], caption: /grain of Offence/ },
   { name: 'inspect receipt', q: 'upto=9&gap=600&end=1&depth=inspect', wait: 12000, expect: ['facts applied', 'IMPLEMENTS', 'Receipt'], caption: /grain of Offence/ },
   { name: 'prevented', q: 'upto=8&gap=600&mode=cross', wait: 11000, expect: ['stopped before the database'], caption: /Stopped a join across subject areas/ },
+  // The light theme. The stage was drawn for dark only (neon hues at 1.5–2:1 on white, states told apart by
+  // fading, the statement strip on a hardcoded dark surface) and read its tokens ONCE at mount — a stage
+  // opened dark kept near-white names and a dark receipt after the page turned light (operator screenshot,
+  // 2026-11-26). `light` holds every story text to 3:1 at its effective opacity and the surfaces to the theme.
+  { name: 'light: watch receipt', q: 'theme=light&upto=9&gap=600&end=1', wait: 12000, expect: ['facts applied', 'Trusted scope'], caption: /grain of Offence/, light: true },
+  { name: 'light: inspect receipt', q: 'theme=light&upto=9&gap=600&end=1&depth=inspect', wait: 12000, expect: ['facts applied', 'IMPLEMENTS', 'Receipt'], caption: /grain of Offence/, light: true },
+  { name: 'light: prevented', q: 'theme=light&upto=8&gap=600&mode=cross', wait: 11000, expect: ['stopped before the database'], caption: /Stopped a join across subject areas/, light: true },
+  { name: 'light: held at Seed (the unreached entities recede, legibly)', q: 'theme=light&upto=9&gap=600&end=1&depth=inspect', wait: 12000, click: '.kgt-trail .kgt-tr[data-beat="seed"]', clickWait: 1500, caption: /^Seeded/, light: true },
+  { name: 'the theme turns light under a mounted stage: the stage follows', q: 'theme=flip&flipAt=9500&upto=9&gap=600&end=1', wait: 12500, expect: ['facts applied', 'Trusted scope'], caption: /grain of Offence/, light: true },
+  { name: 'dark: the story texts read on the dark stage too', q: 'upto=9&gap=600&end=1', wait: 12000, caption: /grain of Offence/, dark: true },
   { name: 'after reset (the app path)', q: 'upto=9&gap=600&end=1&reset=1', wait: 12000, expect: ['facts applied', 'Trusted scope', 'robberies'], caption: /grain of Offence/ },
   { name: 'wide row (stacks and wraps to fit)', q: 'upto=9&gap=600&end=1&wide=1', wait: 12000, expect: ['Weapon', 'Trusted scope'], caption: /grain of Offence/ },
   { name: 'resized to a narrow panel (re-laid out, re-fitted)', q: 'upto=9&gap=600&end=1&wide=1', wait: 12000, resizeTo: [620, 760], expect: ['Weapon', 'Trusted scope', '2023?', 'facts applied'], caption: /grain of Offence/, stacked: true },
@@ -230,6 +260,15 @@ for (const sc of scenarios.filter(s => !ONLY || ONLY.test(s.name))) {
   check(`${sc.name}: camera within [0.2, 1.2] (k=${v.k})`, v.k >= 0.2 - 1e-6 && v.k <= (sc.kMax || 1.2) + 1e-3, `k=${v.k} stage=${v.stage}`);
   if (!sc.noText) check(`${sc.name}: the question is on the stage`, v.qIn === true, `qIn=${v.qIn}`);
   if (v.sOn) check(`${sc.name}: the statement strip is on the stage`, v.sIn === true, `sIn=${v.sIn}`);
+  if (sc.light) {
+    const th = v.theme || {};
+    check(`${sc.name}: the page is light and the stage is the page's surface`, th.attr === 'light' && th.rootAttr == null && (th.bg || []).every(c => c >= 240), JSON.stringify(th.bg));
+    check(`${sc.name}: every story text reads at 3:1 or better at its effective opacity`, th.min >= 3, `min=${th.min} (${th.worst})`);
+    check(`${sc.name}: entity names are dark text, not the dark theme's`, th.nameLum != null && th.nameLum < 0.2, `lum=${th.nameLum}`);
+    if (th.cardLum != null) check(`${sc.name}: the receipt is a light card`, th.cardLum > 0.8, `lum=${th.cardLum}`);
+    if (v.sOn) check(`${sc.name}: the statement strip is a light surface with dark keywords`, th.stripLum > 0.8 && th.kwLum != null && th.kwLum < 0.2, `strip=${th.stripLum} kw=${th.kwLum}`);
+  }
+  if (sc.dark) { const th = v.theme || {}; check(`${sc.name}: every story text reads at 3:1 or better`, th.min >= 3, `min=${th.min} (${th.worst})`); check(`${sc.name}: names light, strip dark`, th.nameLum > 0.6 && th.stripLum < 0.1, JSON.stringify(th)); }
   if (sc.stacked != null) check(`${sc.name}: subject areas ${sc.stacked ? 'stacked' : 'side by side'}`, v.stacked === sc.stacked, `areas=${v.areas} stacked=${v.stacked} stage=${v.stage}`);
   for (const e of (sc.expect || [])) check(`${sc.name}: shows "${e}"`, joined.includes(e));
   check(`${sc.name}: headline`, sc.caption.test(v.caption || ''), v.caption);

@@ -9,12 +9,12 @@ services:
         # shown in the info modal). Defaults to the release tag; override with the
         # exact git description for point-in-time builds, e.g.:
         #   UDERIA_VERSION="$(git describe --tags)" docker compose build
-        UDERIA_VERSION: ${UDERIA_VERSION:-v1.28}
+        UDERIA_VERSION: ${UDERIA_VERSION:-v1.29}
     # This will be the name of the image after it's built
-    image: uderia-v1-28:latest
+    image: uderia-v1-29:latest
 
     # This is the container name from your JSON config
-    container_name: uderia-v1-28
+    container_name: uderia-v1-29
 
     # Memory limit to prevent OOM killing the host.  6g: a 200k-row industry-model
     # (re)deploy peaks ~0.75 GB above the ~1.5 GB idle footprint (embedding model +

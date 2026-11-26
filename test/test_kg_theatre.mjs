@@ -416,5 +416,50 @@ console.log('[15] the real turn (local f622f5ef, turn 2): counts, twins, the rew
   R3.apply('conversation_tool_rewrite', { tool_name: 'base_readQuery', kind: 'x', executed_sql: 'SELECT 3 FROM t' });
   check('a statement is rewritten once: a second rewrite with no statement left changes nothing', R3.state.statements[0].sql === 'SELECT 2 FROM t');
 }
+
+console.log('[theme] the stage reads in BOTH themes: every text hue clears 4.5:1, a receding state stays legible');
+{
+  // The stage was drawn for the dark theme only: neon hues (1.5–2:1 on white), states told apart
+  // by fading (a faded box dissolves on white), a statement strip on a hardcoded dark surface, and
+  // tokens captured once at mount (a stage opened dark kept dark colours on a light page).
+  const { PALETTE, PALETTE_TEXT, PALETTE_CODE } = await import('../static/js/handlers/kgTheatre.js');
+  const fs = await import('node:fs');
+  const rgb = (h) => { const x = h.replace('#', ''); const n = parseInt(x.length === 3 ? x.split('').map(c => c + c).join('') : x, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const lum = (c) => { const [r, g, b] = c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+  const over = (fg, a, bg) => fg.map((v, i) => Math.round(v * a + bg[i] * (1 - a)));
+  // the shared tokens the stage reads from the page, as static/css/themes.css declares them
+  const CSS = fs.readFileSync('static/css/themes.css', 'utf8');
+  const block = (sel) => { const i = CSS.indexOf(sel + ' {'); return CSS.slice(i, CSS.indexOf('\n}', i)); };
+  const tok = (blk, name) => { const m = new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{3,8})`).exec(blk); return m ? m[1] : null; };
+  const pageTok = { dark: block('[data-theme="modern"]'), light: block('[data-theme="light"]') };
+  for (const theme of ['dark', 'light']) {
+    const P = PALETTE[theme]; const stage = rgb(P.stage);
+    check(`${theme}: the palette's stage IS the page's --bg-primary`, (tok(pageTok[theme], 'bg-primary') || '').toLowerCase() === P.stage.toLowerCase(), `${tok(pageTok[theme], 'bg-primary')} vs ${P.stage}`);
+    const low = PALETTE_TEXT.map(k => [k, ratio(rgb(P[k]), stage)]).filter(([, r]) => r < 4.5);
+    check(`${theme}: every text hue clears 4.5:1 on the stage`, low.length === 0, low.map(([k, r]) => `${k} ${P[k]} ${r.toFixed(2)}`).join(', '));
+    const code = rgb(P.code);
+    const lowCode = PALETTE_CODE.map(k => [k, ratio(rgb(P[k]), over(rgb(P[k]), P.tint, code))]).filter(([, r]) => r < 4.5);
+    check(`${theme}: every statement token clears 4.5:1 on its own chip`, lowCode.length === 0, lowCode.map(([k, r]) => `${k} ${r.toFixed(2)}`).join(', '));
+    for (const name of ['text-primary', 'text-secondary', 'text-muted']) { const v = tok(pageTok[theme], name); check(`${theme}: --${name} clears 4.5:1 on the stage`, !!v && ratio(rgb(v), stage) >= 4.5, `${v}`); }
+  }
+  const L = PALETTE.light, white = rgb(L.stage);
+  check('light: no state that carries text fades below 0.7', Math.min(...Object.values(L.op.ent)) >= 0.7 && L.op.label >= 0.7 && L.op.threadLabelBack >= 0.7 && L.op.word >= 0.7, JSON.stringify(L.op.ent));
+  // a receded entity is drawn neutral; its name (--text-secondary) at the ladder's lowest step, on the neutral card
+  const name2 = rgb(tok(pageTok.light, 'text-secondary')), card = rgb(L.neutralFill);
+  const receded = ratio(over(name2, L.op.ent.dim, card), card);
+  check('light: the name on the most receded entity still clears 4.5:1', receded >= 4.5, receded.toFixed(2));
+  check('light: a receded border is a mark that clears 3:1 at its faintest', ratio(over(rgb(L.neutralStroke), 1, white), white) >= 2.5, ratio(rgb(L.neutralStroke), white).toFixed(2));
+  check('dark keeps the ladder the DOM gate measures (dim < 0.3, background 0.3–0.6)', PALETTE.dark.op.ent.dim < 0.3 && PALETTE.dark.op.ent.back > 0.3 && PALETTE.dark.op.ent.back < 0.6 && PALETTE.dark.op.focusRest <= 0.2);
+  const T = fs.readFileSync('static/js/handlers/kgTheatre.js', 'utf8');
+  const mount = T.slice(T.indexOf('export function mountTheatre('));
+  check('the tokens are read per theme, and again when the theme changes', /function readTheme\(\)/.test(mount) && /new MutationObserver\(retheme\)/.test(mount) && /attributeFilter: \['data-theme'\]/.test(mount) && /\[document\.documentElement, document\.body\]/.test(mount) && /if \(mo\) mo\.disconnect\(\)/.test(mount));
+  check('the stage draws no hue of its own: every colour literal lives in PALETTE or a page token', !/attr\('(fill|stroke)', '#[0-9a-fA-F]{3,8}'\)/.test(mount) && !/\? '#[0-9a-fA-F]{6}' :/.test(mount.slice(mount.indexOf('function renderRegions('))));
+  // the app themes <body>; a token read from <html> is the :root default (dark) in every theme
+  const IDX = fs.readFileSync('templates/index.html', 'utf8');
+  check('the app carries the theme on <body>, and the theatre reads its tokens from the element that carries it', /<body[^>]*data-theme=/.test(IDX) && /body\.setAttribute\('data-theme', theme\)/.test(IDX) && /getComputedStyle\(themeHost\(\)\)/.test(T) && !/getComputedStyle\(document\.documentElement\)/.test(T) && /b\.hasAttribute\('data-theme'\)\) \? b : document\.documentElement/.test(T));
+  const css = T.slice(T.indexOf('function _injectCss('), T.indexOf('export function mountTheatre('));
+  check('the statement strip follows the theme (no hardcoded surface, no hardcoded token colour)', !/\.kgt-strip\{[^}]*background:#/.test(css) && !/\.kgt-strip span\.[a-z]+\{color:#/.test(css) && /\[data-theme="light"\] \.kgt-root\{/.test(css));
+}
 console.log(`\n${fail === 0 ? 'ALL PASS' : 'FAILURES'} — ${pass} assertions, ${fail} failures`);
 process.exit(fail ? 1 : 0);

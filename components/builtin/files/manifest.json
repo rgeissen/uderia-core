@@ -13,6 +13,7 @@
     "signals": {
       "emits": [],
       "listens": [
+        "uderia:effective-profile",
         "uderia:component-changed"
       ],
       "announces": [

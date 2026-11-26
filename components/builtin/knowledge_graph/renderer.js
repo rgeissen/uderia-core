@@ -592,7 +592,7 @@ function _renderMiniGraph(container, spec, heightOverride) {
 //   in the split panel with the stage; "Graph" in its caption strip brings the graph
 //   back. The preference is per viewer (localStorage), never a server setting.
 // ═══════════════════════════════════════════════════════════════════════
-const _THEATRE_MODULE = '/static/js/handlers/kgTheatre.js?v=1.36';
+const _THEATRE_MODULE = '/static/js/handlers/kgTheatre.js?v=1.38';
 let _theatreMod = null, _theatreLoad = null;
 let _theatre = null;            // the mounted instance
 let _theatreSkipTurn = false;   // a session-primer turn in flight: its events never reach the stage
